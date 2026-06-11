@@ -1,0 +1,59 @@
+.gitignore
+  s_b9270579097098::t_a3f13aa0404364 1-45
+pubspec.yaml
+  s_b9270579097098::t_a3f13aa0404364 1-19
+README.md
+  s_b9270579097098::t_a3f13aa0404364 1-3
+android/gradle.properties
+  s_b9270579097098::t_a3f13aa0404364 1-2
+ios/Runner.xcodeproj/project.pbxproj
+  s_b9270579097098::t_a3f13aa0404364 1-620
+ios/RunnerTests/RunnerTests.swift
+  s_b9270579097098::t_a3f13aa0404364 1-12
+lib/main.dart
+  s_b9270579097098::t_a3f13aa0404364 1-20
+web/index.html
+  s_b9270579097098::t_a3f13aa0404364 1-46
+analysis_options.yaml
+  s_b9270579097098::t_a3f13aa0404364 1
+android/app/src/profile/AndroidManifest.xml
+  s_b9270579097098::t_a3f13aa0404364 1-7
+ios/Runner.xcodeproj/xcshareddata/xcschemes/Runner.xcscheme
+  s_b9270579097098::t_a3f13aa0404364 1-101
+android/app/build.gradle.kts
+  s_b9270579097098::t_a3f13aa0404364 1-44
+android/app/src/main/AndroidManifest.xml
+  s_b9270579097098::t_a3f13aa0404364 1-45
+android/gradle/wrapper/gradle-wrapper.properties
+  s_b9270579097098::t_a3f13aa0404364 1-5
+web/manifest.json
+  s_b9270579097098::t_a3f13aa0404364 1-35
+android/app/src/main/kotlin/com/example/fgex/MainActivity.kt
+  s_b9270579097098::t_a3f13aa0404364 1-5
+ios/Runner/Info.plist
+  s_b9270579097098::t_a3f13aa0404364 1-70
+android/build.gradle.kts
+  s_b9270579097098::t_a3f13aa0404364 1-24
+android/settings.gradle.kts
+  s_b9270579097098::t_a3f13aa0404364 1-26
+android/app/src/debug/AndroidManifest.xml
+  s_b9270579097098::t_a3f13aa0404364 1-7
+.metadata
+  s_b9270579097098::t_a3f13aa0404364 1-36
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "a3f0da96e67ac93f666834f5049d558e4483ebac",
+  "prompts": {},
+  "sessions": {
+    "s_b9270579097098": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8f3e378f-0dc5-4934-b56e-116723d6ead4",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
