@@ -1,0 +1,5 @@
+package com.example.fgex
+
+import io.flutter.embedding.android.FlutterActivity
+
+class MainActivity : FlutterActivity()
