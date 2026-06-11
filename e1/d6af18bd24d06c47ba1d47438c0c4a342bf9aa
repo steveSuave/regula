@@ -1,0 +1,20 @@
+pubspec.yaml
+  s_b9270579097098::t_249398d058b499 2,13-16,22-23,26-31
+  s_b9270579097098::t_dfdc2409c4bf90 10,17-19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "e1d6af18bd24d06c47ba1d47438c0c4a342bf9aa",
+  "prompts": {},
+  "sessions": {
+    "s_b9270579097098": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8f3e378f-0dc5-4934-b56e-116723d6ead4",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
