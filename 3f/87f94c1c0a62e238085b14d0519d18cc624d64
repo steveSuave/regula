@@ -1,0 +1,23 @@
+analysis_options.yaml
+  s_b9270579097098::t_026e9576f23cec 1-4,6-41
+.github/workflows/ci.yml
+  s_b9270579097098::t_4263ff2cd1978d 1-19
+test/smoke_test.dart
+  s_b9270579097098::t_3e85847a81e0bc 1-9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "3f87f94c1c0a62e238085b14d0519d18cc624d64",
+  "prompts": {},
+  "sessions": {
+    "s_b9270579097098": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8f3e378f-0dc5-4934-b56e-116723d6ead4",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
