@@ -5,13 +5,13 @@ Live checklist for the build phases described in `docs/PLAN.md`. Tick items as t
 Definition of done for each phase: code merged, tests passing, `docs/TODO.md` updated, `docs/STATUS.md` entry written.
 
 ## Phase 0 — Project scaffolding
-- [ ] Install Flutter (stable) and confirm `flutter doctor`
-- [ ] `flutter create .` (web, Android, iOS targets)
-- [ ] Pin dependencies in `pubspec.yaml` (`flutter_riverpod`, `riverpod_annotation`, `freezed_annotation`, `json_annotation`, `vector_math`, `file_picker`, `shared_preferences`, `uuid`)
-- [ ] Pin dev dependencies (`build_runner`, `riverpod_generator`, `freezed`, `json_serializable`, `flutter_test`, `mocktail`, `golden_toolkit`, `glados`, `flutter_lints`)
-- [ ] `analysis_options.yaml` with strict lints
-- [ ] `git init`, initial commit, `.gitignore` review
-- [ ] CI placeholder workflow (`flutter analyze && flutter test`)
+- [x] Install Flutter (stable) and confirm `flutter doctor` (3.41.9; Xcode incomplete — iOS builds blocked until installed, web/Android fine)
+- [x] `flutter create .` (web, Android, iOS targets)
+- [x] Pin dependencies in `pubspec.yaml` (`flutter_riverpod`, `riverpod_annotation`, `freezed_annotation`, `json_annotation`, `vector_math`, `file_picker`, `shared_preferences`, `uuid`)
+- [x] Pin dev dependencies (`build_runner`, `riverpod_generator`, `freezed`, `json_serializable`, `flutter_test`, `mocktail`, `golden_toolkit`, `glados`, `flutter_lints`)
+- [x] `analysis_options.yaml` with strict lints
+- [x] `git init`, initial commit, `.gitignore` review
+- [x] CI placeholder workflow (`flutter analyze && flutter test`)
 
 ## Phase 1 — Pure math layer (`lib/domain/math/`)
 - [ ] `Vec2` + ops, with tests
