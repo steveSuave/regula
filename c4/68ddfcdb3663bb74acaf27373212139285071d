@@ -1,0 +1,26 @@
+lib/domain/math/triangle_centers.dart
+  s_b30904ba7edb10::t_a09612bc78301c 1-57
+docs/TODO.md
+  s_b30904ba7edb10::t_175870f9947f15 20-21
+test/domain/math/triangle_centers_test.dart
+  s_b30904ba7edb10::t_edf4aed7491e2c 130,132
+  s_b30904ba7edb10::t_d9d5b3823177a5 1-129,131,133-140
+docs/STATUS.md
+  s_b30904ba7edb10::t_de113359f95a60 9-24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "c468ddfcdb3663bb74acaf27373212139285071d",
+  "prompts": {},
+  "sessions": {
+    "s_b30904ba7edb10": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ff6b070b-eb2f-49e9-98d4-9d483d805078",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
