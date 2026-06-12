@@ -22,11 +22,11 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] Layer rule check: no `package:flutter/*` imports (enforced by `test/domain/layer_rule_test.dart`, runs in CI)
 
 ## Phase 2 — Construction core (`lib/domain/construction/`)
-- [ ] Sealed `GeoObject` + `ObjectAttributes` (freezed)
-- [ ] Minimal object set: `FreePoint`, `Midpoint`, `LineThroughTwoPoints`, `Segment`, `CircleCenterPoint`, `IntersectionPoint`
-- [ ] `Construction` DAG: insertion order, dependents lookup, topological recompute
-- [ ] Cascading delete with full restore data
-- [ ] Recompute correctness tests on chained dependencies
+- [x] Sealed `GeoObject` + `ObjectAttributes` (freezed) (sealed at the kind level — `GeoPoint`/`GeoLine`/`GeoCircle`; concrete objects stay one-per-file)
+- [x] Minimal object set: `FreePoint`, `Midpoint`, `LineThroughTwoPoints`, `Segment`, `CircleCenterPoint`, `IntersectionPoint`
+- [x] `Construction` DAG: insertion order, dependents lookup, topological recompute
+- [x] Cascading delete with full restore data
+- [x] Recompute correctness tests on chained dependencies
 
 ## Phase 3 — Commands & undo/redo (`lib/domain/commands/`)
 - [ ] `Command` interface
