@@ -6,6 +6,24 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 6 — 2026-06-12
+
+**Done**
+- Phase 4 on branch `phase-4-providers` (2 commits + docs), merged to `main`. `lib/application/providers/` holds: `constructionProvider` (owns the `Construction`, bridges its listener API via a revision-counting `ConstructionState`; `replace()` swaps constructions for File > New/Open), `commandStackProvider` (wraps `CommandStack`; exposes `(canUndo, canRedo)` record), `selectionProvider` (selected-id set; prunes deleted ids), `viewportProvider` (`ViewportState` pan/scale only).
+- 152 + 9 = 161 tests green, `flutter analyze` clean.
+- `toolProvider` deferred to Phase 5 (TODO updated): the `Tool` interface doesn't exist yet, and designing it without Phase 5's canvas-input types would be guesswork.
+
+**Next**
+- Phase 5 (`lib/presentation/canvas/` + `lib/domain/tools/`): `Tool` interface + `toolProvider`, `Viewport` value type + transforms, `GeometryPainter`, `HitTester`, `GeometryCanvas`, `PointTool`, web smoke test.
+
+**Open questions / gotchas**
+- `@Riverpod(name: 'constructionProvider')` gives PLAN's provider names despite notifier classes being `ConstructionNotifier` etc. (a notifier class can't be called `Construction` — clashes with the domain class).
+- `select` is not exported by `riverpod_annotation` — files needing it import `flutter_riverpod`. Fine in `application/`, never in `domain/`.
+- Riverpod forbids touching `state` inside life-cycle callbacks (`ref.onDispose`): `ConstructionNotifier` keeps a `_construction` field mirroring `state.construction` for unsubscription. Keep the two in sync in `replace()`.
+- `commandStackProvider` depends on the construction *instance* via `select` — NOT the revision — so undo history survives mutations but is dropped when `replace()` swaps constructions (undoing against a construction a command never touched would corrupt it). Don't "simplify" to a plain watch.
+- `viewportProvider` stores state only; world↔screen transforms, zoom-about-focal-point, and scale clamping are deliberately left to Phase 5/8 gesture code. The presentation `Viewport` should be *built from* `ViewportState`, not duplicate it.
+- Provider tests use plain `ProviderContainer()` + `addTearDown(dispose)`; no overrides were needed since providers wire to each other, not to injectables.
+
 ## Session 5 — 2026-06-12
 
 **Done**
