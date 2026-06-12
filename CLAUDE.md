@@ -24,7 +24,7 @@ Cross-platform (web / Android / iOS) dynamic geometry app written in Flutter. Co
 - **`lib/domain/` must not import `package:flutter/*`.** That layer is pure Dart, unit-testable in isolation. Cross the boundary only via `lib/application/` (Riverpod providers).
 - **Free points are the only directly-mutable objects.** Every other object is derived and recomputes from its parents.
 - **The `Construction` DAG is the single source of truth.** Rendering, hit testing, undo/redo, and save/load all read from it.
-- **All user actions are reversible `Command`s.** No direct mutation of the construction outside a command. One command per drag gesture (not per frame).
+- **All user actions are reversible `Command`s.** No direct mutation of the construction outside a command, with one carve-out: drag *preview* frames mutate directly, and the gesture must end by emitting exactly one command capturing start → end (or rolling the preview back on cancel). One command per drag gesture, never per frame.
 - **Save format carries a `version` field.** Bump it on any breaking schema change and add a migration.
 - **No new public API in `domain/` without a test.** Especially `domain/math/` and `domain/construction/`.
 

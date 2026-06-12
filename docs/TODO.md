@@ -30,7 +30,7 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 
 ## Phase 3 — Commands & undo/redo (`lib/domain/commands/`)
 - [ ] `Command` interface
-- [ ] `AddObjectCommand`, `DeleteObjectsCommand`, `MoveFreePointCommand`, `ChangeAttributesCommand`, `MacroCommand`
+- [ ] `AddObjectCommand`, `DeleteObjectsCommand`, `MoveFreePointCommand`, `TranslateObjectsCommand` (multi-point rigid translation — backs derived-object dragging), `ChangeAttributesCommand`, `MacroCommand`
 - [ ] `CommandStack` (Riverpod-backed) with undo + redo
 - [ ] `undo(apply(c)) == c` round-trip tests
 - [ ] One drag = one command (not per-frame)
@@ -52,6 +52,7 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 
 ## Phase 6 — Object & tool coverage
 - [ ] Triangle centers (Centroid, Orthocenter, Incenter, Circumcenter)
+- [ ] `PointOnObject` (point constrained to a curve)
 - [ ] Perpendicular & Parallel lines
 - [ ] Angle bisector
 - [ ] Segment-ratio point
@@ -63,6 +64,7 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 
 ## Phase 7 — Selection & attributes
 - [ ] Multi-select (rubber band + shift-click)
+- [ ] Drag derived objects (rigid translation of free-point ancestors via `TranslateObjectsCommand`)
 - [ ] Attributes inspector panel
 - [ ] Hide/show + label visibility
 - [ ] Color, stroke width
