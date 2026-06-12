@@ -1,0 +1,27 @@
+lib/domain/commands/command.dart
+  s_440d63387d8688::t_1007de33a2c3b2 1-20
+test/domain/commands/move_free_point_command_test.dart
+  s_440d63387d8688::t_ec6cd82388d47b 1-87
+test/domain/commands/add_object_command_test.dart
+  s_440d63387d8688::t_f3e90813599074 1-71
+lib/domain/commands/move_free_point_command.dart
+  s_440d63387d8688::t_8a52617a24089b 1-29
+lib/domain/commands/add_object_command.dart
+  s_440d63387d8688::t_9f47a496ad8794 1-30
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "8dc4d2653ce1161b48bb4c3d035b47aa020925db",
+  "prompts": {},
+  "sessions": {
+    "s_440d63387d8688": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f3d09c05-7070-43a2-ab1b-4b2d7b0730b7",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
