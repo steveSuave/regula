@@ -36,14 +36,15 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] One drag = one command (not per-frame) — `MoveFreePointCommand`/`TranslateObjectsCommand` carry whole-gesture deltas; enforced at the gesture layer in Phase 5
 
 ## Phase 4 — Riverpod application layer (`lib/application/providers/`)
-- [ ] `constructionProvider`
-- [ ] `selectionProvider`
-- [ ] `toolProvider`
-- [ ] `viewportProvider`
-- [ ] `commandStackProvider`
-- [ ] Provider tests with overrides
+- [x] `constructionProvider` (revision-counting bridge over `Construction`'s listener API; `replace()` for File > New/Open)
+- [x] `selectionProvider` (prunes deleted ids by listening to the construction)
+- [x] `viewportProvider` (pan/zoom state only — transforms are Phase 5's `Viewport`)
+- [x] `commandStackProvider` (watches the construction *instance*, so history survives mutations but resets on `replace`)
+- [x] Provider tests (`ProviderContainer`-based; overrides not needed yet — no provider has an injectable dependency)
+- toolProvider moved to Phase 5 — it needs the `Tool` interface, which Phase 5 designs
 
 ## Phase 5 — Canvas & first tool (`lib/presentation/canvas/`)
+- [ ] `Tool` interface (`lib/domain/tools/tool.dart`) + `toolProvider` (moved from Phase 4)
 - [ ] `Viewport` value type + transforms
 - [ ] `GeometryPainter` (CustomPainter)
 - [ ] `HitTester` with priority order + 8 px threshold
