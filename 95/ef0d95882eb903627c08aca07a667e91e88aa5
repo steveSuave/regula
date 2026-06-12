@@ -1,0 +1,21 @@
+test/domain/commands/macro_command_test.dart
+  s_440d63387d8688::t_2c914df1112bef 1-69
+lib/domain/commands/macro_command.dart
+  s_440d63387d8688::t_fb713f0503d9d1 1-29
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "95ef0d95882eb903627c08aca07a667e91e88aa5",
+  "prompts": {},
+  "sessions": {
+    "s_440d63387d8688": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f3d09c05-7070-43a2-ab1b-4b2d7b0730b7",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
