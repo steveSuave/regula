@@ -1,0 +1,21 @@
+test/domain/layer_rule_test.dart
+  s_5eacdf8daa4425::t_fc609bf9e0e3b4 6-13,15-25,30-31,50-51,54-57,59-62,67-68
+  s_5eacdf8daa4425::t_f511d91b305fbb 26-29,35-48,58
+  s_5eacdf8daa4425::t_6bd9f260ccc42d 34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "1cb9a9ac3b508466746a65510d961f60dd01dad7",
+  "prompts": {},
+  "sessions": {
+    "s_5eacdf8daa4425": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f95bdbe7-6d10-4d3c-9fef-b1897f6a3aff",
+        "model": "claude-fable-5"
+      },
+      "human_author": null
+    }
+  }
+}
