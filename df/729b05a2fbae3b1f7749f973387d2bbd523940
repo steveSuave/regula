@@ -1,0 +1,27 @@
+lib/domain/construction/geo_object.dart
+  s_7fbafb02da3cd4::t_56f1c47d8dc905 1-77
+test/domain/construction/object_attributes_test.dart
+  s_7fbafb02da3cd4::t_1479e0268341c7 1-54
+lib/domain/construction/object_attributes.freezed.dart
+  s_7fbafb02da3cd4::t_0c35e1a03fc509 1-305
+lib/domain/construction/object_attributes.g.dart
+  s_7fbafb02da3cd4::t_0c35e1a03fc509 1-29
+lib/domain/construction/object_attributes.dart
+  s_7fbafb02da3cd4::t_3d811a970b4dd6 1-38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "df729b05a2fbae3b1f7749f973387d2bbd523940",
+  "prompts": {},
+  "sessions": {
+    "s_7fbafb02da3cd4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "35ee2ebd-dd87-45c7-9005-00a5a0e9f8bb",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
