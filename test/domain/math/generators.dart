@@ -1,3 +1,5 @@
+import 'package:fgex/domain/math/circle_eq.dart';
+import 'package:fgex/domain/math/line_eq.dart';
 import 'package:fgex/domain/math/vec2.dart';
 import 'package:glados/glados.dart';
 
@@ -15,4 +17,20 @@ extension MathAnys on Any {
   /// An interpolation parameter in [0, 1] on a 0.001 grid.
   Generator<double> get unitInterval =>
       intInRange(0, 1001).map((i) => i / 1000);
+
+  /// A strictly positive radius in (0, 1000] on a 0.001 grid.
+  Generator<double> get positiveRadius =>
+      intInRange(1, 1000001).map((i) => i / 1000);
+
+  /// A line through two generated points; when the points coincide the
+  /// second is nudged so the generator never produces a degenerate line.
+  Generator<LineEq> get lineEq => combine2(
+        vec2,
+        vec2,
+        (Vec2 p, Vec2 q) =>
+            LineEq.throughPoints(p, p == q ? q + const Vec2(1, 0) : q),
+      );
+
+  Generator<CircleEq> get circleEq =>
+      combine2(vec2, positiveRadius, CircleEq.new);
 }

@@ -16,7 +16,7 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 ## Phase 1 — Pure math layer (`lib/domain/math/`)
 - [x] `Vec2` + ops, with tests
 - [x] `LineEq`, `CircleEq` value types
-- [ ] Intersections: line∩line, line∩circle, circle∩circle (degenerate cases handled)
+- [x] Intersections: line∩line, line∩circle, circle∩circle (degenerate cases handled)
 - [ ] Triangle centers: centroid, orthocenter, incenter, circumcenter
 - [ ] Property-based tests via `glados` for invariants
 - [x] Layer rule check: no `package:flutter/*` imports (enforced by `test/domain/layer_rule_test.dart`, runs in CI)
