@@ -1,0 +1,26 @@
+lib/domain/commands/delete_objects_command.dart
+  s_440d63387d8688::t_8c90fff5cc7486 1-39
+test/domain/commands/delete_objects_command_test.dart
+  s_440d63387d8688::t_2436060f32fda8 1-83
+test/domain/commands/translate_objects_command_test.dart
+  s_440d63387d8688::t_df69241d1e24f5 1-82
+lib/domain/commands/translate_objects_command.dart
+  s_440d63387d8688::t_e05684fcdcbbab 1-11,17-25,27-28,30-40,42,52-54
+  s_440d63387d8688::t_b5343a381c7d32 12-16,26,29,41,43-51
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "7585151e5401144660eaafed142aa6e6e445aa42",
+  "prompts": {},
+  "sessions": {
+    "s_440d63387d8688": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f3d09c05-7070-43a2-ab1b-4b2d7b0730b7",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
