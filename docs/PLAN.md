@@ -54,6 +54,7 @@ The `domain/` layer must not import `package:flutter/*`. This is the boundary th
 - `Vec2` with the usual ops, `dot`, `cross`, `norm`, `distanceTo`.
 - `LineEq` / `CircleEq` value types for analytic forms.
 - `intersections.dart`: line∩line, line∩circle, circle∩circle returning `List<Vec2>` (0/1/2). Each intersection object carries an `index` so the user's chosen branch is stable across drags.
+- Caveat: the index is *deterministic*, not *continuous*. Line∩circle branches are ordered along the line's direction, so dragging a defining point past the other reverses the direction and the two branches visibly swap. Known wart, not a bug. If it bothers in Phase 5/6 manual testing, layer a runtime continuity heuristic (prefer the candidate nearest the previous position) on top — but the *persisted* branch stays the index; continuity is path-dependent and must never leak into the save format.
 - `triangle_centers.dart`: closed-form centroid, orthocenter, incenter, circumcenter.
 - All functions are pure, take `Vec2`s, and have epsilon-tolerant predicates (`isParallel`, `isCollinear`).
 
@@ -67,7 +68,8 @@ The `domain/` layer must not import `package:flutter/*`. This is the boundary th
 ### Commands (`domain/commands/`)
 
 - `abstract class Command { void apply(Construction c); void undo(Construction c); }`
-- Concrete commands: `AddObjectCommand`, `DeleteObjectsCommand` (cascades to dependents — captures their full state for restore), `MoveFreePointCommand` (one command per drag gesture, not per frame), `ChangeAttributesCommand`, `MacroCommand` (groups N commands).
+- Concrete commands: `AddObjectCommand`, `DeleteObjectsCommand` (cascades to dependents — captures their full state for restore), `MoveFreePointCommand` (one command per drag gesture, not per frame), `TranslateObjectsCommand` (rigidly translates a *set* of free points by one delta in a single undo step — this is how dragging a derived object works, see canvas section), `ChangeAttributesCommand`, `MacroCommand` (groups N commands).
+- Drag preview: during a gesture the construction is mutated directly per frame (no command per frame). The gesture must terminate by emitting exactly one command capturing start → end, or by rolling the preview back on cancel (Esc mid-drag). This is the one sanctioned mutation outside a command; CLAUDE.md states the invariant with this carve-out.
 - `class CommandStack` (in `application/`) holds undo + redo stacks, exposed as a Riverpod `Notifier`.
 
 ### Canvas & interaction (`presentation/canvas/`)
@@ -77,6 +79,7 @@ The `domain/` layer must not import `package:flutter/*`. This is the boundary th
   - `GestureDetector` for tap, pan, scale.
 - `Viewport` value type: `Vec2 pan` + `double scale`. World↔screen transforms live here.
 - `HitTester`: iterates visible objects, returns the closest under an 8 px threshold, with priority order points > arcs/circles > segments/rays/lines > angles. Used by both tools (input picking) and the selection drag.
+- Dragging: a free point moves directly (`MoveFreePointCommand`). Any *other* object drags as a rigid translation of its free-point ancestors — grab a circle's rim and the whole circle moves because its defining points do — emitting one `TranslateObjectsCommand` per gesture. Fully-derived objects with no free ancestors (e.g. an intersection point) don't drag.
 - `GeometryPainter` walks the construction in insertion order, applies the viewport transform, draws each object using its attributes. Labels rendered via `TextPainter`.
 - Multi-touch on mobile: pinch = zoom, two-finger drag = pan. On web/desktop: scroll = zoom, drag empty = pan.
 
@@ -112,7 +115,7 @@ The `domain/` layer must not import `package:flutter/*`. This is the boundary th
 
 | Path | Purpose |
 |---|---|
-| `pubspec.yaml` | Dependencies: `flutter_riverpod`, `freezed`, `json_serializable`, `vector_math`, `file_picker`, `shared_preferences`, `uuid`. Dev: `build_runner`, `flutter_test`, `mocktail`, `golden_toolkit`, optionally `glados` (property-based tests). |
+| `pubspec.yaml` | Dependencies: `flutter_riverpod`, `freezed`, `json_serializable`, `file_picker`, `shared_preferences`, `uuid`. Dev: `build_runner`, `flutter_test`, `mocktail`, `golden_toolkit`, optionally `glados` (property-based tests). (`vector_math` was planned but dropped — the domain layer hand-rolls an immutable `Vec2`.) |
 | `lib/domain/math/vec2.dart` | 2D vector ops. |
 | `lib/domain/math/intersections.dart` | All intersection routines, with degenerate-case handling. |
 | `lib/domain/math/triangle_centers.dart` | Centroid, orthocenter, incenter, circumcenter. |
