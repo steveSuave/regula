@@ -6,6 +6,24 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 5 — 2026-06-12
+
+**Done**
+- Phase 3 complete on branch `phase-3-commands` (5 commits), merged to `main`. `lib/domain/commands/` holds: `Command` (abstract interface; LIFO-undo + replayable-apply contract documented), `AddObjectCommand`, `MoveFreePointCommand`, `DeleteObjectsCommand`, `TranslateObjectsCommand`, `ChangeAttributesCommand`, `MacroCommand`. `CommandStack` (plain class) lives in `lib/application/command_stack.dart`.
+- New `Construction.setAttributes(id, attributes)` primitive so attribute edits notify listeners; covered in `construction_test.dart`.
+- 139 tests green, `flutter analyze` clean.
+
+**Next**
+- Phase 4 (`lib/application/providers/`): `constructionProvider`, `selectionProvider`, `toolProvider`, `viewportProvider`, `commandStackProvider` — `@riverpod` code-gen (first riverpod_generator use; remember `dart run build_runner build --delete-conflicting-outputs`), bridging `Construction`'s listener API into a Notifier. Provider tests with overrides.
+
+**Open questions / gotchas**
+- Commands that capture state in `apply` (`DeleteObjectsCommand` batches, `TranslateObjectsCommand` before-positions, `ChangeAttributesCommand` previous values) are replay-safe: redo recaptures from the then-current construction. Don't share one command instance across two stacks.
+- `DeleteObjectsCommand.undo` restores batches in *reverse* removal order — that's what makes cross-batch parent/child dependencies (select a parent and an unrelated root whose dependents interleave) restore validly. Don't "simplify" to forward order.
+- `TranslateObjectsCommand` snapshots pre-move positions rather than applying `-delta`: float round-trip (`(x+d)-d ≠ x`) would break exact undo.
+- `AddObjectCommand.undo` asserts (debug-only) that no dependents exist — out-of-order undo is a stack bug, not a user state.
+- Commands validate up front (all-or-nothing): a bad id throws before anything mutates, so `CommandStack.execute` records nothing on failure.
+- Mid-drag preview frames (direct `moveFreePoint` calls, no command) still notify listeners per frame — fine for repaint; Phase 5's gesture code must emit exactly one command per gesture on top of that.
+
 ## Session 4 — 2026-06-12
 
 **Done**

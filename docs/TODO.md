@@ -29,11 +29,11 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] Recompute correctness tests on chained dependencies
 
 ## Phase 3 — Commands & undo/redo (`lib/domain/commands/`)
-- [ ] `Command` interface
-- [ ] `AddObjectCommand`, `DeleteObjectsCommand`, `MoveFreePointCommand`, `TranslateObjectsCommand` (multi-point rigid translation — backs derived-object dragging), `ChangeAttributesCommand`, `MacroCommand`
-- [ ] `CommandStack` (Riverpod-backed) with undo + redo
-- [ ] `undo(apply(c)) == c` round-trip tests
-- [ ] One drag = one command (not per-frame)
+- [x] `Command` interface
+- [x] `AddObjectCommand`, `DeleteObjectsCommand`, `MoveFreePointCommand`, `TranslateObjectsCommand` (multi-point rigid translation — backs derived-object dragging), `ChangeAttributesCommand`, `MacroCommand`
+- [x] `CommandStack` with undo + redo (plain class in `application/`; the Riverpod wrapper is Phase 4's `commandStackProvider`)
+- [x] `undo(apply(c)) == c` round-trip tests
+- [x] One drag = one command (not per-frame) — `MoveFreePointCommand`/`TranslateObjectsCommand` carry whole-gesture deltas; enforced at the gesture layer in Phase 5
 
 ## Phase 4 — Riverpod application layer (`lib/application/providers/`)
 - [ ] `constructionProvider`
