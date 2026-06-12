@@ -1,4 +1,5 @@
 import 'package:fgex/domain/construction/construction.dart';
+import 'package:fgex/domain/construction/object_attributes.dart';
 import 'package:fgex/domain/construction/objects/circle_center_point.dart';
 import 'package:fgex/domain/construction/objects/free_point.dart';
 import 'package:fgex/domain/construction/objects/intersection_point.dart';
@@ -166,6 +167,24 @@ void main() {
     });
   });
 
+  group('Construction: setAttributes', () {
+    test('replaces attributes without touching geometry, throws unknown', () {
+      final c = Construction();
+      final a = FreePoint(id: 'a', position: const Vec2(1, 2));
+      c.add(a);
+
+      c.setAttributes('a', const ObjectAttributes(name: 'A', visible: false));
+      expect(a.attributes.name, 'A');
+      expect(a.attributes.visible, isFalse);
+      expect(a.position, const Vec2(1, 2));
+
+      expect(
+        () => c.setAttributes('nope', const ObjectAttributes()),
+        throwsArgumentError,
+      );
+    });
+  });
+
   group('Construction: listeners', () {
     test('notified once per mutation, removable', () {
       final c = Construction();
@@ -178,12 +197,14 @@ void main() {
       expect(calls, 1);
       c.moveFreePoint('a', const Vec2(1, 1));
       expect(calls, 2);
-      c.removeWithDependents('a');
+      c.setAttributes('a', const ObjectAttributes(name: 'A'));
       expect(calls, 3);
+      c.removeWithDependents('a');
+      expect(calls, 4);
 
       c.removeListener(listener);
       c.add(FreePoint(id: 'b', position: Vec2.zero));
-      expect(calls, 3);
+      expect(calls, 4);
     });
   });
 
