@@ -1,0 +1,21 @@
+test/application/command_stack_test.dart
+  s_440d63387d8688::t_22d19225f1ac86 1-109
+lib/application/command_stack.dart
+  s_440d63387d8688::t_8cacd107c67aea 1-61
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "61c0c1bdbe804aac93d65fa0e2e9e6d0312255e2",
+  "prompts": {},
+  "sessions": {
+    "s_440d63387d8688": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f3d09c05-7070-43a2-ab1b-4b2d7b0730b7",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
