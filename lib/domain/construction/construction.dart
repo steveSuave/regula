@@ -2,6 +2,7 @@ import 'dart:collection';
 
 import '../math/vec2.dart';
 import 'geo_object.dart';
+import 'object_attributes.dart';
 import 'objects/free_point.dart';
 
 /// The construction graph — the single source of truth for the app.
@@ -76,6 +77,20 @@ class Construction {
     }
     object.position = position;
     _recomputeDependentsOf(id);
+    _notify();
+  }
+
+  /// Replaces the attributes of object [id].
+  ///
+  /// Attributes are display-only — no geometry depends on them — so no
+  /// recompute happens, but listeners are notified (the painter must
+  /// redraw). Throws [ArgumentError] for an unknown id.
+  void setAttributes(String id, ObjectAttributes attributes) {
+    final object = _objects[id];
+    if (object == null) {
+      throw ArgumentError('Unknown object id: $id');
+    }
+    object.attributes = attributes;
     _notify();
   }
 
