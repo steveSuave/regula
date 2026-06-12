@@ -1,0 +1,27 @@
+lib/domain/math/intersections.dart
+  s_b30904ba7edb10::t_4a70c45e303e37 1-18,25-104
+  s_b30904ba7edb10::t_b0384ffe85cf87 19-24
+test/domain/math/generators.dart
+  s_b30904ba7edb10::t_e85b74b3e05b2f 20-35
+  s_b30904ba7edb10::t_1649824acc5fde 1-2
+test/domain/math/intersections_test.dart
+  s_b30904ba7edb10::t_c073bb65ed6e94 1-170
+docs/TODO.md
+  s_b30904ba7edb10::t_a0a46cc00e892c 19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "2e20f90004a8ad9ca2969bf4cffe57802c230798",
+  "prompts": {},
+  "sessions": {
+    "s_b30904ba7edb10": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ff6b070b-eb2f-49e9-98d4-9d483d805078",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
