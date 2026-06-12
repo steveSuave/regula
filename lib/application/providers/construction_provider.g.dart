@@ -63,7 +63,7 @@ final class ConstructionNotifierProvider
 }
 
 String _$constructionNotifierHash() =>
-    r'cdb9f28acce983509929e101d986c4fffbe75fbc';
+    r'55fa1f7a17b89a6b9a81ca0c59bfffadaa86f61b';
 
 /// Owns the live [Construction] and bridges its pure-Dart listener API
 /// into Riverpod: every construction mutation bumps [ConstructionState]'s
