@@ -38,14 +38,16 @@ The `domain/` layer must not import `package:flutter/*`. This is the boundary th
 
 ### Construction graph (`domain/construction/`)
 
-- `sealed class GeoObject` with `id`, `parents: List<GeoObject>`, `attributes: ObjectAttributes`, and `void recompute()`.
+- `sealed class GeoObject` with `id`, `parents`, `attributes: ObjectAttributes`, and `void recompute()`. Sealing is at the *kind* level: `GeoPoint` / `GeoLine` / `GeoCircle` are the sealed branches, concrete objects extend an open kind — Dart requires a sealed class's direct subtypes in the same library, which one-file-per-object rules out on the root. Kind switches are exhaustive; concrete-type switches are not.
+- `parents` is a getter derived from typed parent fields (e.g. `Midpoint` holds `GeoPoint point1, point2`), so ill-typed constructions are unrepresentable rather than runtime errors.
+- Derived objects support an *undefined* state (degenerate parent configuration — coincident points defining a line, curves that stopped intersecting mid-drag). Undefined objects stay in the graph, are skipped by painter/hit-tester, and recover when the degeneracy passes.
 - Subclasses (one file each, grouped by kind):
   - **Points:** `FreePoint`, `PointOnObject` (constrained to a curve), `IntersectionPoint`, `Midpoint`, `Centroid`, `Orthocenter`, `Incenter`, `Circumcenter`, `SegmentRatioPoint`.
   - **Lines:** `LineThroughTwoPoints`, `Segment`, `Ray`, `PerpendicularLine`, `ParallelLine`, `AngleBisector`.
   - **Circles & arcs:** `CircleCenterPoint`, `ThreePointCircle`, `CompassCircle` (center + two points defining radius), `Arc`, `Sector`.
   - **Angles:** `AngleBetweenLines` / `AngleAtVertex`.
-- `class Construction` owns the DAG: insertion-ordered map of objects, topological recompute on dirty propagation, dependents lookup for cascading delete. It is a `ChangeNotifier` exposed via Riverpod.
-- `class ObjectAttributes`: `name`, `color`, `visible`, `labelVisible`, `strokeWidth`, plus per-type extras (point size, fill alpha for sectors). Built with `freezed` for immutability + `copyWith`.
+- `class Construction` owns the DAG: insertion-ordered map of objects (insertion order doubles as topological order), topological recompute on dirty propagation, dependents lookup for cascading delete. It is pure Dart with a minimal hand-rolled listener API — *not* a Flutter `ChangeNotifier` (the domain layer must not import Flutter, and `ChangeNotifierProvider` is the legacy path in Riverpod 3 anyway). The application layer wraps it in a `@riverpod` `Notifier` that re-exposes state after each command. If that notifier ends up being the only listener by Phase 4, drop the listener API.
+- `class ObjectAttributes`: `name`, `colorArgb` (raw ARGB int, `null` = theme default — the domain layer can't use Flutter's `Color`; presentation maps it), `visible`, `labelVisible`, `strokeWidth`, plus per-type extras (point size, fill alpha for sectors). Built with `freezed` for immutability + `copyWith`.
 
 ### Pure math (`domain/math/`)
 
