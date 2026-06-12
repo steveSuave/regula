@@ -17,8 +17,8 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] `Vec2` + ops, with tests
 - [x] `LineEq`, `CircleEq` value types
 - [x] Intersections: line∩line, line∩circle, circle∩circle (degenerate cases handled)
-- [ ] Triangle centers: centroid, orthocenter, incenter, circumcenter
-- [ ] Property-based tests via `glados` for invariants
+- [x] Triangle centers: centroid, orthocenter, incenter, circumcenter
+- [x] Property-based tests via `glados` for invariants
 - [x] Layer rule check: no `package:flutter/*` imports (enforced by `test/domain/layer_rule_test.dart`, runs in CI)
 
 ## Phase 2 — Construction core (`lib/domain/construction/`)
