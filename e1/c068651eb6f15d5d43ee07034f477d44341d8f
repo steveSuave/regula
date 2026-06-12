@@ -1,0 +1,36 @@
+lib/domain/math/circle_eq.dart
+  s_b30904ba7edb10::t_cb792b88386560 1-55
+lib/domain/math/vec2.dart
+  s_b30904ba7edb10::t_56891bf1fe0267 1-80
+test/domain/math/line_eq_test.dart
+  s_b30904ba7edb10::t_3ca834109bc562 1-125
+test/domain/math/generators.dart
+  s_b30904ba7edb10::t_2178a33d8329b1 1-18
+lib/domain/math/line_eq.dart
+  s_b30904ba7edb10::t_e604297d8493b8 1-108
+test/domain/layer_rule_test.dart
+  s_b30904ba7edb10::t_f4ee52c8ca4867 1-26
+docs/TODO.md
+  s_b30904ba7edb10::t_edb7c0fadbee16 17-18
+  s_b30904ba7edb10::t_d6d22a98dabf46 22
+test/domain/math/vec2_test.dart
+  s_b30904ba7edb10::t_ed3d1005bed2d8 1-108
+test/domain/math/circle_eq_test.dart
+  s_b30904ba7edb10::t_014d76210a4477 1-73
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "e1c068651eb6f15d5d43ee07034f477d44341d8f",
+  "prompts": {},
+  "sessions": {
+    "s_b30904ba7edb10": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ff6b070b-eb2f-49e9-98d4-9d483d805078",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
