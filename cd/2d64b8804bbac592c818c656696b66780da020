@@ -1,0 +1,22 @@
+test/domain/construction/construction_test.dart
+  s_7fbafb02da3cd4::t_a47164a47cd856 275-279
+  s_7fbafb02da3cd4::t_d99b719f70164f 1-274,280-282
+lib/domain/construction/construction.dart
+  s_7fbafb02da3cd4::t_fcd62a4a89cbce 1-160
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "cd2d64b8804bbac592c818c656696b66780da020",
+  "prompts": {},
+  "sessions": {
+    "s_7fbafb02da3cd4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "35ee2ebd-dd87-45c7-9005-00a5a0e9f8bb",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
