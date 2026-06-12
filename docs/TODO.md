@@ -14,12 +14,12 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] CI placeholder workflow (`flutter analyze && flutter test`)
 
 ## Phase 1 — Pure math layer (`lib/domain/math/`)
-- [ ] `Vec2` + ops, with tests
-- [ ] `LineEq`, `CircleEq` value types
+- [x] `Vec2` + ops, with tests
+- [x] `LineEq`, `CircleEq` value types
 - [ ] Intersections: line∩line, line∩circle, circle∩circle (degenerate cases handled)
 - [ ] Triangle centers: centroid, orthocenter, incenter, circumcenter
 - [ ] Property-based tests via `glados` for invariants
-- [ ] Layer rule check: no `package:flutter/*` imports
+- [x] Layer rule check: no `package:flutter/*` imports (enforced by `test/domain/layer_rule_test.dart`, runs in CI)
 
 ## Phase 2 — Construction core (`lib/domain/construction/`)
 - [ ] Sealed `GeoObject` + `ObjectAttributes` (freezed)
