@@ -52,7 +52,7 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] `PointTool` end-to-end smoke test on web (headless Chrome via Playwright: 3 points placed, 2×undo, redo — all rendered correctly; plus widget tests for the same flow)
 
 ## Phase 6 — Object & tool coverage
-- [ ] Triangle centers (Centroid, Orthocenter, Incenter, Circumcenter)
+- [x] Triangle centers (Centroid, Orthocenter, Incenter, Circumcenter) (objects + one `TriangleCenterTool` for all four via constructor tear-offs, incl. in-progress input markers — on branch `phase-6-objects`)
 - [ ] `PointOnObject` (point constrained to a curve)
 - [ ] Perpendicular & Parallel lines
 - [ ] Angle bisector
