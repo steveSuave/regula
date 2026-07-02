@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'application/object_ids.dart';
 import 'application/providers/command_stack_provider.dart';
 import 'application/providers/tool_provider.dart';
+import 'domain/construction/objects/angle_bisector_line.dart';
 import 'domain/construction/objects/centroid.dart';
 import 'domain/construction/objects/circle_center_point.dart';
 import 'domain/construction/objects/circumcenter.dart';
@@ -17,6 +18,8 @@ import 'domain/construction/objects/segment.dart';
 import 'domain/tools/point_and_line_tool.dart';
 import 'domain/tools/point_on_object_tool.dart';
 import 'domain/tools/point_tool.dart';
+import 'domain/tools/three_point_tool.dart';
+import 'domain/tools/tool.dart';
 import 'domain/tools/triangle_center_tool.dart';
 import 'domain/tools/two_point_tool.dart';
 import 'presentation/canvas/geometry_canvas.dart';
@@ -53,7 +56,11 @@ class EditorScreen extends ConsumerWidget {
     final centerToolActive = activeTool is TriangleCenterTool;
     final twoPointToolActive = activeTool is TwoPointTool;
     final pointOnObjectActive = activeTool is PointOnObjectTool;
-    final pointAndLineToolActive = activeTool is PointAndLineTool;
+    // ThreePointTool currently only builds the angle bisector; once it
+    // also serves circles/arcs from another menu this needs to look at
+    // the builder, not just the type.
+    final lineConstructionActive =
+        activeTool is PointAndLineTool || activeTool is ThreePointTool;
     final undoRedo = ref.watch(commandStackProvider);
     final highlight = Theme.of(context).colorScheme.primary;
 
@@ -121,24 +128,36 @@ class EditorScreen extends ConsumerWidget {
               }
             },
           ),
-          PopupMenuButton<PointAndLineBuilder>(
-            tooltip: 'Perpendicular / parallel: pick one, then tap a line '
-                'and a point (either order)',
+          PopupMenuButton<Tool Function()>(
+            tooltip: 'Line constructions: perpendicular, parallel, bisector',
             icon: Icon(
               Icons.line_axis,
-              color: pointAndLineToolActive ? highlight : null,
+              color: lineConstructionActive ? highlight : null,
             ),
-            onSelected: (builder) => ref.read(toolProvider.notifier).activate(
-                  PointAndLineTool(newId: newObjectId, build: builder),
-                ),
-            itemBuilder: (context) => const [
+            onSelected: (createTool) =>
+                ref.read(toolProvider.notifier).activate(createTool()),
+            itemBuilder: (context) => [
               PopupMenuItem(
-                value: PerpendicularLine.new,
-                child: Text('Perpendicular line'),
+                value: () => PointAndLineTool(
+                  newId: newObjectId,
+                  build: PerpendicularLine.new,
+                ),
+                child: const Text('Perpendicular line'),
               ),
               PopupMenuItem(
-                value: ParallelLine.new,
-                child: Text('Parallel line'),
+                value: () => PointAndLineTool(
+                  newId: newObjectId,
+                  build: ParallelLine.new,
+                ),
+                child: const Text('Parallel line'),
+              ),
+              PopupMenuItem(
+                value: () => ThreePointTool(
+                  newId: newObjectId,
+                  build: (id, a, b, c) =>
+                      AngleBisectorLine(id: id, arm1: a, vertex: b, arm2: c),
+                ),
+                child: const Text('Angle bisector (arm, vertex, arm)'),
               ),
             ],
           ),
