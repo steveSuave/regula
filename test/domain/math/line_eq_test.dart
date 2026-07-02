@@ -121,5 +121,19 @@ void main() {
       final l = LineEq.throughPoints(p, q);
       expect(l.distanceTo(l.pointOnLine), closeTo(0, 1e-9));
     });
+
+    test('pointAt walks the direction from the anchor', () {
+      final l = LineEq(0, 1, -2); // y = 2, direction (1, 0)
+      expect(l.pointAt(0).closeTo(l.pointOnLine), isTrue);
+      expect(l.pointAt(3).closeTo(const Vec2(3, 2)), isTrue);
+      expect(l.parameterAt(const Vec2(3, 7)), closeTo(3, 1e-12));
+    });
+
+    Glados3(any.vec2, any.vec2, any.vec2)
+        .test('pointAt(parameterAt(p)) is the projection of p', (p, q, r) {
+      if (p == q) return;
+      final l = LineEq.throughPoints(p, q);
+      expect(l.pointAt(l.parameterAt(r)).closeTo(l.project(r), 1e-6), isTrue);
+    });
   });
 }
