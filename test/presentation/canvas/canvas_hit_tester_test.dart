@@ -1,6 +1,7 @@
 import 'package:fgex/domain/construction/construction.dart';
 import 'package:fgex/domain/construction/geo_object.dart';
 import 'package:fgex/domain/construction/object_attributes.dart';
+import 'package:fgex/domain/construction/objects/arc.dart';
 import 'package:fgex/domain/construction/objects/circle_center_point.dart';
 import 'package:fgex/domain/construction/objects/free_point.dart';
 import 'package:fgex/domain/construction/objects/line_through_two_points.dart';
@@ -90,6 +91,29 @@ void main() {
           reason: 'a ray extends past its through point');
       expect(hit(construction, const Vec2(-3, 0.3)), isNull,
           reason: 'behind the origin the carrier line must not count');
+    });
+
+    test('arc is only hit on its branch of the carrier', () {
+      // The defining points are hidden so they can't win on priority —
+      // this test is about the arc's own distance logic.
+      const hidden = ObjectAttributes(visible: false);
+      final construction = Construction();
+      final s = FreePoint(id: 's', position: const Vec2(1, 0), attributes: hidden);
+      final v = FreePoint(id: 'v', position: const Vec2(0, 1), attributes: hidden);
+      final e = FreePoint(id: 'e', position: const Vec2(-1, 0), attributes: hidden);
+      construction
+        ..add(s)
+        ..add(v)
+        ..add(e)
+        ..add(Arc(id: 'arc', start: s, via: v, end: e));
+
+      expect(hit(construction, const Vec2(0, 1.3))?.id, 'arc');
+      expect(hit(construction, const Vec2(0, -1.3)), isNull,
+          reason: 'the far branch of the carrier must not count');
+      expect(hit(construction, const Vec2(-1, -0.4))?.id, 'arc',
+          reason: 'just past an endpoint the endpoint distance rules');
+      expect(hit(construction, const Vec2(-1.2, -1.2)), isNull,
+          reason: 'far from both the branch and the endpoints');
     });
 
     test('circle is hit near its boundary, not near its center', () {
