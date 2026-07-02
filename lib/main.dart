@@ -11,7 +11,10 @@ import 'domain/construction/objects/incenter.dart';
 import 'domain/construction/objects/line_through_two_points.dart';
 import 'domain/construction/objects/midpoint.dart';
 import 'domain/construction/objects/orthocenter.dart';
+import 'domain/construction/objects/parallel_line.dart';
+import 'domain/construction/objects/perpendicular_line.dart';
 import 'domain/construction/objects/segment.dart';
+import 'domain/tools/point_and_line_tool.dart';
 import 'domain/tools/point_on_object_tool.dart';
 import 'domain/tools/point_tool.dart';
 import 'domain/tools/triangle_center_tool.dart';
@@ -50,6 +53,7 @@ class EditorScreen extends ConsumerWidget {
     final centerToolActive = activeTool is TriangleCenterTool;
     final twoPointToolActive = activeTool is TwoPointTool;
     final pointOnObjectActive = activeTool is PointOnObjectTool;
+    final pointAndLineToolActive = activeTool is PointAndLineTool;
     final undoRedo = ref.watch(commandStackProvider);
     final highlight = Theme.of(context).colorScheme.primary;
 
@@ -116,6 +120,27 @@ class EditorScreen extends ConsumerWidget {
                 notifier.activate(PointOnObjectTool(newId: newObjectId));
               }
             },
+          ),
+          PopupMenuButton<PointAndLineBuilder>(
+            tooltip: 'Perpendicular / parallel: pick one, then tap a line '
+                'and a point (either order)',
+            icon: Icon(
+              Icons.line_axis,
+              color: pointAndLineToolActive ? highlight : null,
+            ),
+            onSelected: (builder) => ref.read(toolProvider.notifier).activate(
+                  PointAndLineTool(newId: newObjectId, build: builder),
+                ),
+            itemBuilder: (context) => const [
+              PopupMenuItem(
+                value: PerpendicularLine.new,
+                child: Text('Perpendicular line'),
+              ),
+              PopupMenuItem(
+                value: ParallelLine.new,
+                child: Text('Parallel line'),
+              ),
+            ],
           ),
           PopupMenuButton<TriangleCenterBuilder>(
             tooltip: 'Triangle centers: pick one, then tap three points',
