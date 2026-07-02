@@ -1,0 +1,41 @@
+test/presentation/canvas/geometry_painter_test.dart
+  s_ae34bc3de69bf2::t_2032e1307f8391 10,47
+test/presentation/canvas/geometry_canvas_test.dart
+  s_ae34bc3de69bf2::t_8559fa949ba28a 354-374
+lib/main.dart
+  s_ae34bc3de69bf2::t_34c4aed2b68129 144-146
+  s_ae34bc3de69bf2::t_447641e25fe8d4 19
+  s_ae34bc3de69bf2::t_45b07777ee50d0 143
+lib/presentation/canvas/geometry_painter.dart
+  s_ae34bc3de69bf2::t_7e5a54e9434b71 78-79
+  s_ae34bc3de69bf2::t_319f9293f9f638 104-114
+  s_ae34bc3de69bf2::t_655e742170fb01 6
+lib/domain/construction/objects/ray.dart
+  s_ae34bc3de69bf2::t_3fc2b29b442b60 1-48
+test/domain/construction/objects/ray_test.dart
+  s_ae34bc3de69bf2::t_930cefd989c3e5 1-40
+docs/TODO.md
+  s_ae34bc3de69bf2::t_f800510fa52f55 61
+test/presentation/canvas/canvas_hit_tester_test.dart
+  s_ae34bc3de69bf2::t_2032e1307f8391 7
+  s_ae34bc3de69bf2::t_2b0e7e56d19886 79-94
+lib/presentation/canvas/canvas_hit_tester.dart
+  s_ae34bc3de69bf2::t_285a44dfae1f48 2
+  s_ae34bc3de69bf2::t_247eaedaaddc10 69-73,77,82
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.9",
+  "base_commit_sha": "aa363fa0f9a195568e0979e333fe038e8b2b0bcb",
+  "prompts": {},
+  "sessions": {
+    "s_ae34bc3de69bf2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b8496e4d-0305-4414-9e6f-0a5a4433cdb1",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
