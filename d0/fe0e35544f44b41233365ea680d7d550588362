@@ -1,0 +1,22 @@
+lib/domain/construction/objects/segment_ratio_point.dart
+  s_ae34bc3de69bf2::t_a90b7b0e1d1977 1-44
+test/domain/construction/objects/segment_ratio_point_test.dart
+  s_ae34bc3de69bf2::t_36e8040b5f6a7b 1-80,82-83,85-87
+  s_ae34bc3de69bf2::t_79558b7d753ebc 81,84
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.9",
+  "base_commit_sha": "d0fe0e35544f44b41233365ea680d7d550588362",
+  "prompts": {},
+  "sessions": {
+    "s_ae34bc3de69bf2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b8496e4d-0305-4414-9e6f-0a5a4433cdb1",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
