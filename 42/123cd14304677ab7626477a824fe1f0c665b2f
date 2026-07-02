@@ -1,0 +1,21 @@
+lib/domain/math/angle_geometry.dart
+  s_ae34bc3de69bf2::t_ed5eabda71a6fe 1-127
+test/domain/math/angle_geometry_test.dart
+  s_ae34bc3de69bf2::t_c8642c03aa128a 1-214
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.9",
+  "base_commit_sha": "42123cd14304677ab7626477a824fe1f0c665b2f",
+  "prompts": {},
+  "sessions": {
+    "s_ae34bc3de69bf2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b8496e4d-0305-4414-9e6f-0a5a4433cdb1",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
