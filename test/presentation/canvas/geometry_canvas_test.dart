@@ -351,6 +351,27 @@ void main() {
     expect(objectCount(), 0);
   });
 
+  testWidgets('ray via the two-point menu: two taps, one undo unit',
+      (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+
+    await tester.tap(find.byIcon(Icons.timeline));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Ray (origin, then direction)'));
+    await tester.pumpAndSettle();
+
+    await tester.tapAt(origin + const Offset(100, 100));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(200, 200));
+    await tester.pump();
+    expect(objectCount(), 3, reason: '2 free points + the ray');
+
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(objectCount(), 0);
+  });
+
   testWidgets('deactivating the point tool stops point placement',
       (tester) async {
     await pumpEditor(tester);

@@ -58,7 +58,7 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] Perpendicular & Parallel lines (`RelativeLine` template base; `PointAndLineTool` collects point + line in either order)
 - [x] Angle bisector (`angleBisector` math + `AngleBisectorLine`; `ThreePointTool`, the reusable 3-point sibling of `TwoPointTool`)
 - [x] Segment-ratio point (`SegmentRatioPoint`, fixed lerp parameter; reuses `TwoPointTool` — the ratio comes from a dialog before the tool activates, so the two-point menu's values are now async `TwoPointPick` factories)
-- [ ] Three-point circle, Compass circle
+- [x] Three-point circle, Compass circle (both reuse `ThreePointTool` from a new circles menu; app-bar highlights now key on canonicalized top-level builder tear-offs, resolving the Session 8 highlight gotcha)
 - [ ] Arc (3-point), Sector
 - [ ] Angle (between lines / at vertex)
 - [ ] Ray

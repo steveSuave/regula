@@ -4,6 +4,7 @@ import 'package:fgex/domain/construction/object_attributes.dart';
 import 'package:fgex/domain/construction/objects/circle_center_point.dart';
 import 'package:fgex/domain/construction/objects/free_point.dart';
 import 'package:fgex/domain/construction/objects/line_through_two_points.dart';
+import 'package:fgex/domain/construction/objects/ray.dart';
 import 'package:fgex/domain/construction/objects/segment.dart';
 import 'package:fgex/domain/math/vec2.dart';
 import 'package:fgex/presentation/canvas/canvas_hit_tester.dart';
@@ -73,6 +74,22 @@ void main() {
       expect(hit(construction, const Vec2(0.5, 0.3))?.id, 's');
       expect(hit(construction, const Vec2(3, 0.3)), isNull,
           reason: 'past the endpoint the carrier line must not count');
+    });
+
+    test('ray is hit beyond its through point but not behind its origin',
+        () {
+      final construction = Construction();
+      final a = FreePoint(id: 'a', position: Vec2.zero);
+      final b = FreePoint(id: 'b', position: const Vec2(1, 0));
+      construction
+        ..add(a)
+        ..add(b)
+        ..add(Ray(id: 'r', origin: a, through: b));
+
+      expect(hit(construction, const Vec2(100, 0.3))?.id, 'r',
+          reason: 'a ray extends past its through point');
+      expect(hit(construction, const Vec2(-3, 0.3)), isNull,
+          reason: 'behind the origin the carrier line must not count');
     });
 
     test('circle is hit near its boundary, not near its center', () {
