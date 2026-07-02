@@ -6,6 +6,25 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 9 — 2026-07-02
+
+**Done**
+- Phase 6 continued on `phase-6-objects` (6 more commits, 18 total, still unmerged). Three object families landed end to end, each with domain tests, editor chrome and widget tests:
+- `SegmentRatioPoint` (fixed lerp parameter along point1→point2; ratio outside [0,1] extrapolates deliberately). No new tool — a `TwoPointTool` builder captures the ratio. The two-point menu's values became async `TwoPointPick` factories so the ratio item can show a dialog (accepts `0.25` or `1/4`) before the tool exists; cancel or garbage input activates nothing.
+- `ThreePointCircle` (circumcircle; undefined while collinear) and `CompassCircle` (radius = distance of two points, centered on a third; zero radius OK like `CircleCenterPoint`) — both reuse `ThreePointTool` from a new circles app-bar menu. The Session 8 highlight gotcha is resolved: builders are top-level functions, and the line/circle menu highlights compare `activeTool.build` against those canonicalized tear-offs.
+- `Ray` (origin + through; carrier `GeoLine` like `Segment`): painter draws the half-line from the parent points' direction, hit tester got the predicted extent clamp — segment and ray now share one `_clampedDistance` helper (t in [0,1] vs [0,∞)).
+- 286 tests green, `flutter analyze` clean.
+
+**Next**
+- Remaining Phase 6: arc (3-point), sector, angle (between lines / at vertex) + their tools. These likely need a new `GeoObject` kind (the sealed kinds are point/line/circle only) — per CLAUDE.md, update PLAN first and decide the kind/attribute story before coding.
+
+**Open questions / gotchas**
+- Dart won't infer lambda parameter types through an async closure's `FutureOr<TwoPointBuilder?>` return context — hence the `_pick` helper (typed parameter restores inference) and the typed local function in the ratio item. Don't "simplify" them back to bare lambdas.
+- Disposing a `TextEditingController` right after `showDialog` returns crashes the dialog's exit animation; `_RatioDialog` is a StatefulWidget owning its controller for exactly that reason.
+- Menu-highlight-by-builder relies on top-level function tear-offs being canonicalized (`==` across separate tear-offs). Inline lambdas would break it silently — keep `_build*` functions top-level.
+- `Ray` painting/hit-testing must use the parent points, not `line.direction` — the carrier's direction is normalized independently of parent order. Noted in the class doc.
+- `PointOnObject`'s line parameter is arc-length along the *unit* direction (parameter 1 ≠ "at the second defining point") — tripped up a test this session; worth remembering when writing expectations.
+
 ## Session 8 — 2026-07-02
 
 **Done**

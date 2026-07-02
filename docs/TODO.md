@@ -61,8 +61,8 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] Three-point circle, Compass circle (both reuse `ThreePointTool` from a new circles menu; app-bar highlights now key on canonicalized top-level builder tear-offs, resolving the Session 8 highlight gotcha)
 - [ ] Arc (3-point), Sector
 - [ ] Angle (between lines / at vertex)
-- [ ] Ray
-- [ ] Tools for each of the above
+- [x] Ray (carrier `GeoLine` like `Segment`; painter half-line case + hit-tester extent clamp — segment/ray share one clamped-distance helper)
+- [ ] Tools for each of the above (done for everything landed so far; arc/sector/angle tools remain)
 
 ## Phase 7 — Selection & attributes
 - [ ] Multi-select (rubber band + shift-click)
