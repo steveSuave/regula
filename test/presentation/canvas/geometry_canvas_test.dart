@@ -1,5 +1,6 @@
 import 'package:fgex/application/providers/construction_provider.dart';
 import 'package:fgex/domain/construction/objects/segment_ratio_point.dart';
+import 'package:fgex/domain/construction/objects/three_point_circle.dart';
 import 'package:fgex/domain/math/vec2.dart';
 import 'package:fgex/main.dart';
 import 'package:fgex/presentation/canvas/geometry_canvas.dart';
@@ -265,6 +266,50 @@ void main() {
         .single;
     expect(ratioPoint.ratio, 0.25);
     expect(ratioPoint.position, const Vec2(150, -100));
+
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(objectCount(), 0);
+  });
+
+  testWidgets(
+      'three-point circle via the circles menu: three taps, one undo unit, '
+      'and the circles icon (not the lines one) is highlighted',
+      (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+
+    await tester.tap(find.byIcon(Icons.circle_outlined));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Circle through three points'));
+    await tester.pumpAndSettle();
+
+    // Both menus activate a ThreePointTool; the highlight must follow
+    // the builder, so only the circles icon lights up.
+    final theme = Theme.of(tester.element(find.byType(AppBar)));
+    Color? iconColor(IconData icon) =>
+        tester.widget<Icon>(find.byIcon(icon)).color;
+    expect(iconColor(Icons.circle_outlined), theme.colorScheme.primary);
+    expect(iconColor(Icons.line_axis), isNot(theme.colorScheme.primary));
+
+    await tester.tapAt(origin + const Offset(100, 100));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(300, 100));
+    await tester.pump();
+    expect(objectCount(), 0, reason: 'no commit until the third point');
+    await tester.tapAt(origin + const Offset(100, 300));
+    await tester.pump();
+    expect(objectCount(), 4, reason: '3 free points + the circle');
+
+    // Right angle at the first tap, so the circumcircle is centered on
+    // the hypotenuse midpoint (world is y-up: taps sit at y < 0).
+    final circle = container
+        .read(constructionProvider)
+        .construction
+        .objects
+        .whereType<ThreePointCircle>()
+        .single;
+    expect(circle.circle!.center.closeTo(const Vec2(200, -200)), isTrue);
 
     await tester.tap(find.byIcon(Icons.undo));
     await tester.pump();
