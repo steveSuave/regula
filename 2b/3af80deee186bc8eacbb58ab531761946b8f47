@@ -1,0 +1,27 @@
+lib/domain/construction/objects/perpendicular_line.dart
+  s_fd69abe50f2262::t_3fe760e48e557c 1-16
+test/domain/construction/objects/perpendicular_line_test.dart
+  s_fd69abe50f2262::t_014bd6a0b2e732 1-115
+test/domain/construction/objects/parallel_line_test.dart
+  s_fd69abe50f2262::t_30e260dfcfb4fa 1-79
+lib/domain/construction/objects/relative_line.dart
+  s_fd69abe50f2262::t_6d257b282f69a0 1-50
+lib/domain/construction/objects/parallel_line.dart
+  s_fd69abe50f2262::t_53f5af56e3833e 1-19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.9",
+  "base_commit_sha": "2b3af80deee186bc8eacbb58ab531761946b8f47",
+  "prompts": {},
+  "sessions": {
+    "s_fd69abe50f2262": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ceb0f2b8-2fdf-48bb-9eb1-caa1778851e2",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
