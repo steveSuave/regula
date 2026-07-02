@@ -1,0 +1,29 @@
+test/domain/math/line_eq_test.dart
+  s_fd69abe50f2262::t_02c641f624ae57 124-137
+test/domain/math/circle_eq_test.dart
+  s_fd69abe50f2262::t_b245356e533fbf 72-94
+test/domain/construction/objects/point_on_object_test.dart
+  s_fd69abe50f2262::t_1694f8d64d6d0b 1-134
+lib/domain/math/line_eq.dart
+  s_fd69abe50f2262::t_b0a84fa6363d67 74-85
+lib/domain/math/circle_eq.dart
+  s_fd69abe50f2262::t_73cd105446900f 42-49
+lib/domain/construction/objects/point_on_object.dart
+  s_fd69abe50f2262::t_2a917024329ba2 1-83
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.9",
+  "base_commit_sha": "c06ef615e8799d025854125979065ba14a5ec80b",
+  "prompts": {},
+  "sessions": {
+    "s_fd69abe50f2262": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ceb0f2b8-2fdf-48bb-9eb1-caa1778851e2",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
