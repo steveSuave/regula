@@ -1,8 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 
 import '../../domain/construction/construction.dart';
 import '../../domain/construction/geo_object.dart';
 import '../../domain/construction/objects/segment.dart';
+import '../../domain/math/vec2.dart';
 import 'canvas_viewport.dart';
 
 /// Paints the construction in insertion order (first added = bottom).
@@ -17,7 +19,13 @@ class GeometryPainter extends CustomPainter {
     required this.viewport,
     required this.revision,
     required this.defaultColor,
+    this.previewMarkers = const [],
   });
+
+  /// Radii (logical px) of an in-progress input marker: a filled dot
+  /// inside a hollow ring, visually distinct from a plain point.
+  static const double _markerDotRadius = 3;
+  static const double _markerRingRadius = 7;
 
   /// Read live at paint time, in insertion (drawing) order.
   final Construction construction;
@@ -33,6 +41,10 @@ class GeometryPainter extends CustomPainter {
 
   /// Color for objects whose attributes carry no explicit color.
   final Color defaultColor;
+
+  /// World positions of the active tool's in-progress inputs (see
+  /// `ToolInputPreview`), drawn as markers on top of the construction.
+  final List<Vec2> previewMarkers;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -73,6 +85,17 @@ class GeometryPainter extends CustomPainter {
           );
       }
     }
+
+    final dot = Paint()..color = defaultColor;
+    final ring = Paint()
+      ..color = defaultColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+    for (final marker in previewMarkers) {
+      final center = viewport.worldToScreen(marker);
+      canvas.drawCircle(center, _markerDotRadius, dot);
+      canvas.drawCircle(center, _markerRingRadius, ring);
+    }
   }
 
   /// Draws the visible stretch of an infinite line by extending far past
@@ -105,5 +128,6 @@ class GeometryPainter extends CustomPainter {
       !identical(oldDelegate.construction, construction) ||
       oldDelegate.revision != revision ||
       oldDelegate.viewport.state != viewport.state ||
-      oldDelegate.defaultColor != defaultColor;
+      oldDelegate.defaultColor != defaultColor ||
+      !listEquals(oldDelegate.previewMarkers, previewMarkers);
 }

@@ -4,7 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'application/object_ids.dart';
 import 'application/providers/command_stack_provider.dart';
 import 'application/providers/tool_provider.dart';
+import 'domain/construction/objects/centroid.dart';
+import 'domain/construction/objects/circumcenter.dart';
+import 'domain/construction/objects/incenter.dart';
+import 'domain/construction/objects/orthocenter.dart';
 import 'domain/tools/point_tool.dart';
+import 'domain/tools/triangle_center_tool.dart';
 import 'presentation/canvas/geometry_canvas.dart';
 
 void main() {
@@ -34,7 +39,9 @@ class EditorScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final pointToolActive = ref.watch(toolProvider).tool is PointTool;
+    final activeTool = ref.watch(toolProvider).tool;
+    final pointToolActive = activeTool is PointTool;
+    final centerToolActive = activeTool is TriangleCenterTool;
     final undoRedo = ref.watch(commandStackProvider);
 
     return Scaffold(
@@ -55,6 +62,30 @@ class EditorScreen extends ConsumerWidget {
                 notifier.activate(PointTool(newId: newObjectId));
               }
             },
+          ),
+          PopupMenuButton<TriangleCenterBuilder>(
+            tooltip: 'Triangle centers: pick one, then tap three points',
+            icon: Icon(
+              Icons.change_history,
+              color: centerToolActive
+                  ? Theme.of(context).colorScheme.primary
+                  : null,
+            ),
+            onSelected: (builder) => ref.read(toolProvider.notifier).activate(
+                  TriangleCenterTool(newId: newObjectId, buildCenter: builder),
+                ),
+            itemBuilder: (context) => const [
+              PopupMenuItem(value: Centroid.new, child: Text('Centroid')),
+              PopupMenuItem(
+                value: Orthocenter.new,
+                child: Text('Orthocenter'),
+              ),
+              PopupMenuItem(value: Incenter.new, child: Text('Incenter')),
+              PopupMenuItem(
+                value: Circumcenter.new,
+                child: Text('Circumcenter'),
+              ),
+            ],
           ),
           IconButton(
             tooltip: 'Undo',
