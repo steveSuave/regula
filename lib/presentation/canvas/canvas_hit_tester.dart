@@ -1,6 +1,9 @@
+import 'dart:math' as math;
+
 import '../../domain/construction/geo_object.dart';
 import '../../domain/construction/objects/arc.dart';
 import '../../domain/construction/objects/ray.dart';
+import '../../domain/construction/objects/sector.dart';
 import '../../domain/construction/objects/segment.dart';
 import '../../domain/math/vec2.dart';
 
@@ -69,6 +72,9 @@ class CanvasHitTester {
         // An arc measures to its branch of the carrier: on the far branch
         // the nearest visible geometry is an endpoint (cf. segment/ray).
         Arc() => _arcDistance(object, point),
+        // A sector's visible geometry is its wedge outline: the arc branch
+        // plus the two straight radius edges.
+        Sector() => _sectorDistance(object, point),
         GeoCircle() => object.circle!.distanceTo(point),
         // Segments and rays measure to their extent, not the infinite
         // carrier: t clamps to [0, 1] and [0, ∞) respectively.
@@ -86,6 +92,16 @@ class CanvasHitTester {
     final toStart = p.distanceTo(arc.startPosition!);
     final toEnd = p.distanceTo(arc.endPosition!);
     return toStart < toEnd ? toStart : toEnd;
+  }
+
+  double _sectorDistance(Sector sector, Vec2 p) {
+    final circle = sector.circle!;
+    final arc = sector.containsAngle(circle.angleAt(p))
+        ? circle.distanceTo(p)
+        : double.infinity;
+    final edge1 = _clampedDistance(circle.center, sector.startRim!, p, 1);
+    final edge2 = _clampedDistance(circle.center, sector.endRim!, p, 1);
+    return math.min(arc, math.min(edge1, edge2));
   }
 
   double _clampedDistance(Vec2 a, Vec2 b, Vec2 p, double tMax) {

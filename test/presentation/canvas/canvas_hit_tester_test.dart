@@ -6,6 +6,7 @@ import 'package:fgex/domain/construction/objects/circle_center_point.dart';
 import 'package:fgex/domain/construction/objects/free_point.dart';
 import 'package:fgex/domain/construction/objects/line_through_two_points.dart';
 import 'package:fgex/domain/construction/objects/ray.dart';
+import 'package:fgex/domain/construction/objects/sector.dart';
 import 'package:fgex/domain/construction/objects/segment.dart';
 import 'package:fgex/domain/math/vec2.dart';
 import 'package:fgex/presentation/canvas/canvas_hit_tester.dart';
@@ -114,6 +115,36 @@ void main() {
           reason: 'just past an endpoint the endpoint distance rules');
       expect(hit(construction, const Vec2(-1.2, -1.2)), isNull,
           reason: 'far from both the branch and the endpoints');
+    });
+
+    test('sector is hit on its outline: arc branch and both radius edges',
+        () {
+      // Hidden defining points, as in the arc test: outline logic only.
+      const hidden = ObjectAttributes(visible: false);
+      final construction = Construction();
+      final c =
+          FreePoint(id: 'c', position: Vec2.zero, attributes: hidden);
+      final s =
+          FreePoint(id: 's', position: const Vec2(2, 0), attributes: hidden);
+      final e =
+          FreePoint(id: 'e', position: const Vec2(0, 5), attributes: hidden);
+      construction
+        ..add(c)
+        ..add(s)
+        ..add(e)
+        // Quarter wedge of radius 2 in the first quadrant.
+        ..add(Sector(id: 'w', center: c, start: s, end: e));
+
+      expect(hit(construction, const Vec2(1.7, 1.7))?.id, 'w',
+          reason: 'near the arc branch');
+      expect(hit(construction, const Vec2(1, 0.3))?.id, 'w',
+          reason: 'near the start radius edge');
+      expect(hit(construction, const Vec2(0.3, 1))?.id, 'w',
+          reason: 'near the end radius edge — at radius 2, not at end');
+      expect(hit(construction, const Vec2(0.7, 0.7)), isNull,
+          reason: 'inside the pie but far from the outline');
+      expect(hit(construction, const Vec2(1.4, -1.4)), isNull,
+          reason: 'on the carrier but outside the sweep');
     });
 
     test('circle is hit near its boundary, not near its center', () {

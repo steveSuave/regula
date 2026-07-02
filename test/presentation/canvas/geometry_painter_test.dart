@@ -9,6 +9,7 @@ import 'package:fgex/domain/construction/objects/free_point.dart';
 import 'package:fgex/domain/construction/objects/line_through_two_points.dart';
 import 'package:fgex/domain/construction/objects/midpoint.dart';
 import 'package:fgex/domain/construction/objects/ray.dart';
+import 'package:fgex/domain/construction/objects/sector.dart';
 import 'package:fgex/domain/construction/objects/segment.dart';
 import 'package:fgex/domain/math/vec2.dart';
 import 'package:fgex/presentation/canvas/canvas_viewport.dart';
@@ -48,7 +49,8 @@ void main() {
         ..add(Ray(id: 'r', origin: a, through: c))
         ..add(LineThroughTwoPoints(id: 'l', point1: a, point2: c))
         ..add(CircleCenterPoint(id: 'k', center: a, onCircle: b))
-        ..add(Arc(id: 'arc', start: b, via: c, end: a));
+        ..add(Arc(id: 'arc', start: b, via: c, end: a))
+        ..add(Sector(id: 'w', center: a, start: b, end: c));
 
       paintOnce(painterFor(construction));
     });

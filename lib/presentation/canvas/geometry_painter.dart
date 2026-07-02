@@ -5,7 +5,9 @@ import '../../domain/construction/construction.dart';
 import '../../domain/construction/geo_object.dart';
 import '../../domain/construction/objects/arc.dart';
 import '../../domain/construction/objects/ray.dart';
+import '../../domain/construction/objects/sector.dart';
 import '../../domain/construction/objects/segment.dart';
+import '../../domain/math/circle_eq.dart';
 import '../../domain/math/vec2.dart';
 import 'canvas_viewport.dart';
 
@@ -81,7 +83,22 @@ class GeometryPainter extends CustomPainter {
         case GeoLine():
           _drawInfiniteLine(canvas, size, object, paint);
         case Arc():
-          _drawArc(canvas, object, paint);
+          _drawCarrierBranch(
+            canvas,
+            object.circle!,
+            object.startAngle!,
+            object.sweep!,
+            paint,
+          );
+        case Sector():
+          _drawCarrierBranch(
+            canvas,
+            object.circle!,
+            object.startAngle!,
+            object.sweep!,
+            paint,
+            closeToCenter: true,
+          );
         case GeoCircle():
           final circle = object.circle!;
           canvas.drawCircle(
@@ -115,16 +132,23 @@ class GeometryPainter extends CustomPainter {
     canvas.drawLine(start, start + direction * reach, paint);
   }
 
-  /// Draws the branch of the arc's carrier given by its start angle and
-  /// signed sweep. World angles are counter-clockwise with y up; the
-  /// viewport flips y, so both angles negate on screen.
-  void _drawArc(Canvas canvas, Arc object, Paint paint) {
-    final circle = object.circle!;
+  /// Draws the branch of a circle carrier given by a start angle and a
+  /// signed sweep — an arc, or with [closeToCenter] a sector's pie wedge
+  /// (the two radii close the outline). World angles are counter-clockwise
+  /// with y up; the viewport flips y, so both angles negate on screen.
+  void _drawCarrierBranch(
+    Canvas canvas,
+    CircleEq circle,
+    double startAngle,
+    double sweep,
+    Paint paint, {
+    bool closeToCenter = false,
+  }) {
     final rect = Rect.fromCircle(
       center: viewport.worldToScreen(circle.center),
       radius: viewport.worldToScreenLength(circle.radius),
     );
-    canvas.drawArc(rect, -object.startAngle!, -object.sweep!, false, paint);
+    canvas.drawArc(rect, -startAngle, -sweep, closeToCenter, paint);
   }
 
   /// Draws the visible stretch of an infinite line by extending far past
