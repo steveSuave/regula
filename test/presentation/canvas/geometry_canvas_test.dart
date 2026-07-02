@@ -1,7 +1,13 @@
+import 'dart:math' as math;
+
 import 'package:fgex/application/providers/construction_provider.dart';
+import 'package:fgex/domain/construction/objects/arc.dart';
 import 'package:fgex/domain/construction/objects/compass_circle.dart';
+import 'package:fgex/domain/construction/objects/line_angle.dart';
+import 'package:fgex/domain/construction/objects/sector.dart';
 import 'package:fgex/domain/construction/objects/segment_ratio_point.dart';
 import 'package:fgex/domain/construction/objects/three_point_circle.dart';
+import 'package:fgex/domain/construction/objects/vertex_angle.dart';
 import 'package:fgex/domain/math/vec2.dart';
 import 'package:fgex/main.dart';
 import 'package:fgex/presentation/canvas/geometry_canvas.dart';
@@ -370,6 +376,170 @@ void main() {
     await tester.tap(find.byIcon(Icons.undo));
     await tester.pump();
     expect(objectCount(), 0);
+  });
+
+  testWidgets('arc via the circles menu: three taps, one undo unit',
+      (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+
+    await tester.tap(find.byIcon(Icons.circle_outlined));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Arc (start, via, end)'));
+    await tester.pumpAndSettle();
+
+    await tester.tapAt(origin + const Offset(100, 100)); // start
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(200, 180)); // via
+    await tester.pump();
+    expect(objectCount(), 0, reason: 'no commit until the end point');
+    await tester.tapAt(origin + const Offset(300, 100)); // end
+    await tester.pump();
+    expect(objectCount(), 4, reason: '3 free points + the arc');
+
+    final arc = container
+        .read(constructionProvider)
+        .construction
+        .objects
+        .whereType<Arc>()
+        .single;
+    expect(arc.isDefined, isTrue);
+    expect(arc.circle!.center.closeTo(const Vec2(200, -77.5)), isTrue);
+    expect(arc.containsAngle(arc.circle!.angleAt(const Vec2(200, -180))),
+        isTrue,
+        reason: 'the drawn branch passes the via point');
+
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(objectCount(), 0);
+  });
+
+  testWidgets(
+      'sector via the circles menu: center, rim (radius + start), '
+      'then the angle point', (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+
+    await tester.tap(find.byIcon(Icons.circle_outlined));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Sector (center, rim, then angle)'));
+    await tester.pumpAndSettle();
+
+    await tester.tapAt(origin + const Offset(200, 200)); // center
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(300, 200)); // rim
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(200, 100)); // angle point
+    await tester.pump();
+    expect(objectCount(), 4, reason: '3 free points + the sector');
+
+    final sector = container
+        .read(constructionProvider)
+        .construction
+        .objects
+        .whereType<Sector>()
+        .single;
+    expect(sector.circle!.center.closeTo(const Vec2(200, -200)), isTrue);
+    expect(sector.circle!.radius, closeTo(100, 1e-9));
+    expect(sector.startAngle, closeTo(0, 1e-9));
+    expect(sector.sweep, closeTo(math.pi / 2, 1e-9),
+        reason: 'the third tap is straight up from the center (world '
+            'is y-up), a quarter turn CCW from the rim');
+
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(objectCount(), 0);
+  });
+
+  testWidgets(
+      'vertex angle via the angles menu: three taps, one undo unit, '
+      'and the angles icon is highlighted', (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+
+    await tester.tap(find.byIcon(Icons.square_foot));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Angle at vertex (arm, vertex, arm)'));
+    await tester.pumpAndSettle();
+
+    // A ThreePointTool again — the angles icon must light up, not the
+    // lines or circles ones.
+    final theme = Theme.of(tester.element(find.byType(AppBar)));
+    Color? iconColor(IconData icon) =>
+        tester.widget<Icon>(find.byIcon(icon)).color;
+    expect(iconColor(Icons.square_foot), theme.colorScheme.primary);
+    expect(iconColor(Icons.circle_outlined), isNot(theme.colorScheme.primary));
+    expect(iconColor(Icons.line_axis), isNot(theme.colorScheme.primary));
+
+    await tester.tapAt(origin + const Offset(300, 100)); // arm
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(100, 100)); // vertex
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(100, 10)); // arm
+    await tester.pump();
+    expect(objectCount(), 4, reason: '3 free points + the angle');
+
+    final angle = container
+        .read(constructionProvider)
+        .construction
+        .objects
+        .whereType<VertexAngle>()
+        .single;
+    expect(angle.angle!.vertex.closeTo(const Vec2(100, -100)), isTrue);
+    expect(angle.angle!.measure, closeTo(math.pi / 2, 1e-9),
+        reason: 'CCW from the +x arm to the +y arm (world is y-up)');
+
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(objectCount(), 0);
+  });
+
+  testWidgets(
+      'line angle via the angles menu: tap two existing lines, '
+      'marks the acute angle at their crossing', (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+
+    Future<void> makeLine(Offset from, Offset to) async {
+      await tester.tap(find.byIcon(Icons.timeline));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Line'));
+      await tester.pumpAndSettle();
+      await tester.tapAt(origin + from);
+      await tester.pump();
+      await tester.tapAt(origin + to);
+      await tester.pump();
+    }
+
+    await makeLine(const Offset(100, 100), const Offset(300, 100));
+    await makeLine(const Offset(100, 100), const Offset(100, 300));
+    expect(objectCount(), 5,
+        reason: 'the second line reuses the shared corner point');
+
+    await tester.tap(find.byIcon(Icons.square_foot));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Angle between two lines'));
+    await tester.pumpAndSettle();
+
+    await tester.tapAt(origin + const Offset(200, 100)); // horizontal line
+    await tester.pump();
+    expect(objectCount(), 5, reason: 'no commit until the second line');
+    await tester.tapAt(origin + const Offset(100, 200)); // vertical line
+    await tester.pump();
+    expect(objectCount(), 6);
+
+    final angle = container
+        .read(constructionProvider)
+        .construction
+        .objects
+        .whereType<LineAngle>()
+        .single;
+    expect(angle.angle!.vertex.closeTo(const Vec2(100, -100)), isTrue);
+    expect(angle.angle!.measure, closeTo(math.pi / 2, 1e-9));
+
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(objectCount(), 5, reason: 'only the angle is one undo unit');
   });
 
   testWidgets('deactivating the point tool stops point placement',

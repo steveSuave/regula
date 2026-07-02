@@ -6,26 +6,31 @@ import 'application/providers/command_stack_provider.dart';
 import 'application/providers/tool_provider.dart';
 import 'domain/construction/geo_object.dart';
 import 'domain/construction/objects/angle_bisector_line.dart';
+import 'domain/construction/objects/arc.dart';
 import 'domain/construction/objects/centroid.dart';
 import 'domain/construction/objects/circle_center_point.dart';
 import 'domain/construction/objects/circumcenter.dart';
 import 'domain/construction/objects/compass_circle.dart';
 import 'domain/construction/objects/incenter.dart';
+import 'domain/construction/objects/line_angle.dart';
 import 'domain/construction/objects/line_through_two_points.dart';
 import 'domain/construction/objects/midpoint.dart';
 import 'domain/construction/objects/orthocenter.dart';
 import 'domain/construction/objects/parallel_line.dart';
 import 'domain/construction/objects/perpendicular_line.dart';
 import 'domain/construction/objects/ray.dart';
+import 'domain/construction/objects/sector.dart';
 import 'domain/construction/objects/segment.dart';
 import 'domain/construction/objects/segment_ratio_point.dart';
 import 'domain/construction/objects/three_point_circle.dart';
+import 'domain/construction/objects/vertex_angle.dart';
 import 'domain/tools/point_and_line_tool.dart';
 import 'domain/tools/point_on_object_tool.dart';
 import 'domain/tools/point_tool.dart';
 import 'domain/tools/three_point_tool.dart';
 import 'domain/tools/tool.dart';
 import 'domain/tools/triangle_center_tool.dart';
+import 'domain/tools/two_line_tool.dart';
 import 'domain/tools/two_point_tool.dart';
 import 'presentation/canvas/geometry_canvas.dart';
 
@@ -63,6 +68,18 @@ GeoObject _buildThreePointCircle(
 GeoObject _buildCompassCircle(String id, GeoPoint a, GeoPoint b, GeoPoint c) =>
     CompassCircle(id: id, radiusPoint1: a, radiusPoint2: b, center: c);
 
+GeoObject _buildArc(String id, GeoPoint a, GeoPoint b, GeoPoint c) =>
+    Arc(id: id, start: a, via: b, end: c);
+
+GeoObject _buildSector(String id, GeoPoint a, GeoPoint b, GeoPoint c) =>
+    Sector(id: id, center: a, start: b, end: c);
+
+GeoObject _buildVertexAngle(String id, GeoPoint a, GeoPoint b, GeoPoint c) =>
+    VertexAngle(id: id, arm1: a, vertex: b, arm2: c);
+
+GeoObject _buildLineAngle(String id, GeoLine first, GeoLine second) =>
+    LineAngle(id: id, line1: first, line2: second);
+
 /// Wraps a ready [TwoPointBuilder] as a trivial [TwoPointPick]; also
 /// gives the builder lambda's parameters their types (a bare async
 /// closure's `FutureOr` return context doesn't reach them).
@@ -89,8 +106,11 @@ class EditorScreen extends ConsumerWidget {
         (activeTool is ThreePointTool &&
             activeTool.build == _buildAngleBisector);
     final circleConstructionActive = activeTool is ThreePointTool &&
-        const {_buildThreePointCircle, _buildCompassCircle}
-            .contains(activeTool.build);
+        const {_buildThreePointCircle, _buildCompassCircle, _buildArc,
+            _buildSector}.contains(activeTool.build);
+    final angleConstructionActive = activeTool is TwoLineTool ||
+        (activeTool is ThreePointTool &&
+            activeTool.build == _buildVertexAngle);
     final undoRedo = ref.watch(commandStackProvider);
     final highlight = Theme.of(context).colorScheme.primary;
 
@@ -219,7 +239,8 @@ class EditorScreen extends ConsumerWidget {
             ],
           ),
           PopupMenuButton<Tool Function()>(
-            tooltip: 'Circle constructions: three-point circle, compass',
+            tooltip: 'Circle constructions: three-point circle, compass, '
+                'arc, sector',
             icon: Icon(
               Icons.circle_outlined,
               color: circleConstructionActive ? highlight : null,
@@ -240,6 +261,45 @@ class EditorScreen extends ConsumerWidget {
                   build: _buildCompassCircle,
                 ),
                 child: const Text('Compass (radius points, then center)'),
+              ),
+              PopupMenuItem(
+                value: () => ThreePointTool(
+                  newId: newObjectId,
+                  build: _buildArc,
+                ),
+                child: const Text('Arc (start, via, end)'),
+              ),
+              PopupMenuItem(
+                value: () => ThreePointTool(
+                  newId: newObjectId,
+                  build: _buildSector,
+                ),
+                child: const Text('Sector (center, rim, then angle)'),
+              ),
+            ],
+          ),
+          PopupMenuButton<Tool Function()>(
+            tooltip: 'Angles: at a vertex, or between two lines',
+            icon: Icon(
+              Icons.square_foot,
+              color: angleConstructionActive ? highlight : null,
+            ),
+            onSelected: (createTool) =>
+                ref.read(toolProvider.notifier).activate(createTool()),
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: () => ThreePointTool(
+                  newId: newObjectId,
+                  build: _buildVertexAngle,
+                ),
+                child: const Text('Angle at vertex (arm, vertex, arm)'),
+              ),
+              PopupMenuItem(
+                value: () => TwoLineTool(
+                  newId: newObjectId,
+                  build: _buildLineAngle,
+                ),
+                child: const Text('Angle between two lines'),
               ),
             ],
           ),
