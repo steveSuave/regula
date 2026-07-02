@@ -7,6 +7,7 @@ import 'package:fgex/domain/construction/objects/circle_center_point.dart';
 import 'package:fgex/domain/construction/objects/free_point.dart';
 import 'package:fgex/domain/construction/objects/line_through_two_points.dart';
 import 'package:fgex/domain/construction/objects/midpoint.dart';
+import 'package:fgex/domain/construction/objects/ray.dart';
 import 'package:fgex/domain/construction/objects/segment.dart';
 import 'package:fgex/domain/math/vec2.dart';
 import 'package:fgex/presentation/canvas/canvas_viewport.dart';
@@ -43,6 +44,7 @@ void main() {
         ..add(c)
         ..add(Midpoint(id: 'm', point1: a, point2: b))
         ..add(Segment(id: 's', point1: a, point2: b))
+        ..add(Ray(id: 'r', origin: a, through: c))
         ..add(LineThroughTwoPoints(id: 'l', point1: a, point2: c))
         ..add(CircleCenterPoint(id: 'k', center: a, onCircle: b));
 

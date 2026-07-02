@@ -3,6 +3,7 @@ import 'package:flutter/rendering.dart';
 
 import '../../domain/construction/construction.dart';
 import '../../domain/construction/geo_object.dart';
+import '../../domain/construction/objects/ray.dart';
 import '../../domain/construction/objects/segment.dart';
 import '../../domain/math/vec2.dart';
 import 'canvas_viewport.dart';
@@ -74,6 +75,8 @@ class GeometryPainter extends CustomPainter {
             viewport.worldToScreen(object.end!),
             paint,
           );
+        case Ray():
+          _drawRay(canvas, size, object, paint);
         case GeoLine():
           _drawInfiniteLine(canvas, size, object, paint);
         case GeoCircle():
@@ -96,6 +99,17 @@ class GeometryPainter extends CustomPainter {
       canvas.drawCircle(center, _markerDotRadius, dot);
       canvas.drawCircle(center, _markerRingRadius, ring);
     }
+  }
+
+  /// Draws a ray from its start extending far past the canvas on one side
+  /// (the clip in [paint] trims it). Direction comes from the parent
+  /// points, not the carrier — the carrier normalizes it away.
+  void _drawRay(Canvas canvas, Size size, Ray object, Paint paint) {
+    final start = viewport.worldToScreen(object.start!);
+    final along = viewport.worldToScreen(object.throughPosition!) - start;
+    final direction = along / along.distance;
+    final reach = start.distance + size.width + size.height;
+    canvas.drawLine(start, start + direction * reach, paint);
   }
 
   /// Draws the visible stretch of an infinite line by extending far past

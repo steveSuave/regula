@@ -16,6 +16,7 @@ import 'domain/construction/objects/midpoint.dart';
 import 'domain/construction/objects/orthocenter.dart';
 import 'domain/construction/objects/parallel_line.dart';
 import 'domain/construction/objects/perpendicular_line.dart';
+import 'domain/construction/objects/ray.dart';
 import 'domain/construction/objects/segment.dart';
 import 'domain/construction/objects/segment_ratio_point.dart';
 import 'domain/construction/objects/three_point_circle.dart';
@@ -138,6 +139,10 @@ class EditorScreen extends ConsumerWidget {
                 value:
                     _pick((id, a, b) => Segment(id: id, point1: a, point2: b)),
                 child: const Text('Segment'),
+              ),
+              PopupMenuItem<TwoPointPick>(
+                value: _pick((id, a, b) => Ray(id: id, origin: a, through: b)),
+                child: const Text('Ray (origin, then direction)'),
               ),
               PopupMenuItem<TwoPointPick>(
                 value: _pick((id, a, b) =>

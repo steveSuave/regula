@@ -1,4 +1,5 @@
 import '../../domain/construction/geo_object.dart';
+import '../../domain/construction/objects/ray.dart';
 import '../../domain/construction/objects/segment.dart';
 import '../../domain/math/vec2.dart';
 
@@ -65,18 +66,20 @@ class CanvasHitTester {
   double _distanceTo(GeoObject object, Vec2 point) => switch (object) {
         GeoPoint() => object.position!.distanceTo(point),
         GeoCircle() => object.circle!.distanceTo(point),
-        // Segments measure to their extent, not the infinite carrier.
-        // Rays (Phase 6) will need their own clamp here.
-        Segment() => _segmentDistance(object.start!, object.end!, point),
+        // Segments and rays measure to their extent, not the infinite
+        // carrier: t clamps to [0, 1] and [0, ∞) respectively.
+        Segment() => _clampedDistance(object.start!, object.end!, point, 1),
+        Ray() => _clampedDistance(
+            object.start!, object.throughPosition!, point, double.infinity),
         GeoLine() => object.line!.distanceTo(point),
       };
 
-  double _segmentDistance(Vec2 a, Vec2 b, Vec2 p) {
+  double _clampedDistance(Vec2 a, Vec2 b, Vec2 p, double tMax) {
     final ab = b - a;
     if (ab.normSquared == 0) {
       return p.distanceTo(a);
     }
-    final t = ((p - a).dot(ab) / ab.normSquared).clamp(0.0, 1.0);
+    final t = ((p - a).dot(ab) / ab.normSquared).clamp(0.0, tMax);
     return p.distanceTo(a.lerp(b, t));
   }
 }
