@@ -195,6 +195,30 @@ void main() {
     expect(objectCount(), 3, reason: 'point + perpendicular undo together');
   });
 
+  testWidgets('angle bisector via the menu: three taps, one undo unit',
+      (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+
+    await tester.tap(find.byIcon(Icons.line_axis));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Angle bisector (arm, vertex, arm)'));
+    await tester.pumpAndSettle();
+
+    await tester.tapAt(origin + const Offset(300, 100)); // arm
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(100, 100)); // vertex
+    await tester.pump();
+    expect(objectCount(), 0, reason: 'no commit until the second arm');
+    await tester.tapAt(origin + const Offset(100, 300)); // arm
+    await tester.pump();
+    expect(objectCount(), 4, reason: '3 free points + the bisector');
+
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(objectCount(), 0);
+  });
+
   testWidgets('deactivating the point tool stops point placement',
       (tester) async {
     await pumpEditor(tester);
