@@ -5,11 +5,17 @@ import 'application/object_ids.dart';
 import 'application/providers/command_stack_provider.dart';
 import 'application/providers/tool_provider.dart';
 import 'domain/construction/objects/centroid.dart';
+import 'domain/construction/objects/circle_center_point.dart';
 import 'domain/construction/objects/circumcenter.dart';
 import 'domain/construction/objects/incenter.dart';
+import 'domain/construction/objects/line_through_two_points.dart';
+import 'domain/construction/objects/midpoint.dart';
 import 'domain/construction/objects/orthocenter.dart';
+import 'domain/construction/objects/segment.dart';
+import 'domain/tools/point_on_object_tool.dart';
 import 'domain/tools/point_tool.dart';
 import 'domain/tools/triangle_center_tool.dart';
+import 'domain/tools/two_point_tool.dart';
 import 'presentation/canvas/geometry_canvas.dart';
 
 void main() {
@@ -42,7 +48,10 @@ class EditorScreen extends ConsumerWidget {
     final activeTool = ref.watch(toolProvider).tool;
     final pointToolActive = activeTool is PointTool;
     final centerToolActive = activeTool is TriangleCenterTool;
+    final twoPointToolActive = activeTool is TwoPointTool;
+    final pointOnObjectActive = activeTool is PointOnObjectTool;
     final undoRedo = ref.watch(commandStackProvider);
+    final highlight = Theme.of(context).colorScheme.primary;
 
     return Scaffold(
       appBar: AppBar(
@@ -63,13 +72,56 @@ class EditorScreen extends ConsumerWidget {
               }
             },
           ),
+          PopupMenuButton<TwoPointBuilder>(
+            tooltip: 'Two-point objects: pick one, then tap two points',
+            icon: Icon(
+              Icons.timeline,
+              color: twoPointToolActive ? highlight : null,
+            ),
+            onSelected: (builder) => ref.read(toolProvider.notifier).activate(
+                  TwoPointTool(newId: newObjectId, build: builder),
+                ),
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: (id, a, b) =>
+                    LineThroughTwoPoints(id: id, point1: a, point2: b),
+                child: const Text('Line'),
+              ),
+              PopupMenuItem(
+                value: (id, a, b) => Segment(id: id, point1: a, point2: b),
+                child: const Text('Segment'),
+              ),
+              PopupMenuItem(
+                value: (id, a, b) =>
+                    CircleCenterPoint(id: id, center: a, onCircle: b),
+                child: const Text('Circle (center, then rim)'),
+              ),
+              PopupMenuItem(
+                value: (id, a, b) => Midpoint(id: id, point1: a, point2: b),
+                child: const Text('Midpoint'),
+              ),
+            ],
+          ),
+          IconButton(
+            tooltip: pointOnObjectActive
+                ? 'Leave point-on-object tool'
+                : 'Point on object: tap a line or circle',
+            isSelected: pointOnObjectActive,
+            icon: const Icon(Icons.gps_fixed),
+            onPressed: () {
+              final notifier = ref.read(toolProvider.notifier);
+              if (pointOnObjectActive) {
+                notifier.deactivate();
+              } else {
+                notifier.activate(PointOnObjectTool(newId: newObjectId));
+              }
+            },
+          ),
           PopupMenuButton<TriangleCenterBuilder>(
             tooltip: 'Triangle centers: pick one, then tap three points',
             icon: Icon(
               Icons.change_history,
-              color: centerToolActive
-                  ? Theme.of(context).colorScheme.primary
-                  : null,
+              color: centerToolActive ? highlight : null,
             ),
             onSelected: (builder) => ref.read(toolProvider.notifier).activate(
                   TriangleCenterTool(newId: newObjectId, buildCenter: builder),

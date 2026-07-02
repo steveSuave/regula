@@ -128,6 +128,38 @@ void main() {
     expect(objectCount(), 4);
   });
 
+  testWidgets(
+      'segment via the two-point menu, then a point constrained onto it',
+      (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+
+    await tester.tap(find.byIcon(Icons.timeline));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Segment'));
+    await tester.pumpAndSettle();
+
+    await tester.tapAt(origin + const Offset(100, 100));
+    await tester.pump();
+    expect(objectCount(), 0,
+        reason: 'first endpoint is only collected, not committed');
+    await tester.tapAt(origin + const Offset(300, 100));
+    await tester.pump();
+    expect(objectCount(), 3, reason: '2 free points + the segment');
+
+    // Constrain a point onto the segment: tap between the endpoints.
+    await tester.tap(find.byIcon(Icons.gps_fixed));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(200, 103));
+    await tester.pump();
+    expect(objectCount(), 4);
+
+    // Empty canvas is ignored by the point-on-object tool.
+    await tester.tapAt(origin + const Offset(200, 300));
+    await tester.pump();
+    expect(objectCount(), 4);
+  });
+
   testWidgets('deactivating the point tool stops point placement',
       (tester) async {
     await pumpEditor(tester);
