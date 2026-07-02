@@ -58,7 +58,7 @@ class PointAndLineTool implements ToolInputPreview {
         if (_line != null) return const ToolIgnored();
         _line = hit;
         _lineTap = input.position;
-      case GeoCircle():
+      case GeoCircle() || GeoAngle():
         return const ToolIgnored();
       case null:
         if (_point != null) return const ToolIgnored();

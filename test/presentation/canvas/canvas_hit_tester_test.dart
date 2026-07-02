@@ -8,6 +8,7 @@ import 'package:fgex/domain/construction/objects/line_through_two_points.dart';
 import 'package:fgex/domain/construction/objects/ray.dart';
 import 'package:fgex/domain/construction/objects/sector.dart';
 import 'package:fgex/domain/construction/objects/segment.dart';
+import 'package:fgex/domain/construction/objects/vertex_angle.dart';
 import 'package:fgex/domain/math/vec2.dart';
 import 'package:fgex/presentation/canvas/canvas_hit_tester.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -159,6 +160,29 @@ void main() {
       expect(hit(construction, const Vec2(0, 5.2))?.id, 'k');
       expect(hit(construction, const Vec2(2, 2)), isNull,
           reason: 'inside the disc but far from the boundary');
+    });
+
+    test('angle is picked at its vertex, and anything else there wins', () {
+      const hidden = ObjectAttributes(visible: false);
+      final construction = Construction();
+      final a =
+          FreePoint(id: 'a', position: const Vec2(3, 0), attributes: hidden);
+      final v = FreePoint(id: 'v', position: Vec2.zero, attributes: hidden);
+      final b =
+          FreePoint(id: 'b', position: const Vec2(0, 3), attributes: hidden);
+      construction
+        ..add(a)
+        ..add(v)
+        ..add(b)
+        ..add(VertexAngle(id: 'g', arm1: a, vertex: v, arm2: b));
+
+      expect(hit(construction, const Vec2(0.2, 0.2))?.id, 'g');
+      expect(hit(construction, const Vec2(1.5, 1.5)), isNull,
+          reason: 'only the vertex is pickable');
+
+      construction.add(FreePoint(id: 'p', position: Vec2.zero));
+      expect(hit(construction, const Vec2(0.2, 0.2))?.id, 'p',
+          reason: 'angles have the lowest priority');
     });
 
     test('invisible and undefined objects are never hit', () {

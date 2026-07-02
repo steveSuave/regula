@@ -52,6 +52,7 @@ class CanvasHitTester {
         GeoPoint() => 0,
         GeoCircle() => 1,
         GeoLine() => 2,
+        GeoAngle() => 3,
       };
       final atLeastAsGood = best == null ||
           priority < bestPriority ||
@@ -82,6 +83,10 @@ class CanvasHitTester {
         Ray() => _clampedDistance(
             object.start!, object.throughPosition!, point, double.infinity),
         GeoLine() => object.line!.distanceTo(point),
+        // An angle's marker is drawn at a fixed *screen* radius the tester
+        // can't know (it has no viewport), so an angle is picked at its
+        // vertex — lowest priority, so anything else there wins.
+        GeoAngle() => object.angle!.vertex.distanceTo(point),
       };
 
   double _arcDistance(Arc arc, Vec2 p) {
