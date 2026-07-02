@@ -1,0 +1,125 @@
+import 'package:fgex/domain/construction/construction.dart';
+import 'package:fgex/domain/construction/geo_object.dart';
+import 'package:fgex/domain/construction/object_attributes.dart';
+import 'package:fgex/domain/construction/objects/circle_center_point.dart';
+import 'package:fgex/domain/construction/objects/free_point.dart';
+import 'package:fgex/domain/construction/objects/line_through_two_points.dart';
+import 'package:fgex/domain/construction/objects/segment.dart';
+import 'package:fgex/domain/math/vec2.dart';
+import 'package:fgex/presentation/canvas/canvas_hit_tester.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  const tester = CanvasHitTester();
+  const threshold = 0.5;
+
+  GeoObject? hit(Construction construction, Vec2 point) =>
+      tester.hitTest(construction.objects, point, threshold);
+
+  group('CanvasHitTester', () {
+    test('returns null on an empty construction or when nothing is near', () {
+      final construction = Construction()
+        ..add(FreePoint(id: 'a', position: Vec2.zero));
+
+      expect(hit(Construction(), Vec2.zero), isNull);
+      expect(hit(construction, const Vec2(10, 10)), isNull);
+    });
+
+    test('picks the closest point within the threshold', () {
+      final construction = Construction()
+        ..add(FreePoint(id: 'a', position: Vec2.zero))
+        ..add(FreePoint(id: 'b', position: const Vec2(0.6, 0)));
+
+      expect(hit(construction, const Vec2(0.4, 0))?.id, 'b');
+      expect(hit(construction, const Vec2(0.1, 0))?.id, 'a');
+    });
+
+    test('a point in range beats a closer line', () {
+      final construction = Construction();
+      final a = FreePoint(id: 'a', position: Vec2.zero);
+      final b = FreePoint(id: 'b', position: const Vec2(10, 0));
+      construction
+        ..add(a)
+        ..add(b)
+        ..add(LineThroughTwoPoints(id: 'l', point1: a, point2: b))
+        ..add(FreePoint(id: 'p', position: const Vec2(5, 0.4)));
+
+      // Tap sits on the line (distance 0) and 0.4 from the point: the
+      // point still wins on priority.
+      expect(hit(construction, const Vec2(5, 0))?.id, 'p');
+    });
+
+    test('infinite line is hit far beyond its defining points', () {
+      final construction = Construction();
+      final a = FreePoint(id: 'a', position: Vec2.zero);
+      final b = FreePoint(id: 'b', position: const Vec2(1, 0));
+      construction
+        ..add(a)
+        ..add(b)
+        ..add(LineThroughTwoPoints(id: 'l', point1: a, point2: b));
+
+      expect(hit(construction, const Vec2(100, 0.3))?.id, 'l');
+    });
+
+    test('segment is only hit within its extent', () {
+      final construction = Construction();
+      final a = FreePoint(id: 'a', position: Vec2.zero);
+      final b = FreePoint(id: 'b', position: const Vec2(1, 0));
+      construction
+        ..add(a)
+        ..add(b)
+        ..add(Segment(id: 's', point1: a, point2: b));
+
+      expect(hit(construction, const Vec2(0.5, 0.3))?.id, 's');
+      expect(hit(construction, const Vec2(3, 0.3)), isNull,
+          reason: 'past the endpoint the carrier line must not count');
+    });
+
+    test('circle is hit near its boundary, not near its center', () {
+      final construction = Construction();
+      final center = FreePoint(id: 'c', position: Vec2.zero);
+      final rim = FreePoint(id: 'r', position: const Vec2(5, 0));
+      construction
+        ..add(center)
+        ..add(rim)
+        ..add(CircleCenterPoint(id: 'k', center: center, onCircle: rim));
+
+      expect(hit(construction, const Vec2(0, 5.2))?.id, 'k');
+      expect(hit(construction, const Vec2(2, 2)), isNull,
+          reason: 'inside the disc but far from the boundary');
+    });
+
+    test('invisible and undefined objects are never hit', () {
+      final construction = Construction();
+      final a = FreePoint(id: 'a', position: Vec2.zero);
+      final b = FreePoint(
+        id: 'b',
+        position: Vec2.zero, // coincides with a → line undefined
+      );
+      final hidden = FreePoint(
+        id: 'h',
+        position: const Vec2(3, 3),
+        attributes: const ObjectAttributes(visible: false),
+      );
+      construction
+        ..add(a)
+        ..add(b)
+        ..add(LineThroughTwoPoints(id: 'l', point1: a, point2: b))
+        ..add(hidden);
+
+      expect(hit(construction, const Vec2(3, 3)), isNull);
+      expect(hit(construction, const Vec2(0.2, 0)), isNot(hasId('l')));
+    });
+
+    test('coincident points: the later (topmost) one wins', () {
+      final construction = Construction()
+        ..add(FreePoint(id: 'under', position: Vec2.zero))
+        ..add(FreePoint(id: 'over', position: Vec2.zero));
+
+      expect(hit(construction, const Vec2(0.1, 0))?.id, 'over');
+    });
+  });
+}
+
+Matcher hasId(String id) =>
+    isA<GeoObject>().having((o) => o.id, 'id', id);
