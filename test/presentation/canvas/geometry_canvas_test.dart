@@ -1,4 +1,5 @@
 import 'package:fgex/application/providers/construction_provider.dart';
+import 'package:fgex/domain/construction/objects/compass_circle.dart';
 import 'package:fgex/domain/construction/objects/segment_ratio_point.dart';
 import 'package:fgex/domain/construction/objects/three_point_circle.dart';
 import 'package:fgex/domain/math/vec2.dart';
@@ -310,6 +311,40 @@ void main() {
         .whereType<ThreePointCircle>()
         .single;
     expect(circle.circle!.center.closeTo(const Vec2(200, -200)), isTrue);
+
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(objectCount(), 0);
+  });
+
+  testWidgets(
+      'compass via the circles menu: radius from the first two taps, '
+      'centered on the third', (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+
+    await tester.tap(find.byIcon(Icons.circle_outlined));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Compass (radius points, then center)'));
+    await tester.pumpAndSettle();
+
+    await tester.tapAt(origin + const Offset(100, 100));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(150, 100));
+    await tester.pump();
+    expect(objectCount(), 0, reason: 'no commit until the center lands');
+    await tester.tapAt(origin + const Offset(300, 300));
+    await tester.pump();
+    expect(objectCount(), 4, reason: '3 free points + the circle');
+
+    final circle = container
+        .read(constructionProvider)
+        .construction
+        .objects
+        .whereType<CompassCircle>()
+        .single;
+    expect(circle.circle!.center.closeTo(const Vec2(300, -300)), isTrue);
+    expect(circle.circle!.radius, closeTo(50, 1e-9));
 
     await tester.tap(find.byIcon(Icons.undo));
     await tester.pump();
