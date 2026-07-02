@@ -1,0 +1,21 @@
+test/domain/tools/point_and_line_tool_test.dart
+  s_fd69abe50f2262::t_e08ec5f6795104 1-150
+lib/domain/tools/point_and_line_tool.dart
+  s_fd69abe50f2262::t_549fefc15aa9cf 1-92
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.9",
+  "base_commit_sha": "b7d03cfaedd6c8a5d7c248356f7729043492eb81",
+  "prompts": {},
+  "sessions": {
+    "s_fd69abe50f2262": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ceb0f2b8-2fdf-48bb-9eb1-caa1778851e2",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
