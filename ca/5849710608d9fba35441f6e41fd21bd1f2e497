@@ -1,0 +1,21 @@
+test/domain/construction/objects/three_point_circle_test.dart
+  s_ae34bc3de69bf2::t_95b38b271b6d18 1-61
+lib/domain/construction/objects/three_point_circle.dart
+  s_ae34bc3de69bf2::t_1b5c92e6a04d9e 1-45
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.9",
+  "base_commit_sha": "ca5849710608d9fba35441f6e41fd21bd1f2e497",
+  "prompts": {},
+  "sessions": {
+    "s_ae34bc3de69bf2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b8496e4d-0305-4414-9e6f-0a5a4433cdb1",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
