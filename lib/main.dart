@@ -17,6 +17,7 @@ import 'domain/construction/objects/parallel_line.dart';
 import 'domain/construction/objects/perpendicular_line.dart';
 import 'domain/construction/objects/segment.dart';
 import 'domain/construction/objects/segment_ratio_point.dart';
+import 'domain/construction/objects/three_point_circle.dart';
 import 'domain/tools/point_and_line_tool.dart';
 import 'domain/tools/point_on_object_tool.dart';
 import 'domain/tools/point_tool.dart';
@@ -47,6 +48,16 @@ class MainApp extends StatelessWidget {
 /// for the picked object, or null to abort (ratio dialog cancelled).
 typedef TwoPointPick = Future<TwoPointBuilder?> Function();
 
+// ThreePointTool builders as top-level functions, not inline lambdas:
+// their tear-offs are canonicalized, so the app bar can tell which menu
+// the active ThreePointTool came from and highlight the right icon.
+GeoObject _buildAngleBisector(String id, GeoPoint a, GeoPoint b, GeoPoint c) =>
+    AngleBisectorLine(id: id, arm1: a, vertex: b, arm2: c);
+
+GeoObject _buildThreePointCircle(
+        String id, GeoPoint a, GeoPoint b, GeoPoint c) =>
+    ThreePointCircle(id: id, point1: a, point2: b, point3: c);
+
 /// Wraps a ready [TwoPointBuilder] as a trivial [TwoPointPick]; also
 /// gives the builder lambda's parameters their types (a bare async
 /// closure's `FutureOr` return context doesn't reach them).
@@ -67,11 +78,13 @@ class EditorScreen extends ConsumerWidget {
     final centerToolActive = activeTool is TriangleCenterTool;
     final twoPointToolActive = activeTool is TwoPointTool;
     final pointOnObjectActive = activeTool is PointOnObjectTool;
-    // ThreePointTool currently only builds the angle bisector; once it
-    // also serves circles/arcs from another menu this needs to look at
-    // the builder, not just the type.
-    final lineConstructionActive =
-        activeTool is PointAndLineTool || activeTool is ThreePointTool;
+    // ThreePointTool serves two menus, so the highlights key on which
+    // top-level builder function the active tool carries.
+    final lineConstructionActive = activeTool is PointAndLineTool ||
+        (activeTool is ThreePointTool &&
+            activeTool.build == _buildAngleBisector);
+    final circleConstructionActive = activeTool is ThreePointTool &&
+        activeTool.build == _buildThreePointCircle;
     final undoRedo = ref.watch(commandStackProvider);
     final highlight = Theme.of(context).colorScheme.primary;
 
@@ -189,10 +202,27 @@ class EditorScreen extends ConsumerWidget {
               PopupMenuItem(
                 value: () => ThreePointTool(
                   newId: newObjectId,
-                  build: (id, a, b, c) =>
-                      AngleBisectorLine(id: id, arm1: a, vertex: b, arm2: c),
+                  build: _buildAngleBisector,
                 ),
                 child: const Text('Angle bisector (arm, vertex, arm)'),
+              ),
+            ],
+          ),
+          PopupMenuButton<Tool Function()>(
+            tooltip: 'Circle constructions: circle through three points',
+            icon: Icon(
+              Icons.circle_outlined,
+              color: circleConstructionActive ? highlight : null,
+            ),
+            onSelected: (createTool) =>
+                ref.read(toolProvider.notifier).activate(createTool()),
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: () => ThreePointTool(
+                  newId: newObjectId,
+                  build: _buildThreePointCircle,
+                ),
+                child: const Text('Circle through three points'),
               ),
             ],
           ),

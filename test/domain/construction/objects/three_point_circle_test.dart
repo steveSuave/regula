@@ -24,7 +24,7 @@ void main() {
       final k = ThreePointCircle(id: 'k', point1: a, point2: b, point3: c);
       final circle = k.circle!;
       for (final p in [a, b, c]) {
-        expect(circle.center.distanceTo(p.position!),
+        expect(circle.center.distanceTo(p.position),
             closeTo(circle.radius, 1e-9));
       }
     });

@@ -57,7 +57,7 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] Two-point tools for the Phase 2 objects — line, segment, circle, midpoint (missing from the original list; one `TwoPointTool` + builder lambdas, needed to reach `PointOnObject` in-app)
 - [x] Perpendicular & Parallel lines (`RelativeLine` template base; `PointAndLineTool` collects point + line in either order)
 - [x] Angle bisector (`angleBisector` math + `AngleBisectorLine`; `ThreePointTool`, the reusable 3-point sibling of `TwoPointTool`)
-- [ ] Segment-ratio point
+- [x] Segment-ratio point (`SegmentRatioPoint`, fixed lerp parameter; reuses `TwoPointTool` — the ratio comes from a dialog before the tool activates, so the two-point menu's values are now async `TwoPointPick` factories)
 - [ ] Three-point circle, Compass circle
 - [ ] Arc (3-point), Sector
 - [ ] Angle (between lines / at vertex)
