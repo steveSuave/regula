@@ -55,8 +55,8 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] Triangle centers (Centroid, Orthocenter, Incenter, Circumcenter) (objects + one `TriangleCenterTool` for all four via constructor tear-offs, incl. in-progress input markers — on branch `phase-6-objects`)
 - [x] `PointOnObject` (point constrained to a curve) (fixed analytic parameter — `LineEq.pointAt`/`parameterAt`, `CircleEq.angleAt`; dragging *along* the curve re-sets the parameter and is Phase 7's business)
 - [x] Two-point tools for the Phase 2 objects — line, segment, circle, midpoint (missing from the original list; one `TwoPointTool` + builder lambdas, needed to reach `PointOnObject` in-app)
-- [ ] Perpendicular & Parallel lines
-- [ ] Angle bisector
+- [x] Perpendicular & Parallel lines (`RelativeLine` template base; `PointAndLineTool` collects point + line in either order)
+- [x] Angle bisector (`angleBisector` math + `AngleBisectorLine`; `ThreePointTool`, the reusable 3-point sibling of `TwoPointTool`)
 - [ ] Segment-ratio point
 - [ ] Three-point circle, Compass circle
 - [ ] Arc (3-point), Sector
