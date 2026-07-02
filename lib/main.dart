@@ -9,6 +9,7 @@ import 'domain/construction/objects/angle_bisector_line.dart';
 import 'domain/construction/objects/centroid.dart';
 import 'domain/construction/objects/circle_center_point.dart';
 import 'domain/construction/objects/circumcenter.dart';
+import 'domain/construction/objects/compass_circle.dart';
 import 'domain/construction/objects/incenter.dart';
 import 'domain/construction/objects/line_through_two_points.dart';
 import 'domain/construction/objects/midpoint.dart';
@@ -58,6 +59,9 @@ GeoObject _buildThreePointCircle(
         String id, GeoPoint a, GeoPoint b, GeoPoint c) =>
     ThreePointCircle(id: id, point1: a, point2: b, point3: c);
 
+GeoObject _buildCompassCircle(String id, GeoPoint a, GeoPoint b, GeoPoint c) =>
+    CompassCircle(id: id, radiusPoint1: a, radiusPoint2: b, center: c);
+
 /// Wraps a ready [TwoPointBuilder] as a trivial [TwoPointPick]; also
 /// gives the builder lambda's parameters their types (a bare async
 /// closure's `FutureOr` return context doesn't reach them).
@@ -84,7 +88,8 @@ class EditorScreen extends ConsumerWidget {
         (activeTool is ThreePointTool &&
             activeTool.build == _buildAngleBisector);
     final circleConstructionActive = activeTool is ThreePointTool &&
-        activeTool.build == _buildThreePointCircle;
+        const {_buildThreePointCircle, _buildCompassCircle}
+            .contains(activeTool.build);
     final undoRedo = ref.watch(commandStackProvider);
     final highlight = Theme.of(context).colorScheme.primary;
 
@@ -209,7 +214,7 @@ class EditorScreen extends ConsumerWidget {
             ],
           ),
           PopupMenuButton<Tool Function()>(
-            tooltip: 'Circle constructions: circle through three points',
+            tooltip: 'Circle constructions: three-point circle, compass',
             icon: Icon(
               Icons.circle_outlined,
               color: circleConstructionActive ? highlight : null,
@@ -223,6 +228,13 @@ class EditorScreen extends ConsumerWidget {
                   build: _buildThreePointCircle,
                 ),
                 child: const Text('Circle through three points'),
+              ),
+              PopupMenuItem(
+                value: () => ThreePointTool(
+                  newId: newObjectId,
+                  build: _buildCompassCircle,
+                ),
+                child: const Text('Compass (radius points, then center)'),
               ),
             ],
           ),
