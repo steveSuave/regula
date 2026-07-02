@@ -1,10 +1,14 @@
 import 'package:fgex/application/providers/command_stack_provider.dart';
 import 'package:fgex/application/providers/construction_provider.dart';
 import 'package:fgex/application/providers/tool_provider.dart';
+import 'package:fgex/domain/commands/add_object_command.dart';
+import 'package:fgex/domain/construction/construction.dart';
+import 'package:fgex/domain/construction/objects/centroid.dart';
 import 'package:fgex/domain/construction/objects/free_point.dart';
 import 'package:fgex/domain/math/vec2.dart';
 import 'package:fgex/domain/tools/point_tool.dart';
 import 'package:fgex/domain/tools/tool.dart';
+import 'package:fgex/domain/tools/triangle_center_tool.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -97,6 +101,65 @@ void main() {
       notifier.handleInput(const ToolInput(Vec2.zero)); // ignored
 
       expect(revisions, [1], reason: 'ignored input must not notify');
+    });
+
+    test('undo, redo, and construction replace discard in-progress input',
+        () {
+      final notifier = container.read(toolProvider.notifier);
+      final tool = _StubTool([]);
+      notifier.activate(tool);
+
+      final stack = container.read(commandStackProvider.notifier);
+      stack.execute(AddObjectCommand(FreePoint(id: 'x', position: Vec2.zero)));
+
+      stack.undo();
+      expect(tool.resets, 1);
+      expect(container.read(toolProvider).revision, 1,
+          reason: 'previews of the discarded input must repaint');
+
+      stack.redo();
+      expect(tool.resets, 2);
+
+      container.read(constructionProvider.notifier).replace(Construction());
+      expect(tool.resets, 3,
+          reason: 'a swapped-in construction invalidates collected objects');
+      expect(container.read(toolProvider).tool, same(tool),
+          reason: 'the tool itself stays active — only its input is dropped');
+    });
+
+    test('undo mid-collection: stale parent cannot poison the next commit',
+        () {
+      var nextId = 0;
+      final notifier = container.read(toolProvider.notifier);
+
+      // Place a point, then start collecting a centroid on it.
+      notifier.activate(PointTool(newId: () => 'p${nextId++}'));
+      notifier.handleInput(const ToolInput(Vec2(1, 1)));
+      final placed =
+          container.read(constructionProvider).construction.byId('p0')!;
+
+      final centerTool = TriangleCenterTool(
+        newId: () => 'n${nextId++}',
+        buildCenter: Centroid.new,
+      );
+      notifier.activate(centerTool);
+      notifier.handleInput(ToolInput(const Vec2(1, 1), hit: placed));
+      expect(centerTool.collectedVertices, hasLength(1));
+
+      // Undo removes the collected point out from under the tool.
+      container.read(commandStackProvider.notifier).undo();
+      expect(centerTool.collectedVertices, isEmpty);
+
+      // Three fresh taps still commit cleanly.
+      notifier.handleInput(const ToolInput(Vec2(0, 0)));
+      notifier.handleInput(const ToolInput(Vec2(6, 0)));
+      final result = notifier.handleInput(const ToolInput(Vec2(0, 6)));
+      expect(result, isA<ToolCommitted>());
+      expect(
+        container.read(constructionProvider).construction.length,
+        4,
+        reason: '3 free points + the centroid',
+      );
     });
 
     test('activating a new tool starts it at revision 0', () {
