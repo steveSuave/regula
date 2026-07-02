@@ -1,0 +1,21 @@
+test/domain/math/angle_bisector_test.dart
+  s_fd69abe50f2262::t_eb272824c67ee3 1-91
+lib/domain/math/angle_bisector.dart
+  s_fd69abe50f2262::t_551cfc255d711d 1-25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.9",
+  "base_commit_sha": "64a8e650446bd9b731fc27169db0198a9992ce28",
+  "prompts": {},
+  "sessions": {
+    "s_fd69abe50f2262": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ceb0f2b8-2fdf-48bb-9eb1-caa1778851e2",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
