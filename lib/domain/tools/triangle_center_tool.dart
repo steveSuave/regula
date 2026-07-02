@@ -4,6 +4,7 @@ import '../commands/macro_command.dart';
 import '../construction/geo_object.dart';
 import '../construction/objects/free_point.dart';
 import '../construction/objects/triangle_center_point.dart';
+import '../math/vec2.dart';
 import 'tool.dart';
 
 /// Signature shared by the four triangle-center constructors — pass a
@@ -27,9 +28,10 @@ typedef TriangleCenterBuilder = TriangleCenterPoint Function({
 ///
 /// New free points are held privately until the third vertex lands, then
 /// committed together with the center as one `MacroCommand`, so the whole
-/// construction step is a single undo unit. [collectedVertices] exposes
-/// the in-progress vertices for input-preview rendering.
-class TriangleCenterTool implements Tool {
+/// construction step is a single undo unit. In-progress input is exposed
+/// for marker rendering via [ToolInputPreview] (and, typed, via
+/// [collectedVertices]).
+class TriangleCenterTool implements ToolInputPreview {
   TriangleCenterTool({required this.newId, required this.buildCenter});
 
   /// Produces a fresh unique object id per call (see `PointTool.newId`).
@@ -45,6 +47,10 @@ class TriangleCenterTool implements Tool {
   /// construction and sit where they were tapped.
   List<GeoPoint> get collectedVertices =>
       List.unmodifiable([for (final v in _collected) v.point]);
+
+  @override
+  List<Vec2> get previewPositions =>
+      [for (final v in _collected) ?v.point.position];
 
   @override
   ToolResult onInput(ToolInput input) {
