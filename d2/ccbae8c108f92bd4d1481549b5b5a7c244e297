@@ -1,0 +1,30 @@
+test/presentation/canvas/geometry_canvas_test.dart
+  s_ae34bc3de69bf2::t_a8be46762952af 3
+  s_ae34bc3de69bf2::t_6b930419e2e636 275-318
+test/domain/construction/objects/three_point_circle_test.dart
+  s_ae34bc3de69bf2::t_e8166b93407225 27
+docs/TODO.md
+  s_ae34bc3de69bf2::t_a36461aa7e0fd9 60
+lib/main.dart
+  s_ae34bc3de69bf2::t_af1c5a55a2247e 205,211-225
+  s_ae34bc3de69bf2::t_a2d11afe9cdff5 20
+  s_ae34bc3de69bf2::t_f7bee4acc72059 51-60
+  s_ae34bc3de69bf2::t_ae97b90c876831 81-87
+  s_ae34bc3de69bf2::t_5e432466622984 226-228
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.9",
+  "base_commit_sha": "d2ccbae8c108f92bd4d1481549b5b5a7c244e297",
+  "prompts": {},
+  "sessions": {
+    "s_ae34bc3de69bf2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b8496e4d-0305-4414-9e6f-0a5a4433cdb1",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
