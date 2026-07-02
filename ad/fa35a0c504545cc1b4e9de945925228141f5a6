@@ -1,0 +1,37 @@
+lib/domain/construction/objects/arc.dart
+  s_ae34bc3de69bf2::t_5513873965fe1b 74,80,84
+  s_ae34bc3de69bf2::t_62f0070c3f02b3 1-73,75-79,81-83,85-86
+lib/presentation/canvas/canvas_hit_tester.dart
+  s_ae34bc3de69bf2::t_8e553f1b8cb544 81-90
+  s_ae34bc3de69bf2::t_f02ad53bb2fd3e 69-71
+  s_ae34bc3de69bf2::t_dc8feea5788c80 2
+test/presentation/canvas/geometry_painter_test.dart
+  s_ae34bc3de69bf2::t_a6369f9a55a3ba 50-51
+  s_ae34bc3de69bf2::t_2b4a93456ea948 6
+test/presentation/canvas/canvas_hit_tester_test.dart
+  s_ae34bc3de69bf2::t_f71f5c9972f36e 4
+  s_ae34bc3de69bf2::t_7753bd75dd70ab 96,100,104-112,114,117-118
+  s_ae34bc3de69bf2::t_184cd2c4e09089 97-99,101-103,113,115-116
+lib/presentation/canvas/geometry_painter.dart
+  s_ae34bc3de69bf2::t_4b1c4688527a5e 6
+  s_ae34bc3de69bf2::t_480a911bee9cf4 83-84
+  s_ae34bc3de69bf2::t_8ae5da485bb24b 118-129
+test/domain/construction/objects/arc_test.dart
+  s_ae34bc3de69bf2::t_188d4936995a57 1-104
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.9",
+  "base_commit_sha": "adfa35a0c504545cc1b4e9de945925228141f5a6",
+  "prompts": {},
+  "sessions": {
+    "s_ae34bc3de69bf2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b8496e4d-0305-4414-9e6f-0a5a4433cdb1",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
