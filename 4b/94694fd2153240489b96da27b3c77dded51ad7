@@ -1,0 +1,25 @@
+lib/domain/construction/objects/angle_bisector_line.dart
+  s_fd69abe50f2262::t_c21531ef6e1fad 1-42
+test/domain/tools/three_point_tool_test.dart
+  s_fd69abe50f2262::t_60b556b83873d6 1-61
+lib/domain/tools/three_point_tool.dart
+  s_fd69abe50f2262::t_6c5984221a2c94 1-29
+test/domain/construction/objects/angle_bisector_line_test.dart
+  s_fd69abe50f2262::t_a6373d0329813d 1-70
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.9",
+  "base_commit_sha": "4b94694fd2153240489b96da27b3c77dded51ad7",
+  "prompts": {},
+  "sessions": {
+    "s_fd69abe50f2262": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ceb0f2b8-2fdf-48bb-9eb1-caa1778851e2",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
