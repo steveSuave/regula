@@ -1,3 +1,4 @@
+import '../math/angle_geometry.dart';
 import '../math/circle_eq.dart';
 import '../math/line_eq.dart';
 import '../math/vec2.dart';
@@ -6,8 +7,8 @@ import 'object_attributes.dart';
 /// Base of every object in the construction graph.
 ///
 /// The hierarchy is sealed at the *kind* level: every object is a
-/// [GeoPoint], a [GeoLine] or a [GeoCircle], so kind-switches are
-/// exhaustive. The kinds themselves are open — concrete objects
+/// [GeoPoint], a [GeoLine], a [GeoCircle] or a [GeoAngle], so
+/// kind-switches are exhaustive. The kinds themselves are open — concrete objects
 /// (`FreePoint`, `Midpoint`, …) live one-per-file under `objects/`,
 /// which Dart's `sealed` would forbid on the root class directly.
 ///
@@ -74,4 +75,17 @@ abstract class GeoCircle extends GeoObject {
 
   @override
   bool get isDefined => circle != null;
+}
+
+/// An angle-valued object: a marker at a vertex plus a readable measure
+/// ([AngleGeometry.measure]). Angles take part in no intersection math —
+/// they are decorations over existing geometry. [angle] is null while
+/// undefined.
+abstract class GeoAngle extends GeoObject {
+  GeoAngle({required super.id, super.attributes});
+
+  AngleGeometry? get angle;
+
+  @override
+  bool get isDefined => angle != null;
 }

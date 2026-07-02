@@ -39,6 +39,14 @@ class CircleEq {
   Vec2 pointAt(double angle) =>
       center + Vec2(math.cos(angle), math.sin(angle)) * radius;
 
+  /// The [pointAt] angle of [p]'s radial projection onto the circle, in
+  /// `(-π, π]`. [p] coincident with [center] has no direction; that (and
+  /// only that) returns 0.
+  double angleAt(Vec2 p) {
+    final offset = p - center;
+    return offset.normSquared == 0 ? 0 : math.atan2(offset.y, offset.x);
+  }
+
   bool closeTo(CircleEq other, [double epsilon = defaultEpsilon]) =>
       center.closeTo(other.center, epsilon) &&
       (radius - other.radius).abs() <= epsilon;

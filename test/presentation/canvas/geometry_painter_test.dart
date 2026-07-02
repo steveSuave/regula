@@ -3,11 +3,15 @@ import 'dart:ui';
 import 'package:fgex/application/providers/viewport_provider.dart';
 import 'package:fgex/domain/construction/construction.dart';
 import 'package:fgex/domain/construction/object_attributes.dart';
+import 'package:fgex/domain/construction/objects/arc.dart';
 import 'package:fgex/domain/construction/objects/circle_center_point.dart';
 import 'package:fgex/domain/construction/objects/free_point.dart';
 import 'package:fgex/domain/construction/objects/line_through_two_points.dart';
 import 'package:fgex/domain/construction/objects/midpoint.dart';
+import 'package:fgex/domain/construction/objects/ray.dart';
+import 'package:fgex/domain/construction/objects/sector.dart';
 import 'package:fgex/domain/construction/objects/segment.dart';
+import 'package:fgex/domain/construction/objects/vertex_angle.dart';
 import 'package:fgex/domain/math/vec2.dart';
 import 'package:fgex/presentation/canvas/canvas_viewport.dart';
 import 'package:fgex/presentation/canvas/geometry_painter.dart';
@@ -43,8 +47,12 @@ void main() {
         ..add(c)
         ..add(Midpoint(id: 'm', point1: a, point2: b))
         ..add(Segment(id: 's', point1: a, point2: b))
+        ..add(Ray(id: 'r', origin: a, through: c))
         ..add(LineThroughTwoPoints(id: 'l', point1: a, point2: c))
-        ..add(CircleCenterPoint(id: 'k', center: a, onCircle: b));
+        ..add(CircleCenterPoint(id: 'k', center: a, onCircle: b))
+        ..add(Arc(id: 'arc', start: b, via: c, end: a))
+        ..add(Sector(id: 'w', center: a, start: b, end: c))
+        ..add(VertexAngle(id: 'g', arm1: b, vertex: a, arm2: c));
 
       paintOnce(painterFor(construction));
     });
@@ -65,6 +73,40 @@ void main() {
         ));
 
       paintOnce(painterFor(construction));
+    });
+
+    test('paints preview markers without throwing', () {
+      final construction = Construction()
+        ..add(FreePoint(id: 'a', position: Vec2.zero));
+      final painter = GeometryPainter(
+        construction: construction,
+        viewport: const CanvasViewport(ViewportState()),
+        revision: 0,
+        defaultColor: const Color(0xFF000000),
+        previewMarkers: const [Vec2.zero, Vec2(3, 4)],
+      );
+
+      paintOnce(painter);
+    });
+
+    test('shouldRepaint keys on preview markers', () {
+      final construction = Construction();
+      GeometryPainter withMarkers(List<Vec2> markers) => GeometryPainter(
+            construction: construction,
+            viewport: const CanvasViewport(ViewportState()),
+            revision: 0,
+            defaultColor: const Color(0xFF000000),
+            previewMarkers: markers,
+          );
+
+      final base = withMarkers(const [Vec2(1, 1)]);
+      expect(withMarkers(const [Vec2(1, 1)]).shouldRepaint(base), isFalse);
+      expect(
+        withMarkers(const [Vec2(1, 1), Vec2(2, 2)]).shouldRepaint(base),
+        isTrue,
+      );
+      expect(withMarkers(const []).shouldRepaint(base), isTrue,
+          reason: 'markers must clear on commit/reset');
     });
 
     test(

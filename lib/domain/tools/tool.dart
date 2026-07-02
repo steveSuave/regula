@@ -62,3 +62,13 @@ abstract interface class Tool {
   /// time, including when nothing is collected.
   void reset();
 }
+
+/// Optional capability for multi-input tools: exposes the world positions
+/// of the inputs collected so far, so the canvas can render in-progress
+/// markers. Positions are read live — a collected existing point that
+/// moves (or goes undefined and is skipped) is reflected on the next read.
+abstract interface class ToolInputPreview implements Tool {
+  /// One position per collected input still worth marking; empty when the
+  /// tool is idle.
+  List<Vec2> get previewPositions;
+}

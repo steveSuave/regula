@@ -1,7 +1,9 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../domain/tools/tool.dart';
 import 'command_stack_provider.dart';
+import 'construction_provider.dart';
 
 part 'tool_provider.g.dart';
 
@@ -36,7 +38,16 @@ class ActiveToolState {
 @Riverpod(keepAlive: true, name: 'toolProvider')
 class ToolNotifier extends _$ToolNotifier {
   @override
-  ActiveToolState build() => const ActiveToolState(null, 0);
+  ActiveToolState build() {
+    // A swapped-in construction (File > New / Open) invalidates any
+    // objects a mid-collection tool holds — committing against the new
+    // construction would add a child whose parents aren't in it.
+    ref.listen(
+      constructionProvider.select((ConstructionState s) => s.construction),
+      (_, _) => resetInProgress(),
+    );
+    return const ActiveToolState(null, 0);
+  }
 
   /// Makes [tool] the active tool (null returns to move/select). The
   /// outgoing tool's partially-collected input is discarded.
@@ -47,6 +58,21 @@ class ToolNotifier extends _$ToolNotifier {
 
   /// Esc: back to move/select.
   void deactivate() => activate(null);
+
+  /// Discards the active tool's partially-collected input (the tool stays
+  /// active) and bumps the revision so input previews clear.
+  ///
+  /// Called whenever the construction may have changed under the tool —
+  /// undo/redo, construction swap — since a collected object may no
+  /// longer be in the graph and committing on top of it would throw.
+  void resetInProgress() {
+    final tool = state.tool;
+    if (tool == null) {
+      return;
+    }
+    tool.reset();
+    state = ActiveToolState(tool, state.revision + 1);
+  }
 
   /// Routes one canvas input to the active tool and returns its verdict.
   ///
