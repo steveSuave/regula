@@ -1,4 +1,6 @@
 import 'package:fgex/application/providers/construction_provider.dart';
+import 'package:fgex/domain/construction/objects/segment_ratio_point.dart';
+import 'package:fgex/domain/math/vec2.dart';
 import 'package:fgex/main.dart';
 import 'package:fgex/presentation/canvas/geometry_canvas.dart';
 import 'package:flutter/material.dart';
@@ -213,6 +215,56 @@ void main() {
     await tester.tapAt(origin + const Offset(100, 300)); // arm
     await tester.pump();
     expect(objectCount(), 4, reason: '3 free points + the bisector');
+
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(objectCount(), 0);
+  });
+
+  testWidgets(
+      'segment-ratio point via the menu: cancel does nothing, "1/4" builds '
+      'the interpolated point', (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+
+    // Cancelling the ratio dialog activates nothing.
+    await tester.tap(find.byIcon(Icons.timeline));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Segment-ratio point…'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    await tester.tapAt(origin + const Offset(100, 100));
+    await tester.pump();
+    expect(objectCount(), 0);
+
+    // Fraction input works; two taps commit one undo unit.
+    await tester.tap(find.byIcon(Icons.timeline));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Segment-ratio point…'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '1/4');
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+
+    await tester.tapAt(origin + const Offset(100, 100));
+    await tester.pump();
+    expect(objectCount(), 0,
+        reason: 'first endpoint is only collected, not committed');
+    await tester.tapAt(origin + const Offset(300, 100));
+    await tester.pump();
+    expect(objectCount(), 3, reason: '2 free points + the ratio point');
+
+    // World is y-up with the origin at the canvas top-left, so the taps
+    // sit at (100, -100) and (300, -100); t = 1/4 lands at (150, -100).
+    final ratioPoint = container
+        .read(constructionProvider)
+        .construction
+        .objects
+        .whereType<SegmentRatioPoint>()
+        .single;
+    expect(ratioPoint.ratio, 0.25);
+    expect(ratioPoint.position, const Vec2(150, -100));
 
     await tester.tap(find.byIcon(Icons.undo));
     await tester.pump();
