@@ -1,0 +1,37 @@
+test/domain/construction/objects/orthocenter_test.dart
+  s_fd69abe50f2262::t_b0065338e54d25 1-48
+test/domain/construction/objects/incenter_test.dart
+  s_fd69abe50f2262::t_e6803f81cf3471 1-47
+test/domain/construction/objects/circumcenter_test.dart
+  s_fd69abe50f2262::t_6b0d5182d0076d 1-24,28-75
+  s_fd69abe50f2262::t_e51f935ab78c77 25-27
+lib/domain/construction/objects/circumcenter.dart
+  s_fd69abe50f2262::t_fe8d43d315bebc 1-18
+lib/domain/construction/objects/triangle_center_point.dart
+  s_fd69abe50f2262::t_8b82ac21df8881 5
+  s_fd69abe50f2262::t_6b5f04849571ca 1-4,6-45
+test/domain/construction/objects/centroid_test.dart
+  s_fd69abe50f2262::t_bac0f70851d3c5 1-49
+lib/domain/construction/objects/incenter.dart
+  s_fd69abe50f2262::t_fb8f8906fe62bd 1-18
+lib/domain/construction/objects/centroid.dart
+  s_fd69abe50f2262::t_bb62f9bfd29b3a 1-20
+lib/domain/construction/objects/orthocenter.dart
+  s_fd69abe50f2262::t_25a0104fa8ce68 1-18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.9",
+  "base_commit_sha": "68f41abfc6d34a540ee555cec4e6dae8eefcfb8d",
+  "prompts": {},
+  "sessions": {
+    "s_fd69abe50f2262": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ceb0f2b8-2fdf-48bb-9eb1-caa1778851e2",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
