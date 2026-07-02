@@ -3,6 +3,7 @@ import 'package:flutter/rendering.dart';
 
 import '../../domain/construction/construction.dart';
 import '../../domain/construction/geo_object.dart';
+import '../../domain/construction/objects/arc.dart';
 import '../../domain/construction/objects/ray.dart';
 import '../../domain/construction/objects/segment.dart';
 import '../../domain/math/vec2.dart';
@@ -79,6 +80,8 @@ class GeometryPainter extends CustomPainter {
           _drawRay(canvas, size, object, paint);
         case GeoLine():
           _drawInfiniteLine(canvas, size, object, paint);
+        case Arc():
+          _drawArc(canvas, object, paint);
         case GeoCircle():
           final circle = object.circle!;
           canvas.drawCircle(
@@ -110,6 +113,18 @@ class GeometryPainter extends CustomPainter {
     final direction = along / along.distance;
     final reach = start.distance + size.width + size.height;
     canvas.drawLine(start, start + direction * reach, paint);
+  }
+
+  /// Draws the branch of the arc's carrier given by its start angle and
+  /// signed sweep. World angles are counter-clockwise with y up; the
+  /// viewport flips y, so both angles negate on screen.
+  void _drawArc(Canvas canvas, Arc object, Paint paint) {
+    final circle = object.circle!;
+    final rect = Rect.fromCircle(
+      center: viewport.worldToScreen(circle.center),
+      radius: viewport.worldToScreenLength(circle.radius),
+    );
+    canvas.drawArc(rect, -object.startAngle!, -object.sweep!, false, paint);
   }
 
   /// Draws the visible stretch of an infinite line by extending far past
