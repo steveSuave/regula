@@ -1,0 +1,21 @@
+lib/domain/tools/two_line_tool.dart
+  s_ae34bc3de69bf2::t_ab74e8f1a5fd9b 1-61
+test/domain/tools/two_line_tool_test.dart
+  s_ae34bc3de69bf2::t_7ebb12174599c4 1-104
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.9",
+  "base_commit_sha": "2867f0800a79800d5ebf76d76626aea5b14bf915",
+  "prompts": {},
+  "sessions": {
+    "s_ae34bc3de69bf2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b8496e4d-0305-4414-9e6f-0a5a4433cdb1",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
