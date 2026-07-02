@@ -160,6 +160,41 @@ void main() {
     expect(objectCount(), 4);
   });
 
+  testWidgets(
+      'perpendicular via the menu: tap the line, tap empty canvas, one '
+      'undo unit', (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+
+    // A horizontal line to be perpendicular to.
+    await tester.tap(find.byIcon(Icons.timeline));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Line'));
+    await tester.pumpAndSettle();
+    await tester.tapAt(origin + const Offset(100, 100));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(300, 100));
+    await tester.pump();
+    expect(objectCount(), 3, reason: '2 free points + the line');
+
+    await tester.tap(find.byIcon(Icons.line_axis));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Perpendicular line'));
+    await tester.pumpAndSettle();
+
+    // Tap the line away from its endpoints, then a spot off the line.
+    await tester.tapAt(origin + const Offset(200, 102));
+    await tester.pump();
+    expect(objectCount(), 3, reason: 'the line fills a slot, no commit yet');
+    await tester.tapAt(origin + const Offset(150, 250));
+    await tester.pump();
+    expect(objectCount(), 5, reason: 'new free point + the perpendicular');
+
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(objectCount(), 3, reason: 'point + perpendicular undo together');
+  });
+
   testWidgets('deactivating the point tool stops point placement',
       (tester) async {
     await pumpEditor(tester);
