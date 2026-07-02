@@ -11,6 +11,7 @@ import 'package:fgex/domain/construction/objects/midpoint.dart';
 import 'package:fgex/domain/construction/objects/ray.dart';
 import 'package:fgex/domain/construction/objects/sector.dart';
 import 'package:fgex/domain/construction/objects/segment.dart';
+import 'package:fgex/domain/construction/objects/vertex_angle.dart';
 import 'package:fgex/domain/math/vec2.dart';
 import 'package:fgex/presentation/canvas/canvas_viewport.dart';
 import 'package:fgex/presentation/canvas/geometry_painter.dart';
@@ -50,7 +51,8 @@ void main() {
         ..add(LineThroughTwoPoints(id: 'l', point1: a, point2: c))
         ..add(CircleCenterPoint(id: 'k', center: a, onCircle: b))
         ..add(Arc(id: 'arc', start: b, via: c, end: a))
-        ..add(Sector(id: 'w', center: a, start: b, end: c));
+        ..add(Sector(id: 'w', center: a, start: b, end: c))
+        ..add(VertexAngle(id: 'g', arm1: b, vertex: a, arm2: c));
 
       paintOnce(painterFor(construction));
     });

@@ -31,6 +31,10 @@ class GeometryPainter extends CustomPainter {
   static const double _markerDotRadius = 3;
   static const double _markerRingRadius = 7;
 
+  /// Radius (logical px) of an angle's marker wedge. Like stroke widths,
+  /// it does not scale with zoom.
+  static const double _angleMarkerRadius = 20;
+
   /// Read live at paint time, in insertion (drawing) order.
   final Construction construction;
 
@@ -106,6 +110,8 @@ class GeometryPainter extends CustomPainter {
             viewport.worldToScreenLength(circle.radius),
             paint,
           );
+        case GeoAngle():
+          _drawAngleMarker(canvas, object, paint);
       }
     }
 
@@ -149,6 +155,24 @@ class GeometryPainter extends CustomPainter {
       radius: viewport.worldToScreenLength(circle.radius),
     );
     canvas.drawArc(rect, -startAngle, -sweep, closeToCenter, paint);
+  }
+
+  /// Draws an angle as a small wedge outline at its vertex, opening from
+  /// the start direction through the sweep (angles negate on screen, as in
+  /// [_drawCarrierBranch]). The radius is fixed in screen space.
+  void _drawAngleMarker(Canvas canvas, GeoAngle object, Paint paint) {
+    final angle = object.angle!;
+    final rect = Rect.fromCircle(
+      center: viewport.worldToScreen(angle.vertex),
+      radius: _angleMarkerRadius,
+    );
+    canvas.drawArc(
+      rect,
+      -angle.startDirection.angle,
+      -angle.sweep,
+      true,
+      paint,
+    );
   }
 
   /// Draws the visible stretch of an infinite line by extending far past
