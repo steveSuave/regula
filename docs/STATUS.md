@@ -6,6 +6,23 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 7 — 2026-07-02
+
+**Done**
+- Phase 5 complete on branch `phase-5-canvas` (5 commits). `lib/domain/tools/`: `Tool` interface (`ToolInput` = world position + optional hit object; sealed `ToolResult` Accepted/Committed/Ignored; `reset()` for cancel/switch) + `PointTool` (stateless, ignores taps on existing points, injected `newId`). `lib/application/`: `object_ids.dart` (`newObjectId()`, the app's one UUID source) + `toolProvider` (`ActiveToolState` = nullable tool + revision, mirroring `ConstructionState`; `handleInput` funnels committed commands into `commandStackProvider`). `lib/presentation/canvas/`: `CanvasViewport`, `CanvasHitTester`, `GeometryPainter`, `GeometryCanvas`. `main.dart`: `ProviderScope` + minimal `EditorScreen` (point-tool toggle, undo/redo) — the real toolbar panel is Phases 6–7.
+- 191 tests green, `flutter analyze` clean. Web smoke test done for real: `flutter run -d web-server` + Playwright/headless Chrome — 3 points placed under the cursor, undo×2, redo, all rendered, no console errors.
+
+**Next**
+- Phase 6 (object & tool coverage): triangle centers, `PointOnObject`, perpendicular/parallel, angle bisector, segment-ratio, three-point/compass circles, arc, sector, angle, ray — and a tool per object. First multi-input tools will exercise `ToolAccepted`/preview state for the first time; the painter needs in-progress input markers then too.
+
+**Open questions / gotchas**
+- Naming: PLAN's `Viewport`/`HitTester` collide with Flutter (`Viewport` widget) and flutter_test (`HitTester`) — landed as `CanvasViewport`/`CanvasHitTester`.
+- World coordinates are **y-up**; the flip happens only in `CanvasViewport`. Default viewport puts world origin at the canvas top-left, so visible world y is negative until Phase 8's fit/center lands.
+- `GeometryPainter.shouldRepaint` keys on construction *instance* + revision (+ viewport/color): `replace()` resets revisions, so instance identity alone distinguishes a swapped-in construction. `Construction.objects` returns a fresh iterable per call — never use it for identity.
+- `toolProvider.handleInput` is the single entry point for canvas taps; presentation never touches commands directly. No active tool → `ToolIgnored` (a Phase 7 concern: that's where selection taps go).
+- Web smoke gotcha for future driving: enabling Flutter's semantics tree reroutes canvas clicks through the GestureDetector's semantics node — `onTapUp` then reports the node *center*, not the cursor. Drive by raw coordinates with semantics off (script pattern in scratchpad `drive.js`; consider `/run-skill-generator` if we do this often).
+- Infinite lines are drawn with far endpoints under a `clipRect`, reach scaled to anchor distance + canvas size — revisit only if extreme zoom-out shows artifacts.
+
 ## Session 6 — 2026-06-12
 
 **Done**

@@ -44,12 +44,12 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - toolProvider moved to Phase 5 — it needs the `Tool` interface, which Phase 5 designs
 
 ## Phase 5 — Canvas & first tool (`lib/presentation/canvas/`)
-- [ ] `Tool` interface (`lib/domain/tools/tool.dart`) + `toolProvider` (moved from Phase 4)
-- [ ] `Viewport` value type + transforms
-- [ ] `GeometryPainter` (CustomPainter)
-- [ ] `HitTester` with priority order + 8 px threshold
-- [ ] `GeometryCanvas` widget with gesture stack
-- [ ] `PointTool` end-to-end smoke test on web
+- [x] `Tool` interface (`lib/domain/tools/tool.dart`) + `toolProvider` (moved from Phase 4; `PointTool` landed with it to keep the interface honest — the Phase 5 smoke-test box below still covers wiring it to the canvas)
+- [x] `Viewport` value type + transforms (landed as `CanvasViewport` — Flutter ships a `Viewport` widget; world is y-up, flip lives only here)
+- [x] `GeometryPainter` (CustomPainter) (labels deferred to Phase 7 with the attributes work)
+- [x] `HitTester` with priority order + 8 px threshold (landed as `CanvasHitTester` — flutter_test exports a `HitTester`)
+- [x] `GeometryCanvas` widget with gesture stack (taps only; drag/zoom gestures are Phases 7–8)
+- [x] `PointTool` end-to-end smoke test on web (headless Chrome via Playwright: 3 points placed, 2×undo, redo — all rendered correctly; plus widget tests for the same flow)
 
 ## Phase 6 — Object & tool coverage
 - [ ] Triangle centers (Centroid, Orthocenter, Incenter, Circumcenter)
