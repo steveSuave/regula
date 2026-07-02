@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:fgex/application/providers/viewport_provider.dart';
 import 'package:fgex/domain/math/vec2.dart';
 import 'package:fgex/presentation/canvas/canvas_viewport.dart';
