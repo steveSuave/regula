@@ -12,16 +12,19 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 - Phase 6 started on branch `phase-6-objects` (3 commits, not yet merged — the phase is far from done). Triangle centers landed end to end: `TriangleCenterPoint` base (three `GeoPoint` vertices + undefined-state plumbing) with `Centroid`/`Orthocenter`/`Incenter`/`Circumcenter` as thin subclasses over `math/triangle_centers.dart`; one `TriangleCenterTool` covers all four via a `buildCenter` constructor tear-off (`Centroid.new`, …).
 - First multi-input tool, so the supporting machinery landed with it: taps on existing points collect them (duplicates ignored), taps elsewhere create free points held privately until the third vertex, then everything commits as one `MacroCommand` (single undo unit). `ToolInputPreview` (domain) exposes collected positions; `GeometryPainter` draws dot+ring markers for them; minimal app-bar `PopupMenuButton` activates each center kind.
 - New safety net: undo/redo and `constructionProvider.replace` now call `ToolNotifier.resetInProgress()` — without it, undoing a collected parent mid-collection made the eventual commit throw (`Construction.add`: parent not in construction). Covered by provider + widget tests.
-- 218 tests green, `flutter analyze` clean.
+- Second stint, same session: `PointOnObject` (stores a fixed parameter in the curve's *analytic* parameterization — new math APIs `LineEq.pointAt`/`parameterAt`, `CircleEq.angleAt` with property tests; `PointOnObject.near()` projects a tap). The collect-N logic then moved from `TriangleCenterTool` into an abstract `MultiPointTool`; `TwoPointTool` (builder lambda, positional args because param names differ per object) gives line/segment/circle/midpoint tools nearly for free — those two-point tools were missing from TODO entirely (added, ticked). `PointOnObjectTool` is stateless like `PointTool`. All wired into the app-bar chrome.
+- 236 tests green, `flutter analyze` clean.
 
 **Next**
-- Remaining Phase 6 items, roughly in PLAN order: `PointOnObject`, perpendicular/parallel lines, angle bisector, segment-ratio point, three-point/compass circles, arc, sector, angle, ray — each with its tool. Most multi-input tools can now crib from `TriangleCenterTool` (collect-N pattern + preview markers already work).
+- Remaining Phase 6 items: perpendicular/parallel lines, angle bisector, segment-ratio point, three-point/compass circles, arc, sector, angle, ray — each with its tool. Multi-point tools subclass `MultiPointTool` (pointCount + buildObject); tools taking a *curve* input (perpendicular/parallel need point + line) will need a new collect pattern — `MultiPointTool` only collects points.
 
 **Open questions / gotchas**
 - Constructor tear-off equality/constness is load-bearing in the editor menu (`PopupMenuItem(value: Centroid.new)` is const); the tear-offs all conform to `TriangleCenterBuilder` because extra optional params (`attributes`) don't break function-type assignability.
 - `ToolInputPreview implements Tool` deliberately — an unrelated capability interface wouldn't type-promote after `tool is ToolInputPreview` (Dart promotes only to subtypes).
 - `package:flutter/rendering.dart` does *not* re-export `listEquals`; the painter imports `foundation` for it.
 - `TriangleCenterTool` allows coincident vertex *positions* (center goes undefined, recovers on drag apart) but rejects the same point *object* twice.
+- `PointOnObject`'s parameter rides the *analytic* form (LineEq anchor/direction), not the defining points: translating a line along itself leaves the constrained point in place. Deterministic and documented in the class doc — same spirit as the intersection-branch wart. Revisit only if Phase 7 manual dragging makes it feel wrong.
+- Dart flow analysis can't promote `GeoObject?` through `hit is! GeoLine && hit is! GeoCircle` — `PointOnObjectTool` needs the explicit `hit == null ||` first.
 - Web smoke was not repeated this session (widget tests cover the flows); the Playwright drive script from Session 7 lived in that session's scratchpad and is gone — recreate it next time a real browser check is needed.
 
 ## Session 7 — 2026-07-02
