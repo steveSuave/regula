@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'application/object_ids.dart';
 import 'application/providers/command_stack_provider.dart';
 import 'application/providers/tool_provider.dart';
+import 'domain/construction/geo_object.dart';
 import 'domain/construction/objects/angle_bisector_line.dart';
 import 'domain/construction/objects/centroid.dart';
 import 'domain/construction/objects/circle_center_point.dart';
@@ -15,6 +16,7 @@ import 'domain/construction/objects/orthocenter.dart';
 import 'domain/construction/objects/parallel_line.dart';
 import 'domain/construction/objects/perpendicular_line.dart';
 import 'domain/construction/objects/segment.dart';
+import 'domain/construction/objects/segment_ratio_point.dart';
 import 'domain/tools/point_and_line_tool.dart';
 import 'domain/tools/point_on_object_tool.dart';
 import 'domain/tools/point_tool.dart';
@@ -40,6 +42,15 @@ class MainApp extends StatelessWidget {
     );
   }
 }
+
+/// A two-point-menu item's payload: asynchronously produces the builder
+/// for the picked object, or null to abort (ratio dialog cancelled).
+typedef TwoPointPick = Future<TwoPointBuilder?> Function();
+
+/// Wraps a ready [TwoPointBuilder] as a trivial [TwoPointPick]; also
+/// gives the builder lambda's parameters their types (a bare async
+/// closure's `FutureOr` return context doesn't reach them).
+TwoPointPick _pick(TwoPointBuilder builder) => () async => builder;
 
 /// Canvas plus a bare-bones app bar: point tool toggle and undo/redo.
 ///
@@ -83,33 +94,57 @@ class EditorScreen extends ConsumerWidget {
               }
             },
           ),
-          PopupMenuButton<TwoPointBuilder>(
+          // Values are async so an item can collect extra input (the
+          // segment-ratio dialog) before the tool exists; returning null
+          // (dialog cancelled) leaves the current tool untouched.
+          PopupMenuButton<TwoPointPick>(
             tooltip: 'Two-point objects: pick one, then tap two points',
             icon: Icon(
               Icons.timeline,
               color: twoPointToolActive ? highlight : null,
             ),
-            onSelected: (builder) => ref.read(toolProvider.notifier).activate(
-                  TwoPointTool(newId: newObjectId, build: builder),
-                ),
+            onSelected: (pick) async {
+              final builder = await pick();
+              if (builder == null) return;
+              ref.read(toolProvider.notifier).activate(
+                    TwoPointTool(newId: newObjectId, build: builder),
+                  );
+            },
             itemBuilder: (context) => [
-              PopupMenuItem(
-                value: (id, a, b) =>
-                    LineThroughTwoPoints(id: id, point1: a, point2: b),
+              PopupMenuItem<TwoPointPick>(
+                value: _pick((id, a, b) =>
+                    LineThroughTwoPoints(id: id, point1: a, point2: b)),
                 child: const Text('Line'),
               ),
-              PopupMenuItem(
-                value: (id, a, b) => Segment(id: id, point1: a, point2: b),
+              PopupMenuItem<TwoPointPick>(
+                value:
+                    _pick((id, a, b) => Segment(id: id, point1: a, point2: b)),
                 child: const Text('Segment'),
               ),
-              PopupMenuItem(
-                value: (id, a, b) =>
-                    CircleCenterPoint(id: id, center: a, onCircle: b),
+              PopupMenuItem<TwoPointPick>(
+                value: _pick((id, a, b) =>
+                    CircleCenterPoint(id: id, center: a, onCircle: b)),
                 child: const Text('Circle (center, then rim)'),
               ),
-              PopupMenuItem(
-                value: (id, a, b) => Midpoint(id: id, point1: a, point2: b),
+              PopupMenuItem<TwoPointPick>(
+                value:
+                    _pick((id, a, b) => Midpoint(id: id, point1: a, point2: b)),
                 child: const Text('Midpoint'),
+              ),
+              PopupMenuItem<TwoPointPick>(
+                value: () async {
+                  final ratio = await _askRatio(context);
+                  if (ratio == null) return null;
+                  GeoObject build(String id, GeoPoint a, GeoPoint b) =>
+                      SegmentRatioPoint(
+                        id: id,
+                        point1: a,
+                        point2: b,
+                        ratio: ratio,
+                      );
+                  return build;
+                },
+                child: const Text('Segment-ratio point…'),
               ),
             ],
           ),
@@ -202,4 +237,72 @@ class EditorScreen extends ConsumerWidget {
       body: const GeometryCanvas(),
     );
   }
+}
+
+/// Asks for a segment-ratio interpolation parameter. Returns null when
+/// cancelled — unparseable input reads as cancel too, so OK on garbage
+/// quietly does nothing rather than committing a bogus ratio.
+Future<double?> _askRatio(BuildContext context) => showDialog<double>(
+      context: context,
+      builder: (context) => const _RatioDialog(),
+    );
+
+/// The dialog owns its [TextEditingController] so it outlives the exit
+/// animation (disposing right after `showDialog` returns crashes the
+/// still-rendering `TextField`).
+class _RatioDialog extends StatefulWidget {
+  const _RatioDialog();
+
+  @override
+  State<_RatioDialog> createState() => _RatioDialogState();
+}
+
+class _RatioDialogState extends State<_RatioDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Segment ratio'),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        decoration: const InputDecoration(
+          hintText: '0 = first point, 1 = second — e.g. 0.25 or 1/4',
+        ),
+        onSubmitted: (text) => Navigator.pop(context, _parseRatio(text)),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () =>
+              Navigator.pop(context, _parseRatio(_controller.text)),
+          child: const Text('OK'),
+        ),
+      ],
+    );
+  }
+}
+
+/// Parses "0.25", "-1", or a fraction "1/4". Null when unparseable.
+double? _parseRatio(String text) {
+  final parts = text.split('/');
+  if (parts.length == 2) {
+    final numerator = double.tryParse(parts[0].trim());
+    final denominator = double.tryParse(parts[1].trim());
+    if (numerator == null || denominator == null || denominator == 0) {
+      return null;
+    }
+    return numerator / denominator;
+  }
+  return double.tryParse(text.trim());
 }
