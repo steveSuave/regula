@@ -71,6 +71,18 @@ class LineEq {
   /// Orthogonal projection of [p] onto the line (the closest point).
   Vec2 project(Vec2 p) => p - normal * signedDistanceTo(p);
 
+  /// The point at signed arc-length [t] along [direction] from
+  /// [pointOnLine] — the inverse of [parameterAt].
+  ///
+  /// This parameterization is tied to the line's *analytic* form: as the
+  /// line moves, [pointOnLine] and [direction] move with it, so a fixed
+  /// [t] tracks the line but does not stick to whatever points defined it.
+  Vec2 pointAt(double t) => pointOnLine + direction * t;
+
+  /// The [pointAt] parameter of [p]'s projection onto the line, i.e.
+  /// `pointAt(parameterAt(p)) == project(p)`.
+  double parameterAt(Vec2 p) => direction.dot(p - pointOnLine);
+
   /// Whether the two lines have the same (or opposite) direction.
   ///
   /// Both normals are unit length, so the cross product is the sine of the

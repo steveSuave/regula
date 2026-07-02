@@ -1,8 +1,14 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 
 import '../../domain/construction/construction.dart';
 import '../../domain/construction/geo_object.dart';
+import '../../domain/construction/objects/arc.dart';
+import '../../domain/construction/objects/ray.dart';
+import '../../domain/construction/objects/sector.dart';
 import '../../domain/construction/objects/segment.dart';
+import '../../domain/math/circle_eq.dart';
+import '../../domain/math/vec2.dart';
 import 'canvas_viewport.dart';
 
 /// Paints the construction in insertion order (first added = bottom).
@@ -17,7 +23,17 @@ class GeometryPainter extends CustomPainter {
     required this.viewport,
     required this.revision,
     required this.defaultColor,
+    this.previewMarkers = const [],
   });
+
+  /// Radii (logical px) of an in-progress input marker: a filled dot
+  /// inside a hollow ring, visually distinct from a plain point.
+  static const double _markerDotRadius = 3;
+  static const double _markerRingRadius = 7;
+
+  /// Radius (logical px) of an angle's marker wedge. Like stroke widths,
+  /// it does not scale with zoom.
+  static const double _angleMarkerRadius = 20;
 
   /// Read live at paint time, in insertion (drawing) order.
   final Construction construction;
@@ -33,6 +49,10 @@ class GeometryPainter extends CustomPainter {
 
   /// Color for objects whose attributes carry no explicit color.
   final Color defaultColor;
+
+  /// World positions of the active tool's in-progress inputs (see
+  /// `ToolInputPreview`), drawn as markers on top of the construction.
+  final List<Vec2> previewMarkers;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -62,8 +82,27 @@ class GeometryPainter extends CustomPainter {
             viewport.worldToScreen(object.end!),
             paint,
           );
+        case Ray():
+          _drawRay(canvas, size, object, paint);
         case GeoLine():
           _drawInfiniteLine(canvas, size, object, paint);
+        case Arc():
+          _drawCarrierBranch(
+            canvas,
+            object.circle!,
+            object.startAngle!,
+            object.sweep!,
+            paint,
+          );
+        case Sector():
+          _drawCarrierBranch(
+            canvas,
+            object.circle!,
+            object.startAngle!,
+            object.sweep!,
+            paint,
+            closeToCenter: true,
+          );
         case GeoCircle():
           final circle = object.circle!;
           canvas.drawCircle(
@@ -71,8 +110,69 @@ class GeometryPainter extends CustomPainter {
             viewport.worldToScreenLength(circle.radius),
             paint,
           );
+        case GeoAngle():
+          _drawAngleMarker(canvas, object, paint);
       }
     }
+
+    final dot = Paint()..color = defaultColor;
+    final ring = Paint()
+      ..color = defaultColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+    for (final marker in previewMarkers) {
+      final center = viewport.worldToScreen(marker);
+      canvas.drawCircle(center, _markerDotRadius, dot);
+      canvas.drawCircle(center, _markerRingRadius, ring);
+    }
+  }
+
+  /// Draws a ray from its start extending far past the canvas on one side
+  /// (the clip in [paint] trims it). Direction comes from the parent
+  /// points, not the carrier — the carrier normalizes it away.
+  void _drawRay(Canvas canvas, Size size, Ray object, Paint paint) {
+    final start = viewport.worldToScreen(object.start!);
+    final along = viewport.worldToScreen(object.throughPosition!) - start;
+    final direction = along / along.distance;
+    final reach = start.distance + size.width + size.height;
+    canvas.drawLine(start, start + direction * reach, paint);
+  }
+
+  /// Draws the branch of a circle carrier given by a start angle and a
+  /// signed sweep — an arc, or with [closeToCenter] a sector's pie wedge
+  /// (the two radii close the outline). World angles are counter-clockwise
+  /// with y up; the viewport flips y, so both angles negate on screen.
+  void _drawCarrierBranch(
+    Canvas canvas,
+    CircleEq circle,
+    double startAngle,
+    double sweep,
+    Paint paint, {
+    bool closeToCenter = false,
+  }) {
+    final rect = Rect.fromCircle(
+      center: viewport.worldToScreen(circle.center),
+      radius: viewport.worldToScreenLength(circle.radius),
+    );
+    canvas.drawArc(rect, -startAngle, -sweep, closeToCenter, paint);
+  }
+
+  /// Draws an angle as a small wedge outline at its vertex, opening from
+  /// the start direction through the sweep (angles negate on screen, as in
+  /// [_drawCarrierBranch]). The radius is fixed in screen space.
+  void _drawAngleMarker(Canvas canvas, GeoAngle object, Paint paint) {
+    final angle = object.angle!;
+    final rect = Rect.fromCircle(
+      center: viewport.worldToScreen(angle.vertex),
+      radius: _angleMarkerRadius,
+    );
+    canvas.drawArc(
+      rect,
+      -angle.startDirection.angle,
+      -angle.sweep,
+      true,
+      paint,
+    );
   }
 
   /// Draws the visible stretch of an infinite line by extending far past
@@ -105,5 +205,6 @@ class GeometryPainter extends CustomPainter {
       !identical(oldDelegate.construction, construction) ||
       oldDelegate.revision != revision ||
       oldDelegate.viewport.state != viewport.state ||
-      oldDelegate.defaultColor != defaultColor;
+      oldDelegate.defaultColor != defaultColor ||
+      !listEquals(oldDelegate.previewMarkers, previewMarkers);
 }

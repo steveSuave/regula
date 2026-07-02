@@ -93,8 +93,9 @@ class IntersectionPoint extends GeoPoint {
         return (c1 == null || c2 == null)
             ? const []
             : intersectCircleCircle(c1, c2);
-      // Unreachable: the constructor rejects point parents.
+      // Unreachable: the constructor rejects non-curve parents.
       case ((GeoPoint(), _) || (_, GeoPoint())):
+      case ((GeoAngle(), _) || (_, GeoAngle())):
         throw StateError('IntersectionPoint parents must be curves');
     }
   }

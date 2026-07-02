@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../domain/commands/command.dart';
 import '../command_stack.dart';
 import 'construction_provider.dart';
+import 'tool_provider.dart';
 
 part 'command_stack_provider.g.dart';
 
@@ -42,8 +43,13 @@ class CommandStackNotifier extends _$CommandStackNotifier {
 
   /// Throws [StateError] when there is nothing to undo — gate on
   /// `state.canUndo`.
+  ///
+  /// Undo (and [redo]) may remove objects a mid-collection tool has
+  /// already picked as parents, so the active tool's in-progress input is
+  /// discarded.
   void undo() {
     _stack.undo();
+    ref.read(toolProvider.notifier).resetInProgress();
     _refresh();
   }
 
@@ -51,6 +57,7 @@ class CommandStackNotifier extends _$CommandStackNotifier {
   /// `state.canRedo`.
   void redo() {
     _stack.redo();
+    ref.read(toolProvider.notifier).resetInProgress();
     _refresh();
   }
 

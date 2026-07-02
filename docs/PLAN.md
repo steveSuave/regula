@@ -38,14 +38,15 @@ The `domain/` layer must not import `package:flutter/*`. This is the boundary th
 
 ### Construction graph (`domain/construction/`)
 
-- `sealed class GeoObject` with `id`, `parents`, `attributes: ObjectAttributes`, and `void recompute()`. Sealing is at the *kind* level: `GeoPoint` / `GeoLine` / `GeoCircle` are the sealed branches, concrete objects extend an open kind — Dart requires a sealed class's direct subtypes in the same library, which one-file-per-object rules out on the root. Kind switches are exhaustive; concrete-type switches are not.
+- `sealed class GeoObject` with `id`, `parents`, `attributes: ObjectAttributes`, and `void recompute()`. Sealing is at the *kind* level: `GeoPoint` / `GeoLine` / `GeoCircle` / `GeoAngle` are the sealed branches, concrete objects extend an open kind — Dart requires a sealed class's direct subtypes in the same library, which one-file-per-object rules out on the root. Kind switches are exhaustive; concrete-type switches are not.
+- Kinds are *value shapes*, not visual shapes. A kind's geometry accessor is what intersection math and hit testing consume: `GeoPoint.position`, `GeoLine.line` (carrier `LineEq` — segments and rays reuse line∩x math through it, with extent clamps at the painter/hit-tester), `GeoCircle.circle` (carrier `CircleEq` — arcs and sectors reuse circle∩x math the same way, with *angular* extent clamps), `GeoAngle.angle` (an `AngleGeometry`: vertex, unit start direction, CCW sweep in [0, 2π) — angles are decorations plus a measure; nothing intersects them).
 - `parents` is a getter derived from typed parent fields (e.g. `Midpoint` holds `GeoPoint point1, point2`), so ill-typed constructions are unrepresentable rather than runtime errors.
 - Derived objects support an *undefined* state (degenerate parent configuration — coincident points defining a line, curves that stopped intersecting mid-drag). Undefined objects stay in the graph, are skipped by painter/hit-tester, and recover when the degeneracy passes.
 - Subclasses (one file each, grouped by kind):
   - **Points:** `FreePoint`, `PointOnObject` (constrained to a curve), `IntersectionPoint`, `Midpoint`, `Centroid`, `Orthocenter`, `Incenter`, `Circumcenter`, `SegmentRatioPoint`.
-  - **Lines:** `LineThroughTwoPoints`, `Segment`, `Ray`, `PerpendicularLine`, `ParallelLine`, `AngleBisector`.
-  - **Circles & arcs:** `CircleCenterPoint`, `ThreePointCircle`, `CompassCircle` (center + two points defining radius), `Arc`, `Sector`.
-  - **Angles:** `AngleBetweenLines` / `AngleAtVertex`.
+  - **Lines:** `LineThroughTwoPoints`, `Segment`, `Ray`, `PerpendicularLine`, `ParallelLine`, `AngleBisectorLine`.
+  - **Circles & arcs:** `CircleCenterPoint`, `ThreePointCircle`, `CompassCircle` (two points defining radius + center), `Arc` (through three points: endpoints first and last, the arc is the carrier branch containing the middle point; undefined while collinear), `Sector` (center + rim point fixing radius and start angle + a third point fixing only the end angle; sweep is CCW from start to end).
+  - **Angles:** `VertexAngle` (arm–vertex–arm points; sweep is CCW from the first arm's ray to the second's, so the two tap orders give the two complementary markers) and `LineAngle` (between two lines; always the acute/right angle in (0, π/2], vertex at the intersection, undefined while parallel).
 - `class Construction` owns the DAG: insertion-ordered map of objects (insertion order doubles as topological order), topological recompute on dirty propagation, dependents lookup for cascading delete. It is pure Dart with a minimal hand-rolled listener API — *not* a Flutter `ChangeNotifier` (the domain layer must not import Flutter, and `ChangeNotifierProvider` is the legacy path in Riverpod 3 anyway). The application layer wraps it in a `@riverpod` `Notifier` that re-exposes state after each command. If that notifier ends up being the only listener by Phase 4, drop the listener API.
 - `class ObjectAttributes`: `name`, `colorArgb` (raw ARGB int, `null` = theme default — the domain layer can't use Flutter's `Color`; presentation maps it), `visible`, `labelVisible`, `strokeWidth`, plus per-type extras (point size, fill alpha for sectors). Built with `freezed` for immutability + `copyWith`.
 
@@ -56,6 +57,7 @@ The `domain/` layer must not import `package:flutter/*`. This is the boundary th
 - `intersections.dart`: line∩line, line∩circle, circle∩circle returning `List<Vec2>` (0/1/2). Each intersection object carries an `index` so the user's chosen branch is stable across drags.
 - Caveat: the index is *deterministic*, not *continuous*. Line∩circle branches are ordered along the line's direction, so dragging a defining point past the other reverses the direction and the two branches visibly swap. Known wart, not a bug. If it bothers in Phase 5/6 manual testing, layer a runtime continuity heuristic (prefer the candidate nearest the previous position) on top — but the *persisted* branch stays the index; continuity is path-dependent and must never leak into the save format.
 - `triangle_centers.dart`: closed-form centroid, orthocenter, incenter, circumcenter.
+- `angle_geometry.dart`: `AngleGeometry` value type (vertex, unit start direction, CCW sweep) plus angle helpers — `ccwSweep(from, to)` in [0, 2π), and the arc-branch pick `sweepThrough(start, via, end)` (signed sweep from start to end passing via; feeds `Arc`).
 - All functions are pure, take `Vec2`s, and have epsilon-tolerant predicates (`isParallel`, `isCollinear`).
 
 ### Tool system (`domain/tools/`)

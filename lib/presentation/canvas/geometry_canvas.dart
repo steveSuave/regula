@@ -26,6 +26,9 @@ class GeometryCanvas extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final constructionState = ref.watch(constructionProvider);
     final viewport = CanvasViewport(ref.watch(viewportProvider));
+    // The tool revision bumps on every accepted input, so in-progress
+    // markers rebuild as the user collects.
+    final tool = ref.watch(toolProvider).tool;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -36,6 +39,8 @@ class GeometryCanvas extends ConsumerWidget {
           viewport: viewport,
           revision: constructionState.revision,
           defaultColor: Theme.of(context).colorScheme.primary,
+          previewMarkers:
+              tool is ToolInputPreview ? tool.previewPositions : const [],
         ),
         child: const SizedBox.expand(),
       ),
