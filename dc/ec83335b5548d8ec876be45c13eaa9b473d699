@@ -1,0 +1,44 @@
+lib/domain/tools/tool.dart
+  s_fd69abe50f2262::t_9ca21d2cfd888a 65-74
+lib/main.dart
+  s_fd69abe50f2262::t_7d38d73810b09b 42-44
+  s_fd69abe50f2262::t_afc2074172b902 7-10,12
+  s_fd69abe50f2262::t_ee7ba6e3632f81 66-89
+lib/presentation/canvas/geometry_painter.dart
+  s_fd69abe50f2262::t_4348430004cb2c 88-98
+  s_fd69abe50f2262::t_cf921387e0064e 22,25-28
+  s_fd69abe50f2262::t_cfaa9c31a97054 1
+  s_fd69abe50f2262::t_f56f1b4335e110 45-48
+  s_fd69abe50f2262::t_68b78258aa7531 131-132
+  s_fd69abe50f2262::t_75897c74cece7c 7
+  s_fd69abe50f2262::t_47f85bc162f0a5 29
+lib/domain/tools/triangle_center_tool.dart
+  s_fd69abe50f2262::t_df88d63d973a60 52-53
+  s_fd69abe50f2262::t_40a28b72579801 31-33
+  s_fd69abe50f2262::t_63f26981633465 34
+  s_fd69abe50f2262::t_968c045991341d 54
+  s_fd69abe50f2262::t_3a505779efd62d 7
+  s_fd69abe50f2262::t_2c2d738e6bea59 51
+lib/presentation/canvas/geometry_canvas.dart
+  s_fd69abe50f2262::t_745e1d5ba5bbb0 29-31,42-43
+test/presentation/canvas/geometry_canvas_test.dart
+  s_fd69abe50f2262::t_922088b7eea63d 66-130
+test/presentation/canvas/geometry_painter_test.dart
+  s_fd69abe50f2262::t_8334fa0f407840 70-103
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.9",
+  "base_commit_sha": "dcec83335b5548d8ec876be45c13eaa9b473d699",
+  "prompts": {},
+  "sessions": {
+    "s_fd69abe50f2262": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ceb0f2b8-2fdf-48bb-9eb1-caa1778851e2",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
