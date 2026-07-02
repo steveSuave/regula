@@ -44,7 +44,7 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - toolProvider moved to Phase 5 — it needs the `Tool` interface, which Phase 5 designs
 
 ## Phase 5 — Canvas & first tool (`lib/presentation/canvas/`)
-- [ ] `Tool` interface (`lib/domain/tools/tool.dart`) + `toolProvider` (moved from Phase 4)
+- [x] `Tool` interface (`lib/domain/tools/tool.dart`) + `toolProvider` (moved from Phase 4; `PointTool` landed with it to keep the interface honest — the Phase 5 smoke-test box below still covers wiring it to the canvas)
 - [ ] `Viewport` value type + transforms
 - [ ] `GeometryPainter` (CustomPainter)
 - [ ] `HitTester` with priority order + 8 px threshold
