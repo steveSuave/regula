@@ -1,0 +1,21 @@
+test/presentation/canvas/canvas_viewport_test.dart
+  s_9a2cf95ec420fd::t_0eb6d580b8c85d 1-51
+lib/presentation/canvas/canvas_viewport.dart
+  s_9a2cf95ec420fd::t_9e46c8d6b7ea72 1-42
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.9",
+  "base_commit_sha": "8ff2a08c8db814d5ebfb91255ebb7bbd65561c4b",
+  "prompts": {},
+  "sessions": {
+    "s_9a2cf95ec420fd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6fbd60bf-3ad8-4fc5-9d07-5b5f5aaeb5c0",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
