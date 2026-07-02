@@ -6,6 +6,27 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 10 — 2026-07-02
+
+**Done**
+- Phase 6 finished. PLAN updated first (per CLAUDE.md) with the kind story: arcs/sectors are `GeoCircle`s with a carrier + *angular* extent (the circle-side twin of `Segment`/`Ray` on `GeoLine`); angles are a genuinely new 4th sealed kind `GeoAngle` whose value is an `AngleGeometry` (vertex, unit start direction, CCW sweep) — decorations plus a measure, no intersection math.
+- `math/angle_geometry.dart`: `ccwSweep` (in [0, 2π)), `sweepThrough` (signed arc-branch pick), `AngleGeometry` with `fromRays` (directed, arm order picks the marker) and `betweenLines` (always acute/right, in (0, π/2]).
+- `Arc` (start/via/end, signed sweep = branch containing via) and `Sector` (center + rim fixing radius/start angle + a point fixing only the end angle, CCW sweep): painter draws the branch via `drawArc` (world angles negate on screen, y-flip), hit tester clamps to the branch — off-branch falls back to endpoint distance (arc) or the two radius edges (sector).
+- `GeoAngle` + `VertexAngle`/`LineAngle`. Adding the kind fanned out compiler-driven to every exhaustive switch: painter (marker wedge at fixed 20 px screen radius), hit tester (priority 3, picked at its *vertex* — the tester has no viewport, so it can't know the marker's world size), `PointOnObject`, `IntersectionPoint`, `PointAndLineTool`.
+- Tools/chrome: arc + sector joined the circles menu (`ThreePointTool`); new angles menu (`Icons.square_foot`) with vertex angle (`ThreePointTool`) and `TwoLineTool` (new tool: collects two distinct existing lines, ignores everything else, previews the first tap projected on its carrier). Highlight logic extended to the new builder tear-offs.
+- 336 tests green, `flutter analyze` clean. Merged `phase-6-objects` into `main`.
+
+**Next**
+- Phase 7 — Selection & attributes: multi-select (rubber band + shift-click), dragging derived objects via `TranslateObjectsCommand`, attributes inspector, hide/show, color/stroke, cascading-delete UX, object tree panel. Start a `phase-7-selection` branch.
+
+**Open questions / gotchas**
+- `VertexAngle` is *directed* (CCW from arm1's ray to arm2's): the two tap orders mark the two complementary angles. Deliberate — GeoGebra-style — and documented in the class; don't "fix" it to always-interior.
+- `LineAngle` is undefined while its lines are parallel (no vertex to mark), even though "angle = 0" would be answerable. Also its vertex can sit outside a segment/ray parent's drawn extent (carrier semantics, same wart as `IntersectionPoint`).
+- Angle hit testing is vertex-only, priority last. If Phase 7 selection makes that feel too small a target, the fix needs the viewport's zoom (marker radius is screen-space) — plumb a world-radius hint into `CanvasHitTester` rather than hardcoding one.
+- `Sector.endRim` is a *computed* rim point (end projected onto the circle); `startRim` is the parent's own position. Painters/hit-testers must not assume `end.position` is on the circle.
+- Screen-vs-world angle sign: `drawArc` needs both start angle and sweep *negated* (world y-up → screen y-down). Both call sites live in `_drawCarrierBranch`/`_drawAngleMarker`; keep any future angle drawing on that path.
+- Dart's `%` on doubles is already Euclidean (non-negative for a positive divisor), but a tiny negative difference can round to exactly 2π — `ccwSweep` guards that edge; reuse it instead of inlining `% (2 * pi)`.
+
 ## Session 9 — 2026-07-02
 
 **Done**

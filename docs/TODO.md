@@ -59,10 +59,10 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] Angle bisector (`angleBisector` math + `AngleBisectorLine`; `ThreePointTool`, the reusable 3-point sibling of `TwoPointTool`)
 - [x] Segment-ratio point (`SegmentRatioPoint`, fixed lerp parameter; reuses `TwoPointTool` — the ratio comes from a dialog before the tool activates, so the two-point menu's values are now async `TwoPointPick` factories)
 - [x] Three-point circle, Compass circle (both reuse `ThreePointTool` from a new circles menu; app-bar highlights now key on canonicalized top-level builder tear-offs, resolving the Session 8 highlight gotcha)
-- [ ] Arc (3-point), Sector
-- [ ] Angle (between lines / at vertex)
+- [x] Arc (3-point), Sector (both `GeoCircle` carriers with angular extent, mirroring `Segment`/`Ray` on `GeoLine`; new `math/angle_geometry.dart` sweep helpers; painter draws the branch/wedge, hit tester clamps to it)
+- [x] Angle (between lines / at vertex) (`GeoAngle` — new 4th sealed kind, value = `AngleGeometry`; `VertexAngle` CCW arm→arm, `LineAngle` always acute at the crossing; marker wedge at fixed screen radius, picked at its vertex with lowest priority)
 - [x] Ray (carrier `GeoLine` like `Segment`; painter half-line case + hit-tester extent clamp — segment/ray share one clamped-distance helper)
-- [ ] Tools for each of the above (done for everything landed so far; arc/sector/angle tools remain)
+- [x] Tools for each of the above (arc/sector/vertex-angle reuse `ThreePointTool` from the circles + new angles menus; `TwoLineTool` collects two existing lines for `LineAngle`)
 
 ## Phase 7 — Selection & attributes
 - [ ] Multi-select (rubber band + shift-click)
