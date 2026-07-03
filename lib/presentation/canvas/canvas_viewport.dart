@@ -19,7 +19,58 @@ import '../../domain/math/vec2.dart';
 class CanvasViewport {
   const CanvasViewport(this.state);
 
+  /// Zoom bounds, in screen pixels per world unit. Wide enough that no
+  /// reasonable construction hits them; tight enough that float precision
+  /// in the transforms never becomes visible.
+  static const double minScale = 0.05;
+  static const double maxScale = 50;
+
   final ViewportState state;
+
+  /// The state after multiplying scale by [factor] (> 1 zooms in) while
+  /// keeping the world point under [focal] (screen coordinates) exactly
+  /// there — the cursor pins the content. Scale is clamped to
+  /// [minScale]..[maxScale]; at a bound the state returns unchanged.
+  ViewportState zoomedAbout(Offset focal, double factor) {
+    final newScale =
+        (state.scale * factor).clamp(minScale, maxScale).toDouble();
+    if (newScale == state.scale) {
+      return state;
+    }
+    return pinning(world: screenToWorld(focal), focal: focal, scale: newScale);
+  }
+
+  /// The state after shifting the content by [delta] screen pixels
+  /// (y-down, like a pointer delta): content follows a rightward/downward
+  /// delta, so the world point at the canvas origin moves the other way.
+  /// Backs viewport nudging; scale is untouched.
+  ViewportState pannedByScreen(Offset delta) => ViewportState(
+        pan: Vec2(
+          state.pan.x - delta.dx / state.scale,
+          state.pan.y + delta.dy / state.scale,
+        ),
+        scale: state.scale,
+      );
+
+  /// The state with [scale] (clamped) whose pan puts the [world] point at
+  /// the [focal] screen point — the shared solve behind scroll zoom and
+  /// the pinch/pan gesture, where the anchor world point must track a
+  /// moving focal.
+  static ViewportState pinning({
+    required Vec2 world,
+    required Offset focal,
+    required double scale,
+  }) {
+    final clamped = scale.clamp(minScale, maxScale).toDouble();
+    // Solve screenToWorld(focal) == world for pan.
+    return ViewportState(
+      pan: Vec2(
+        world.x - focal.dx / clamped,
+        world.y + focal.dy / clamped,
+      ),
+      scale: clamped,
+    );
+  }
 
   Offset worldToScreen(Vec2 world) => Offset(
         (world.x - state.pan.x) * state.scale,

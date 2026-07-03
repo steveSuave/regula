@@ -33,6 +33,68 @@ void main() {
       expect(viewport.screenToWorldLength(8), 4);
     });
 
+    test('zoomedAbout scales while pinning the focal world point', () {
+      const viewport = CanvasViewport(
+        ViewportState(pan: Vec2(-4, 7.5), scale: 2.5),
+      );
+      const focal = Offset(320, 240);
+      final fixedWorld = viewport.screenToWorld(focal);
+
+      for (final factor in [2.0, 0.5, 1.25, 0.9]) {
+        final zoomed = CanvasViewport(viewport.zoomedAbout(focal, factor));
+        expect(zoomed.state.scale, closeTo(2.5 * factor, 1e-12));
+        final focalAfter = zoomed.worldToScreen(fixedWorld);
+        expect(focalAfter.dx, closeTo(focal.dx, 1e-9),
+            reason: 'factor $factor moved the focal point');
+        expect(focalAfter.dy, closeTo(focal.dy, 1e-9),
+            reason: 'factor $factor moved the focal point');
+      }
+    });
+
+    test('zoomedAbout in then out restores the original state', () {
+      const viewport = CanvasViewport(
+        ViewportState(pan: Vec2(3, -2), scale: 1.5),
+      );
+      const focal = Offset(100, 50);
+
+      final there = CanvasViewport(viewport.zoomedAbout(focal, 2));
+      final back = there.zoomedAbout(focal, 0.5);
+      expect(back.scale, closeTo(1.5, 1e-12));
+      expect(back.pan.closeTo(viewport.state.pan), isTrue,
+          reason: 'round trip drifted the pan: ${back.pan}');
+    });
+
+    test('zoomedAbout clamps the scale and no-ops at the bounds', () {
+      const viewport = CanvasViewport(ViewportState(scale: 1));
+      const focal = Offset(50, 50);
+
+      final floored = viewport.zoomedAbout(focal, 1e-9);
+      expect(floored.scale, CanvasViewport.minScale);
+      final ceiled = viewport.zoomedAbout(focal, 1e9);
+      expect(ceiled.scale, CanvasViewport.maxScale);
+
+      // Already at a bound: further zoom out must not creep the pan.
+      final atFloor = CanvasViewport(floored);
+      expect(atFloor.zoomedAbout(focal, 0.5), floored,
+          reason: 'clamped zoom must return the state unchanged');
+    });
+
+    test('pannedByScreen shifts content with the pointer, scale untouched',
+        () {
+      const viewport = CanvasViewport(
+        ViewportState(pan: Vec2(10, -5), scale: 2),
+      );
+      const world = Vec2(12, -8);
+      final before = viewport.worldToScreen(world);
+
+      final panned =
+          CanvasViewport(viewport.pannedByScreen(const Offset(30, -14)));
+      expect(panned.state.scale, 2);
+      final after = panned.worldToScreen(world);
+      expect(after - before, const Offset(30, -14),
+          reason: 'every world point moves by exactly the screen delta');
+    });
+
     test('screenToWorld inverts worldToScreen', () {
       const viewport = CanvasViewport(
         ViewportState(pan: Vec2(-4, 7.5), scale: 2.5),
