@@ -33,6 +33,7 @@ import 'domain/tools/triangle_center_tool.dart';
 import 'domain/tools/two_line_tool.dart';
 import 'domain/tools/two_point_tool.dart';
 import 'presentation/canvas/geometry_canvas.dart';
+import 'presentation/panels/attributes_inspector.dart';
 
 void main() {
   runApp(const ProviderScope(child: MainApp()));
@@ -341,7 +342,13 @@ class EditorScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: const GeometryCanvas(),
+      body: const Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(child: GeometryCanvas()),
+          AttributesInspector(),
+        ],
+      ),
     );
   }
 }
