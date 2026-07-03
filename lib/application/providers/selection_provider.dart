@@ -37,6 +37,11 @@ class SelectionNotifier extends _$SelectionNotifier {
         }
       : {...state, id};
 
+  /// Replaces the selection with [ids] (rubber band); [additive] unions
+  /// instead (shift + rubber band). An empty non-additive call clears.
+  void selectMany(Iterable<String> ids, {bool additive = false}) =>
+      state = additive ? {...state, ...ids} : {...ids};
+
   /// Selects every object currently in the construction (Ctrl/Cmd+A).
   void selectAll() => state = {
         for (final object in ref.read(constructionProvider).construction.objects)

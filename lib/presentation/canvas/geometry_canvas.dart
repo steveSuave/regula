@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,11 +15,13 @@ import 'geometry_painter.dart';
 /// The drawing surface: hosts the [GeometryPainter] and turns taps into
 /// [ToolInput]s for the active tool — or, with no tool active
 /// (move/select mode), into selection changes: tap selects the hit
-/// object, shift-tap toggles it, tapping empty canvas clears.
+/// object, shift-tap toggles it, tapping empty canvas clears, and a drag
+/// from empty canvas rubber-bands everything wholly inside (shift adds
+/// to the selection instead of replacing it).
 ///
-/// Drag (one command per gesture), pinch/scroll zoom and pan land in
-/// Phases 7–8 on top of the same gesture stack.
-class GeometryCanvas extends ConsumerWidget {
+/// Object drag (one command per gesture), pinch/scroll zoom and pan land
+/// later in Phases 7–8 on top of the same gesture stack.
+class GeometryCanvas extends ConsumerStatefulWidget {
   const GeometryCanvas({super.key});
 
   /// Hit-test radius in logical pixels (PLAN: 8 px), converted to world
@@ -26,7 +29,20 @@ class GeometryCanvas extends ConsumerWidget {
   static const double hitThresholdPx = 8;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<GeometryCanvas> createState() => _GeometryCanvasState();
+}
+
+class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
+  /// In-progress rubber band, in screen coordinates; null when no band
+  /// is being dragged. Local widget state — nothing outside the canvas
+  /// cares until the band commits to the selection on release.
+  /// [_bandAnchor] is the drag's start corner: a `Rect` normalizes its
+  /// corners away, so it can't serve as the fixed one on its own.
+  Rect? _band;
+  Offset? _bandAnchor;
+
+  @override
+  Widget build(BuildContext context) {
     final constructionState = ref.watch(constructionProvider);
     final viewport = CanvasViewport(ref.watch(viewportProvider));
     // The tool revision bumps on every accepted input, so in-progress
@@ -35,7 +51,18 @@ class GeometryCanvas extends ConsumerWidget {
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
+      // .down (not the default .start): the band must anchor where the
+      // pointer went down, not where the drag won the gesture arena —
+      // with .start a fast drag loses its first ~18 px of slop.
+      dragStartBehavior: DragStartBehavior.down,
       onTapUp: (details) => _handleTap(ref, viewport, details.localPosition),
+      onPanStart: (details) => _bandStart(viewport, details.localPosition),
+      onPanUpdate: (details) => _bandUpdate(details.localPosition),
+      onPanEnd: (_) => _bandEnd(viewport),
+      onPanCancel: () => setState(() {
+        _band = null;
+        _bandAnchor = null;
+      }),
       child: CustomPaint(
         painter: GeometryPainter(
           construction: constructionState.construction,
@@ -47,9 +74,64 @@ class GeometryCanvas extends ConsumerWidget {
           previewMarkers:
               tool is ToolInputPreview ? tool.previewPositions : const [],
         ),
+        foregroundPainter: _MarqueePainter(
+          band: _band,
+          color: Theme.of(context).colorScheme.tertiary,
+        ),
         child: const SizedBox.expand(),
       ),
     );
+  }
+
+  /// A drag in move/select mode starting over empty canvas opens a
+  /// rubber band. Over an object (a future move-drag) or with a tool
+  /// active, the pan is ignored.
+  void _bandStart(CanvasViewport viewport, Offset screen) {
+    if (ref.read(toolProvider).tool != null) {
+      return;
+    }
+    final construction = ref.read(constructionProvider).construction;
+    final hit = const CanvasHitTester().hitTest(
+      construction.objects,
+      viewport.screenToWorld(screen),
+      viewport.screenToWorldLength(GeometryCanvas.hitThresholdPx),
+    );
+    if (hit != null) {
+      return;
+    }
+    setState(() {
+      _bandAnchor = screen;
+      _band = Rect.fromPoints(screen, screen);
+    });
+  }
+
+  void _bandUpdate(Offset screen) {
+    final anchor = _bandAnchor;
+    if (anchor == null) {
+      return;
+    }
+    setState(() => _band = Rect.fromPoints(anchor, screen));
+  }
+
+  void _bandEnd(CanvasViewport viewport) {
+    final band = _band;
+    if (band == null) {
+      return;
+    }
+    setState(() {
+      _band = null;
+      _bandAnchor = null;
+    });
+    final construction = ref.read(constructionProvider).construction;
+    final banded = const CanvasHitTester().objectsInRect(
+      construction.objects,
+      viewport.screenToWorld(band.topLeft),
+      viewport.screenToWorld(band.bottomRight),
+    );
+    ref.read(selectionProvider.notifier).selectMany(
+          [for (final object in banded) object.id],
+          additive: HardwareKeyboard.instance.isShiftPressed,
+        );
   }
 
   void _handleTap(WidgetRef ref, CanvasViewport viewport, Offset screen) {
@@ -60,7 +142,7 @@ class GeometryCanvas extends ConsumerWidget {
     final hit = const CanvasHitTester().hitTest(
       construction.objects,
       world,
-      viewport.screenToWorldLength(hitThresholdPx),
+      viewport.screenToWorldLength(GeometryCanvas.hitThresholdPx),
     );
     if (ref.read(toolProvider).tool != null) {
       // An active tool owns every tap — including ones it ignores, so a
@@ -77,4 +159,33 @@ class GeometryCanvas extends ConsumerWidget {
       selection.select(hit.id);
     }
   }
+}
+
+/// The in-progress rubber band: a hairline outline over a translucent
+/// fill, in screen coordinates (no viewport transform).
+class _MarqueePainter extends CustomPainter {
+  _MarqueePainter({required this.band, required this.color});
+
+  final Rect? band;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final band = this.band;
+    if (band == null) {
+      return;
+    }
+    canvas.drawRect(band, Paint()..color = color.withValues(alpha: 0.12));
+    canvas.drawRect(
+      band,
+      Paint()
+        ..color = color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_MarqueePainter oldDelegate) =>
+      oldDelegate.band != band || oldDelegate.color != color;
 }

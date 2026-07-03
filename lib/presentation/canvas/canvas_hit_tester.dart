@@ -5,6 +5,7 @@ import '../../domain/construction/objects/arc.dart';
 import '../../domain/construction/objects/ray.dart';
 import '../../domain/construction/objects/sector.dart';
 import '../../domain/construction/objects/segment.dart';
+import '../../domain/math/circle_eq.dart';
 import '../../domain/math/vec2.dart';
 
 /// Finds the object under a tap.
@@ -64,6 +65,74 @@ class CanvasHitTester {
       }
     }
     return best;
+  }
+
+  /// The visible, defined objects wholly inside the axis-aligned world
+  /// rect spanned by [corner1] and [corner2] — rubber-band selection.
+  ///
+  /// "Wholly inside" is the rule: a band that merely crosses an object
+  /// does not take it. Infinite carriers (lines, rays) can never be
+  /// contained; arcs and sectors are measured by their drawn branch, not
+  /// the full carrier circle; an angle by its vertex (its marker is
+  /// screen-sized, invisible to a world-space tester — cf. [hitTest]).
+  List<GeoObject> objectsInRect(
+    Iterable<GeoObject> objects,
+    Vec2 corner1,
+    Vec2 corner2,
+  ) {
+    final minX = math.min(corner1.x, corner2.x);
+    final maxX = math.max(corner1.x, corner2.x);
+    final minY = math.min(corner1.y, corner2.y);
+    final maxY = math.max(corner1.y, corner2.y);
+    bool within(Vec2 p) =>
+        p.x >= minX && p.x <= maxX && p.y >= minY && p.y <= maxY;
+
+    return [
+      for (final object in objects)
+        if (object.attributes.visible &&
+            object.isDefined &&
+            _containedIn(object, within))
+          object,
+    ];
+  }
+
+  bool _containedIn(GeoObject object, bool Function(Vec2) within) =>
+      switch (object) {
+        GeoPoint() => within(object.position!),
+        Segment() => within(object.start!) && within(object.end!),
+        Arc() => _branchExtremes(
+            object.circle!,
+            object.containsAngle,
+            [object.startPosition!, object.endPosition!],
+          ).every(within),
+        Sector() => _branchExtremes(
+            object.circle!,
+            object.containsAngle,
+            [object.circle!.center, object.startRim!, object.endRim!],
+          ).every(within),
+        GeoCircle() =>
+          _branchExtremes(object.circle!, (_) => true, const []).every(within),
+        GeoLine() => false, // infinite (rays included): never contained
+        GeoAngle() => within(object.angle!.vertex),
+      };
+
+  /// The points bounding a carrier-circle branch: the [seeds] (endpoints,
+  /// and for a sector its center) plus each cardinal-direction extreme of
+  /// the carrier that lies on the branch. Their combined bounding box is
+  /// the branch's exact bounding box.
+  Iterable<Vec2> _branchExtremes(
+    CircleEq circle,
+    bool Function(double) containsAngle,
+    List<Vec2> seeds,
+  ) sync* {
+    yield* seeds;
+    for (var k = 0; k < 4; k++) {
+      final angle = k * math.pi / 2;
+      if (containsAngle(angle)) {
+        yield circle.center +
+            Vec2(math.cos(angle), math.sin(angle)) * circle.radius;
+      }
+    }
   }
 
   /// Distance from [point] to the object's visible geometry. Only called
