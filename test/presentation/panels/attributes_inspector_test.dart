@@ -156,6 +156,87 @@ void main() {
     expect(b.attributes.visible, isFalse);
   });
 
+  testWidgets('color swatches: explicit color and back to Auto, one '
+      'command each', (tester) async {
+    await pumpEditor(tester);
+    final a = addPoint('a', Vec2.zero);
+    container.read(selectionProvider.notifier).select('a');
+    await tester.pump();
+
+    await tester.tap(find.byTooltip('Red'));
+    await tester.pump();
+    expect(a.attributes.colorArgb, 0xFFE53935);
+
+    await tester.tap(find.byTooltip('Auto'));
+    await tester.pump();
+    expect(a.attributes.colorArgb, isNull,
+        reason: 'Auto must set the color back to the theme-default null, '
+            'not leave the previous explicit color in place');
+
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(a.attributes.colorArgb, 0xFFE53935,
+        reason: 'each swatch tap is its own undo step');
+  });
+
+  testWidgets('re-tapping the color the whole selection already has adds '
+      'nothing to the undo stack', (tester) async {
+    await pumpEditor(tester);
+    addPoint('a', Vec2.zero);
+    container.read(selectionProvider.notifier).select('a');
+    await tester.pump();
+
+    await tester.tap(find.byTooltip('Auto'));
+    await tester.pump();
+    expect(container.read(commandStackProvider).canUndo, isFalse);
+  });
+
+  testWidgets('point size selector: points get it, strokes do not',
+      (tester) async {
+    await pumpEditor(tester);
+    final a = addPoint('a', Vec2.zero);
+    container.read(selectionProvider.notifier).select('a');
+    await tester.pump();
+
+    final pointSize = find.byKey(const ValueKey('point-size'));
+    expect(pointSize, findsOneWidget);
+    expect(find.byKey(const ValueKey('stroke-width')), findsNothing,
+        reason: 'stroke width means nothing for a point-only selection');
+
+    await tester
+        .tap(find.descendant(of: pointSize, matching: find.text('8')));
+    await tester.pump();
+    expect(a.attributes.pointSize, 8.0);
+
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(a.attributes.pointSize, 4.0);
+  });
+
+  testWidgets('mixed-kind selection: stroke width touches only the '
+      'non-points', (tester) async {
+    await pumpEditor(tester);
+    final a = addPoint('a', Vec2.zero);
+    final b = addPoint('b', const Vec2(4, 0));
+    final s = Segment(id: 's', point1: a, point2: b);
+    container.read(constructionProvider).construction.add(s);
+    container.read(selectionProvider.notifier).selectMany(['a', 'b', 's']);
+    await tester.pump();
+
+    final strokeWidth = find.byKey(const ValueKey('stroke-width'));
+    expect(strokeWidth, findsOneWidget);
+    expect(find.byKey(const ValueKey('point-size')), findsOneWidget);
+
+    await tester
+        .tap(find.descendant(of: strokeWidth, matching: find.text('6')));
+    await tester.pump();
+    expect(s.attributes.strokeWidth, 6.0);
+    expect(a.attributes.strokeWidth, 2.0,
+        reason: 'points keep their (unused) stroke width — the command '
+            'covers only the slice the control targets');
+    expect(a.attributes.pointSize, 4.0);
+  });
+
   testWidgets('multi-selection: count header and a read-only list',
       (tester) async {
     await pumpEditor(tester);

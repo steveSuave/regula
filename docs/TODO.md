@@ -69,7 +69,7 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] Drag derived objects (rigid translation of free-point ancestors via `TranslateObjectsCommand`) (`DragSession` in `domain/tools/` previews per frame and rolls back before the one command commits; free point → `MoveFreePointCommand`; *derived points refuse to drag* — sliding `PointOnObject` along its curve is still open)
 - [x] Attributes inspector panel (side panel, collapsed while nothing is selected; single selection shows kind + name editor — one `ChangeAttributesCommand` per rename; multi shows count + read-only list; hide/show and color/stroke controls land with their own items below)
 - [x] Hide/show + label visibility (inspector checkboxes over the whole selection — tristate dash for mixed, one command per tap; painter now draws names beside a per-kind `labelAnchor`; hiding keeps the object selected, since the inspector is the only way back to un-hiding until the object tree lands)
-- [ ] Color, stroke width
+- [x] Color, stroke width (swatch row — fixed palette + "Auto" for the theme-default null — and discrete width segments, so every tap is exactly one command; stroke width targets non-points, point size targets points, each control shown only when the selection has that kind)
 - [ ] Cascading-delete UX with confirmation
 - [ ] Object tree panel
 
