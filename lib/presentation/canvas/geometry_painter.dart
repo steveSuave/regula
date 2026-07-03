@@ -10,13 +10,15 @@ import '../../domain/construction/objects/segment.dart';
 import '../../domain/math/circle_eq.dart';
 import '../../domain/math/vec2.dart';
 import 'canvas_viewport.dart';
+import 'label_anchor.dart';
 
 /// Paints the construction in insertion order (first added = bottom).
 ///
 /// Skips undefined and invisible objects, per the `GeoObject` contract.
 /// Stroke widths and point radii come from `ObjectAttributes` and are in
 /// logical pixels — they do not scale with zoom (a hairline stays a
-/// hairline). Labels land with the attributes work in Phase 7.
+/// hairline). A named object with `labelVisible` gets its name painted
+/// beside its [labelAnchor], in the object's own color.
 class GeometryPainter extends CustomPainter {
   GeometryPainter({
     required this.construction,
@@ -42,6 +44,12 @@ class GeometryPainter extends CustomPainter {
   static const double _haloExtra = 5;
 
   static const double _haloAlpha = 0.4;
+
+  static const double _labelFontSize = 12;
+
+  /// Screen offset from the label's anchor to the text's top-left, sized
+  /// to sit above-right of a default point without touching it.
+  static const Offset _labelOffset = Offset(6, -18);
 
   /// Read live at paint time, in insertion (drawing) order.
   final Construction construction;
@@ -85,11 +93,17 @@ class GeometryPainter extends CustomPainter {
           ..style = PaintingStyle.stroke;
         _drawObject(canvas, size, object, halo, pointRadiusExtra: _haloExtra);
       }
+      final color =
+          Color(object.attributes.colorArgb ?? defaultColor.toARGB32());
       final paint = Paint()
-        ..color = Color(object.attributes.colorArgb ?? defaultColor.toARGB32())
+        ..color = color
         ..strokeWidth = object.attributes.strokeWidth
         ..style = PaintingStyle.stroke;
       _drawObject(canvas, size, object, paint);
+      if (object.attributes.labelVisible &&
+          object.attributes.name.isNotEmpty) {
+        _drawLabel(canvas, object, color);
+      }
     }
 
     final dot = Paint()..color = defaultColor;
@@ -157,6 +171,24 @@ class GeometryPainter extends CustomPainter {
       case GeoAngle():
         _drawAngleMarker(canvas, object, paint);
     }
+  }
+
+  /// Paints the object's name beside its [labelAnchor]. Like stroke
+  /// widths, the font size and offset are in logical pixels and do not
+  /// scale with zoom.
+  void _drawLabel(Canvas canvas, GeoObject object, Color color) {
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: object.attributes.name,
+        style: TextStyle(color: color, fontSize: _labelFontSize),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    textPainter.paint(
+      canvas,
+      viewport.worldToScreen(labelAnchor(object)) + _labelOffset,
+    );
+    textPainter.dispose();
   }
 
   /// Draws a ray from its start extending far past the canvas on one side
