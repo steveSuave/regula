@@ -65,7 +65,7 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] Tools for each of the above (arc/sector/vertex-angle reuse `ThreePointTool` from the circles + new angles menus; `TwoLineTool` collects two existing lines for `LineAngle`)
 
 ## Phase 7 — Selection & attributes
-- [ ] Multi-select (rubber band + shift-click)
+- [x] Multi-select (rubber band + shift-click) (tap selects / shift-tap toggles / empty tap clears; band from empty canvas takes what it *wholly* contains — infinite lines and rays never band; shift-band unions; halo drawn in theme tertiary)
 - [ ] Drag derived objects (rigid translation of free-point ancestors via `TranslateObjectsCommand`)
 - [ ] Attributes inspector panel
 - [ ] Hide/show + label visibility
