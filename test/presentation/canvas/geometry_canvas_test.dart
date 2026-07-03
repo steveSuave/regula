@@ -2,9 +2,12 @@ import 'dart:math' as math;
 
 import 'package:fgex/application/providers/construction_provider.dart';
 import 'package:fgex/application/providers/selection_provider.dart';
+import 'package:fgex/application/providers/tool_provider.dart';
 import 'package:fgex/domain/construction/objects/arc.dart';
 import 'package:fgex/domain/construction/objects/compass_circle.dart';
+import 'package:fgex/domain/construction/objects/free_point.dart';
 import 'package:fgex/domain/construction/objects/line_angle.dart';
+import 'package:fgex/domain/construction/objects/midpoint.dart';
 import 'package:fgex/domain/construction/objects/sector.dart';
 import 'package:fgex/domain/construction/objects/segment_ratio_point.dart';
 import 'package:fgex/domain/construction/objects/three_point_circle.dart';
@@ -729,6 +732,113 @@ void main() {
     await tester.pump();
     await onObject.up();
     await tester.pump();
+    expect(container.read(selectionProvider), isEmpty);
+  });
+
+  testWidgets('dragging a free point moves it; one undo restores it',
+      (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+
+    await tester.tap(find.byIcon(Icons.control_point));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(100, 100));
+    await tester.pump();
+    await tester.tap(find.byIcon(Icons.control_point)); // toggle off
+    await tester.pump();
+
+    FreePoint point() => container
+        .read(constructionProvider)
+        .construction
+        .objects
+        .whereType<FreePoint>()
+        .single;
+
+    final drag = await tester.startGesture(origin + const Offset(100, 100));
+    await drag.moveTo(origin + const Offset(250, 180));
+    await tester.pump();
+    expect(point().position, const Vec2(250, -180),
+        reason: 'the preview tracks the pointer frame by frame');
+    await drag.up();
+    await tester.pump();
+    expect(point().position, const Vec2(250, -180));
+
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(point().position, const Vec2(100, -100),
+        reason: 'the whole gesture is one undo unit');
+  });
+
+  testWidgets(
+      'dragging a segment rigidly translates its endpoints, one undo unit',
+      (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+
+    await tester.tap(find.byIcon(Icons.timeline));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Segment'));
+    await tester.pumpAndSettle();
+    await tester.tapAt(origin + const Offset(100, 100));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(300, 100));
+    await tester.pump();
+    container.read(toolProvider.notifier).deactivate(); // move/select mode
+    await tester.pump();
+
+    List<Vec2> endpoints() => [
+          for (final object in container
+              .read(constructionProvider)
+              .construction
+              .objects
+              .whereType<FreePoint>())
+            object.position,
+        ];
+
+    // Grab the segment between its endpoints and drag.
+    final drag = await tester.startGesture(origin + const Offset(200, 100));
+    await drag.moveTo(origin + const Offset(220, 160));
+    await tester.pump();
+    await drag.up();
+    await tester.pump();
+    expect(endpoints(), [const Vec2(120, -160), const Vec2(320, -160)],
+        reason: 'both defining points shift by the drag delta');
+
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(endpoints(), [const Vec2(100, -100), const Vec2(300, -100)]);
+  });
+
+  testWidgets('a derived point refuses to drag', (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+
+    await tester.tap(find.byIcon(Icons.timeline));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Midpoint'));
+    await tester.pumpAndSettle();
+    await tester.tapAt(origin + const Offset(100, 100));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(300, 100));
+    await tester.pump();
+    container.read(toolProvider.notifier).deactivate(); // move/select mode
+    await tester.pump();
+
+    // The midpoint sits at (200, 100) on screen; dragging it does nothing
+    // (and must not open a rubber band underneath it either).
+    final drag = await tester.startGesture(origin + const Offset(200, 100));
+    await drag.moveTo(origin + const Offset(300, 250));
+    await tester.pump();
+    await drag.up();
+    await tester.pump();
+
+    final midpoint = container
+        .read(constructionProvider)
+        .construction
+        .objects
+        .whereType<Midpoint>()
+        .single;
+    expect(midpoint.position, const Vec2(200, -100));
     expect(container.read(selectionProvider), isEmpty);
   });
 

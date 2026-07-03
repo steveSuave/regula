@@ -66,7 +66,7 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 
 ## Phase 7 — Selection & attributes
 - [x] Multi-select (rubber band + shift-click) (tap selects / shift-tap toggles / empty tap clears; band from empty canvas takes what it *wholly* contains — infinite lines and rays never band; shift-band unions; halo drawn in theme tertiary)
-- [ ] Drag derived objects (rigid translation of free-point ancestors via `TranslateObjectsCommand`)
+- [x] Drag derived objects (rigid translation of free-point ancestors via `TranslateObjectsCommand`) (`DragSession` in `domain/tools/` previews per frame and rolls back before the one command commits; free point → `MoveFreePointCommand`; *derived points refuse to drag* — sliding `PointOnObject` along its curve is still open)
 - [ ] Attributes inspector panel
 - [ ] Hide/show + label visibility
 - [ ] Color, stroke width
