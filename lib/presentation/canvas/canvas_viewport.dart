@@ -40,6 +40,18 @@ class CanvasViewport {
     return pinning(world: screenToWorld(focal), focal: focal, scale: newScale);
   }
 
+  /// The state after shifting the content by [delta] screen pixels
+  /// (y-down, like a pointer delta): content follows a rightward/downward
+  /// delta, so the world point at the canvas origin moves the other way.
+  /// Backs viewport nudging; scale is untouched.
+  ViewportState pannedByScreen(Offset delta) => ViewportState(
+        pan: Vec2(
+          state.pan.x - delta.dx / state.scale,
+          state.pan.y + delta.dy / state.scale,
+        ),
+        scale: state.scale,
+      );
+
   /// The state with [scale] (clamped) whose pan puts the [world] point at
   /// the [focal] screen point — the shared solve behind scroll zoom and
   /// the pinch/pan gesture, where the anchor world point must track a

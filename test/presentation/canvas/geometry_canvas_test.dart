@@ -1024,6 +1024,49 @@ void main() {
     expect(container.read(selectionProvider), isEmpty);
   });
 
+  testWidgets('fit frames the construction; reset restores the default view',
+      (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+
+    await tester.tap(find.byIcon(Icons.control_point));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(100, 100));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(300, 200));
+    await tester.pump();
+
+    // Wander off first, so fit demonstrably recovers the construction.
+    container
+        .read(viewportProvider.notifier)
+        .set(const ViewportState(pan: Vec2(5000, 5000), scale: 7));
+    await tester.pump();
+
+    await tester.tap(find.byIcon(Icons.fit_screen));
+    await tester.pump();
+    final canvasSize = tester.getSize(find.byType(GeometryCanvas));
+    final fitted = CanvasViewport(container.read(viewportProvider));
+    final points = container
+        .read(constructionProvider)
+        .construction
+        .objects
+        .whereType<FreePoint>()
+        .toList();
+    final onScreen =
+        points.map((p) => fitted.worldToScreen(p.position)).toList();
+    for (final screen in onScreen) {
+      expect(screen.dx, inInclusiveRange(0, canvasSize.width));
+      expect(screen.dy, inInclusiveRange(0, canvasSize.height));
+    }
+    final midpointOnScreen = (onScreen[0] + onScreen[1]) / 2;
+    expect(midpointOnScreen.dx, closeTo(canvasSize.width / 2, 1e-6));
+    expect(midpointOnScreen.dy, closeTo(canvasSize.height / 2, 1e-6));
+
+    await tester.tap(find.byIcon(Icons.filter_center_focus));
+    await tester.pump();
+    expect(container.read(viewportProvider), const ViewportState());
+  });
+
   testWidgets('a second finger mid-band cancels the band instead of '
       'committing it', (tester) async {
     await pumpEditor(tester);

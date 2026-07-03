@@ -74,10 +74,10 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] Object tree panel (toggled from the app bar, hidden by default; flat list grouped by sealed kind in insertion order; rows select on tap / toggle on shift-tap — canvas semantics, so hidden objects are finally reachable — plus a per-row eye flipping `visible`, one command per tap)
 
 ## Phase 8 — Pan/zoom viewport
-- [ ] Pinch-to-zoom on touch
-- [x] Scroll-to-zoom on web/desktop (exponential per-pixel factor about the cursor via `CanvasViewport.zoomedAbout` — the focal world point stays pinned; scale clamped 0.05×–50×; wired through `PointerSignalResolver`; viewport changes are deliberately *not* undoable, noted in PLAN)
-- [ ] Two-finger pan / space-drag
-- [ ] Fit / reset / nudge
+- [x] Pinch-to-zoom on touch (canvas gestures moved from pan to scale callbacks — scale is the superset that also receives trackpad pan-zoom, which reports as ≥2 pointers; `CanvasViewport.pinning` solves zoom+pan per frame from a per-gesture baseline so error can't accumulate; the `Listener` records the true down position since the recognizer only reports the post-slop acceptance focal)
+- [x] Scroll-to-zoom on web/desktop (exponential per-pixel factor about the cursor via `CanvasViewport.zoomedAbout` — the focal world point stays pinned; scale clamped 0.05×–50×; wired through `PointerSignalResolver`; viewport changes are deliberately *not* undoable, noted in PLAN) (exponential per-pixel factor about the cursor via `CanvasViewport.zoomedAbout` — the focal world point stays pinned; scale clamped 0.05×–50×; wired through `PointerSignalResolver`; viewport changes are deliberately *not* undoable, noted in PLAN)
+- [x] Two-finger pan / space-drag (both are the same navigation baseline with `details.scale == 1`; a gesture that starts navigating stays navigation until every pointer lifts, and a band/drag interrupted by a second finger cancels rather than commits)
+- [x] Fit / reset / nudge (app-bar Fit button — pure `fittedViewport` over per-kind world bounds: points/circle discs/angle vertices, lines contribute nothing; Reset button = origin at 100 %; nudge's viewport op landed as `CanvasViewport.pannedByScreen`, its arrow-key wiring belongs to Phase 11's shortcut table)
 
 ## Phase 9 — Persistence & theme
 - [ ] JSON codec (encode + decode in topological order, `version: 1`)
