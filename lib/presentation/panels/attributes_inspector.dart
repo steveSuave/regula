@@ -13,11 +13,13 @@ import 'object_kind_label.dart';
 /// nothing while the selection is empty.
 ///
 /// A single selected object gets its kind as the header plus editable
-/// fields (name, visibility, label visibility — color and stroke arrive
-/// with their own Phase 7 items). A multi-selection shows the count, the
-/// same toggles applied to the whole selection (a dash means the values
-/// are mixed; a tap resolves mixed to all-on), and a read-only list of
-/// what's in it.
+/// fields (name, visibility, label visibility, color, width). A
+/// multi-selection shows the count, the same controls applied to the
+/// whole selection (a dash or no highlight means the values are mixed;
+/// a tap sets everything), and a read-only list of what's in it. Width
+/// is two controls — stroke width for line-like kinds, point size for
+/// points — each shown only when the selection contains that kind and
+/// applied only to it.
 ///
 /// Hiding a selected object does not deselect it: hidden objects can't
 /// be hit on the canvas, so staying in the inspector is the way back to
@@ -48,6 +50,16 @@ class AttributesInspector extends ConsumerWidget {
 
     final theme = Theme.of(context);
     final single = objects.length == 1 ? objects.first : null;
+    // Width means different things per kind, so the two selectors each
+    // target their own slice of the selection.
+    final points = [
+      for (final object in objects)
+        if (object is GeoPoint) object,
+    ];
+    final strokes = [
+      for (final object in objects)
+        if (object is! GeoPoint) object,
+    ];
     return SizedBox(
       width: panelWidth,
       child: Row(
@@ -98,6 +110,50 @@ class AttributesInspector extends ConsumerWidget {
                     (attributes) => attributes.copyWith(labelVisible: value),
                   ),
                 ),
+                const SizedBox(height: 8),
+                _ColorRow(
+                  values: [
+                    for (final object in objects) object.attributes.colorArgb,
+                  ],
+                  onChanged: (argb) => _setForAll(
+                    ref,
+                    objects,
+                    (attributes) => attributes.copyWith(colorArgb: argb),
+                  ),
+                ),
+                if (strokes.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  _WidthSelector(
+                    key: const ValueKey('stroke-width'),
+                    label: 'Stroke width',
+                    options: const [1, 2, 4, 6],
+                    values: [
+                      for (final object in strokes)
+                        object.attributes.strokeWidth,
+                    ],
+                    onChanged: (width) => _setForAll(
+                      ref,
+                      strokes,
+                      (attributes) => attributes.copyWith(strokeWidth: width),
+                    ),
+                  ),
+                ],
+                if (points.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  _WidthSelector(
+                    key: const ValueKey('point-size'),
+                    label: 'Point size',
+                    options: const [3, 4, 6, 8],
+                    values: [
+                      for (final object in points) object.attributes.pointSize,
+                    ],
+                    onChanged: (size) => _setForAll(
+                      ref,
+                      points,
+                      (attributes) => attributes.copyWith(pointSize: size),
+                    ),
+                  ),
+                ],
                 if (single == null) ...[
                   const Divider(),
                   for (final object in objects)
@@ -196,6 +252,137 @@ class _AttributeToggle extends StatelessWidget {
       tristate: true,
       value: allOn || !anyOn ? allOn : null,
       onChanged: (_) => onChanged(!allOn),
+    );
+  }
+}
+
+/// The colors the inspector offers, as (tooltip, raw ARGB) pairs; null
+/// is "Auto" — inherit the theme default, the portable choice that
+/// adapts when light/dark themes land in Phase 9.
+const _palette = <(String, int?)>[
+  ('Auto', null),
+  ('Red', 0xFFE53935),
+  ('Orange', 0xFFFB8C00),
+  ('Green', 0xFF43A047),
+  ('Blue', 0xFF1E88E5),
+  ('Purple', 0xFF8E24AA),
+];
+
+/// The selection's color as a row of tappable swatches.
+///
+/// A swatch is highlighted only when the whole selection carries exactly
+/// its color — a mixed selection highlights nothing. The Auto swatch is
+/// drawn in the theme primary (what the canvas paints for `null`) with a
+/// reset glyph to tell it apart from the fixed blues and purples.
+class _ColorRow extends StatelessWidget {
+  const _ColorRow({required this.values, required this.onChanged});
+
+  final List<int?> values;
+  final ValueChanged<int?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final uniform = values.toSet().length == 1;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Color', style: Theme.of(context).textTheme.bodyMedium),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          children: [
+            for (final (name, argb) in _palette)
+              Tooltip(
+                message: name,
+                child: InkWell(
+                  onTap: () => onChanged(argb),
+                  customBorder: const CircleBorder(),
+                  child: Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Color(argb ?? scheme.primary.toARGB32()),
+                      border: Border.all(
+                        color: uniform && argb == values.first
+                            ? scheme.onSurface
+                            : scheme.outlineVariant,
+                        width: uniform && argb == values.first ? 3 : 1,
+                      ),
+                    ),
+                    child: argb == null
+                        ? Icon(
+                            Icons.format_color_reset,
+                            size: 16,
+                            color: scheme.onPrimary,
+                          )
+                        : null,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// One width attribute over (a slice of) the selection, as a row of
+/// discrete choices — discrete so each tap is exactly one command on the
+/// undo stack, where a live slider would emit one per frame.
+///
+/// Nothing is highlighted when the values are mixed, or uniform but not
+/// among [options] (possible once saved files arrive).
+class _WidthSelector extends StatelessWidget {
+  const _WidthSelector({
+    super.key,
+    required this.label,
+    required this.options,
+    required this.values,
+    required this.onChanged,
+  });
+
+  final String label;
+  final List<double> options;
+  final List<double> values;
+  final ValueChanged<double> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final uniform = values.toSet().length == 1;
+    final selected = uniform && options.contains(values.first)
+        ? {values.first}
+        : const <double>{};
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: Theme.of(context).textTheme.bodyMedium),
+        const SizedBox(height: 8),
+        SegmentedButton<double>(
+          segments: [
+            for (final option in options)
+              ButtonSegment(
+                value: option,
+                label: Text('${option.round()}'),
+              ),
+          ],
+          selected: selected,
+          // Allowing empty lets `selected` model the mixed state; a tap
+          // on the already-selected segment then arrives as an empty set,
+          // which is a no-op rather than a "no width".
+          emptySelectionAllowed: true,
+          showSelectedIcon: false,
+          style: const ButtonStyle(
+            visualDensity: VisualDensity.compact,
+          ),
+          onSelectionChanged: (selection) {
+            if (selection.isNotEmpty) {
+              onChanged(selection.first);
+            }
+          },
+        ),
+      ],
     );
   }
 }
