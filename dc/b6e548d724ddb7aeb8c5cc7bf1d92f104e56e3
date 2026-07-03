@@ -1,0 +1,30 @@
+lib/presentation/panels/attributes_inspector.dart
+  s_a578ba5bbebbe2::t_3012915cb40204 1-155
+lib/main.dart
+  s_a578ba5bbebbe2::t_db61e235fcfffb 345-351
+  s_a578ba5bbebbe2::t_70c3889984e77c 36
+test/presentation/panels/attributes_inspector_test.dart
+  s_a578ba5bbebbe2::t_afe2230ca43dbb 1-130
+docs/TODO.md
+  s_a578ba5bbebbe2::t_5156570d2b7395 70
+lib/presentation/panels/object_kind_label.dart
+  s_a578ba5bbebbe2::t_b73d67b9a5b79f 1-50
+test/presentation/panels/object_kind_label_test.dart
+  s_a578ba5bbebbe2::t_356a6490cd6eee 1-78
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "dcb6e548d724ddb7aeb8c5cc7bf1d92f104e56e3",
+  "prompts": {},
+  "sessions": {
+    "s_a578ba5bbebbe2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f122032c-0d11-4220-98b2-a27aecdd4d04",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
