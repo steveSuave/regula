@@ -34,6 +34,7 @@ import 'domain/tools/two_line_tool.dart';
 import 'domain/tools/two_point_tool.dart';
 import 'presentation/canvas/geometry_canvas.dart';
 import 'presentation/panels/attributes_inspector.dart';
+import 'presentation/panels/object_tree_panel.dart';
 
 void main() {
   runApp(const ProviderScope(child: MainApp()));
@@ -91,11 +92,21 @@ TwoPointPick _pick(TwoPointBuilder builder) => () async => builder;
 /// The real toolbar/tool palette belongs in `presentation/panels/` and
 /// arrives with the wider tool coverage (Phases 6–7); this is just enough
 /// chrome to exercise Phase 5's canvas end to end.
-class EditorScreen extends ConsumerWidget {
+class EditorScreen extends ConsumerStatefulWidget {
   const EditorScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<EditorScreen> createState() => _EditorScreenState();
+}
+
+class _EditorScreenState extends ConsumerState<EditorScreen> {
+  /// Object-tree visibility is ephemeral UI state (not undoable, not
+  /// persisted), so it lives here rather than in a provider. Hidden by
+  /// default: the tree is a secondary surface next to the canvas.
+  bool _showObjectTree = false;
+
+  @override
+  Widget build(BuildContext context) {
     final activeTool = ref.watch(toolProvider).tool;
     final pointToolActive = activeTool is PointTool;
     final centerToolActive = activeTool is TriangleCenterTool;
@@ -117,6 +128,14 @@ class EditorScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          tooltip:
+              _showObjectTree ? 'Hide object tree' : 'Show object tree',
+          isSelected: _showObjectTree,
+          icon: const Icon(Icons.account_tree_outlined),
+          onPressed: () =>
+              setState(() => _showObjectTree = !_showObjectTree),
+        ),
         title: const Text('fgex'),
         actions: [
           IconButton(
@@ -342,11 +361,12 @@ class EditorScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: const Row(
+      body: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(child: GeometryCanvas()),
-          AttributesInspector(),
+          if (_showObjectTree) const ObjectTreePanel(),
+          const Expanded(child: GeometryCanvas()),
+          const AttributesInspector(),
         ],
       ),
     );
