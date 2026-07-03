@@ -56,13 +56,10 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
       // with .start a fast drag loses its first ~18 px of slop.
       dragStartBehavior: DragStartBehavior.down,
       onTapUp: (details) => _handleTap(ref, viewport, details.localPosition),
-      onPanStart: (details) => _bandStart(viewport, details.localPosition),
-      onPanUpdate: (details) => _bandUpdate(details.localPosition),
-      onPanEnd: (_) => _bandEnd(viewport),
-      onPanCancel: () => setState(() {
-        _band = null;
-        _bandAnchor = null;
-      }),
+      onPanStart: (details) => _panStart(viewport, details.localPosition),
+      onPanUpdate: (details) => _panUpdate(viewport, details.localPosition),
+      onPanEnd: (_) => _panEnd(viewport),
+      onPanCancel: _panCancel,
       child: CustomPaint(
         painter: GeometryPainter(
           construction: constructionState.construction,
@@ -83,20 +80,24 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
     );
   }
 
-  /// A drag in move/select mode starting over empty canvas opens a
-  /// rubber band. Over an object (a future move-drag) or with a tool
-  /// active, the pan is ignored.
-  void _bandStart(CanvasViewport viewport, Offset screen) {
+  /// A drag in move/select mode: starting over an object moves it (the
+  /// drag session lives in `toolProvider`), starting over empty canvas
+  /// opens a rubber band. With a tool active the pan is ignored.
+  void _panStart(CanvasViewport viewport, Offset screen) {
     if (ref.read(toolProvider).tool != null) {
       return;
     }
+    final world = viewport.screenToWorld(screen);
     final construction = ref.read(constructionProvider).construction;
     final hit = const CanvasHitTester().hitTest(
       construction.objects,
-      viewport.screenToWorld(screen),
+      world,
       viewport.screenToWorldLength(GeometryCanvas.hitThresholdPx),
     );
     if (hit != null) {
+      // May refuse (derived point): then the pan does nothing — starting
+      // a band under an object the user visibly grabbed would surprise.
+      ref.read(toolProvider.notifier).startDrag(hit, world);
       return;
     }
     setState(() {
@@ -105,17 +106,21 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
     });
   }
 
-  void _bandUpdate(Offset screen) {
+  void _panUpdate(CanvasViewport viewport, Offset screen) {
     final anchor = _bandAnchor;
-    if (anchor == null) {
+    if (anchor != null) {
+      setState(() => _band = Rect.fromPoints(anchor, screen));
       return;
     }
-    setState(() => _band = Rect.fromPoints(anchor, screen));
+    ref
+        .read(toolProvider.notifier)
+        .updateDrag(viewport.screenToWorld(screen));
   }
 
-  void _bandEnd(CanvasViewport viewport) {
+  void _panEnd(CanvasViewport viewport) {
     final band = _band;
     if (band == null) {
+      ref.read(toolProvider.notifier).endDrag();
       return;
     }
     setState(() {
@@ -132,6 +137,14 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
           [for (final object in banded) object.id],
           additive: HardwareKeyboard.instance.isShiftPressed,
         );
+  }
+
+  void _panCancel() {
+    ref.read(toolProvider.notifier).cancelDrag();
+    setState(() {
+      _band = null;
+      _bandAnchor = null;
+    });
   }
 
   void _handleTap(WidgetRef ref, CanvasViewport viewport, Offset screen) {

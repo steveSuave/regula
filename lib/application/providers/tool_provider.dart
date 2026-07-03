@@ -1,6 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../domain/construction/geo_object.dart';
+import '../../domain/math/vec2.dart';
+import '../../domain/tools/drag_session.dart';
 import '../../domain/tools/tool.dart';
 import 'command_stack_provider.dart';
 import 'construction_provider.dart';
@@ -37,6 +40,11 @@ class ActiveToolState {
 /// presentation layer never handles commands itself.
 @Riverpod(keepAlive: true, name: 'toolProvider')
 class ToolNotifier extends _$ToolNotifier {
+  /// The move/select-mode drag in progress, if any. Not part of [state]:
+  /// preview frames repaint through the construction's own revision, so
+  /// nothing needs to watch the session itself.
+  DragSession? _drag;
+
   @override
   ActiveToolState build() {
     // A swapped-in construction (File > New / Open) invalidates any
@@ -50,8 +58,10 @@ class ToolNotifier extends _$ToolNotifier {
   }
 
   /// Makes [tool] the active tool (null returns to move/select). The
-  /// outgoing tool's partially-collected input is discarded.
+  /// outgoing tool's partially-collected input is discarded, as is any
+  /// drag in progress.
   void activate(Tool? tool) {
+    _abandonDrag();
     state.tool?.reset();
     state = ActiveToolState(tool, 0);
   }
@@ -66,12 +76,53 @@ class ToolNotifier extends _$ToolNotifier {
   /// undo/redo, construction swap — since a collected object may no
   /// longer be in the graph and committing on top of it would throw.
   void resetInProgress() {
+    _abandonDrag();
     final tool = state.tool;
     if (tool == null) {
       return;
     }
     tool.reset();
     state = ActiveToolState(tool, state.revision + 1);
+  }
+
+  /// Starts a move/select-mode drag of [target], grabbed at [grabStart]
+  /// (world). Returns whether a drag began — false with a tool active or
+  /// for targets that don't drag — so the canvas knows whether to route
+  /// the pan's remaining frames here or to its rubber band.
+  bool startDrag(GeoObject target, Vec2 grabStart) {
+    if (state.tool != null) {
+      return false;
+    }
+    _drag = DragSession.start(
+      ref.read(constructionProvider).construction,
+      target,
+      grabStart,
+    );
+    return _drag != null;
+  }
+
+  /// Previews the drag at [pointer] (world). No-op when nothing drags.
+  void updateDrag(Vec2 pointer) => _drag?.update(pointer);
+
+  /// Ends the drag: the session's preview is rolled back and its single
+  /// start → end command executed (none when the pointer never moved).
+  void endDrag() {
+    final command = _drag?.end();
+    _drag = null;
+    if (command != null) {
+      ref.read(commandStackProvider.notifier).execute(command);
+    }
+  }
+
+  /// Rolls back and drops the drag without a command (pan cancel).
+  void cancelDrag() => _abandonDrag();
+
+  /// Cancel with a session-may-be-stale guard: also reached via
+  /// [resetInProgress] during undo/redo and construction swaps, where the
+  /// session's points may already be gone (the session skips those).
+  void _abandonDrag() {
+    _drag?.cancel();
+    _drag = null;
   }
 
   /// Routes one canvas input to the active tool and returns its verdict.
