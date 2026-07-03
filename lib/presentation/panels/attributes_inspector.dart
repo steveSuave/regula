@@ -5,6 +5,7 @@ import '../../application/providers/command_stack_provider.dart';
 import '../../application/providers/construction_provider.dart';
 import '../../application/providers/selection_provider.dart';
 import '../../domain/commands/change_attributes_command.dart';
+import '../../domain/commands/delete_objects_command.dart';
 import '../../domain/construction/geo_object.dart';
 import '../../domain/construction/object_attributes.dart';
 import 'object_kind_label.dart';
@@ -26,7 +27,10 @@ import 'object_kind_label.dart';
 /// un-hiding until the object tree panel lands.
 ///
 /// Every edit is one [ChangeAttributesCommand] on the shared stack, so
-/// attribute changes undo exactly like geometry changes.
+/// attribute changes undo exactly like geometry changes. The panel also
+/// carries the Delete button — deletion acts on the selection, and the
+/// panel exists exactly while there is one (see [_deleteSelection] for
+/// the cascade confirmation).
 class AttributesInspector extends ConsumerWidget {
   const AttributesInspector({super.key});
 
@@ -170,6 +174,17 @@ class AttributesInspector extends ConsumerWidget {
                           : Text(objectKindLabel(object)),
                     ),
                 ],
+                const SizedBox(height: 16),
+                OutlinedButton.icon(
+                  key: const ValueKey('delete-button'),
+                  icon: const Icon(Icons.delete_outline),
+                  label: Text(
+                    single != null
+                        ? 'Delete'
+                        : 'Delete ${objects.length} objects',
+                  ),
+                  onPressed: () => _deleteSelection(context, ref, objects),
+                ),
               ],
             ),
           ),
@@ -193,6 +208,70 @@ class AttributesInspector extends ConsumerWidget {
           }),
         );
   }
+
+  /// Deletes the selection as one [DeleteObjectsCommand] (one undo step).
+  ///
+  /// Deletion cascades to everything depending on the selection, so when
+  /// the cascade reaches *beyond* it, a dialog lists exactly which
+  /// unselected objects would go too and asks first. A self-contained
+  /// selection (dependents all selected, or none) deletes immediately —
+  /// the user already sees everything that will disappear.
+  Future<void> _deleteSelection(
+    BuildContext context,
+    WidgetRef ref,
+    List<GeoObject> objects,
+  ) async {
+    final construction = ref.read(constructionProvider).construction;
+    final ids = [for (final object in objects) object.id];
+    final doomed = {
+      for (final id in ids) ...construction.transitiveDependentsOf(id),
+    }..removeAll(ids);
+    if (doomed.isNotEmpty) {
+      // Insertion order, like every other listing of objects.
+      final casualties = [
+        for (final object in construction.objects)
+          if (doomed.contains(object.id)) object,
+      ];
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          scrollable: true,
+          title: const Text('Delete dependent objects too?'),
+          content: Text(
+            '${casualties.length == 1 ? 'This object depends' : 'These '
+                '${casualties.length} objects depend'} on the selection '
+            'and will also be deleted:\n\n'
+            '${casualties.map(_displayLabel).join(', ')}',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              key: const ValueKey('confirm-delete'),
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Delete'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !context.mounted) {
+        return;
+      }
+    }
+    // The construction can have changed while the dialog was up; an
+    // all-gone selection must not put an empty delete on the undo stack.
+    if (!ids.any(construction.contains)) {
+      return;
+    }
+    ref.read(commandStackProvider.notifier).execute(DeleteObjectsCommand(ids));
+  }
+
+  static String _displayLabel(GeoObject object) =>
+      object.attributes.name.isEmpty
+          ? objectKindLabel(object)
+          : object.attributes.name;
 
   /// Applies [change] to every selected object in one command, so a
   /// multi-object toggle undoes as a single step. Objects re-read by id

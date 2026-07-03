@@ -70,7 +70,7 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] Attributes inspector panel (side panel, collapsed while nothing is selected; single selection shows kind + name editor — one `ChangeAttributesCommand` per rename; multi shows count + read-only list; hide/show and color/stroke controls land with their own items below)
 - [x] Hide/show + label visibility (inspector checkboxes over the whole selection — tristate dash for mixed, one command per tap; painter now draws names beside a per-kind `labelAnchor`; hiding keeps the object selected, since the inspector is the only way back to un-hiding until the object tree lands)
 - [x] Color, stroke width (swatch row — fixed palette + "Auto" for the theme-default null — and discrete width segments, so every tap is exactly one command; stroke width targets non-points, point size targets points, each control shown only when the selection has that kind)
-- [ ] Cascading-delete UX with confirmation
+- [x] Cascading-delete UX with confirmation (Delete button in the inspector; a dialog appears only when the cascade reaches *beyond* the selection, listing the unselected casualties by name/kind — a self-contained selection deletes immediately; always one `DeleteObjectsCommand` = one undo step)
 - [ ] Object tree panel
 
 ## Phase 8 — Pan/zoom viewport
