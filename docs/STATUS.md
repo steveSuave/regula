@@ -6,6 +6,27 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 12 — 2026-07-04
+
+**Done**
+- Phase 8 complete on `phase-8-viewport` (4 commits), merged to `main`. PLAN updated first with the decision the Session 11 entry teed up: viewport changes are *view* state — never `Command`s, never undoable (same reasoning as selection); the viewport still gets snapshotted into the Phase 9 save format, just outside undo history.
+- Scroll-zoom: `CanvasViewport.zoomedAbout` pins the world point under the cursor, scale clamped 0.05–50 px/unit; factor is e^(−dy·0.002) so scroll up/down round-trips exactly; wired through `Listener.onPointerSignal` + `PointerSignalResolver`.
+- Pinch + pan: canvas moved from pan to *scale* callbacks (Flutter forbids both on one detector; scale also receives trackpad pan-zoom, which reports as ≥2 pointers). Two fingers or held space = navigation: `CanvasViewport.pinning` solves zoom+pan each frame from a per-gesture baseline (no accumulated error). Navigation latches until every pointer lifts; a band/drag interrupted by a second finger cancels, never commits.
+- Fit / reset: pure `fittedViewport` over per-kind world bounds (points, full circle discs, angle vertices; lines contribute nothing — their defining points already count; single point centers at 100 %). App-bar Fit + Reset buttons; canvas size read via a `GlobalKey` at tap time. `CanvasViewport.pannedByScreen` backs nudge; arrow-key wiring is Phase 11's shortcut table.
+- 420 tests green, `flutter analyze` clean. Real-browser smoke (Playwright + `flutter run -d web-server`): 3 wheel notches measured spread ×1.820 vs e^0.6 ≈ 1.822 expected, focal point pinned within 0.5 px, zero console errors.
+- The Playwright drive script now lives **in-repo** at `tool/web_smoke/drive.js` (+README) — Session 7's died with its scratchpad; extend it per phase instead of rewriting.
+
+**Next**
+- Phase 9 — persistence & theme: JSON codec (`version: 1`, topological order), Save/Open via `file_picker`, light/dark canvas palette, theme choice in `shared_preferences`, round-trip test on a construction using every object kind. Start a `phase-9-persistence` branch.
+
+**Open questions / gotchas**
+- `ScaleGestureRecognizer` reports the focal point only at *acceptance* (past ~18 px slop) — the canvas `Listener` records the true down position for the band anchor and drag hit test. `dragStartBehavior` is back to the default `.start`: the anchor no longer comes from the recognizer, and `.start` re-baselines `details.scale` at acceptance so a pinch can't open with a jump.
+- The scale gesture has no cancel callback; pointer-cancel rollback lives in `Listener.onPointerCancel`, and the recognizer's trailing `onEnd` then finds nothing to commit (`endDrag` without a session is a no-op — relied upon).
+- On finger add/remove the recognizer fires `onEnd` + fresh `onStart`; `ScaleEndDetails.pointerCount` 0 vs >0 is what separates "gesture over" from "reconfiguring". Don't collapse the two paths.
+- Widget-testing multi-touch: per-finger moves are sequential events, so the span breathes mid-frame. Separate the fingers *perpendicular* to the drag direction (span ≈ constant) or the accept-time baseline bakes a spurious zoom into the assertions.
+- Default viewport still puts the world origin at the canvas top-left; Fit is the recovery. If Phase 9's File > New should open centered instead, decide it there.
+- Still open: sliding `PointOnObject` along its curve when dragged; angle hit-target world-radius hint now that zoom exists (marker is screen-sized, tester is world-space).
+
 ## Session 11 — 2026-07-03
 
 **Done**
