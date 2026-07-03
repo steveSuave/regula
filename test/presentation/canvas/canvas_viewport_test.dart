@@ -79,6 +79,22 @@ void main() {
           reason: 'clamped zoom must return the state unchanged');
     });
 
+    test('pannedByScreen shifts content with the pointer, scale untouched',
+        () {
+      const viewport = CanvasViewport(
+        ViewportState(pan: Vec2(10, -5), scale: 2),
+      );
+      const world = Vec2(12, -8);
+      final before = viewport.worldToScreen(world);
+
+      final panned =
+          CanvasViewport(viewport.pannedByScreen(const Offset(30, -14)));
+      expect(panned.state.scale, 2);
+      final after = panned.worldToScreen(world);
+      expect(after - before, const Offset(30, -14),
+          reason: 'every world point moves by exactly the screen delta');
+    });
+
     test('screenToWorld inverts worldToScreen', () {
       const viewport = CanvasViewport(
         ViewportState(pan: Vec2(-4, 7.5), scale: 2.5),
