@@ -215,6 +215,149 @@ void main() {
       expect(hit(construction, const Vec2(0.1, 0))?.id, 'over');
     });
   });
+
+  group('objectsInRect', () {
+    List<String> inRect(Construction construction, Vec2 c1, Vec2 c2) => [
+          for (final object in tester.objectsInRect(construction.objects, c1, c2))
+            object.id,
+        ];
+
+    test('points: wholly-inside rule, corners in either order', () {
+      final construction = Construction()
+        ..add(FreePoint(id: 'in', position: const Vec2(1, 1)))
+        ..add(FreePoint(id: 'out', position: const Vec2(5, 5)));
+
+      expect(inRect(construction, Vec2.zero, const Vec2(2, 2)), ['in']);
+      expect(inRect(construction, const Vec2(2, 2), Vec2.zero), ['in'],
+          reason: 'a band dragged up-left spans the same rect');
+    });
+
+    test('segment needs both endpoints inside; lines and rays never fit', () {
+      final construction = Construction();
+      final a = FreePoint(id: 'a', position: const Vec2(1, 1));
+      final b = FreePoint(id: 'b', position: const Vec2(3, 1));
+      construction
+        ..add(a)
+        ..add(b)
+        ..add(Segment(id: 's', point1: a, point2: b))
+        ..add(LineThroughTwoPoints(id: 'l', point1: a, point2: b))
+        ..add(Ray(id: 'r', origin: a, through: b));
+
+      expect(
+        inRect(construction, Vec2.zero, const Vec2(4, 2)),
+        ['a', 'b', 's'],
+        reason: 'the infinite carriers escape any finite band',
+      );
+      expect(inRect(construction, Vec2.zero, const Vec2(2, 2)), ['a'],
+          reason: 'a band crossing the segment does not take it');
+    });
+
+    test('circle needs its full disc bounds inside', () {
+      final construction = Construction();
+      final center = FreePoint(id: 'c', position: Vec2.zero);
+      final rim = FreePoint(id: 'p', position: const Vec2(2, 0));
+      construction
+        ..add(center)
+        ..add(rim)
+        ..add(CircleCenterPoint(id: 'k', center: center, onCircle: rim));
+
+      expect(
+        inRect(construction, const Vec2(-2.1, -2.1), const Vec2(2.1, 2.1)),
+        ['c', 'p', 'k'],
+      );
+      expect(
+        inRect(construction, const Vec2(-1, -2.1), const Vec2(2.1, 2.1)),
+        ['c', 'p'],
+        reason: 'the disc pokes past x = -1 even though no defining '
+            'point does',
+      );
+    });
+
+    test('arc is measured by its branch, not the carrier circle', () {
+      final construction = Construction();
+      final start = FreePoint(id: 's', position: const Vec2(4, -3));
+      final via = FreePoint(id: 'v', position: const Vec2(5, 0));
+      final end = FreePoint(id: 'e', position: const Vec2(4, 3));
+      construction
+        ..add(start)
+        ..add(via)
+        ..add(end)
+        ..add(Arc(id: 'arc', start: start, via: via, end: end));
+
+      // Carrier is the radius-5 circle about the origin; the branch stays
+      // in x ∈ [4, 5], y ∈ [-3, 3].
+      expect(
+        inRect(construction, const Vec2(3.9, -3.1), const Vec2(5.1, 3.1)),
+        ['s', 'v', 'e', 'arc'],
+      );
+      expect(
+        inRect(construction, const Vec2(4.5, -3.1), const Vec2(5.1, 3.1)),
+        ['v'],
+        reason: 'endpoints out → arc out',
+      );
+    });
+
+    test('sector counts its center and rim extremes', () {
+      final construction = Construction();
+      final center = FreePoint(id: 'c', position: Vec2.zero);
+      final rim = FreePoint(id: 'r', position: const Vec2(5, 0));
+      final angle = FreePoint(id: 'a', position: const Vec2(0, 2));
+      construction
+        ..add(center)
+        ..add(rim)
+        ..add(angle)
+        ..add(Sector(id: 'w', center: center, start: rim, end: angle));
+
+      // Quarter wedge: x, y ∈ [0, 5].
+      expect(
+        inRect(construction, const Vec2(-0.1, -0.1), const Vec2(5.1, 5.1)),
+        ['c', 'r', 'a', 'w'],
+      );
+      expect(
+        inRect(construction, const Vec2(0.5, -0.1), const Vec2(5.1, 5.1)),
+        ['r'],
+        reason: 'center out → wedge out',
+      );
+    });
+
+    test('an angle is banded by its vertex alone', () {
+      final construction = Construction();
+      final arm1 = FreePoint(id: 'a1', position: const Vec2(9, 0));
+      final vertex = FreePoint(id: 'v', position: Vec2.zero);
+      final arm2 = FreePoint(id: 'a2', position: const Vec2(0, 9));
+      construction
+        ..add(arm1)
+        ..add(vertex)
+        ..add(arm2)
+        ..add(VertexAngle(id: 'g', arm1: arm1, vertex: vertex, arm2: arm2));
+
+      expect(
+        inRect(construction, const Vec2(-1, -1), const Vec2(1, 1)),
+        ['v', 'g'],
+        reason: 'the marker is screen-sized; the arms are not the angle',
+      );
+    });
+
+    test('invisible and undefined objects are never banded', () {
+      final construction = Construction();
+      final a = FreePoint(id: 'a', position: Vec2.zero);
+      final b = FreePoint(id: 'b', position: Vec2.zero); // line undefined
+      construction
+        ..add(a)
+        ..add(b)
+        ..add(LineThroughTwoPoints(id: 'l', point1: a, point2: b))
+        ..add(FreePoint(
+          id: 'h',
+          position: const Vec2(1, 1),
+          attributes: const ObjectAttributes(visible: false),
+        ));
+
+      expect(
+        inRect(construction, const Vec2(-2, -2), const Vec2(2, 2)),
+        ['a', 'b'],
+      );
+    });
+  });
 }
 
 Matcher hasId(String id) =>

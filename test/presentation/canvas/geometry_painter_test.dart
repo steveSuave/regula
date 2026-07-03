@@ -21,12 +21,18 @@ import 'package:flutter_test/flutter_test.dart';
 /// the painter accepts every current object kind — including undefined
 /// and invisible ones — without throwing.
 void main() {
-  GeometryPainter painterFor(Construction construction, {int revision = 0}) =>
+  GeometryPainter painterFor(
+    Construction construction, {
+    int revision = 0,
+    Set<String> selectedIds = const {},
+  }) =>
       GeometryPainter(
         construction: construction,
         viewport: const CanvasViewport(ViewportState()),
         revision: revision,
         defaultColor: const Color(0xFF000000),
+        selectionColor: const Color(0xFF0000FF),
+        selectedIds: selectedIds,
       );
 
   void paintOnce(GeometryPainter painter) {
@@ -75,6 +81,36 @@ void main() {
       paintOnce(painterFor(construction));
     });
 
+    test('paints labels on named objects without throwing', () {
+      const named = ObjectAttributes(name: 'A');
+      final construction = Construction();
+      final a = FreePoint(id: 'a', position: Vec2.zero, attributes: named);
+      final b = FreePoint(id: 'b', position: const Vec2(4, 0));
+      final c = FreePoint(id: 'c', position: const Vec2(0, 3));
+      construction
+        ..add(a)
+        ..add(b)
+        ..add(c)
+        ..add(Segment(id: 's', point1: a, point2: b, attributes: named))
+        ..add(Ray(id: 'r', origin: a, through: c, attributes: named))
+        ..add(LineThroughTwoPoints(
+            id: 'l', point1: a, point2: c, attributes: named))
+        ..add(CircleCenterPoint(
+            id: 'k', center: a, onCircle: b, attributes: named))
+        ..add(Arc(id: 'arc', start: b, via: c, end: a, attributes: named))
+        ..add(Sector(id: 'w', center: a, start: b, end: c, attributes: named))
+        ..add(VertexAngle(
+            id: 'g', arm1: b, vertex: a, arm2: c, attributes: named))
+        // labelVisible off: name present but no label painted.
+        ..add(FreePoint(
+          id: 'q',
+          position: const Vec2(1, 1),
+          attributes: const ObjectAttributes(name: 'Q', labelVisible: false),
+        ));
+
+      paintOnce(painterFor(construction));
+    });
+
     test('paints preview markers without throwing', () {
       final construction = Construction()
         ..add(FreePoint(id: 'a', position: Vec2.zero));
@@ -83,10 +119,34 @@ void main() {
         viewport: const CanvasViewport(ViewportState()),
         revision: 0,
         defaultColor: const Color(0xFF000000),
+        selectionColor: const Color(0xFF0000FF),
         previewMarkers: const [Vec2.zero, Vec2(3, 4)],
       );
 
       paintOnce(painter);
+    });
+
+    test('paints selection halos on every object kind without throwing', () {
+      final construction = Construction();
+      final a = FreePoint(id: 'a', position: Vec2.zero);
+      final b = FreePoint(id: 'b', position: const Vec2(4, 0));
+      final c = FreePoint(id: 'c', position: const Vec2(0, 3));
+      construction
+        ..add(a)
+        ..add(b)
+        ..add(c)
+        ..add(Segment(id: 's', point1: a, point2: b))
+        ..add(Ray(id: 'r', origin: a, through: c))
+        ..add(LineThroughTwoPoints(id: 'l', point1: a, point2: c))
+        ..add(CircleCenterPoint(id: 'k', center: a, onCircle: b))
+        ..add(Arc(id: 'arc', start: b, via: c, end: a))
+        ..add(Sector(id: 'w', center: a, start: b, end: c))
+        ..add(VertexAngle(id: 'g', arm1: b, vertex: a, arm2: c));
+
+      final everything = {
+        for (final object in construction.objects) object.id,
+      };
+      paintOnce(painterFor(construction, selectedIds: everything));
     });
 
     test('shouldRepaint keys on preview markers', () {
@@ -96,6 +156,7 @@ void main() {
             viewport: const CanvasViewport(ViewportState()),
             revision: 0,
             defaultColor: const Color(0xFF000000),
+            selectionColor: const Color(0xFF0000FF),
             previewMarkers: markers,
           );
 
@@ -133,8 +194,28 @@ void main() {
         viewport: const CanvasViewport(ViewportState(pan: Vec2(1, 0))),
         revision: 0,
         defaultColor: const Color(0xFF000000),
+        selectionColor: const Color(0xFF0000FF),
       );
       expect(panned.shouldRepaint(base), isTrue);
+    });
+
+    test('shouldRepaint keys on the selected-id set', () {
+      final construction = Construction()
+        ..add(FreePoint(id: 'a', position: Vec2.zero));
+
+      final base = painterFor(construction, selectedIds: const {'a'});
+      expect(
+        painterFor(construction, selectedIds: const {'a'})
+            .shouldRepaint(base),
+        isFalse,
+        reason: 'set equality, not identity — the provider rebuilds sets',
+      );
+      expect(painterFor(construction).shouldRepaint(base), isTrue,
+          reason: 'clearing the selection must drop the halo');
+      expect(
+        painterFor(construction, selectedIds: const {'b'}).shouldRepaint(base),
+        isTrue,
+      );
     });
   });
 }

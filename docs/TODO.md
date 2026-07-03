@@ -65,13 +65,13 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] Tools for each of the above (arc/sector/vertex-angle reuse `ThreePointTool` from the circles + new angles menus; `TwoLineTool` collects two existing lines for `LineAngle`)
 
 ## Phase 7 — Selection & attributes
-- [ ] Multi-select (rubber band + shift-click)
-- [ ] Drag derived objects (rigid translation of free-point ancestors via `TranslateObjectsCommand`)
-- [ ] Attributes inspector panel
-- [ ] Hide/show + label visibility
-- [ ] Color, stroke width
-- [ ] Cascading-delete UX with confirmation
-- [ ] Object tree panel
+- [x] Multi-select (rubber band + shift-click) (tap selects / shift-tap toggles / empty tap clears; band from empty canvas takes what it *wholly* contains — infinite lines and rays never band; shift-band unions; halo drawn in theme tertiary)
+- [x] Drag derived objects (rigid translation of free-point ancestors via `TranslateObjectsCommand`) (`DragSession` in `domain/tools/` previews per frame and rolls back before the one command commits; free point → `MoveFreePointCommand`; *derived points refuse to drag* — sliding `PointOnObject` along its curve is still open)
+- [x] Attributes inspector panel (side panel, collapsed while nothing is selected; single selection shows kind + name editor — one `ChangeAttributesCommand` per rename; multi shows count + read-only list; hide/show and color/stroke controls land with their own items below)
+- [x] Hide/show + label visibility (inspector checkboxes over the whole selection — tristate dash for mixed, one command per tap; painter now draws names beside a per-kind `labelAnchor`; hiding keeps the object selected, since the inspector is the only way back to un-hiding until the object tree lands)
+- [x] Color, stroke width (swatch row — fixed palette + "Auto" for the theme-default null — and discrete width segments, so every tap is exactly one command; stroke width targets non-points, point size targets points, each control shown only when the selection has that kind)
+- [x] Cascading-delete UX with confirmation (Delete button in the inspector; a dialog appears only when the cascade reaches *beyond* the selection, listing the unselected casualties by name/kind — a self-contained selection deletes immediately; always one `DeleteObjectsCommand` = one undo step)
+- [x] Object tree panel (toggled from the app bar, hidden by default; flat list grouped by sealed kind in insertion order; rows select on tap / toggle on shift-tap — canvas semantics, so hidden objects are finally reachable — plus a per-row eye flipping `visible`, one command per tap)
 
 ## Phase 8 — Pan/zoom viewport
 - [ ] Pinch-to-zoom on touch

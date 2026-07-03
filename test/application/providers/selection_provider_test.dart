@@ -39,6 +39,23 @@ void main() {
       expect(container.read(selectionProvider), isEmpty);
     });
 
+    test('selectMany replaces the selection, or unions when additive', () {
+      final notifier = container.read(selectionProvider.notifier);
+
+      notifier.selectMany(['a', 'b']);
+      expect(container.read(selectionProvider), {'a', 'b'});
+
+      notifier.selectMany(['b', 'c'], additive: true);
+      expect(container.read(selectionProvider), {'a', 'b', 'c'});
+
+      notifier.selectMany(['d']);
+      expect(container.read(selectionProvider), {'d'});
+
+      notifier.selectMany([]);
+      expect(container.read(selectionProvider), isEmpty,
+          reason: 'an empty band clears a non-additive selection');
+    });
+
     test('selectAll selects every object in the construction', () {
       final a = FreePoint(id: 'a', position: Vec2.zero);
       final b = FreePoint(id: 'b', position: const Vec2(2, 0));
