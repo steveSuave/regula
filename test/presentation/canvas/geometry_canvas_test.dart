@@ -1,9 +1,13 @@
 import 'dart:math' as math;
 
 import 'package:fgex/application/providers/construction_provider.dart';
+import 'package:fgex/application/providers/selection_provider.dart';
+import 'package:fgex/application/providers/tool_provider.dart';
 import 'package:fgex/domain/construction/objects/arc.dart';
 import 'package:fgex/domain/construction/objects/compass_circle.dart';
+import 'package:fgex/domain/construction/objects/free_point.dart';
 import 'package:fgex/domain/construction/objects/line_angle.dart';
+import 'package:fgex/domain/construction/objects/midpoint.dart';
 import 'package:fgex/domain/construction/objects/sector.dart';
 import 'package:fgex/domain/construction/objects/segment_ratio_point.dart';
 import 'package:fgex/domain/construction/objects/three_point_circle.dart';
@@ -12,6 +16,7 @@ import 'package:fgex/domain/math/vec2.dart';
 import 'package:fgex/main.dart';
 import 'package:fgex/presentation/canvas/geometry_canvas.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -540,6 +545,301 @@ void main() {
     await tester.tap(find.byIcon(Icons.undo));
     await tester.pump();
     expect(objectCount(), 5, reason: 'only the angle is one undo unit');
+  });
+
+  testWidgets(
+      'move/select mode: tap selects, shift-tap toggles, empty tap clears',
+      (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+
+    // Two points, then back to move/select mode.
+    await tester.tap(find.byIcon(Icons.control_point));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(100, 100));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(200, 100));
+    await tester.pump();
+    await tester.tap(find.byIcon(Icons.control_point)); // toggle off
+    await tester.pump();
+
+    final ids = [
+      for (final object
+          in container.read(constructionProvider).construction.objects)
+        object.id,
+    ];
+    Set<String> selection() => container.read(selectionProvider);
+
+    await tester.tapAt(origin + const Offset(100, 100));
+    await tester.pump();
+    expect(selection(), {ids[0]});
+
+    // A plain click moves the selection rather than growing it.
+    await tester.tapAt(origin + const Offset(200, 100));
+    await tester.pump();
+    expect(selection(), {ids[1]});
+
+    // Shift-click adds…
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.tapAt(origin + const Offset(100, 100));
+    await tester.pump();
+    expect(selection(), {ids[0], ids[1]});
+
+    // …and removes.
+    await tester.tapAt(origin + const Offset(100, 100));
+    await tester.pump();
+    expect(selection(), {ids[1]});
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+
+    // Empty canvas clears (even a shift-click keeps nothing to toggle).
+    await tester.tapAt(origin + const Offset(400, 300));
+    await tester.pump();
+    expect(selection(), isEmpty);
+  });
+
+  testWidgets('taps while a tool is active never touch the selection',
+      (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+
+    // A point, selected in move/select mode.
+    await tester.tap(find.byIcon(Icons.control_point));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(100, 100));
+    await tester.pump();
+    await tester.tap(find.byIcon(Icons.control_point)); // toggle off
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(100, 100));
+    await tester.pump();
+    final selected = container.read(selectionProvider);
+    expect(selected, hasLength(1));
+
+    // Back in the point tool: a tap the tool ignores (the existing
+    // point) and one it commits (empty canvas) both leave the
+    // selection alone.
+    await tester.tap(find.byIcon(Icons.control_point));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(100, 100));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(200, 200));
+    await tester.pump();
+    expect(objectCount(), 2);
+    expect(container.read(selectionProvider), selected);
+  });
+
+  testWidgets(
+      'rubber band from empty canvas selects what it encloses; a band '
+      'over nothing clears', (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+
+    await tester.tap(find.byIcon(Icons.control_point));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(100, 100));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(200, 100));
+    await tester.pump();
+    await tester.tap(find.byIcon(Icons.control_point)); // toggle off
+    await tester.pump();
+
+    final ids = [
+      for (final object
+          in container.read(constructionProvider).construction.objects)
+        object.id,
+    ];
+    Set<String> selection() => container.read(selectionProvider);
+
+    // Drag up-left from empty canvas across both points.
+    final band = await tester.startGesture(origin + const Offset(350, 250));
+    await band.moveTo(origin + const Offset(80, 60));
+    await tester.pump();
+    await band.up();
+    await tester.pump();
+    expect(selection(), {ids[0], ids[1]});
+
+    // A band over empty space replaces the selection with nothing.
+    final empty = await tester.startGesture(origin + const Offset(400, 300));
+    await empty.moveTo(origin + const Offset(500, 400));
+    await tester.pump();
+    await empty.up();
+    await tester.pump();
+    expect(selection(), isEmpty);
+  });
+
+  testWidgets('shift rubber band adds to the selection instead of replacing',
+      (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+
+    await tester.tap(find.byIcon(Icons.control_point));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(100, 100));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(300, 100));
+    await tester.pump();
+    await tester.tap(find.byIcon(Icons.control_point)); // toggle off
+    await tester.pump();
+
+    final ids = [
+      for (final object
+          in container.read(constructionProvider).construction.objects)
+        object.id,
+    ];
+
+    await tester.tapAt(origin + const Offset(100, 100));
+    await tester.pump();
+    expect(container.read(selectionProvider), {ids[0]});
+
+    // Shift-band around only the second point keeps the first selected.
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    final band = await tester.startGesture(origin + const Offset(390, 160));
+    await band.moveTo(origin + const Offset(260, 60));
+    await tester.pump();
+    await band.up();
+    await tester.pump();
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+
+    expect(container.read(selectionProvider), {ids[0], ids[1]});
+  });
+
+  testWidgets(
+      'drags starting on an object, or with a tool active, do not '
+      'rubber band', (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+
+    await tester.tap(find.byIcon(Icons.control_point));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(100, 100));
+    await tester.pump();
+
+    // Point tool still active: a drag across the point selects nothing.
+    final toolDrag = await tester.startGesture(origin + const Offset(50, 50));
+    await toolDrag.moveTo(origin + const Offset(300, 300));
+    await tester.pump();
+    await toolDrag.up();
+    await tester.pump();
+    expect(container.read(selectionProvider), isEmpty);
+
+    await tester.tap(find.byIcon(Icons.control_point)); // toggle off
+    await tester.pump();
+
+    // Move/select mode, but the drag starts on the point itself: that is
+    // a future move-drag, not a band.
+    final onObject =
+        await tester.startGesture(origin + const Offset(100, 100));
+    await onObject.moveTo(origin + const Offset(300, 300));
+    await tester.pump();
+    await onObject.up();
+    await tester.pump();
+    expect(container.read(selectionProvider), isEmpty);
+  });
+
+  testWidgets('dragging a free point moves it; one undo restores it',
+      (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+
+    await tester.tap(find.byIcon(Icons.control_point));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(100, 100));
+    await tester.pump();
+    await tester.tap(find.byIcon(Icons.control_point)); // toggle off
+    await tester.pump();
+
+    FreePoint point() => container
+        .read(constructionProvider)
+        .construction
+        .objects
+        .whereType<FreePoint>()
+        .single;
+
+    final drag = await tester.startGesture(origin + const Offset(100, 100));
+    await drag.moveTo(origin + const Offset(250, 180));
+    await tester.pump();
+    expect(point().position, const Vec2(250, -180),
+        reason: 'the preview tracks the pointer frame by frame');
+    await drag.up();
+    await tester.pump();
+    expect(point().position, const Vec2(250, -180));
+
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(point().position, const Vec2(100, -100),
+        reason: 'the whole gesture is one undo unit');
+  });
+
+  testWidgets(
+      'dragging a segment rigidly translates its endpoints, one undo unit',
+      (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+
+    await tester.tap(find.byIcon(Icons.timeline));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Segment'));
+    await tester.pumpAndSettle();
+    await tester.tapAt(origin + const Offset(100, 100));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(300, 100));
+    await tester.pump();
+    container.read(toolProvider.notifier).deactivate(); // move/select mode
+    await tester.pump();
+
+    List<Vec2> endpoints() => [
+          for (final object in container
+              .read(constructionProvider)
+              .construction
+              .objects
+              .whereType<FreePoint>())
+            object.position,
+        ];
+
+    // Grab the segment between its endpoints and drag.
+    final drag = await tester.startGesture(origin + const Offset(200, 100));
+    await drag.moveTo(origin + const Offset(220, 160));
+    await tester.pump();
+    await drag.up();
+    await tester.pump();
+    expect(endpoints(), [const Vec2(120, -160), const Vec2(320, -160)],
+        reason: 'both defining points shift by the drag delta');
+
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(endpoints(), [const Vec2(100, -100), const Vec2(300, -100)]);
+  });
+
+  testWidgets('a derived point refuses to drag', (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+
+    await tester.tap(find.byIcon(Icons.timeline));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Midpoint'));
+    await tester.pumpAndSettle();
+    await tester.tapAt(origin + const Offset(100, 100));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(300, 100));
+    await tester.pump();
+    container.read(toolProvider.notifier).deactivate(); // move/select mode
+    await tester.pump();
+
+    // The midpoint sits at (200, 100) on screen; dragging it does nothing
+    // (and must not open a rubber band underneath it either).
+    final drag = await tester.startGesture(origin + const Offset(200, 100));
+    await drag.moveTo(origin + const Offset(300, 250));
+    await tester.pump();
+    await drag.up();
+    await tester.pump();
+
+    final midpoint = container
+        .read(constructionProvider)
+        .construction
+        .objects
+        .whereType<Midpoint>()
+        .single;
+    expect(midpoint.position, const Vec2(200, -100));
+    expect(container.read(selectionProvider), isEmpty);
   });
 
   testWidgets('deactivating the point tool stops point placement',
