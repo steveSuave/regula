@@ -6,6 +6,28 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 11 — 2026-07-03
+
+**Done**
+- Phase 7 finished, all on `phase-7-selection` (8 commits), merged into `main`. In landing order:
+- Click selection (tap selects / shift-tap toggles / empty tap clears; taps while a tool is active never touch the selection) + selection halos in theme tertiary; rubber band from empty canvas takes what it *wholly* contains (infinite lines/rays never band), shift-band unions.
+- Dragging: free point → `MoveFreePointCommand`; derived object → rigid translation of its free-point *ancestors* via `TranslateObjectsCommand`. `DragSession` (domain/tools) previews per frame and rolls back before the single commit — one command per gesture, per the CLAUDE.md carve-out. Derived *points* refuse to drag (sliding `PointOnObject` still open).
+- Attributes inspector (right panel, exists exactly while something is selected): kind header, name field (single only), visible/label tristate checkboxes, color swatches (fixed palette + "Auto" = null = theme default), discrete stroke-width/point-size segments (stroke targets non-points, size targets points; each shown only when the selection has that kind). Every tap = exactly one `ChangeAttributesCommand`; mixed state = dash / no highlight.
+- Cascading-delete UX: Delete button in the inspector; confirmation dialog *only* when the cascade reaches beyond the selection, listing the unselected casualties; always one `DeleteObjectsCommand`. `Construction.transitiveDependentsOf` added (public, non-mutating) for the preview.
+- Object tree panel (left, toggled from the app bar, hidden by default): flat list grouped by sealed kind in insertion order; rows select on tap / toggle on shift-tap; per-row eye flips `visible` one command per tap — hidden objects are now reachable again.
+- Painter now draws labels beside a per-kind `labelAnchor`. 401 tests green, `flutter analyze` clean.
+
+**Next**
+- Phase 8 — pan/zoom viewport: pinch, scroll-zoom, two-finger pan / space-drag, fit/reset/nudge. Start a `phase-8-viewport` branch. `viewportProvider` and `CanvasViewport` already exist; the work is gestures + commands-or-not decision (view state is not construction state — probably *not* undoable, mirror the selection's reasoning and note it in PLAN if confirmed).
+
+**Open questions / gotchas**
+- Selection pruning listens to the construction and can lag a build by one frame — panels must null-filter `construction.byId(id)` instead of assuming selected ids exist (both panels do; keep the idiom).
+- Freezed `copyWith` uses the `freezed` sentinel, so `copyWith(colorArgb: null)` genuinely sets null — that's how "Auto" works; don't replace it with a hand-rolled copyWith.
+- `SegmentedButton` with `emptySelectionAllowed: true` models the mixed state; a tap on the already-selected segment arrives as an *empty* selection — treat as no-op, not "clear the width".
+- Inspector/tree are lazy `ListView`s: widget tests must `scrollUntilVisible` anything below the 600-px fold (see the delete-button test) or the finder comes up empty.
+- Shift detection is `HardwareKeyboard.instance.isShiftPressed` in both canvas and tree — keep them consistent if a third selection surface appears.
+- Still open from Phase 6/7: sliding `PointOnObject` along its curve when dragged; angle hit-target world-radius hint for `CanvasHitTester` if vertex-only picking feels too small in practice.
+
 ## Session 10 — 2026-07-02
 
 **Done**
