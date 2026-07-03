@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/construction_provider.dart';
+import '../../application/providers/selection_provider.dart';
 import '../../application/providers/tool_provider.dart';
 import '../../application/providers/viewport_provider.dart';
 import '../../domain/tools/tool.dart';
@@ -10,11 +12,12 @@ import 'canvas_viewport.dart';
 import 'geometry_painter.dart';
 
 /// The drawing surface: hosts the [GeometryPainter] and turns taps into
-/// [ToolInput]s for the active tool.
+/// [ToolInput]s for the active tool — or, with no tool active
+/// (move/select mode), into selection changes: tap selects the hit
+/// object, shift-tap toggles it, tapping empty canvas clears.
 ///
-/// Phase 5 scope is taps only. Drag (move/select, one command per
-/// gesture), pinch/scroll zoom and pan land in Phases 7–8 on top of the
-/// same gesture stack.
+/// Drag (one command per gesture), pinch/scroll zoom and pan land in
+/// Phases 7–8 on top of the same gesture stack.
 class GeometryCanvas extends ConsumerWidget {
   const GeometryCanvas({super.key});
 
@@ -39,6 +42,8 @@ class GeometryCanvas extends ConsumerWidget {
           viewport: viewport,
           revision: constructionState.revision,
           defaultColor: Theme.of(context).colorScheme.primary,
+          selectionColor: Theme.of(context).colorScheme.tertiary,
+          selectedIds: ref.watch(selectionProvider),
           previewMarkers:
               tool is ToolInputPreview ? tool.previewPositions : const [],
         ),
@@ -57,6 +62,19 @@ class GeometryCanvas extends ConsumerWidget {
       world,
       viewport.screenToWorldLength(hitThresholdPx),
     );
-    ref.read(toolProvider.notifier).handleInput(ToolInput(world, hit: hit));
+    if (ref.read(toolProvider).tool != null) {
+      // An active tool owns every tap — including ones it ignores, so a
+      // stray tap mid-collection can't silently retarget the selection.
+      ref.read(toolProvider.notifier).handleInput(ToolInput(world, hit: hit));
+      return;
+    }
+    final selection = ref.read(selectionProvider.notifier);
+    if (hit == null) {
+      selection.clear();
+    } else if (HardwareKeyboard.instance.isShiftPressed) {
+      selection.toggle(hit.id);
+    } else {
+      selection.select(hit.id);
+    }
   }
 }
