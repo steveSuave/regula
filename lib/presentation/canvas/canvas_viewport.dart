@@ -37,11 +37,26 @@ class CanvasViewport {
     if (newScale == state.scale) {
       return state;
     }
-    final fixed = screenToWorld(focal);
-    // Solve screenToWorld'(focal) == fixed for the new pan.
+    return pinning(world: screenToWorld(focal), focal: focal, scale: newScale);
+  }
+
+  /// The state with [scale] (clamped) whose pan puts the [world] point at
+  /// the [focal] screen point — the shared solve behind scroll zoom and
+  /// the pinch/pan gesture, where the anchor world point must track a
+  /// moving focal.
+  static ViewportState pinning({
+    required Vec2 world,
+    required Offset focal,
+    required double scale,
+  }) {
+    final clamped = scale.clamp(minScale, maxScale).toDouble();
+    // Solve screenToWorld(focal) == world for pan.
     return ViewportState(
-      pan: Vec2(fixed.x - focal.dx / newScale, fixed.y + focal.dy / newScale),
-      scale: newScale,
+      pan: Vec2(
+        world.x - focal.dx / clamped,
+        world.y + focal.dy / clamped,
+      ),
+      scale: clamped,
     );
   }
 

@@ -910,4 +910,148 @@ void main() {
     expect(container.read(viewportProvider).scale, greaterThan(1));
     expect(objectCount(), 0);
   });
+
+  testWidgets('pinch zooms about the fingers, and never rubber-bands',
+      (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+    final focal = tester.getCenter(find.byType(GeometryCanvas));
+    final fixedWorld =
+        const CanvasViewport(ViewportState()).screenToWorld(focal - origin);
+
+    // Two fingers 80 px apart spreading to 200 px in small alternating
+    // steps (real pinches interleave per-finger moves the same way; big
+    // single moves would skew the focal point mid-gesture).
+    final g1 = await tester.createGesture();
+    await g1.down(focal - const Offset(40, 0));
+    final g2 = await tester.createGesture();
+    await g2.down(focal + const Offset(40, 0));
+    await tester.pump();
+    for (var step = 0; step < 10; step++) {
+      await g1.moveBy(const Offset(-6, 0));
+      await g2.moveBy(const Offset(6, 0));
+      await tester.pump();
+    }
+    await g1.up();
+    await g2.up();
+    await tester.pump();
+
+    final after = CanvasViewport(container.read(viewportProvider));
+    // Exact factor depends on where the recognizer's slop ran out, but a
+    // 80→200 px spread must land solidly past 2× and pin the focal point
+    // to within the slop the baseline swallowed.
+    expect(after.state.scale, greaterThan(1.5));
+    expect(after.state.scale, lessThan(3.0));
+    final focalWorldOnScreen = after.worldToScreen(fixedWorld);
+    expect((focalWorldOnScreen - (focal - origin)).distance, lessThan(10),
+        reason: 'the world point between the fingers must stay put');
+    expect(container.read(selectionProvider), isEmpty,
+        reason: 'a pinch must not open a rubber band');
+    expect(objectCount(), 0);
+  });
+
+  testWidgets('two-finger drag pans without zooming or banding',
+      (tester) async {
+    await pumpEditor(tester);
+    final center = tester.getCenter(find.byType(GeometryCanvas));
+    final before = container.read(viewportProvider);
+
+    // Fingers separated *perpendicular* to the drag: sequential
+    // per-finger moves then barely disturb the span (√(200²+10²) ≈ 200),
+    // so no incidental zoom sneaks into the baseline.
+    final g1 = await tester.createGesture();
+    await g1.down(center - const Offset(0, 100));
+    final g2 = await tester.createGesture();
+    await g2.down(center + const Offset(0, 100));
+    await tester.pump();
+    for (var step = 0; step < 8; step++) {
+      await g1.moveBy(const Offset(10, 0));
+      await g2.moveBy(const Offset(10, 0));
+      await tester.pump();
+    }
+    await g1.up();
+    await g2.up();
+    await tester.pump();
+
+    final after = container.read(viewportProvider);
+    // Content follows the fingers rightward: the world point at the
+    // canvas origin moves left. The pan-slop the recognizer swallows
+    // before accepting keeps the exact distance from being 80/scale.
+    expect(after.pan.x, lessThan(before.pan.x - 30));
+    expect(after.pan.y, closeTo(before.pan.y, 1));
+    expect(after.scale, closeTo(1, 0.01));
+    expect(container.read(selectionProvider), isEmpty);
+  });
+
+  testWidgets('space-drag pans exactly, even over an object', (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+
+    await tester.tap(find.byIcon(Icons.control_point));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(150, 150));
+    await tester.pump();
+    container.read(toolProvider.notifier).deactivate();
+    await tester.pump();
+    final point = container
+        .read(constructionProvider)
+        .construction
+        .objects
+        .whereType<FreePoint>()
+        .single;
+    final positionBefore = point.position;
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.space);
+    final gesture = await tester.startGesture(origin + const Offset(150, 150));
+    // First move wins the arena and baselines the pan; the second is the
+    // measured, exact displacement.
+    await gesture.moveTo(origin + const Offset(180, 160));
+    await tester.pump();
+    await gesture.moveTo(origin + const Offset(240, 130));
+    await tester.pump();
+    await gesture.up();
+    await tester.pump();
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.space);
+
+    final after = container.read(viewportProvider);
+    // (+60, -30) screen at scale 1: world-at-origin shifts (-60, -30)
+    // (screen y-down, world y-up).
+    expect(after.pan.x, closeTo(-60, 1e-6));
+    expect(after.pan.y, closeTo(-30, 1e-6));
+    expect(after.scale, 1);
+    expect(point.position, positionBefore,
+        reason: 'space-drag pans the viewport, never the grabbed object');
+    expect(container.read(selectionProvider), isEmpty);
+  });
+
+  testWidgets('a second finger mid-band cancels the band instead of '
+      'committing it', (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+
+    await tester.tap(find.byIcon(Icons.control_point));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(200, 200));
+    await tester.pump();
+    container.read(toolProvider.notifier).deactivate();
+    await tester.pump();
+
+    // Band from empty canvas grows to enclose the point…
+    final g1 = await tester.startGesture(origin + const Offset(100, 100));
+    await g1.moveTo(origin + const Offset(300, 300));
+    await tester.pump();
+    // …then a second finger lands: the gesture pivots to navigation and
+    // the half-built band must evaporate, not select.
+    final g2 = await tester.createGesture();
+    await g2.down(origin + const Offset(320, 100));
+    await tester.pump();
+    await g1.moveBy(const Offset(15, 0));
+    await g2.moveBy(const Offset(15, 0));
+    await tester.pump();
+    await g1.up();
+    await g2.up();
+    await tester.pump();
+
+    expect(container.read(selectionProvider), isEmpty);
+  });
 }
