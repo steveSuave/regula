@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'application/object_ids.dart';
 import 'application/providers/command_stack_provider.dart';
+import 'application/providers/construction_provider.dart';
 import 'application/providers/tool_provider.dart';
+import 'application/providers/viewport_provider.dart';
 import 'domain/construction/geo_object.dart';
 import 'domain/construction/objects/angle_bisector_line.dart';
 import 'domain/construction/objects/arc.dart';
@@ -32,6 +34,7 @@ import 'domain/tools/tool.dart';
 import 'domain/tools/triangle_center_tool.dart';
 import 'domain/tools/two_line_tool.dart';
 import 'domain/tools/two_point_tool.dart';
+import 'presentation/canvas/fit_viewport.dart';
 import 'presentation/canvas/geometry_canvas.dart';
 import 'presentation/panels/attributes_inspector.dart';
 import 'presentation/panels/object_tree_panel.dart';
@@ -104,6 +107,24 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   /// persisted), so it lives here rather than in a provider. Hidden by
   /// default: the tree is a secondary surface next to the canvas.
   bool _showObjectTree = false;
+
+  /// Fit-to-viewport needs the canvas's laid-out size at tap time; the
+  /// key reads it without threading sizes through providers.
+  final GlobalKey _canvasKey = GlobalKey();
+
+  void _fitConstruction() {
+    final size = _canvasKey.currentContext?.size;
+    if (size == null) {
+      return;
+    }
+    final fitted = fittedViewport(
+      ref.read(constructionProvider).construction.objects,
+      size,
+    );
+    if (fitted != null) {
+      ref.read(viewportProvider.notifier).set(fitted);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -346,6 +367,16 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
             ],
           ),
           IconButton(
+            tooltip: 'Fit construction to view',
+            icon: const Icon(Icons.fit_screen),
+            onPressed: _fitConstruction,
+          ),
+          IconButton(
+            tooltip: 'Reset view (origin at 100 %)',
+            icon: const Icon(Icons.filter_center_focus),
+            onPressed: () => ref.read(viewportProvider.notifier).reset(),
+          ),
+          IconButton(
             tooltip: 'Undo',
             icon: const Icon(Icons.undo),
             onPressed: undoRedo.canUndo
@@ -365,7 +396,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (_showObjectTree) const ObjectTreePanel(),
-          const Expanded(child: GeometryCanvas()),
+          Expanded(child: GeometryCanvas(key: _canvasKey)),
           const AttributesInspector(),
         ],
       ),
