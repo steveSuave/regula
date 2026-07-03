@@ -79,7 +79,8 @@ The `domain/` layer must not import `package:flutter/*`. This is the boundary th
 - `GeometryCanvas` widget hosts a `CustomPaint` with a `GeometryPainter` and a gesture stack:
   - `Listener` for pointer events (mouse + touch).
   - `GestureDetector` for tap, pan, scale.
-- `Viewport` value type: `Vec2 pan` + `double scale`. World↔screen transforms live here.
+- `Viewport` value type: `Vec2 pan` + `double scale`. World↔screen transforms live here, including zoom-about-a-focal-point (the world point under the cursor stays fixed) and scale clamping.
+- Viewport changes (pan, zoom, fit, reset) are *view* state, not construction state — they never go through `Command`s and are not undoable, for the same reason selection changes aren't: undo should replay edits to the document, not replay where the user was looking. The viewport is still snapshotted into the save format (Phase 9), just outside the undo history.
 - `HitTester`: iterates visible objects, returns the closest under an 8 px threshold, with priority order points > arcs/circles > segments/rays/lines > angles. Used by both tools (input picking) and the selection drag.
 - Dragging: a free point moves directly (`MoveFreePointCommand`). Any *other* object drags as a rigid translation of its free-point ancestors — grab a circle's rim and the whole circle moves because its defining points do — emitting one `TranslateObjectsCommand` per gesture. Fully-derived objects with no free ancestors (e.g. an intersection point) don't drag.
 - `GeometryPainter` walks the construction in insertion order, applies the viewport transform, draws each object using its attributes. Labels rendered via `TextPainter`.

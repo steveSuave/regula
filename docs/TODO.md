@@ -75,7 +75,7 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 
 ## Phase 8 — Pan/zoom viewport
 - [ ] Pinch-to-zoom on touch
-- [ ] Scroll-to-zoom on web/desktop
+- [x] Scroll-to-zoom on web/desktop (exponential per-pixel factor about the cursor via `CanvasViewport.zoomedAbout` — the focal world point stays pinned; scale clamped 0.05×–50×; wired through `PointerSignalResolver`; viewport changes are deliberately *not* undoable, noted in PLAN)
 - [ ] Two-finger pan / space-drag
 - [ ] Fit / reset / nudge
 

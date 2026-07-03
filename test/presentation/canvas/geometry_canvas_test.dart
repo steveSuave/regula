@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:fgex/application/providers/construction_provider.dart';
 import 'package:fgex/application/providers/selection_provider.dart';
 import 'package:fgex/application/providers/tool_provider.dart';
+import 'package:fgex/application/providers/viewport_provider.dart';
 import 'package:fgex/domain/construction/objects/arc.dart';
 import 'package:fgex/domain/construction/objects/compass_circle.dart';
 import 'package:fgex/domain/construction/objects/free_point.dart';
@@ -14,7 +15,9 @@ import 'package:fgex/domain/construction/objects/three_point_circle.dart';
 import 'package:fgex/domain/construction/objects/vertex_angle.dart';
 import 'package:fgex/domain/math/vec2.dart';
 import 'package:fgex/main.dart';
+import 'package:fgex/presentation/canvas/canvas_viewport.dart';
 import 'package:fgex/presentation/canvas/geometry_canvas.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -859,5 +862,52 @@ void main() {
     await tester.tapAt(origin + const Offset(150, 50));
     await tester.pump();
     expect(objectCount(), 1);
+  });
+
+  testWidgets('scroll wheel zooms about the cursor', (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+    final cursor = origin + const Offset(240, 180);
+    final before = CanvasViewport(container.read(viewportProvider));
+    final fixedWorld = before.screenToWorld(cursor - origin);
+
+    // Scroll up (negative dy) = zoom in, per the exponential mapping.
+    final pointer = TestPointer(1, PointerDeviceKind.mouse);
+    pointer.hover(cursor);
+    await tester.sendEventToBinding(pointer.scroll(const Offset(0, -100)));
+    await tester.pump();
+
+    final after = CanvasViewport(container.read(viewportProvider));
+    expect(
+      after.state.scale,
+      closeTo(math.exp(100 * GeometryCanvas.scrollZoomPerPixel), 1e-9),
+    );
+    final focalAfter = after.worldToScreen(fixedWorld);
+    expect(focalAfter.dx, closeTo(cursor.dx - origin.dx, 1e-6),
+        reason: 'the world point under the cursor must not move');
+    expect(focalAfter.dy, closeTo(cursor.dy - origin.dy, 1e-6),
+        reason: 'the world point under the cursor must not move');
+
+    // Scrolling back down by the same amount restores 100 % exactly
+    // (exponential mapping is symmetric).
+    await tester.sendEventToBinding(pointer.scroll(const Offset(0, 100)));
+    await tester.pump();
+    expect(container.read(viewportProvider).scale, closeTo(1, 1e-9));
+  });
+
+  testWidgets('scroll zoom works with a tool active and adds nothing',
+      (tester) async {
+    await pumpEditor(tester);
+    await tester.tap(find.byIcon(Icons.control_point));
+    await tester.pump();
+
+    final cursor = tester.getCenter(find.byType(GeometryCanvas));
+    final pointer = TestPointer(1, PointerDeviceKind.mouse);
+    pointer.hover(cursor);
+    await tester.sendEventToBinding(pointer.scroll(const Offset(0, -50)));
+    await tester.pump();
+
+    expect(container.read(viewportProvider).scale, greaterThan(1));
+    expect(objectCount(), 0);
   });
 }

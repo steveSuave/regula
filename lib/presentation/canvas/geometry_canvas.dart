@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -19,14 +21,20 @@ import 'geometry_painter.dart';
 /// from empty canvas rubber-bands everything wholly inside (shift adds
 /// to the selection instead of replacing it).
 ///
-/// Object drag (one command per gesture), pinch/scroll zoom and pan land
-/// later in Phases 7–8 on top of the same gesture stack.
+/// Scroll wheel / trackpad scroll zooms about the cursor (any tool).
+/// Pinch zoom and two-finger / space-drag pan land later in Phase 8 on
+/// top of the same gesture stack.
 class GeometryCanvas extends ConsumerStatefulWidget {
   const GeometryCanvas({super.key});
 
   /// Hit-test radius in logical pixels (PLAN: 8 px), converted to world
   /// units per tap so it feels the same at every zoom level.
   static const double hitThresholdPx = 8;
+
+  /// Exponential zoom rate per scrolled pixel: factor = e^(−dy · rate),
+  /// so one mouse-wheel notch (~100 px) zooms ~22 % and scrolling is
+  /// exactly reversible (+dy then −dy lands back on the same scale).
+  static const double scrollZoomPerPixel = 0.002;
 
   @override
   ConsumerState<GeometryCanvas> createState() => _GeometryCanvasState();
@@ -49,35 +57,58 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
     // markers rebuild as the user collects.
     final tool = ref.watch(toolProvider).tool;
 
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      // .down (not the default .start): the band must anchor where the
-      // pointer went down, not where the drag won the gesture arena —
-      // with .start a fast drag loses its first ~18 px of slop.
-      dragStartBehavior: DragStartBehavior.down,
-      onTapUp: (details) => _handleTap(ref, viewport, details.localPosition),
-      onPanStart: (details) => _panStart(viewport, details.localPosition),
-      onPanUpdate: (details) => _panUpdate(viewport, details.localPosition),
-      onPanEnd: (_) => _panEnd(viewport),
-      onPanCancel: _panCancel,
-      child: CustomPaint(
-        painter: GeometryPainter(
-          construction: constructionState.construction,
-          viewport: viewport,
-          revision: constructionState.revision,
-          defaultColor: Theme.of(context).colorScheme.primary,
-          selectionColor: Theme.of(context).colorScheme.tertiary,
-          selectedIds: ref.watch(selectionProvider),
-          previewMarkers:
-              tool is ToolInputPreview ? tool.previewPositions : const [],
+    return Listener(
+      onPointerSignal: _handlePointerSignal,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        // .down (not the default .start): the band must anchor where the
+        // pointer went down, not where the drag won the gesture arena —
+        // with .start a fast drag loses its first ~18 px of slop.
+        dragStartBehavior: DragStartBehavior.down,
+        onTapUp: (details) => _handleTap(ref, viewport, details.localPosition),
+        onPanStart: (details) => _panStart(viewport, details.localPosition),
+        onPanUpdate: (details) => _panUpdate(viewport, details.localPosition),
+        onPanEnd: (_) => _panEnd(viewport),
+        onPanCancel: _panCancel,
+        child: CustomPaint(
+          painter: GeometryPainter(
+            construction: constructionState.construction,
+            viewport: viewport,
+            revision: constructionState.revision,
+            defaultColor: Theme.of(context).colorScheme.primary,
+            selectionColor: Theme.of(context).colorScheme.tertiary,
+            selectedIds: ref.watch(selectionProvider),
+            previewMarkers:
+                tool is ToolInputPreview ? tool.previewPositions : const [],
+          ),
+          foregroundPainter: _MarqueePainter(
+            band: _band,
+            color: Theme.of(context).colorScheme.tertiary,
+          ),
+          child: const SizedBox.expand(),
         ),
-        foregroundPainter: _MarqueePainter(
-          band: _band,
-          color: Theme.of(context).colorScheme.tertiary,
-        ),
-        child: const SizedBox.expand(),
       ),
     );
+  }
+
+  /// Scroll = zoom about the cursor, on any tool (per PLAN's shortcut
+  /// table; panning is space-drag / two-finger, never scroll). Registered
+  /// through the [PointerSignalResolver] so a scrollable ancestor and the
+  /// canvas can't both consume one event.
+  void _handlePointerSignal(PointerSignalEvent event) {
+    if (event is! PointerScrollEvent) {
+      return;
+    }
+    GestureBinding.instance.pointerSignalResolver.register(event, (event) {
+      final scroll = event as PointerScrollEvent;
+      final viewport = CanvasViewport(ref.read(viewportProvider));
+      final factor = math.exp(
+        -scroll.scrollDelta.dy * GeometryCanvas.scrollZoomPerPixel,
+      );
+      ref
+          .read(viewportProvider.notifier)
+          .set(viewport.zoomedAbout(scroll.localPosition, factor));
+    });
   }
 
   /// A drag in move/select mode: starting over an object moves it (the
