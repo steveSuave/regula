@@ -6,15 +6,22 @@ import '../../application/providers/construction_provider.dart';
 import '../../application/providers/selection_provider.dart';
 import '../../domain/commands/change_attributes_command.dart';
 import '../../domain/construction/geo_object.dart';
+import '../../domain/construction/object_attributes.dart';
 import 'object_kind_label.dart';
 
 /// Side panel showing the current selection's attributes; collapses to
 /// nothing while the selection is empty.
 ///
 /// A single selected object gets its kind as the header plus editable
-/// fields (just the name so far — hide/show, color and stroke arrive
-/// with their own Phase 7 items). A multi-selection shows the count and
-/// a read-only list of what's in it.
+/// fields (name, visibility, label visibility — color and stroke arrive
+/// with their own Phase 7 items). A multi-selection shows the count, the
+/// same toggles applied to the whole selection (a dash means the values
+/// are mixed; a tap resolves mixed to all-on), and a read-only list of
+/// what's in it.
+///
+/// Hiding a selected object does not deselect it: hidden objects can't
+/// be hit on the canvas, so staying in the inspector is the way back to
+/// un-hiding until the object tree panel lands.
 ///
 /// Every edit is one [ChangeAttributesCommand] on the shared stack, so
 /// attribute changes undo exactly like geometry changes.
@@ -57,7 +64,7 @@ class AttributesInspector extends ConsumerWidget {
                   style: theme.textTheme.titleMedium,
                 ),
                 const SizedBox(height: 16),
-                if (single != null)
+                if (single != null) ...[
                   _NameField(
                     // Keyed by id *and* name: an external change (undo,
                     // selecting another object) swaps the field out for a
@@ -65,8 +72,34 @@ class AttributesInspector extends ConsumerWidget {
                     key: ValueKey((single.id, single.attributes.name)),
                     initialName: single.attributes.name,
                     onCommit: (text) => _renameTo(ref, single.id, text),
-                  )
-                else
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                _AttributeToggle(
+                  label: 'Visible',
+                  values: [
+                    for (final object in objects) object.attributes.visible,
+                  ],
+                  onChanged: (value) => _setForAll(
+                    ref,
+                    objects,
+                    (attributes) => attributes.copyWith(visible: value),
+                  ),
+                ),
+                _AttributeToggle(
+                  label: 'Show label',
+                  values: [
+                    for (final object in objects)
+                      object.attributes.labelVisible,
+                  ],
+                  onChanged: (value) => _setForAll(
+                    ref,
+                    objects,
+                    (attributes) => attributes.copyWith(labelVisible: value),
+                  ),
+                ),
+                if (single == null) ...[
+                  const Divider(),
                   for (final object in objects)
                     ListTile(
                       dense: true,
@@ -80,6 +113,7 @@ class AttributesInspector extends ConsumerWidget {
                           ? null
                           : Text(objectKindLabel(object)),
                     ),
+                ],
               ],
             ),
           ),
@@ -102,6 +136,67 @@ class AttributesInspector extends ConsumerWidget {
             id: object.attributes.copyWith(name: name),
           }),
         );
+  }
+
+  /// Applies [change] to every selected object in one command, so a
+  /// multi-object toggle undoes as a single step. Objects re-read by id
+  /// at commit time (cf. [_renameTo]); ones the change leaves untouched
+  /// stay out of the command.
+  void _setForAll(
+    WidgetRef ref,
+    List<GeoObject> objects,
+    ObjectAttributes Function(ObjectAttributes) change,
+  ) {
+    final construction = ref.read(constructionProvider).construction;
+    final updates = <String, ObjectAttributes>{};
+    for (final stale in objects) {
+      final object = construction.byId(stale.id);
+      if (object == null) {
+        continue;
+      }
+      final updated = change(object.attributes);
+      if (updated != object.attributes) {
+        updates[object.id] = updated;
+      }
+    }
+    if (updates.isEmpty) {
+      return;
+    }
+    ref
+        .read(commandStackProvider.notifier)
+        .execute(ChangeAttributesCommand(updates));
+  }
+}
+
+/// One boolean attribute over the whole selection, as a checkbox row.
+///
+/// All-on shows checked, all-off unchecked, mixed the tristate dash.
+/// Tapping ignores Flutter's three-way cycle: anything but all-on turns
+/// everything on; all-on turns everything off.
+class _AttributeToggle extends StatelessWidget {
+  const _AttributeToggle({
+    required this.label,
+    required this.values,
+    required this.onChanged,
+  });
+
+  final String label;
+  final List<bool> values;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final allOn = values.every((value) => value);
+    final anyOn = values.any((value) => value);
+    return CheckboxListTile(
+      dense: true,
+      contentPadding: EdgeInsets.zero,
+      controlAffinity: ListTileControlAffinity.leading,
+      title: Text(label),
+      tristate: true,
+      value: allOn || !anyOn ? allOn : null,
+      onChanged: (_) => onChanged(!allOn),
+    );
   }
 }
 

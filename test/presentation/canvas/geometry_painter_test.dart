@@ -81,6 +81,36 @@ void main() {
       paintOnce(painterFor(construction));
     });
 
+    test('paints labels on named objects without throwing', () {
+      const named = ObjectAttributes(name: 'A');
+      final construction = Construction();
+      final a = FreePoint(id: 'a', position: Vec2.zero, attributes: named);
+      final b = FreePoint(id: 'b', position: const Vec2(4, 0));
+      final c = FreePoint(id: 'c', position: const Vec2(0, 3));
+      construction
+        ..add(a)
+        ..add(b)
+        ..add(c)
+        ..add(Segment(id: 's', point1: a, point2: b, attributes: named))
+        ..add(Ray(id: 'r', origin: a, through: c, attributes: named))
+        ..add(LineThroughTwoPoints(
+            id: 'l', point1: a, point2: c, attributes: named))
+        ..add(CircleCenterPoint(
+            id: 'k', center: a, onCircle: b, attributes: named))
+        ..add(Arc(id: 'arc', start: b, via: c, end: a, attributes: named))
+        ..add(Sector(id: 'w', center: a, start: b, end: c, attributes: named))
+        ..add(VertexAngle(
+            id: 'g', arm1: b, vertex: a, arm2: c, attributes: named))
+        // labelVisible off: name present but no label painted.
+        ..add(FreePoint(
+          id: 'q',
+          position: const Vec2(1, 1),
+          attributes: const ObjectAttributes(name: 'Q', labelVisible: false),
+        ));
+
+      paintOnce(painterFor(construction));
+    });
+
     test('paints preview markers without throwing', () {
       final construction = Construction()
         ..add(FreePoint(id: 'a', position: Vec2.zero));

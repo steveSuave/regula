@@ -1,6 +1,7 @@
 import 'package:fgex/application/providers/command_stack_provider.dart';
 import 'package:fgex/application/providers/construction_provider.dart';
 import 'package:fgex/application/providers/selection_provider.dart';
+import 'package:fgex/domain/construction/object_attributes.dart';
 import 'package:fgex/domain/construction/objects/free_point.dart';
 import 'package:fgex/domain/construction/objects/segment.dart';
 import 'package:fgex/domain/math/vec2.dart';
@@ -76,6 +77,83 @@ void main() {
     await tester.pump();
 
     expect(container.read(commandStackProvider).canUndo, isFalse);
+  });
+
+  testWidgets('visibility toggle: one command, undo restores, and the '
+      'hidden object stays in the inspector', (tester) async {
+    await pumpEditor(tester);
+    final a = addPoint('a', Vec2.zero);
+    container.read(selectionProvider.notifier).select('a');
+    await tester.pump();
+
+    await tester.tap(find.widgetWithText(CheckboxListTile, 'Visible'));
+    await tester.pump();
+    expect(a.attributes.visible, isFalse);
+    expect(container.read(commandStackProvider).canUndo, isTrue);
+    // Hidden but still selected: the panel is the way back to un-hiding.
+    expect(find.text('Point'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(a.attributes.visible, isTrue);
+  });
+
+  testWidgets('label toggle flips labelVisible', (tester) async {
+    await pumpEditor(tester);
+    final a = addPoint('a', Vec2.zero);
+    container.read(selectionProvider.notifier).select('a');
+    await tester.pump();
+
+    await tester.tap(find.widgetWithText(CheckboxListTile, 'Show label'));
+    await tester.pump();
+    expect(a.attributes.labelVisible, isFalse);
+    expect(a.attributes.visible, isTrue,
+        reason: 'the two toggles must not bleed into each other');
+
+    await tester.tap(find.widgetWithText(CheckboxListTile, 'Show label'));
+    await tester.pump();
+    expect(a.attributes.labelVisible, isTrue);
+  });
+
+  testWidgets('multi-selection toggle: mixed resolves to all-on in one '
+      'undoable command', (tester) async {
+    await pumpEditor(tester);
+    final a = addPoint('a', Vec2.zero);
+    final b = FreePoint(
+      id: 'b',
+      position: const Vec2(4, 0),
+      attributes: const ObjectAttributes(visible: false),
+    );
+    container.read(constructionProvider).construction.add(b);
+    container.read(selectionProvider.notifier).selectMany(['a', 'b']);
+    await tester.pump();
+
+    final visibleTile = find.widgetWithText(CheckboxListTile, 'Visible');
+    expect(
+      tester.widget<CheckboxListTile>(visibleTile).value,
+      isNull,
+      reason: 'mixed visibility shows the tristate dash',
+    );
+
+    await tester.tap(visibleTile);
+    await tester.pump();
+    expect(a.attributes.visible, isTrue);
+    expect(b.attributes.visible, isTrue);
+
+    await tester.tap(visibleTile);
+    await tester.pump();
+    expect(a.attributes.visible, isFalse);
+    expect(b.attributes.visible, isFalse);
+
+    // One undo per tap: all-off -> all-on -> the original mixed state.
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(a.attributes.visible, isTrue);
+    expect(b.attributes.visible, isTrue);
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(a.attributes.visible, isTrue);
+    expect(b.attributes.visible, isFalse);
   });
 
   testWidgets('multi-selection: count header and a read-only list',
