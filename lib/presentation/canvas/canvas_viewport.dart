@@ -19,7 +19,31 @@ import '../../domain/math/vec2.dart';
 class CanvasViewport {
   const CanvasViewport(this.state);
 
+  /// Zoom bounds, in screen pixels per world unit. Wide enough that no
+  /// reasonable construction hits them; tight enough that float precision
+  /// in the transforms never becomes visible.
+  static const double minScale = 0.05;
+  static const double maxScale = 50;
+
   final ViewportState state;
+
+  /// The state after multiplying scale by [factor] (> 1 zooms in) while
+  /// keeping the world point under [focal] (screen coordinates) exactly
+  /// there — the cursor pins the content. Scale is clamped to
+  /// [minScale]..[maxScale]; at a bound the state returns unchanged.
+  ViewportState zoomedAbout(Offset focal, double factor) {
+    final newScale =
+        (state.scale * factor).clamp(minScale, maxScale).toDouble();
+    if (newScale == state.scale) {
+      return state;
+    }
+    final fixed = screenToWorld(focal);
+    // Solve screenToWorld'(focal) == fixed for the new pan.
+    return ViewportState(
+      pan: Vec2(fixed.x - focal.dx / newScale, fixed.y + focal.dy / newScale),
+      scale: newScale,
+    );
+  }
 
   Offset worldToScreen(Vec2 world) => Offset(
         (world.x - state.pan.x) * state.scale,
