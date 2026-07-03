@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:fgex/application/providers/construction_provider.dart';
+import 'package:fgex/application/providers/selection_provider.dart';
 import 'package:fgex/domain/construction/objects/arc.dart';
 import 'package:fgex/domain/construction/objects/compass_circle.dart';
 import 'package:fgex/domain/construction/objects/line_angle.dart';
@@ -12,6 +13,7 @@ import 'package:fgex/domain/math/vec2.dart';
 import 'package:fgex/main.dart';
 import 'package:fgex/presentation/canvas/geometry_canvas.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -540,6 +542,86 @@ void main() {
     await tester.tap(find.byIcon(Icons.undo));
     await tester.pump();
     expect(objectCount(), 5, reason: 'only the angle is one undo unit');
+  });
+
+  testWidgets(
+      'move/select mode: tap selects, shift-tap toggles, empty tap clears',
+      (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+
+    // Two points, then back to move/select mode.
+    await tester.tap(find.byIcon(Icons.control_point));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(100, 100));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(200, 100));
+    await tester.pump();
+    await tester.tap(find.byIcon(Icons.control_point)); // toggle off
+    await tester.pump();
+
+    final ids = [
+      for (final object
+          in container.read(constructionProvider).construction.objects)
+        object.id,
+    ];
+    Set<String> selection() => container.read(selectionProvider);
+
+    await tester.tapAt(origin + const Offset(100, 100));
+    await tester.pump();
+    expect(selection(), {ids[0]});
+
+    // A plain click moves the selection rather than growing it.
+    await tester.tapAt(origin + const Offset(200, 100));
+    await tester.pump();
+    expect(selection(), {ids[1]});
+
+    // Shift-click adds…
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.tapAt(origin + const Offset(100, 100));
+    await tester.pump();
+    expect(selection(), {ids[0], ids[1]});
+
+    // …and removes.
+    await tester.tapAt(origin + const Offset(100, 100));
+    await tester.pump();
+    expect(selection(), {ids[1]});
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+
+    // Empty canvas clears (even a shift-click keeps nothing to toggle).
+    await tester.tapAt(origin + const Offset(400, 300));
+    await tester.pump();
+    expect(selection(), isEmpty);
+  });
+
+  testWidgets('taps while a tool is active never touch the selection',
+      (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+
+    // A point, selected in move/select mode.
+    await tester.tap(find.byIcon(Icons.control_point));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(100, 100));
+    await tester.pump();
+    await tester.tap(find.byIcon(Icons.control_point)); // toggle off
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(100, 100));
+    await tester.pump();
+    final selected = container.read(selectionProvider);
+    expect(selected, hasLength(1));
+
+    // Back in the point tool: a tap the tool ignores (the existing
+    // point) and one it commits (empty canvas) both leave the
+    // selection alone.
+    await tester.tap(find.byIcon(Icons.control_point));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(100, 100));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(200, 200));
+    await tester.pump();
+    expect(objectCount(), 2);
+    expect(container.read(selectionProvider), selected);
   });
 
   testWidgets('deactivating the point tool stops point placement',

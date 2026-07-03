@@ -23,6 +23,8 @@ class GeometryPainter extends CustomPainter {
     required this.viewport,
     required this.revision,
     required this.defaultColor,
+    required this.selectionColor,
+    this.selectedIds = const {},
     this.previewMarkers = const [],
   });
 
@@ -34,6 +36,12 @@ class GeometryPainter extends CustomPainter {
   /// Radius (logical px) of an angle's marker wedge. Like stroke widths,
   /// it does not scale with zoom.
   static const double _angleMarkerRadius = 20;
+
+  /// How much wider (logical px) a selection halo is than the stroke it
+  /// sits under; also the extra radius on a selected point's halo disc.
+  static const double _haloExtra = 5;
+
+  static const double _haloAlpha = 0.4;
 
   /// Read live at paint time, in insertion (drawing) order.
   final Construction construction;
@@ -50,6 +58,12 @@ class GeometryPainter extends CustomPainter {
   /// Color for objects whose attributes carry no explicit color.
   final Color defaultColor;
 
+  /// Ids of selected objects, drawn with a translucent halo underneath.
+  final Set<String> selectedIds;
+
+  /// Base color of the selection halo (alpha is the painter's business).
+  final Color selectionColor;
+
   /// World positions of the active tool's in-progress inputs (see
   /// `ToolInputPreview`), drawn as markers on top of the construction.
   final List<Vec2> previewMarkers;
@@ -64,55 +78,18 @@ class GeometryPainter extends CustomPainter {
       if (!object.attributes.visible || !object.isDefined) {
         continue;
       }
+      if (selectedIds.contains(object.id)) {
+        final halo = Paint()
+          ..color = selectionColor.withValues(alpha: _haloAlpha)
+          ..strokeWidth = object.attributes.strokeWidth + _haloExtra
+          ..style = PaintingStyle.stroke;
+        _drawObject(canvas, size, object, halo, pointRadiusExtra: _haloExtra);
+      }
       final paint = Paint()
         ..color = Color(object.attributes.colorArgb ?? defaultColor.toARGB32())
         ..strokeWidth = object.attributes.strokeWidth
         ..style = PaintingStyle.stroke;
-
-      switch (object) {
-        case GeoPoint():
-          canvas.drawCircle(
-            viewport.worldToScreen(object.position!),
-            object.attributes.pointSize,
-            paint..style = PaintingStyle.fill,
-          );
-        case Segment():
-          canvas.drawLine(
-            viewport.worldToScreen(object.start!),
-            viewport.worldToScreen(object.end!),
-            paint,
-          );
-        case Ray():
-          _drawRay(canvas, size, object, paint);
-        case GeoLine():
-          _drawInfiniteLine(canvas, size, object, paint);
-        case Arc():
-          _drawCarrierBranch(
-            canvas,
-            object.circle!,
-            object.startAngle!,
-            object.sweep!,
-            paint,
-          );
-        case Sector():
-          _drawCarrierBranch(
-            canvas,
-            object.circle!,
-            object.startAngle!,
-            object.sweep!,
-            paint,
-            closeToCenter: true,
-          );
-        case GeoCircle():
-          final circle = object.circle!;
-          canvas.drawCircle(
-            viewport.worldToScreen(circle.center),
-            viewport.worldToScreenLength(circle.radius),
-            paint,
-          );
-        case GeoAngle():
-          _drawAngleMarker(canvas, object, paint);
-      }
+      _drawObject(canvas, size, object, paint);
     }
 
     final dot = Paint()..color = defaultColor;
@@ -124,6 +101,61 @@ class GeometryPainter extends CustomPainter {
       final center = viewport.worldToScreen(marker);
       canvas.drawCircle(center, _markerDotRadius, dot);
       canvas.drawCircle(center, _markerRingRadius, ring);
+    }
+  }
+
+  /// Draws one object with [paint] — both the normal pass and, with a
+  /// wider translucent paint plus [pointRadiusExtra], the selection halo.
+  void _drawObject(
+    Canvas canvas,
+    Size size,
+    GeoObject object,
+    Paint paint, {
+    double pointRadiusExtra = 0,
+  }) {
+    switch (object) {
+      case GeoPoint():
+        canvas.drawCircle(
+          viewport.worldToScreen(object.position!),
+          object.attributes.pointSize + pointRadiusExtra,
+          paint..style = PaintingStyle.fill,
+        );
+      case Segment():
+        canvas.drawLine(
+          viewport.worldToScreen(object.start!),
+          viewport.worldToScreen(object.end!),
+          paint,
+        );
+      case Ray():
+        _drawRay(canvas, size, object, paint);
+      case GeoLine():
+        _drawInfiniteLine(canvas, size, object, paint);
+      case Arc():
+        _drawCarrierBranch(
+          canvas,
+          object.circle!,
+          object.startAngle!,
+          object.sweep!,
+          paint,
+        );
+      case Sector():
+        _drawCarrierBranch(
+          canvas,
+          object.circle!,
+          object.startAngle!,
+          object.sweep!,
+          paint,
+          closeToCenter: true,
+        );
+      case GeoCircle():
+        final circle = object.circle!;
+        canvas.drawCircle(
+          viewport.worldToScreen(circle.center),
+          viewport.worldToScreenLength(circle.radius),
+          paint,
+        );
+      case GeoAngle():
+        _drawAngleMarker(canvas, object, paint);
     }
   }
 
@@ -206,5 +238,7 @@ class GeometryPainter extends CustomPainter {
       oldDelegate.revision != revision ||
       oldDelegate.viewport.state != viewport.state ||
       oldDelegate.defaultColor != defaultColor ||
+      oldDelegate.selectionColor != selectionColor ||
+      !setEquals(oldDelegate.selectedIds, selectedIds) ||
       !listEquals(oldDelegate.previewMarkers, previewMarkers);
 }
