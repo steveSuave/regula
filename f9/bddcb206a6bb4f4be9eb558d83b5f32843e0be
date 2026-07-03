@@ -1,0 +1,35 @@
+lib/presentation/canvas/canvas_viewport.dart
+  s_eeb377f2f6898b::t_abdfc4e6b0749c 40-53,55-59
+lib/presentation/canvas/geometry_canvas.dart
+  s_eeb377f2f6898b::t_5ef50e4b775e6f 138-140,168-181,186-224
+  s_eeb377f2f6898b::t_3ad73f817ee11c 56-66
+  s_eeb377f2f6898b::t_0e27619498e871 67-73
+  s_eeb377f2f6898b::t_fce845f4884c32 319-327
+  s_eeb377f2f6898b::t_fa530359f9d72e 94-96
+  s_eeb377f2f6898b::t_54a8be39f74282 141-167
+  s_eeb377f2f6898b::t_9dd73ffc1a8896 182-185
+  s_eeb377f2f6898b::t_78a55b62dd70f6 12
+  s_eeb377f2f6898b::t_8f77684aac9d6c 83-85,89-92
+  s_eeb377f2f6898b::t_0bb2d8b1b78e98 25-30
+test/presentation/canvas/geometry_canvas_test.dart
+  s_eeb377f2f6898b::t_de4389c462ad2d 945-946
+  s_eeb377f2f6898b::t_0b8f6343b37784 917,919-920
+  s_eeb377f2f6898b::t_5c3d391a32e66d 913-916,918,921-944,947-958,962,964,966-977,980,983-1056
+  s_eeb377f2f6898b::t_4b061bde89c707 959-961,963,965,978-979,981-982
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f9bddcb206a6bb4f4be9eb558d83b5f32843e0be",
+  "prompts": {},
+  "sessions": {
+    "s_eeb377f2f6898b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "bb801520-b41a-4d64-ba52-2dbc60aa53a2",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
