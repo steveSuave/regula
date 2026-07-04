@@ -1,0 +1,44 @@
+docs/PLAN.md
+  s_402d41618a9d11::t_1b653f563fce77 69
+  s_402d41618a9d11::t_4cbbffc8de504d 95
+  s_402d41618a9d11::t_2d92702135308e 240
+lib/presentation/panels/toolbar.dart
+  s_402d41618a9d11::t_80940af21f892e 31
+  s_402d41618a9d11::t_753031d2a1b9a0 523-532,535
+  s_402d41618a9d11::t_4c50dcdbf5b98b 608
+  s_402d41618a9d11::t_f08c5180338f40 156
+  s_402d41618a9d11::t_c729d7665df84c 187-193
+  s_402d41618a9d11::t_20b2c4c5b6367d 309-313
+  s_402d41618a9d11::t_f5030b581fb018 588-590
+lib/presentation/shortcuts/shortcut_table.dart
+  s_402d41618a9d11::t_296bdcc9815e38 57
+  s_402d41618a9d11::t_92ae7e4521c394 543-548
+test/presentation/shortcuts/editor_shortcuts_test.dart
+  s_402d41618a9d11::t_c5b6ad75857e29 240-263
+  s_402d41618a9d11::t_8e34e329f194c2 15
+test/presentation/panels/toolbar_test.dart
+  s_402d41618a9d11::t_366e6dc1b43964 2
+  s_402d41618a9d11::t_0944942e3a7fe6 234-271
+lib/main.dart
+  s_402d41618a9d11::t_feab45d6409d37 25
+  s_402d41618a9d11::t_141cf2d473c0b5 316-325
+  s_402d41618a9d11::t_3d24c09c0eb862 462-463
+docs/TODO.md
+  s_402d41618a9d11::t_aac479084e7db0 127
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "734a3c75852c2cb5113b64fcedb97e0159d01a3b",
+  "prompts": {},
+  "sessions": {
+    "s_402d41618a9d11": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b5bee080-981c-41da-94d5-df8864cfa684",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
