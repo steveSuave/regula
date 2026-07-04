@@ -113,10 +113,10 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [ ] Deselect affordances: double-click on a flyout group icon deactivates its tool; active-tool highlight consistent across single icons and groups; tooltips say "click again / double-click to deselect"
 - [ ] Update the shortcut table, cheat sheet, and any goldens/smoke assertions touched by the toolbar change (drive.js indexes app-bar icons by position)
 
-## Phase 14 — Drag rework
-- [ ] New `DragTool` (`V` rebinds to it); no-tool mode becomes select-only — `_panStart` in `geometry_canvas.dart` no longer starts drags without a tool
-- [ ] `PointOnObject` slides along its host curve via new `SetPointOnObjectParameterCommand` (one command per gesture, preview/rollback per the existing `DragSession` contract — closes the open item carried since Phase 7)
+## Phase 14 — Drag & gesture fixes
+- [ ] `PointOnObject` slides along its host curve via new `SetPointOnObjectParameterCommand` (one command per gesture, preview/rollback per the existing `DragSession` contract — closes the open item carried since Phase 7; dragging stays in the no-tool move/select mode, the dedicated Drag tool idea was shelved)
 - [ ] `CompassCircle` drag moves only its center's free-point ancestors; the radius-defining points stay put
+- [ ] Fix: multi-finger trackpad pan on macOS in the browser both pans *and* zooms (expected pure pan). Trackpad pan-zoom reports as ≥2 pointers (Phase 8 note), so it lands in `_scaleUpdate`'s nav branch where `CanvasViewport.pinning` applies `nav.startScale * details.scale` — the scale factor evidently drifts from 1 during a pure pan on web. Reproduce in-browser, find where the spurious scale originates (browser trackpad events vs the scale recognizer's synthesis), and pin scale for pan-only gestures
 
 ## Phase 15 — Transformations
 - [ ] Four derived-point objects + tools: reflect about line (`ReflectedPoint`), reflect about point (`CentralReflectionPoint`), rotate around point by a fixed angle (`RotatedPoint`, angle via dialog), translate by vector (`TranslatedPoint`, vector given by two points) — names refinable at implementation
