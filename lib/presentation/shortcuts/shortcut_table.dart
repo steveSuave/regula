@@ -64,6 +64,10 @@ enum AppAction {
   kiteMacroTool,
   isoscelesTrapeziumMacroTool,
   rightTrapeziumMacroTool,
+  equilateralTriangleMacroTool,
+  isoscelesTriangleMacroTool,
+  rightTriangleMacroTool,
+  regularPolygonMacroTool,
 }
 
 /// Cheat-sheet grouping, mirroring the PLAN's shortcut tables.
@@ -162,14 +166,19 @@ ShortcutBinding _g(
   display: display,
 );
 
-/// An `X`-leader chord (shape macros).
+/// An `X`-leader chord (shape macros). [shift] shifts the *second*
+/// stroke (`X ⇧ I` vs `X I`).
 ShortcutBinding _x(
   LogicalKeyboardKey second,
   AppAction action,
   String label,
-  String display,
-) => ShortcutBinding(
-  sequence: [const KeyStroke(LogicalKeyboardKey.keyX), KeyStroke(second)],
+  String display, {
+  bool shift = false,
+}) => ShortcutBinding(
+  sequence: [
+    const KeyStroke(LogicalKeyboardKey.keyX),
+    KeyStroke(second, shift: shift),
+  ],
   action: action,
   label: label,
   section: ShortcutSection.macros,
@@ -574,6 +583,32 @@ final List<ShortcutBinding> shortcutTable = [
     AppAction.rightTrapeziumMacroTool,
     'Right trapezium',
     'X L',
+  ),
+  _x(
+    LogicalKeyboardKey.keyE,
+    AppAction.equilateralTriangleMacroTool,
+    'Equilateral triangle',
+    'X E',
+  ),
+  _x(
+    LogicalKeyboardKey.keyI,
+    AppAction.isoscelesTriangleMacroTool,
+    'Isosceles triangle',
+    'X ⇧ I',
+    shift: true,
+  ),
+  _x(
+    LogicalKeyboardKey.keyR,
+    AppAction.rightTriangleMacroTool,
+    'Right triangle',
+    'X ⇧ R',
+    shift: true,
+  ),
+  _x(
+    LogicalKeyboardKey.keyG,
+    AppAction.regularPolygonMacroTool,
+    'Regular polygon…',
+    'X G',
   ),
 ];
 
