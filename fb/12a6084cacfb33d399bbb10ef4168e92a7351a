@@ -1,0 +1,65 @@
+test/application/persistence/construction_codec_test.dart
+  s_0a159edc7b5c66::t_c499dd39a76487 10
+  s_0a159edc7b5c66::t_73f487d6bb295e 115-119
+  s_0a159edc7b5c66::t_e0fd8470a6db4f 26-27
+  s_0a159edc7b5c66::t_7a072d4509b108 182
+  s_0a159edc7b5c66::t_f046c29e0480b6 32
+test/domain/math/line_eq_test.dart
+  s_0a159edc7b5c66::t_817f6cfed0abb4 145-171
+  s_0a159edc7b5c66::t_70ce745b30f772 61-67
+test/domain/construction/objects/central_reflection_point_test.dart
+  s_0a159edc7b5c66::t_7df72a05996d81 1-22,24-70
+  s_0a159edc7b5c66::t_a171b2a1bcf423 23
+lib/domain/construction/objects/translated_point.dart
+  s_0a159edc7b5c66::t_27e02f3b5a81ce 1-40
+lib/domain/construction/objects/reflected_point.dart
+  s_0a159edc7b5c66::t_fc579f7db24eda 1-37
+test/domain/math/generators.dart
+  s_0a159edc7b5c66::t_7395fb4b685f63 21-24
+test/domain/construction/objects/translated_point_test.dart
+  s_0a159edc7b5c66::t_aed75e3ab2d3c0 34,38,42
+  s_0a159edc7b5c66::t_03aef3ae6775a3 1-33,35-37,39-41,43-82
+test/domain/construction/objects/rotated_point_test.dart
+  s_0a159edc7b5c66::t_572a7060b43be0 1-29,32-36,39-50,52-71
+  s_0a159edc7b5c66::t_a22c25b62ec49b 51
+  s_0a159edc7b5c66::t_16a75c18864a63 30-31,37-38
+test/domain/construction/objects/reflected_point_test.dart
+  s_0a159edc7b5c66::t_4f14d3126a6664 47,50
+  s_0a159edc7b5c66::t_20f138051a904b 1-34,36-46,48-49,51-86
+  s_0a159edc7b5c66::t_a10117027dc793 35
+lib/domain/math/vec2.dart
+  s_0a159edc7b5c66::t_43a3174f596aea 59-65
+lib/domain/construction/objects/central_reflection_point.dart
+  s_0a159edc7b5c66::t_1739515efa05e0 1-36
+lib/application/persistence/construction_codec.dart
+  s_0a159edc7b5c66::t_2744acfa0e2acd 124-127
+  s_0a159edc7b5c66::t_6be4034008e691 221-246
+  s_0a159edc7b5c66::t_bf857fe3182e6a 6
+  s_0a159edc7b5c66::t_b4924f71ae6440 28
+  s_0a159edc7b5c66::t_285bd8b0799b7a 22-23
+lib/domain/math/line_eq.dart
+  s_0a159edc7b5c66::t_2b3dfb04dfd7d4 74-76
+lib/domain/construction/objects/rotated_point.dart
+  s_0a159edc7b5c66::t_641d0379dc81c8 1-41
+test/domain/math/vec2_test.dart
+  s_0a159edc7b5c66::t_87be1bd28e0863 119-131
+  s_0a159edc7b5c66::t_c6ac09d773edf2 48-59
+devtools_options.yaml
+  s_0a159edc7b5c66::t_375ee1a4cc4009 1-3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "fb12a6084cacfb33d399bbb10ef4168e92a7351a",
+  "prompts": {},
+  "sessions": {
+    "s_0a159edc7b5c66": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4c9397c7-bb56-4ff1-aaf3-f3f40ec03611",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
