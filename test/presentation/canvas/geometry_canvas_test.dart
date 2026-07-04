@@ -59,7 +59,9 @@ void main() {
     await pumpEditor(tester);
 
     await tester.tap(find.byIcon(Icons.control_point));
-    await tester.pump();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Point'));
+    await tester.pumpAndSettle();
 
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
     await tester.tapAt(origin + const Offset(100, 100));
@@ -88,7 +90,7 @@ void main() {
       (tester) async {
     await pumpEditor(tester);
 
-    await tester.tap(find.byIcon(Icons.change_history));
+    await tester.tap(find.byIcon(Icons.control_point));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Centroid'));
     await tester.pumpAndSettle();
@@ -138,8 +140,10 @@ void main() {
     await buildSegment(const Offset(200, 40), const Offset(200, 160));
     expect(objectCount(), 6);
 
-    await tester.tap(find.byIcon(Icons.join_inner));
-    await tester.pump();
+    await tester.tap(find.byIcon(Icons.control_point));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Intersection of two curves'));
+    await tester.pumpAndSettle();
 
     // Taps land on the segments away from their endpoints and from the
     // crossing, so the hit tester reports the segments themselves.
@@ -297,13 +301,15 @@ void main() {
 
     // Place a point with the point tool.
     await tester.tap(find.byIcon(Icons.control_point));
-    await tester.pump();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Point'));
+    await tester.pumpAndSettle();
     await tester.tapAt(origin + const Offset(100, 100));
     await tester.pump();
     expect(objectCount(), 1);
 
     // Collect it as a centroid vertex, then undo it away.
-    await tester.tap(find.byIcon(Icons.change_history));
+    await tester.tap(find.byIcon(Icons.control_point));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Centroid'));
     await tester.pumpAndSettle();
@@ -343,8 +349,10 @@ void main() {
     expect(objectCount(), 3, reason: '2 free points + the segment');
 
     // Constrain a point onto the segment: tap between the endpoints.
-    await tester.tap(find.byIcon(Icons.gps_fixed));
-    await tester.pump();
+    await tester.tap(find.byIcon(Icons.control_point));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Point on object'));
+    await tester.pumpAndSettle();
     await tester.tapAt(origin + const Offset(200, 103));
     await tester.pump();
     expect(objectCount(), 4);
@@ -372,7 +380,7 @@ void main() {
     await tester.pump();
     expect(objectCount(), 3, reason: '2 free points + the line');
 
-    await tester.tap(find.byIcon(Icons.line_axis));
+    await tester.tap(find.byIcon(Icons.timeline));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Perpendicular line'));
     await tester.pumpAndSettle();
@@ -395,7 +403,7 @@ void main() {
     await pumpEditor(tester);
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
 
-    await tester.tap(find.byIcon(Icons.line_axis));
+    await tester.tap(find.byIcon(Icons.timeline));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Angle bisector (arm, vertex, arm)'));
     await tester.pumpAndSettle();
@@ -421,7 +429,7 @@ void main() {
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
 
     // Cancelling the ratio dialog activates nothing.
-    await tester.tap(find.byIcon(Icons.timeline));
+    await tester.tap(find.byIcon(Icons.control_point));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Segment-ratio point…'));
     await tester.pumpAndSettle();
@@ -432,7 +440,7 @@ void main() {
     expect(objectCount(), 0);
 
     // Fraction input works; two taps commit one undo unit.
-    await tester.tap(find.byIcon(Icons.timeline));
+    await tester.tap(find.byIcon(Icons.control_point));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Segment-ratio point…'));
     await tester.pumpAndSettle();
@@ -482,7 +490,7 @@ void main() {
     Color? iconColor(IconData icon) =>
         tester.widget<Icon>(find.byIcon(icon)).color;
     expect(iconColor(Icons.circle_outlined), theme.colorScheme.primary);
-    expect(iconColor(Icons.line_axis), isNot(theme.colorScheme.primary));
+    expect(iconColor(Icons.timeline), isNot(theme.colorScheme.primary));
 
     await tester.tapAt(origin + const Offset(100, 100));
     await tester.pump();
@@ -654,7 +662,7 @@ void main() {
         tester.widget<Icon>(find.byIcon(icon)).color;
     expect(iconColor(Icons.square_foot), theme.colorScheme.primary);
     expect(iconColor(Icons.circle_outlined), isNot(theme.colorScheme.primary));
-    expect(iconColor(Icons.line_axis), isNot(theme.colorScheme.primary));
+    expect(iconColor(Icons.timeline), isNot(theme.colorScheme.primary));
 
     await tester.tapAt(origin + const Offset(300, 100)); // arm
     await tester.pump();
@@ -735,12 +743,14 @@ void main() {
 
     // Two points, then back to move/select mode.
     await tester.tap(find.byIcon(Icons.control_point));
-    await tester.pump();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Point'));
+    await tester.pumpAndSettle();
     await tester.tapAt(origin + const Offset(100, 100));
     await tester.pump();
     await tester.tapAt(origin + const Offset(200, 100));
     await tester.pump();
-    await tester.tap(find.byIcon(Icons.control_point)); // toggle off
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape); // deactivate
     await tester.pump();
 
     final ids = [
@@ -784,10 +794,12 @@ void main() {
 
     // A point, selected in move/select mode.
     await tester.tap(find.byIcon(Icons.control_point));
-    await tester.pump();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Point'));
+    await tester.pumpAndSettle();
     await tester.tapAt(origin + const Offset(100, 100));
     await tester.pump();
-    await tester.tap(find.byIcon(Icons.control_point)); // toggle off
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape); // deactivate
     await tester.pump();
     await tester.tapAt(origin + const Offset(100, 100));
     await tester.pump();
@@ -796,9 +808,12 @@ void main() {
 
     // Back in the point tool: a tap the tool ignores (the existing
     // point) and one it commits (empty canvas) both leave the
-    // selection alone.
+    // selection alone. (`.last`: the open inspector also shows a
+    // "Point" kind header, the flyout item is the later one.)
     await tester.tap(find.byIcon(Icons.control_point));
-    await tester.pump();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Point').last);
+    await tester.pumpAndSettle();
     await tester.tapAt(origin + const Offset(100, 100));
     await tester.pump();
     await tester.tapAt(origin + const Offset(200, 200));
@@ -814,12 +829,14 @@ void main() {
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
 
     await tester.tap(find.byIcon(Icons.control_point));
-    await tester.pump();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Point'));
+    await tester.pumpAndSettle();
     await tester.tapAt(origin + const Offset(100, 100));
     await tester.pump();
     await tester.tapAt(origin + const Offset(200, 100));
     await tester.pump();
-    await tester.tap(find.byIcon(Icons.control_point)); // toggle off
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape); // deactivate
     await tester.pump();
 
     final ids = [
@@ -852,12 +869,14 @@ void main() {
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
 
     await tester.tap(find.byIcon(Icons.control_point));
-    await tester.pump();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Point'));
+    await tester.pumpAndSettle();
     await tester.tapAt(origin + const Offset(100, 100));
     await tester.pump();
     await tester.tapAt(origin + const Offset(300, 100));
     await tester.pump();
-    await tester.tap(find.byIcon(Icons.control_point)); // toggle off
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape); // deactivate
     await tester.pump();
 
     final ids = [
@@ -889,7 +908,9 @@ void main() {
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
 
     await tester.tap(find.byIcon(Icons.control_point));
-    await tester.pump();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Point'));
+    await tester.pumpAndSettle();
     await tester.tapAt(origin + const Offset(100, 100));
     await tester.pump();
 
@@ -901,7 +922,7 @@ void main() {
     await tester.pump();
     expect(container.read(selectionProvider), isEmpty);
 
-    await tester.tap(find.byIcon(Icons.control_point)); // toggle off
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape); // deactivate
     await tester.pump();
 
     // Move/select mode, but the drag starts on the point itself: that is
@@ -921,10 +942,12 @@ void main() {
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
 
     await tester.tap(find.byIcon(Icons.control_point));
-    await tester.pump();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Point'));
+    await tester.pumpAndSettle();
     await tester.tapAt(origin + const Offset(100, 100));
     await tester.pump();
-    await tester.tap(find.byIcon(Icons.control_point)); // toggle off
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape); // deactivate
     await tester.pump();
 
     FreePoint point() => container
@@ -993,7 +1016,7 @@ void main() {
     await pumpEditor(tester);
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
 
-    await tester.tap(find.byIcon(Icons.timeline));
+    await tester.tap(find.byIcon(Icons.control_point));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Midpoint'));
     await tester.pumpAndSettle();
@@ -1075,23 +1098,32 @@ void main() {
         reason: 'undoing the drag restores the dependent too');
   });
 
-  testWidgets('deactivating the point tool stops point placement',
-      (tester) async {
+  testWidgets(
+      'double-clicking the active group icon deactivates the tool and '
+      'stops point placement', (tester) async {
     await pumpEditor(tester);
     final toolButton = find.byIcon(Icons.control_point);
 
     await tester.tap(toolButton);
-    await tester.pump();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Point'));
+    await tester.pumpAndSettle();
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
     await tester.tapAt(origin + const Offset(50, 50));
     await tester.pump();
     expect(objectCount(), 1);
 
-    await tester.tap(toolButton); // toggle off
-    await tester.pump();
+    // Double-click the highlighted group icon: the tool deactivates and
+    // the flyout must not open.
+    await tester.tap(toolButton);
+    await tester.pump(kDoubleTapMinTime);
+    await tester.tap(toolButton);
+    await tester.pumpAndSettle();
+    expect(find.text('Point'), findsNothing, reason: 'no menu opened');
+
     await tester.tapAt(origin + const Offset(150, 50));
     await tester.pump();
-    expect(objectCount(), 1);
+    expect(objectCount(), 1, reason: 'move/select mode places nothing');
   });
 
   testWidgets('scroll wheel zooms about the cursor', (tester) async {
@@ -1129,7 +1161,9 @@ void main() {
       (tester) async {
     await pumpEditor(tester);
     await tester.tap(find.byIcon(Icons.control_point));
-    await tester.pump();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Point'));
+    await tester.pumpAndSettle();
 
     final cursor = tester.getCenter(find.byType(GeometryCanvas));
     final pointer = TestPointer(1, PointerDeviceKind.mouse);
@@ -1218,7 +1252,9 @@ void main() {
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
 
     await tester.tap(find.byIcon(Icons.control_point));
-    await tester.pump();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Point'));
+    await tester.pumpAndSettle();
     await tester.tapAt(origin + const Offset(150, 150));
     await tester.pump();
     container.read(toolProvider.notifier).deactivate();
@@ -1260,7 +1296,9 @@ void main() {
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
 
     await tester.tap(find.byIcon(Icons.control_point));
-    await tester.pump();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Point'));
+    await tester.pumpAndSettle();
     await tester.tapAt(origin + const Offset(100, 100));
     await tester.pump();
     await tester.tapAt(origin + const Offset(300, 200));
@@ -1303,7 +1341,9 @@ void main() {
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
 
     await tester.tap(find.byIcon(Icons.control_point));
-    await tester.pump();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Point'));
+    await tester.pumpAndSettle();
     await tester.tapAt(origin + const Offset(200, 200));
     await tester.pump();
     container.read(toolProvider.notifier).deactivate();
