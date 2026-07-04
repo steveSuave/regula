@@ -89,12 +89,12 @@ class ShortcutResolver {
     }
 
     bool matches(KeyStroke stroke) => stroke.matches(
-          key,
-          shiftDown: shiftDown,
-          controlDown: controlDown,
-          metaDown: metaDown,
-          altDown: altDown,
-        );
+      key,
+      shiftDown: shiftDown,
+      controlDown: controlDown,
+      metaDown: metaDown,
+      altDown: altDown,
+    );
 
     if (_pending.isNotEmpty) {
       final candidates = _pending;

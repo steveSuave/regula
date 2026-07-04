@@ -143,14 +143,13 @@ ShortcutBinding _g(
   AppAction action,
   String label,
   String display,
-) =>
-    ShortcutBinding(
-      sequence: [const KeyStroke(LogicalKeyboardKey.keyG), KeyStroke(second)],
-      action: action,
-      label: label,
-      section: ShortcutSection.constructions,
-      display: display,
-    );
+) => ShortcutBinding(
+  sequence: [const KeyStroke(LogicalKeyboardKey.keyG), KeyStroke(second)],
+  action: action,
+  label: label,
+  section: ShortcutSection.constructions,
+  display: display,
+);
 
 /// An `X`-leader chord (shape macros).
 ShortcutBinding _x(
@@ -158,14 +157,13 @@ ShortcutBinding _x(
   AppAction action,
   String label,
   String display,
-) =>
-    ShortcutBinding(
-      sequence: [const KeyStroke(LogicalKeyboardKey.keyX), KeyStroke(second)],
-      action: action,
-      label: label,
-      section: ShortcutSection.macros,
-      display: display,
-    );
+) => ShortcutBinding(
+  sequence: [const KeyStroke(LogicalKeyboardKey.keyX), KeyStroke(second)],
+  action: action,
+  label: label,
+  section: ShortcutSection.macros,
+  display: display,
+);
 
 /// The binding table — the single source of truth for every keyboard
 /// shortcut (PLAN "Keyboard shortcuts"). The cheat-sheet overlay renders
@@ -508,10 +506,5 @@ final List<ShortcutBinding> shortcutTable = [
     'Parallelogram',
     'X P',
   ),
-  _x(
-    LogicalKeyboardKey.keyT,
-    AppAction.trapeziumMacroTool,
-    'Trapezium',
-    'X T',
-  ),
+  _x(LogicalKeyboardKey.keyT, AppAction.trapeziumMacroTool, 'Trapezium', 'X T'),
 ];
