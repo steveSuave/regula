@@ -174,7 +174,8 @@ ShortcutBinding _x(
 /// Deliberately absent, per PLAN: `Tab` object cycling (needs cursor
 /// tracking; Tab traverses focus meanwhile). `Space`+drag panning lives
 /// in the canvas's gesture code, not here — it is a modifier for a
-/// pointer gesture, not a key action.
+/// pointer gesture, not a key action; the cheat sheet lists it (and the
+/// other pointer gestures) via the display-only [gestureRows].
 final List<ShortcutBinding> shortcutTable = [
   // ── Selection / app level ────────────────────────────────────────
   const ShortcutBinding(
@@ -187,10 +188,9 @@ final List<ShortcutBinding> shortcutTable = [
   const ShortcutBinding(
     sequence: [KeyStroke(LogicalKeyboardKey.keyV)],
     action: AppAction.returnToMoveSelect,
-    label: 'Move/select tool',
+    label: 'Move/select tool (deactivates the active tool)',
     section: ShortcutSection.appLevel,
     display: 'V',
-    showInCheatSheet: false,
   ),
   const ShortcutBinding(
     sequence: [KeyStroke(LogicalKeyboardKey.delete)],
@@ -515,4 +515,43 @@ final List<ShortcutBinding> shortcutTable = [
     'X P',
   ),
   _x(LogicalKeyboardKey.keyT, AppAction.trapeziumMacroTool, 'Trapezium', 'X T'),
+];
+
+/// A display-only cheat-sheet row for a pointer gesture. Not a binding —
+/// the resolver never sees these; they exist so the pointer-first
+/// interactions (panning, zooming) are discoverable next to their
+/// keyboard cousins.
+class GestureRow {
+  const GestureRow({
+    required this.display,
+    required this.label,
+    required this.section,
+  });
+
+  final String display;
+  final String label;
+  final ShortcutSection section;
+}
+
+const List<GestureRow> gestureRows = [
+  GestureRow(
+    display: 'Space + drag',
+    label: 'Pan (hold Space, works with any tool)',
+    section: ShortcutSection.viewport,
+  ),
+  GestureRow(
+    display: 'Scroll',
+    label: 'Zoom about the cursor',
+    section: ShortcutSection.viewport,
+  ),
+  GestureRow(
+    display: 'Two-finger drag',
+    label: 'Pan (touch)',
+    section: ShortcutSection.viewport,
+  ),
+  GestureRow(
+    display: 'Pinch',
+    label: 'Zoom (touch)',
+    section: ShortcutSection.viewport,
+  ),
 ];

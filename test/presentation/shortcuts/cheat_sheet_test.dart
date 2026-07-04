@@ -45,6 +45,13 @@ void main() {
     expect(find.text('G C'), findsOneWidget);
     expect(find.text('Centroid'), findsOneWidget);
 
+    // `V` is no longer hidden as an Esc twin (Phase 13 discoverability).
+    expect(find.text('V'), findsOneWidget);
+
+    // Display-only pointer-gesture rows make panning findable.
+    expect(find.text('Space + drag'), findsOneWidget);
+    expect(find.text('Scroll'), findsOneWidget);
+
     await pressQuestionMark(tester);
     expect(find.byType(ShortcutCheatSheet), findsNothing);
   });
