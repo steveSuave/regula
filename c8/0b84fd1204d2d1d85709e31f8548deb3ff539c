@@ -1,0 +1,19 @@
+docs/PLAN.md
+  s_402d41618a9d11::t_fc9bc0b4788e90 72
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "c80b84fd1204d2d1d85709e31f8548deb3ff539c",
+  "prompts": {},
+  "sessions": {
+    "s_402d41618a9d11": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b5bee080-981c-41da-94d5-df8864cfa684",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
