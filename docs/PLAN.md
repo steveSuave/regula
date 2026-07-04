@@ -91,11 +91,11 @@ The `domain/` layer must not import `package:flutter/*`. This is the boundary th
 
 ### Panels (`presentation/panels/`)
 
-- **Toolbar / tool palette** — grouping (landed in Phase 13, in `presentation/panels/toolbar.dart`): **Points** (flyout: free point, midpoint, segment-ratio point, intersection, point-on-object, centroid, orthocenter, incenter, circumcenter), **Lines** (flyout, renamed from the two-point menu: line, segment, ray, perpendicular, parallel, angle bisector), **Circles** (flyout: circle center+rim — moved here from the two-point menu — three-point circle, compass, arc, sector), **Angles** (flyout: at vertex, between lines; *by given size joins in Phase 16*), **Transform** (flyout: reflect about line, reflect about point, rotate around point, translate by vector — *Phase 15*), **Macros** (flyout: square, parallelogram, trapezium, rectangle, right trapezium, rhombus, isosceles trapezium, kite — *the last five land in Phase 18*; *triangles and polygons join in Phase 16*). The group icon highlights while its tool is active, so the current tool is always visible. Flyout rows show each tool's shortcut as dimmed trailing text (from the shortcut table's `display` strings, joined via `AppAction`), and each group icon's tooltip lists its keys (Phase 17). Adapt to mobile with a bottom sheet (still open). Builders are public top-level tear-offs shared with the keyboard switch; the Points highlight is a catch-all for builders no tear-off claims (the segment-ratio dialog's closure).
+- **Toolbar / tool palette** — grouping (landed in Phase 13, in `presentation/panels/toolbar.dart`): **Points** (flyout: free point, midpoint, segment-ratio point, intersection, point-on-object, centroid, orthocenter, incenter, circumcenter), **Lines** (flyout, renamed from the two-point menu: line, segment, ray, perpendicular, parallel, angle bisector), **Circles** (flyout: circle center+rim — moved here from the two-point menu — three-point circle, compass, arc, sector), **Angles** (flyout: at vertex, between lines; *by given size joins in Phase 16*), **Transform** (flyout: reflect about line, reflect about point, rotate around point, translate by vector — *Phase 15*), **Macros** (flyout: square, parallelogram, trapezium, rectangle, right trapezium, rhombus, isosceles trapezium, kite — *the last five land in Phase 18*; *triangles and polygons join in Phase 16*). The group icon highlights while its tool is active, so the current tool is always visible. Flyout rows show each tool's shortcut as dimmed trailing text (from the shortcut table's `display` strings, joined via `AppAction`); group-icon tooltips deliberately do *not* list keys (shipped in Phase 17, reverted in Session 20 — hints live next to the subtool names only). Adapt to mobile with a bottom sheet (still open). Builders are public top-level tear-offs shared with the keyboard switch; the Points highlight is a catch-all for builders no tear-off claims (the segment-ratio dialog's closure).
 - **Tool activation / deactivation** — (landed in Phase 13) the active tool's flyout group icon is highlighted; **double-clicking the highlighted group icon deactivates** the tool, and the group's tooltip appends "double-click to deselect" while active. The double-tap detector mounts only on the active group, so the double-tap delay on opening a flyout applies only there. `Esc` and `V` always deactivate. With no tool active the app is in move/select mode (select + drag — see Canvas & interaction).
 - **Attributes inspector** — shown when ≥1 object is selected. Edits name, color, visibility, label visibility, stroke width, and dash style (Solid/Fine/Medium/Coarse presets → `dashPeriod` 0/4/8/16, strokes only) via `ChangeAttributesCommand`s (so attribute edits are undoable).
 - **Object tree** (collapsible) — flat list grouped by type, useful for selecting hidden objects.
-- **App bar** — file menu (new/open/save/save as), undo/redo, theme toggle, cheat-sheet toggle button (keyboard icon, sits between Reset and the theme toggle so the web-smoke script's "theme toggle is last" indexing survives).
+- **App bar** — file menu (new/open/save/save as; *"Export as PNG…" joins in Phase 19*), undo/redo, theme toggle, cheat-sheet toggle button (keyboard icon, sits between Reset and the theme toggle so the web-smoke script's "theme toggle is last" indexing survives).
 
 ### Theme (`presentation/theme/`)
 
@@ -119,6 +119,17 @@ The `domain/` layer must not import `package:flutter/*`. This is the boundary th
 - Encode/decode both live in one hand-written codec (`application/persistence/construction_codec.dart`) that switches on concrete object type, rather than `toJson` methods spread across the domain classes: the type↔constructor registry must exist centrally for *decoding* anyway, keeping the encoder beside it means one file to update per new object kind, and the domain layer stays free of persistence concerns. The cost — a forgotten kind fails at runtime, not compile time — is covered by the round-trip test that instantiates every concrete kind.
 - Decode failures (malformed file, unknown type, unknown version, ill-typed parents) throw `FormatException` with the offending object's id, so File > Open can show one dialog for any bad file.
 - Schema version field from day one to allow future migrations. A file with a *newer* version than the app understands is rejected, not best-effort parsed.
+
+### Export (`application/export/`) — planned, Phase 19
+
+Export the construction as an image, separate from the JSON save format.
+
+- **PNG (committed).** Render off-screen via `ui.PictureRecorder` + the existing `GeometryPainter` — *not* a widget screenshot — so exports work at any resolution and never include UI chrome (selection halos, in-progress tool markers, band rectangle). Framing defaults to "fit construction" via the existing `fittedViewport`, with "current viewport" as the alternative. An options dialog picks scale factor (1×/2×/4×) and background (theme canvas color vs transparent). Encode with `ui.Image.toByteData(format: png)`; deliver bytes through the existing `saveFile(bytes:)` in `application/persistence/file_io.dart` (already handles web download + native picker).
+- **Placement.** Orchestration in a new `lib/application/export/` beside `persistence/`, plus a small options dialog in presentation. The painter lives in `presentation/`, so the export code that calls it also stays outside `domain/` — no layer-rule impact.
+- **Not a command.** Export is a read-only view operation: not undoable, nothing added to the save format (same reasoning as viewport changes not being undoable).
+- **UI.** File menu → "Export as PNG…"; shortcut `Ctrl/Cmd + E` in the shortcut table + cheat sheet.
+- **SVG (stretch, same phase, may slip).** Hand-written SVG writer walking the construction in insertion order, mirroring the painter's per-kind drawing (incl. `dashPeriod` → `stroke-dasharray`, labels as `<text>`). No dependency. Explicitly optional.
+- **Out of scope.** PDF and clipboard-copy — revisit on demand.
 
 ## Critical files to create
 
@@ -181,6 +192,7 @@ Selection / app-level:
 | `Ctrl`/`Cmd` + `Shift` + `Z` (also `Ctrl`/`Cmd` + `Y`) | Redo |
 | `Ctrl`/`Cmd` + `A` | Select all |
 | `Ctrl`/`Cmd` + `S` / `O` / `N` | Save / Open / New construction |
+| `Ctrl`/`Cmd` + `E` | Export as PNG… *(Phase 19)* |
 | `Ctrl`/`Cmd` + `D` | Toggle dark mode |
 | `H` | Hide selected · `Shift` + `H` reveals all |
 | `Tab` | Cycle through selectable objects under cursor *(deferred — needs cursor-position tracking; Tab does focus traversal meanwhile)* |
@@ -260,6 +272,7 @@ The full table is rendered in a `?`-key cheat sheet overlay. Bindings live in `l
 15. Angle-by-given-size + triangle/polygon macros. (TODO Phase 16)
 16. Discoverability & styling polish: cheat-sheet app-bar button, shortcut hints in toolbar flyouts, dashed stroke style, draggable labels. (TODO Phase 17)
 17. Quadrilateral macros: rectangle, right trapezium, rhombus, isosceles trapezium, kite. (TODO Phase 18)
+18. Export: off-screen PNG render + save via the existing file I/O; SVG writer as a stretch goal. (TODO Phase 19)
 
 ## Multi-session workflow
 

@@ -146,3 +146,10 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] `KiteMacroTool` (3 taps apex A, side vertex B, apex C; hidden diagonal segment AC as the mirror axis; D = B mirrored; B on the diagonal = flat kite, not an error)
 - [x] Wiring: Macros flyout rows + `macrosActive` check, `AppAction` entries, `X R`/`X H`/`X K`/`X I`/`X L` chords, cheat sheet auto-updates
 - [x] Tests per tool (tap flow, invariant checked numerically and after dragging each free corner incl. across-axis drags, one undo unit, degeneracy round-trip, hidden scaffolding) + toolbar widget test + web smoke re-run (596 tests green, SMOKE PASS — Square stays the Macros menu's row 1, so drive.js's macro section is untouched)
+
+## Phase 19 — Export
+- [ ] Off-screen PNG renderer in `lib/application/export/` (`PictureRecorder` + `GeometryPainter`; fit-vs-current-viewport framing via `fittedViewport`; scale factor 1×/2×/4×; theme-color vs transparent background; no UI chrome — selection halos, in-progress markers, band never render)
+- [ ] Export options dialog + File-menu "Export as PNG…" entry + `Ctrl/Cmd + E` shortcut + cheat-sheet row (export is read-only view work: no `Command`, not undoable, no save-format change)
+- [ ] Delivery via existing `saveFile(bytes:)` in `file_io.dart`; verify on web (download) and Android (native picker)
+- [ ] Tests: pixel check on exported PNG bytes for a known scene (decode + spot-check, or golden-style compare); widget test for the menu → dialog → save flow
+- [ ] Stretch: hand-written SVG writer mirroring the painter per kind (`dashPeriod` → `stroke-dasharray`, labels as `<text>`) + "Export as SVG…" entry — may slip; PDF and clipboard-copy stay out of scope
