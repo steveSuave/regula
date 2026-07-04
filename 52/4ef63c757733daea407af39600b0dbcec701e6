@@ -1,0 +1,47 @@
+lib/presentation/panels/toolbar.dart
+  s_402d41618a9d11::t_4659066fd44d86 176-181
+  s_402d41618a9d11::t_c290bff8b14fd5 410-451
+  s_402d41618a9d11::t_403ad29226a8a7 204-210
+  s_402d41618a9d11::t_b6d0d1488be7b6 367
+  s_402d41618a9d11::t_e8e7aeb053b5a7 599-608
+  s_402d41618a9d11::t_c0bf8369d138d9 701-749
+  s_402d41618a9d11::t_ab90381d8f962b 32,35,40,42,45
+docs/PLAN.md
+  s_402d41618a9d11::t_6c385330155e1d 96
+  s_402d41618a9d11::t_4e4079fe1296b7 254-257
+test/presentation/shortcuts/editor_shortcuts_test.dart
+  s_402d41618a9d11::t_d79c42ac77fab0 198-244
+  s_402d41618a9d11::t_584a637d194150 16,20-22
+lib/main.dart
+  s_402d41618a9d11::t_18cb26fa9f4b33 26,29
+  s_402d41618a9d11::t_b33c73eb9a0d49 330-339
+  s_402d41618a9d11::t_e51e4321ee2f95 35,38
+  s_402d41618a9d11::t_e1441586bb87fa 494-501
+test/presentation/panels/toolbar_test.dart
+  s_402d41618a9d11::t_7860f76002ec28 3,6
+  s_402d41618a9d11::t_722453a80c350d 9,11,14
+  s_402d41618a9d11::t_c1070f4b4753a0 246-285
+  s_402d41618a9d11::t_b0aec1d211fb9c 138-142
+  s_402d41618a9d11::t_44278dcf15fb63 152-153
+  s_402d41618a9d11::t_f72167c684cfaa 244-245
+lib/presentation/shortcuts/shortcut_table.dart
+  s_402d41618a9d11::t_1fe6e87cf42286 67-70
+  s_402d41618a9d11::t_80b459c9b5d0c7 587-612
+  s_402d41618a9d11::t_c793122f8445ba 169-170,175-181
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "524ef63c757733daea407af39600b0dbcec701e6",
+  "prompts": {},
+  "sessions": {
+    "s_402d41618a9d11": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b5bee080-981c-41da-94d5-df8864cfa684",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
