@@ -58,11 +58,11 @@ function darkBlobs(png, minY) {
 // Centers of the app-bar action icons, left to right (x > 300 skips the
 // leading object-tree toggle and the title). Column runs separated by
 // less than 8 px merge into one icon (outlined glyphs have gaps).
-// Current action order (main.dart): 0 file, 1 point tool, 2 two-point,
-// 3 point-on-object, 4 line constructions, 5 circles, 6 angles,
-// 7 triangle centers, 8 shape macros, 9 fit, 10 reset, 11 theme toggle,
-// 12 undo, 13 redo (undo/redo start disabled and greyed below the glyph
-// threshold, so a fresh app detects 12 icons and the theme toggle is the
+// Current action order (main.dart + panels/toolbar.dart, Phase 13):
+// 0 file, then the five tool flyout groups — 1 Points, 2 Lines,
+// 3 Circles, 4 Angles, 5 Macros — then 6 fit, 7 reset, 8 theme toggle,
+// 9 undo, 10 redo (undo/redo start disabled and greyed below the glyph
+// threshold, so a fresh app detects 9 icons and the theme toggle is the
 // last — index it from the end, not from the front).
 function appBarIcons(png) {
   const isGlyphCol = (x) => {
@@ -113,18 +113,25 @@ async function canvasSample(page, x, y) {
 
   const icons = appBarIcons(PNG.sync.read(await page.screenshot()));
   console.log('app-bar icons at:', icons.map((x) => x.toFixed(0)).join(' '));
-  check(icons.length >= 12, `found ${icons.length} app-bar icons (>= 12)`);
-  const [fileX, pointToolX] = icons;
+  check(icons.length >= 9, `found ${icons.length} app-bar icons (>= 9)`);
+  const [fileX, pointsX] = icons;
   const themeX = icons[icons.length - 1];
 
   // ---- Phase 8: place two points, zoom, blobs spread ----
-  await page.mouse.click(pointToolX, 28);
+  // Phase 13: the point tool lives in the Points flyout now (first item);
+  // menu rows are 48 px below ~8 px padding. With only 9 icons the whole
+  // action cluster sits right of the window midline, so *every* popup
+  // menu opens left-aligned to its button (Flutter grows the menu toward
+  // the side with more room) — click left of the icon, not right.
+  await page.mouse.click(pointsX, 28);
+  await page.waitForTimeout(500);
+  await page.mouse.click(pointsX - 60, 8 + 24); // first item: Point
   await page.waitForTimeout(300);
   await page.mouse.click(400, 300);
   await page.waitForTimeout(200);
   await page.mouse.click(560, 400);
   await page.waitForTimeout(200);
-  await page.mouse.click(pointToolX, 28); // toggle tool off
+  await page.keyboard.press('Escape'); // deactivate (no toggle icon anymore)
   await page.waitForTimeout(300);
 
   const before = darkBlobs(PNG.sync.read(await page.screenshot()), 70);
@@ -149,12 +156,12 @@ async function canvasSample(page, x, y) {
         'zoom spreads the two point blobs about the cursor');
 
   // ---- Phase 9: Save… downloads a parseable version-1 document ----
-  // The popup opens over the button (top of the bar); items are 48 px
-  // rows below ~8 px padding: New, Open…, Save….
+  // Items are 48 px rows below ~8 px padding: New, Open…, Save…. Click
+  // left of the icon (see the Points-menu note above).
   await page.mouse.click(fileX, 28);
   await page.waitForTimeout(500);
   const downloadPromise = page.waitForEvent('download', { timeout: 5000 });
-  await page.mouse.click(fileX + 30, 8 + 2 * 48 + 24); // third item: Save…
+  await page.mouse.click(fileX - 30, 8 + 2 * 48 + 24); // third item: Save…
   let doc = null;
   try {
     const download = await downloadPromise;
@@ -198,7 +205,7 @@ async function canvasSample(page, x, y) {
   // length up (y-up world): C(520,280), D(400,280). Side BC lies on the
   // hidden perpendicular's carrier, so pixels beyond the segment extent
   // (x=520 below B) tell "hidden line drawn" from "side drawn" apart.
-  const shapesX = icons[8];
+  const shapesX = icons[5];
   await page.mouse.click(shapesX, 28);
   await page.waitForTimeout(500);
   // The menu would overflow the right window edge, so it opens shifted
