@@ -7,6 +7,7 @@ import '../commands/translate_objects_command.dart';
 import '../construction/construction.dart';
 import '../construction/free_point_ancestors.dart';
 import '../construction/geo_object.dart';
+import '../construction/objects/compass_circle.dart';
 import '../construction/objects/free_point.dart';
 import '../construction/objects/point_on_object.dart';
 import '../math/vec2.dart';
@@ -29,6 +30,9 @@ import '../math/vec2.dart';
 /// - any *other* derived point does not drag ([start] returns null): its
 ///   position is its constraint's business — an intersection lives where
 ///   its parents cross;
+/// - a [CompassCircle] drags by translating only its *center's* free
+///   ancestors: the radius is a measurement of two other points, not part
+///   of the rigid body, so those points stay put;
 /// - any other object drags as a rigid translation of its free-point
 ///   ancestors → [TranslateObjectsCommand]: grab a circle's rim and the
 ///   whole circle moves because its defining points do.
@@ -48,7 +52,9 @@ abstract class DragSession {
     if (target is GeoPoint && target is! FreePoint) {
       return null;
     }
-    final points = freePointAncestors(target);
+    final points = target is CompassCircle
+        ? freePointAncestors(target.center)
+        : freePointAncestors(target);
     if (points.isEmpty) {
       return null;
     }

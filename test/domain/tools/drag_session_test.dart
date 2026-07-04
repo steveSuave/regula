@@ -5,7 +5,9 @@ import 'package:fgex/domain/commands/set_point_on_object_parameter_command.dart'
 import 'package:fgex/domain/commands/translate_objects_command.dart';
 import 'package:fgex/domain/construction/construction.dart';
 import 'package:fgex/domain/construction/objects/circle_center_point.dart';
+import 'package:fgex/domain/construction/objects/compass_circle.dart';
 import 'package:fgex/domain/construction/objects/free_point.dart';
+import 'package:fgex/domain/construction/objects/line_through_two_points.dart';
 import 'package:fgex/domain/construction/objects/midpoint.dart';
 import 'package:fgex/domain/construction/objects/point_on_object.dart';
 import 'package:fgex/domain/construction/objects/segment.dart';
@@ -137,6 +139,97 @@ void main() {
       session.cancel();
       expect(b.position, const Vec2(4, 0),
           reason: 'the surviving point still rolls back');
+    });
+  });
+
+  group('CompassCircle drag', () {
+    test('moves only the center — the radius points are a measurement', () {
+      final center = FreePoint(id: 'c', position: const Vec2(10, 10));
+      final compass = CompassCircle(
+        id: 'k',
+        radiusPoint1: a,
+        radiusPoint2: b,
+        center: center,
+      );
+      construction
+        ..add(center)
+        ..add(compass);
+      expect(compass.circle!.radius, 4);
+
+      final session =
+          DragSession.start(construction, compass, const Vec2(14, 10))!;
+      session.update(const Vec2(15, 12));
+      expect(center.position, const Vec2(11, 12));
+      expect(a.position, Vec2.zero,
+          reason: 'radius-defining points stay put');
+      expect(b.position, const Vec2(4, 0));
+      expect(compass.circle!.radius, 4,
+          reason: 'the measured radius is unchanged');
+
+      final command = session.end()!;
+      expect(center.position, const Vec2(10, 10));
+      expect(command, isA<TranslateObjectsCommand>());
+      command.apply(construction);
+      expect(center.position, const Vec2(11, 12));
+      expect(a.position, Vec2.zero);
+      command.undo(construction);
+      expect(center.position, const Vec2(10, 10));
+    });
+
+    test('a derived center drags through its own free ancestors', () {
+      // Center = midpoint of a and b: those ARE radius ancestors too, so
+      // the radius may change — the rule is "the center's free ancestors",
+      // not "anything but the radius points".
+      final compass = CompassCircle(
+        id: 'k',
+        radiusPoint1: a,
+        radiusPoint2: b,
+        center: midpoint,
+      );
+      construction.add(compass);
+
+      final session =
+          DragSession.start(construction, compass, const Vec2(2, 4))!;
+      session.update(const Vec2(3, 4));
+      expect(a.position, const Vec2(1, 0));
+      expect(b.position, const Vec2(5, 0));
+      session.cancel();
+      expect(a.position, Vec2.zero);
+      expect(b.position, const Vec2(4, 0));
+    });
+
+    test("a constrained center drags its host curve's free points only",
+        () {
+      // Center rides a line through two points unrelated to the radius
+      // pair: dragging the compass translates the line's points, while a
+      // and b (the measurement) stay put.
+      final d = FreePoint(id: 'd', position: const Vec2(0, 10));
+      final e = FreePoint(id: 'e', position: const Vec2(10, 10));
+      final l1 = LineThroughTwoPoints(id: 'l1', point1: d, point2: e);
+      construction
+        ..add(d)
+        ..add(e)
+        ..add(l1);
+      final onLine = PointOnObject(id: 'ol', curve: l1, parameter: 5);
+      construction.add(onLine);
+      final compass = CompassCircle(
+        id: 'k',
+        radiusPoint1: a,
+        radiusPoint2: b,
+        center: onLine,
+      );
+      construction.add(compass);
+
+      final session =
+          DragSession.start(construction, compass, const Vec2(9, 10))!;
+      session.update(const Vec2(9, 13));
+      expect(d.position, const Vec2(0, 13));
+      expect(e.position, const Vec2(10, 13));
+      expect(a.position, Vec2.zero);
+      expect(b.position, const Vec2(4, 0));
+      session.cancel();
+      expect(d.position, const Vec2(0, 10));
+      expect(e.position, const Vec2(10, 10));
     });
   });
 
