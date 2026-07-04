@@ -14,14 +14,13 @@ void main() {
     bool control = false,
     bool meta = false,
     bool alt = false,
-  }) =>
-      resolver.onStroke(
-        key,
-        shiftDown: shift,
-        controlDown: control,
-        metaDown: meta,
-        altDown: alt,
-      );
+  }) => resolver.onStroke(
+    key,
+    shiftDown: shift,
+    controlDown: control,
+    metaDown: meta,
+    altDown: alt,
+  );
 
   AppAction actionOf(ShortcutResolution resolution) =>
       (resolution as ShortcutMatched).binding.action;

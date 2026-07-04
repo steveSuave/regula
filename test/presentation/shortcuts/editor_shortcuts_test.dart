@@ -66,8 +66,9 @@ void main() {
     return (a, b, m);
   }
 
-  testWidgets('letter keys activate tools; Esc and V leave them',
-      (tester) async {
+  testWidgets('letter keys activate tools; Esc and V leave them', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     expect(activeTool(), isNull);
 
@@ -91,8 +92,11 @@ void main() {
 
     tapWorld(0, 0);
     tapWorld(4, 0);
-    final objects =
-        container.read(constructionProvider).construction.objects.toList();
+    final objects = container
+        .read(constructionProvider)
+        .construction
+        .objects
+        .toList();
     expect(objects, hasLength(3));
     expect(objects.last, isA<Segment>());
   });
@@ -115,8 +119,11 @@ void main() {
     tapWorld(0, 0);
     tapWorld(4, 0);
     tapWorld(0, 3);
-    final objects =
-        container.read(constructionProvider).construction.objects.toList();
+    final objects = container
+        .read(constructionProvider)
+        .construction
+        .objects
+        .toList();
     expect(objects.last, isA<Centroid>());
   });
 
@@ -129,8 +136,9 @@ void main() {
     expect(activeTool(), isA<TriangleCenterTool>());
   });
 
-  testWidgets('a failed chord swallows the stroke instead of firing it',
-      (tester) async {
+  testWidgets('a failed chord swallows the stroke instead of firing it', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
     await tester.sendKeyEvent(LogicalKeyboardKey.keyP);
@@ -147,8 +155,9 @@ void main() {
     expect(activeTool(), isA<SquareMacroTool>());
   });
 
-  testWidgets('G R asks for the ratio; cancel activates nothing',
-      (tester) async {
+  testWidgets('G R asks for the ratio; cancel activates nothing', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
     await tester.sendKeyEvent(LogicalKeyboardKey.keyR);
@@ -160,8 +169,7 @@ void main() {
     expect(activeTool(), isNull);
   });
 
-  testWidgets('undo/redo shortcuts, on both primary modifiers',
-      (tester) async {
+  testWidgets('undo/redo shortcuts, on both primary modifiers', (tester) async {
     await pumpEditor(tester);
     buildSmallConstruction();
     final construction = container.read(constructionProvider).construction;
@@ -225,13 +233,12 @@ void main() {
     );
   });
 
-  testWidgets('Del deletes a self-contained selection without asking',
-      (tester) async {
+  testWidgets('Del deletes a self-contained selection without asking', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final (a, b, m) = buildSmallConstruction();
-    container
-        .read(selectionProvider.notifier)
-        .selectMany([a.id, b.id, m.id]);
+    container.read(selectionProvider.notifier).selectMany([a.id, b.id, m.id]);
     await tester.pump();
 
     await tester.sendKeyEvent(LogicalKeyboardKey.delete);
@@ -239,8 +246,9 @@ void main() {
     expect(container.read(constructionProvider).construction.isEmpty, isTrue);
   });
 
-  testWidgets('Del warns when the cascade reaches beyond the selection',
-      (tester) async {
+  testWidgets('Del warns when the cascade reaches beyond the selection', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final (a, _, _) = buildSmallConstruction();
     container.read(selectionProvider.notifier).select(a.id);
@@ -257,8 +265,9 @@ void main() {
     expect(construction.contains('b'), isTrue);
   });
 
-  testWidgets('arrow keys nudge with camera semantics, repeating',
-      (tester) async {
+  testWidgets('arrow keys nudge with camera semantics, repeating', (
+    tester,
+  ) async {
     await pumpEditor(tester);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
@@ -278,8 +287,9 @@ void main() {
     );
   });
 
-  testWidgets('zoom keys: in, out, and back to 100 % about the center',
-      (tester) async {
+  testWidgets('zoom keys: in, out, and back to 100 % about the center', (
+    tester,
+  ) async {
     await pumpEditor(tester);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.equal);
@@ -296,7 +306,9 @@ void main() {
 
   testWidgets('F fits the construction', (tester) async {
     await pumpEditor(tester);
-    container.read(commandStackProvider.notifier).execute(
+    container
+        .read(commandStackProvider.notifier)
+        .execute(
           AddObjectCommand(
             FreePoint(id: 'far', position: const Vec2(100, 100)),
           ),
@@ -308,8 +320,9 @@ void main() {
     expect(viewport.pan, isNot(Vec2.zero));
   });
 
-  testWidgets('Ctrl/Cmd+N asks before discarding a construction',
-      (tester) async {
+  testWidgets('Ctrl/Cmd+N asks before discarding a construction', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     buildSmallConstruction();
 
@@ -335,8 +348,9 @@ void main() {
     expect(container.read(themeModeProvider), ThemeMode.dark);
   });
 
-  testWidgets('shortcuts stand down while a text field is focused',
-      (tester) async {
+  testWidgets('shortcuts stand down while a text field is focused', (
+    tester,
+  ) async {
     await pumpEditor(tester);
     final (a, _, _) = buildSmallConstruction();
     container.read(selectionProvider.notifier).select(a.id);

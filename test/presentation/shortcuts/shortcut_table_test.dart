@@ -26,7 +26,8 @@ void main() {
         expect(
           collides && a.action != b.action,
           isFalse,
-          reason: '"${a.label}" (${a.display}) and "${b.label}" '
+          reason:
+              '"${a.label}" (${a.display}) and "${b.label}" '
               '(${b.display}) match the same keys for different actions',
         );
         expect(
@@ -53,7 +54,8 @@ void main() {
         expect(
           _overlaps(binding.sequence[0], single.sequence[0]),
           isFalse,
-          reason: 'Leader of "${binding.label}" (${binding.display}) is '
+          reason:
+              'Leader of "${binding.label}" (${binding.display}) is '
               'shadowed by "${single.label}" (${single.display})',
         );
       }
@@ -84,8 +86,7 @@ void main() {
     }
   });
 
-  test('labels and displays are non-empty, sequences one or two strokes',
-      () {
+  test('labels and displays are non-empty, sequences one or two strokes', () {
     for (final binding in shortcutTable) {
       expect(binding.label, isNotEmpty);
       expect(binding.display, isNotEmpty);
@@ -118,14 +119,13 @@ void main() {
       bool control = false,
       bool meta = false,
       bool alt = false,
-    }) =>
-        stroke.matches(
-          key,
-          shiftDown: shift,
-          controlDown: control,
-          metaDown: meta,
-          altDown: alt,
-        );
+    }) => stroke.matches(
+      key,
+      shiftDown: shift,
+      controlDown: control,
+      metaDown: meta,
+      altDown: alt,
+    );
 
     expect(match(plain, LogicalKeyboardKey.keyH), isTrue);
     expect(match(plain, LogicalKeyboardKey.keyG), isFalse);
