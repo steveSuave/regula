@@ -3,7 +3,6 @@ import 'dart:math' as math;
 import '../commands/add_object_command.dart';
 import '../commands/command.dart';
 import '../commands/macro_command.dart';
-import '../construction/geo_object.dart';
 import '../construction/objects/free_point.dart';
 import '../construction/objects/segment.dart';
 import '../math/vec2.dart';

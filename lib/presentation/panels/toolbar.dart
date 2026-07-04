@@ -29,15 +29,20 @@ import '../../domain/construction/objects/three_point_circle.dart';
 import '../../domain/construction/objects/translated_point.dart';
 import '../../domain/construction/objects/vertex_angle.dart';
 import '../../domain/tools/angle_by_size_tool.dart';
+import '../../domain/tools/equilateral_triangle_macro_tool.dart';
 import '../../domain/tools/intersection_tool.dart';
 import '../../domain/tools/isosceles_trapezium_macro_tool.dart';
+import '../../domain/tools/isosceles_triangle_macro_tool.dart';
 import '../../domain/tools/kite_macro_tool.dart';
 import '../../domain/tools/parallelogram_macro_tool.dart';
 import '../../domain/tools/point_and_line_tool.dart';
 import '../../domain/tools/point_tool.dart';
+import '../../domain/tools/random_shape_stamp_tool.dart';
 import '../../domain/tools/rectangle_macro_tool.dart';
+import '../../domain/tools/regular_polygon_macro_tool.dart';
 import '../../domain/tools/rhombus_macro_tool.dart';
 import '../../domain/tools/right_trapezium_macro_tool.dart';
+import '../../domain/tools/right_triangle_macro_tool.dart';
 import '../../domain/tools/rotated_point_tool.dart';
 import '../../domain/tools/square_macro_tool.dart';
 import '../../domain/tools/three_point_tool.dart';
@@ -168,7 +173,12 @@ class GeometryToolbar extends ConsumerWidget {
         tool is RhombusMacroTool ||
         tool is KiteMacroTool ||
         tool is IsoscelesTrapeziumMacroTool ||
-        tool is RightTrapeziumMacroTool;
+        tool is RightTrapeziumMacroTool ||
+        tool is EquilateralTriangleMacroTool ||
+        tool is IsoscelesTriangleMacroTool ||
+        tool is RightTriangleMacroTool ||
+        tool is RegularPolygonMacroTool ||
+        tool is RandomShapeStampTool;
 
     Future<Tool?> ratioPick() async {
       final build = await askRatioBuilder(context);
@@ -189,6 +199,13 @@ class GeometryToolbar extends ConsumerWidget {
       return angle == null
           ? null
           : AngleBySizeTool(newId: newObjectId, angle: angle);
+    }
+
+    Future<Tool?> regularPolygonPick() async {
+      final sides = await askPolygonSideCount(context);
+      return sides == null
+          ? null
+          : RegularPolygonMacroTool(newId: newObjectId, sideCount: sides);
     }
 
     return Row(
@@ -347,7 +364,7 @@ class GeometryToolbar extends ConsumerWidget {
         ),
         _ToolGroup(
           icon: Icons.crop_square,
-          tooltip: 'Shape macros: quadrilaterals',
+          tooltip: 'Shape macros: triangles, quadrilaterals, polygons',
           active: macrosActive,
           items: [
             (
@@ -389,6 +406,48 @@ class GeometryToolbar extends ConsumerWidget {
               'Kite (apex, side corner, apex)',
               _pick(() => KiteMacroTool(newId: newObjectId)),
               AppAction.kiteMacroTool,
+            ),
+            (
+              'Equilateral triangle (two corners)',
+              _pick(() => EquilateralTriangleMacroTool(newId: newObjectId)),
+              AppAction.equilateralTriangleMacroTool,
+            ),
+            (
+              'Isosceles triangle (base, then apex)',
+              _pick(() => IsoscelesTriangleMacroTool(newId: newObjectId)),
+              AppAction.isoscelesTriangleMacroTool,
+            ),
+            (
+              'Right triangle (base, then height)',
+              _pick(() => RightTriangleMacroTool(newId: newObjectId)),
+              AppAction.rightTriangleMacroTool,
+            ),
+            (
+              'Regular polygon (two corners)…',
+              regularPolygonPick,
+              AppAction.regularPolygonMacroTool,
+            ),
+            (
+              'Random triangle (one tap)',
+              _pick(
+                () => RandomShapeStampTool(
+                  newId: newObjectId,
+                  minVertices: 3,
+                  maxVertices: 3,
+                ),
+              ),
+              null,
+            ),
+            (
+              'Random polygon (one tap)',
+              _pick(
+                () => RandomShapeStampTool(
+                  newId: newObjectId,
+                  minVertices: 4,
+                  maxVertices: 7,
+                ),
+              ),
+              null,
             ),
           ],
         ),
@@ -537,6 +596,16 @@ Future<double?> _askDegrees(BuildContext context, String title) async {
   return degrees == null ? null : degrees * math.pi / 180;
 }
 
+/// Asks for a regular polygon's side count — the shared path behind the
+/// Macros flyout item and the `X G` shortcut. Integer 3–100; anything
+/// else (cancel, garbage, out of range) reads as cancel, matching the
+/// other dialog tools.
+Future<int?> askPolygonSideCount(BuildContext context) =>
+    showDialog<int>(
+      context: context,
+      builder: (context) => const _SideCountDialog(),
+    );
+
 /// The dialog owns its [TextEditingController] so it outlives the exit
 /// animation (disposing right after `showDialog` returns crashes the
 /// still-rendering `TextField`).
@@ -627,6 +696,55 @@ class _AngleDialogState extends State<_AngleDialog> {
       ],
     );
   }
+}
+
+/// Integer sibling of [_AngleDialog] (same controller-lifetime
+/// reasoning).
+class _SideCountDialog extends StatefulWidget {
+  const _SideCountDialog();
+
+  @override
+  State<_SideCountDialog> createState() => _SideCountDialogState();
+}
+
+class _SideCountDialogState extends State<_SideCountDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Number of sides'),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        decoration: const InputDecoration(hintText: '3 to 100 — e.g. 5'),
+        onSubmitted: (text) => Navigator.pop(context, _parseSideCount(text)),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () =>
+              Navigator.pop(context, _parseSideCount(_controller.text)),
+          child: const Text('OK'),
+        ),
+      ],
+    );
+  }
+}
+
+/// Parses an integer side count in [3, 100]. Null otherwise.
+int? _parseSideCount(String text) {
+  final count = int.tryParse(text.trim());
+  return (count == null || count < 3 || count > 100) ? null : count;
 }
 
 /// Parses "0.25", "-1", or a fraction "1/4". Null when unparseable.
