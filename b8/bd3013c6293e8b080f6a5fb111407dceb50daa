@@ -1,0 +1,24 @@
+test/domain/tools/angle_by_size_tool_test.dart
+  s_402d41618a9d11::t_aea10cf11b4d21 35-37,39-43,45-46
+  s_402d41618a9d11::t_cbaf1e20dd5a09 137,162,166
+  s_402d41618a9d11::t_2ad1480418ac66 1-34,38,44,47-73,77-78,81-136,138-161,163-165,167-179
+  s_402d41618a9d11::t_38226de561321d 74-76,79-80
+lib/domain/tools/angle_by_size_tool.dart
+  s_402d41618a9d11::t_b7e484dbf7d094 1-46
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "b8bd3013c6293e8b080f6a5fb111407dceb50daa",
+  "prompts": {},
+  "sessions": {
+    "s_402d41618a9d11": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b5bee080-981c-41da-94d5-df8864cfa684",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
