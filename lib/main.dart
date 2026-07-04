@@ -22,6 +22,7 @@ import 'domain/construction/objects/orthocenter.dart';
 import 'domain/construction/objects/parallel_line.dart';
 import 'domain/construction/objects/perpendicular_line.dart';
 import 'domain/math/vec2.dart';
+import 'domain/tools/angle_by_size_tool.dart';
 import 'domain/tools/intersection_tool.dart';
 import 'domain/tools/isosceles_trapezium_macro_tool.dart';
 import 'domain/tools/kite_macro_tool.dart';
@@ -312,6 +313,16 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         .activate(RotatedPointTool(newId: newObjectId, angle: angle));
   }
 
+  Future<void> _activateAngleBySizeTool() async {
+    final angle = await askAngleSize(context);
+    if (angle == null) {
+      return;
+    }
+    ref
+        .read(toolProvider.notifier)
+        .activate(AngleBySizeTool(newId: newObjectId, angle: angle));
+  }
+
   /// The one exhaustive [AppAction] switch — a binding added to the
   /// table without behaviour here fails to compile.
   void _handleShortcut(AppAction action) {
@@ -448,6 +459,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         tools.activate(
           ThreePointTool(newId: newObjectId, build: buildTranslatedPoint),
         );
+      case AppAction.angleBySizeTool:
+        _activateAngleBySizeTool();
       case AppAction.squareMacroTool:
         tools.activate(SquareMacroTool(newId: newObjectId));
       case AppAction.parallelogramMacroTool:

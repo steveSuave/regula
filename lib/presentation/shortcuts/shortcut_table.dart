@@ -54,6 +54,7 @@ enum AppAction {
   reflectAboutPointTool,
   rotateAroundPointTool,
   translateByVectorTool,
+  angleBySizeTool,
   // Shape macros behind the X leader.
   squareMacroTool,
   parallelogramMacroTool,
@@ -538,6 +539,12 @@ final List<ShortcutBinding> shortcutTable = [
     AppAction.translateByVectorTool,
     'Translate by vector',
     'G V',
+  ),
+  _g(
+    LogicalKeyboardKey.keyD,
+    AppAction.angleBySizeTool,
+    'Angle by given size…',
+    'G D',
   ),
   // ── X leader: shape macros ───────────────────────────────────────
   _x(LogicalKeyboardKey.keyS, AppAction.squareMacroTool, 'Square', 'X S'),
