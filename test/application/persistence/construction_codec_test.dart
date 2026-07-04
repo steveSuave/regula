@@ -42,6 +42,8 @@ Construction buildKitchenSink() {
       name: 'A',
       colorArgb: 0xFFAA3366,
       labelVisible: false,
+      labelDx: 14,
+      labelDy: 9,
       pointSize: 6,
     ),
   );

@@ -12,6 +12,7 @@ import '../../domain/math/vec2.dart';
 import 'canvas_viewport.dart';
 import 'dash_path.dart';
 import 'label_anchor.dart';
+import 'label_layout.dart';
 
 /// Paints the construction in insertion order (first added = bottom).
 ///
@@ -29,6 +30,7 @@ class GeometryPainter extends CustomPainter {
     required this.selectionColor,
     this.selectedIds = const {},
     this.previewMarkers = const [],
+    this.labelDragPreview,
   });
 
   /// Radii (logical px) of an in-progress input marker: a filled dot
@@ -45,12 +47,6 @@ class GeometryPainter extends CustomPainter {
   static const double _haloExtra = 5;
 
   static const double _haloAlpha = 0.4;
-
-  static const double _labelFontSize = 12;
-
-  /// Screen offset from the label's anchor to the text's top-left, sized
-  /// to sit above-right of a default point without touching it.
-  static const Offset _labelOffset = Offset(6, -18);
 
   /// Read live at paint time, in insertion (drawing) order.
   final Construction construction;
@@ -76,6 +72,12 @@ class GeometryPainter extends CustomPainter {
   /// World positions of the active tool's in-progress inputs (see
   /// `ToolInputPreview`), drawn as markers on top of the construction.
   final List<Vec2> previewMarkers;
+
+  /// A label mid-drag: [offset] replaces the object's stored label
+  /// offset for this frame only. The canvas holds the drag as widget
+  /// state and commits one `ChangeAttributesCommand` at gesture end, so
+  /// the construction is never mutated per frame.
+  final ({String id, Offset offset})? labelDragPreview;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -213,21 +215,23 @@ class GeometryPainter extends CustomPainter {
     }
   }
 
-  /// Paints the object's name beside its [labelAnchor]. Like stroke
-  /// widths, the font size and offset are in logical pixels and do not
-  /// scale with zoom.
+  /// Paints the object's name beside its [labelAnchor], shifted by the
+  /// stored label offset (or the in-progress [labelDragPreview]). Like
+  /// stroke widths, the font size and offset are in logical pixels and
+  /// do not scale with zoom.
   void _drawLabel(Canvas canvas, GeoObject object, Color color) {
+    final preview = labelDragPreview;
+    final offset = preview != null && preview.id == object.id
+        ? preview.offset
+        : Offset(object.attributes.labelDx, object.attributes.labelDy);
     final textPainter = TextPainter(
       text: TextSpan(
         text: object.attributes.name,
-        style: TextStyle(color: color, fontSize: _labelFontSize),
+        style: TextStyle(color: color, fontSize: labelFontSize),
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    textPainter.paint(
-      canvas,
-      viewport.worldToScreen(labelAnchor(object)) + _labelOffset,
-    );
+    textPainter.paint(canvas, viewport.worldToScreen(labelAnchor(object)) + offset);
     textPainter.dispose();
   }
 
@@ -338,5 +342,6 @@ class GeometryPainter extends CustomPainter {
       oldDelegate.defaultColor != defaultColor ||
       oldDelegate.selectionColor != selectionColor ||
       !setEquals(oldDelegate.selectedIds, selectedIds) ||
-      !listEquals(oldDelegate.previewMarkers, previewMarkers);
+      !listEquals(oldDelegate.previewMarkers, previewMarkers) ||
+      oldDelegate.labelDragPreview != labelDragPreview;
 }
