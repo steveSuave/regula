@@ -235,9 +235,12 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         );
   }
 
-  /// Arrow-key nudge with camera semantics: pressing → looks further
-  /// right, so the content shifts left ([delta] is the *content* shift
-  /// that [CanvasViewport.pannedByScreen] expects).
+  /// Arrow-key nudge with content semantics: pressing → moves the drawing
+  /// right, matching the Phase 14 scroll mapping where every pan gesture
+  /// moves content in the gesture's direction ([delta] is the *content*
+  /// shift that [CanvasViewport.pannedByScreen] expects). Flipped from
+  /// camera semantics in Session 21 — the trackpad pan made the old
+  /// direction read as inverted.
   void _nudgeView(Offset delta) {
     final viewport = CanvasViewport(ref.read(viewportProvider));
     ref.read(viewportProvider.notifier).set(viewport.pannedByScreen(delta));
@@ -351,13 +354,13 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
       case AppAction.fitView:
         _fitConstruction();
       case AppAction.nudgeLeft:
-        _nudgeView(const Offset(_nudgeStep, 0));
-      case AppAction.nudgeRight:
         _nudgeView(const Offset(-_nudgeStep, 0));
+      case AppAction.nudgeRight:
+        _nudgeView(const Offset(_nudgeStep, 0));
       case AppAction.nudgeUp:
-        _nudgeView(const Offset(0, _nudgeStep));
-      case AppAction.nudgeDown:
         _nudgeView(const Offset(0, -_nudgeStep));
+      case AppAction.nudgeDown:
+        _nudgeView(const Offset(0, _nudgeStep));
       case AppAction.pointTool:
         tools.activate(PointTool(newId: newObjectId));
       case AppAction.lineTool:
