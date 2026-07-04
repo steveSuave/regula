@@ -18,6 +18,10 @@ extension MathAnys on Any {
   Generator<double> get unitInterval =>
       intInRange(0, 1001).map((i) => i / 1000);
 
+  /// An angle in [-π, π] (approximately) on a 0.0001 grid.
+  Generator<double> get angle =>
+      intInRange(-31416, 31417).map((i) => i / 10000);
+
   /// A strictly positive radius in (0, 1000] on a 0.001 grid.
   Generator<double> get positiveRadius =>
       intInRange(1, 1000001).map((i) => i / 1000);

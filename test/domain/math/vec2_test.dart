@@ -45,6 +45,18 @@ void main() {
       expect(const Vec2(-1, 0).angle, closeTo(math.pi, 1e-12));
     });
 
+    test('rotated by known angles', () {
+      expect(
+        const Vec2(1, 0).rotated(math.pi / 2).closeTo(const Vec2(0, 1), 1e-12),
+        isTrue,
+      );
+      expect(
+        const Vec2(3, 4).rotated(math.pi).closeTo(const Vec2(-3, -4), 1e-12),
+        isTrue,
+      );
+      expect(const Vec2(3, 4).rotated(0), const Vec2(3, 4));
+    });
+
     test('value equality and hashCode', () {
       expect(const Vec2(1, 2), const Vec2(1, 2));
       expect(const Vec2(1, 2).hashCode, const Vec2(1, 2).hashCode);
@@ -103,6 +115,19 @@ void main() {
         .test('midpoint is equidistant from both endpoints', (a, b) {
       final m = a.lerp(b, 0.5);
       expect(m.distanceTo(a), closeTo(m.distanceTo(b), 1e-9));
+    });
+
+    Glados2(any.vec2, any.angle).test('rotation preserves length', (a, t) {
+      expect(a.rotated(t).norm, closeTo(a.norm, 1e-9));
+    });
+
+    Glados(any.vec2).test('rotation by π/2 is perpendicular', (a) {
+      expect(a.rotated(math.pi / 2).closeTo(a.perpendicular, 1e-9), isTrue);
+    });
+
+    Glados3(any.vec2, any.angle, any.angle).test('rotations compose additively',
+        (a, s, t) {
+      expect(a.rotated(s).rotated(t).closeTo(a.rotated(s + t), 1e-6), isTrue);
     });
   });
 }

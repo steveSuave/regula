@@ -50,6 +50,10 @@ enum AppAction {
   segmentRatioTool,
   arcTool,
   sectorTool,
+  reflectAboutLineTool,
+  reflectAboutPointTool,
+  rotateAroundPointTool,
+  translateByVectorTool,
   // Shape macros behind the X leader.
   squareMacroTool,
   parallelogramMacroTool,
@@ -511,6 +515,30 @@ final List<ShortcutBinding> shortcutTable = [
   ),
   _g(LogicalKeyboardKey.keyA, AppAction.arcTool, 'Arc (three points)', 'G A'),
   _g(LogicalKeyboardKey.keyS, AppAction.sectorTool, 'Sector', 'G S'),
+  _g(
+    LogicalKeyboardKey.keyL,
+    AppAction.reflectAboutLineTool,
+    'Reflect about line',
+    'G L',
+  ),
+  _g(
+    LogicalKeyboardKey.keyP,
+    AppAction.reflectAboutPointTool,
+    'Reflect about point',
+    'G P',
+  ),
+  _g(
+    LogicalKeyboardKey.keyT,
+    AppAction.rotateAroundPointTool,
+    'Rotate around point…',
+    'G T',
+  ),
+  _g(
+    LogicalKeyboardKey.keyV,
+    AppAction.translateByVectorTool,
+    'Translate by vector',
+    'G V',
+  ),
   // ── X leader: shape macros ───────────────────────────────────────
   _x(LogicalKeyboardKey.keyS, AppAction.squareMacroTool, 'Square', 'X S'),
   _x(

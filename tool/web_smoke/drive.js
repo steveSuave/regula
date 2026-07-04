@@ -60,12 +60,13 @@ function darkBlobs(png, minY) {
 // Centers of the app-bar action icons, left to right (x > 300 skips the
 // leading object-tree toggle and the title). Column runs separated by
 // less than 8 px merge into one icon (outlined glyphs have gaps).
-// Current action order (main.dart + panels/toolbar.dart, Phase 17):
-// 0 file, then the five tool flyout groups — 1 Points, 2 Lines,
-// 3 Circles, 4 Angles, 5 Macros — then 6 fit, 7 reset, 8 cheat sheet,
-// 9 theme toggle, 10 undo, 11 redo (undo/redo start disabled and greyed
-// below the glyph threshold, so a fresh app detects 10 icons and the
-// theme toggle is the last — index it from the end, not from the front).
+// Current action order (main.dart + panels/toolbar.dart, Phase 15):
+// 0 file, then the six tool flyout groups — 1 Points, 2 Lines,
+// 3 Circles, 4 Angles, 5 Transform, 6 Macros — then 7 fit, 8 reset,
+// 9 cheat sheet, 10 theme toggle, 11 undo, 12 redo (undo/redo start
+// disabled and greyed below the glyph threshold, so a fresh app detects
+// 11 icons and the theme toggle is the last — index it from the end,
+// not from the front).
 function appBarIcons(png) {
   const isGlyphCol = (x) => {
     for (let y = 8; y < 48; y++) {
@@ -179,12 +180,15 @@ async function canvasSample(page, x, y) {
         'plain scroll pans the canvas without zooming');
 
   // ---- Phase 9: Save… downloads a parseable version-1 document ----
-  // Items are 48 px rows below ~8 px padding: New, Open…, Save…. Click
-  // left of the icon (see the Points-menu note above).
+  // Items are 48 px rows below ~8 px padding: New, Open…, Save…. Since
+  // the Phase 15 Transform group made it 11 icons, the File button sits
+  // *left* of the window midline, so its menu opens right-aligned —
+  // click right of the icon (the flyout groups farther right still open
+  // left-aligned; see the Points-menu note above).
   await page.mouse.click(fileX, 28);
   await page.waitForTimeout(500);
   const downloadPromise = page.waitForEvent('download', { timeout: 5000 });
-  await page.mouse.click(fileX - 30, 8 + 2 * 48 + 24); // third item: Save…
+  await page.mouse.click(fileX + 30, 8 + 2 * 48 + 24); // third item: Save…
   let doc = null;
   try {
     const download = await downloadPromise;
@@ -228,7 +232,7 @@ async function canvasSample(page, x, y) {
   // length up (y-up world): C(520,280), D(400,280). Side BC lies on the
   // hidden perpendicular's carrier, so pixels beyond the segment extent
   // (x=520 below B) tell "hidden line drawn" from "side drawn" apart.
-  const shapesX = icons[5];
+  const shapesX = icons[6];
   await page.mouse.click(shapesX, 28);
   await page.waitForTimeout(500);
   // The menu would overflow the right window edge, so it opens shifted
