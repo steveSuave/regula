@@ -22,15 +22,20 @@ import 'domain/construction/objects/orthocenter.dart';
 import 'domain/construction/objects/parallel_line.dart';
 import 'domain/construction/objects/perpendicular_line.dart';
 import 'domain/math/vec2.dart';
+import 'domain/tools/angle_by_size_tool.dart';
+import 'domain/tools/equilateral_triangle_macro_tool.dart';
 import 'domain/tools/intersection_tool.dart';
 import 'domain/tools/isosceles_trapezium_macro_tool.dart';
+import 'domain/tools/isosceles_triangle_macro_tool.dart';
 import 'domain/tools/kite_macro_tool.dart';
 import 'domain/tools/parallelogram_macro_tool.dart';
 import 'domain/tools/point_and_line_tool.dart';
 import 'domain/tools/point_tool.dart';
 import 'domain/tools/rectangle_macro_tool.dart';
+import 'domain/tools/regular_polygon_macro_tool.dart';
 import 'domain/tools/rhombus_macro_tool.dart';
 import 'domain/tools/right_trapezium_macro_tool.dart';
+import 'domain/tools/right_triangle_macro_tool.dart';
 import 'domain/tools/rotated_point_tool.dart';
 import 'domain/tools/square_macro_tool.dart';
 import 'domain/tools/three_point_tool.dart';
@@ -312,6 +317,26 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         .activate(RotatedPointTool(newId: newObjectId, angle: angle));
   }
 
+  Future<void> _activateAngleBySizeTool() async {
+    final angle = await askAngleSize(context);
+    if (angle == null) {
+      return;
+    }
+    ref
+        .read(toolProvider.notifier)
+        .activate(AngleBySizeTool(newId: newObjectId, angle: angle));
+  }
+
+  Future<void> _activateRegularPolygonTool() async {
+    final sides = await askPolygonSideCount(context);
+    if (sides == null) {
+      return;
+    }
+    ref
+        .read(toolProvider.notifier)
+        .activate(RegularPolygonMacroTool(newId: newObjectId, sideCount: sides));
+  }
+
   /// The one exhaustive [AppAction] switch — a binding added to the
   /// table without behaviour here fails to compile.
   void _handleShortcut(AppAction action) {
@@ -448,6 +473,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         tools.activate(
           ThreePointTool(newId: newObjectId, build: buildTranslatedPoint),
         );
+      case AppAction.angleBySizeTool:
+        _activateAngleBySizeTool();
       case AppAction.squareMacroTool:
         tools.activate(SquareMacroTool(newId: newObjectId));
       case AppAction.parallelogramMacroTool:
@@ -464,6 +491,14 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         tools.activate(IsoscelesTrapeziumMacroTool(newId: newObjectId));
       case AppAction.rightTrapeziumMacroTool:
         tools.activate(RightTrapeziumMacroTool(newId: newObjectId));
+      case AppAction.equilateralTriangleMacroTool:
+        tools.activate(EquilateralTriangleMacroTool(newId: newObjectId));
+      case AppAction.isoscelesTriangleMacroTool:
+        tools.activate(IsoscelesTriangleMacroTool(newId: newObjectId));
+      case AppAction.rightTriangleMacroTool:
+        tools.activate(RightTriangleMacroTool(newId: newObjectId));
+      case AppAction.regularPolygonMacroTool:
+        _activateRegularPolygonTool();
     }
   }
 

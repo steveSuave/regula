@@ -1,11 +1,17 @@
 import 'package:fgex/application/providers/tool_provider.dart';
+import 'package:fgex/domain/tools/angle_by_size_tool.dart';
+import 'package:fgex/domain/tools/equilateral_triangle_macro_tool.dart';
 import 'package:fgex/domain/tools/intersection_tool.dart';
 import 'package:fgex/domain/tools/isosceles_trapezium_macro_tool.dart';
+import 'package:fgex/domain/tools/isosceles_triangle_macro_tool.dart';
 import 'package:fgex/domain/tools/kite_macro_tool.dart';
 import 'package:fgex/domain/tools/point_and_line_tool.dart';
+import 'package:fgex/domain/tools/random_shape_stamp_tool.dart';
 import 'package:fgex/domain/tools/rectangle_macro_tool.dart';
+import 'package:fgex/domain/tools/regular_polygon_macro_tool.dart';
 import 'package:fgex/domain/tools/rhombus_macro_tool.dart';
 import 'package:fgex/domain/tools/right_trapezium_macro_tool.dart';
+import 'package:fgex/domain/tools/right_triangle_macro_tool.dart';
 import 'package:fgex/domain/tools/rotated_point_tool.dart';
 import 'package:fgex/domain/tools/three_point_tool.dart';
 import 'package:fgex/domain/tools/two_point_tool.dart';
@@ -129,6 +135,11 @@ void main() {
           IsoscelesTrapeziumMacroTool,
       'Right trapezium (base, then the far corner)': RightTrapeziumMacroTool,
       'Kite (apex, side corner, apex)': KiteMacroTool,
+      'Equilateral triangle (two corners)': EquilateralTriangleMacroTool,
+      'Isosceles triangle (base, then apex)': IsoscelesTriangleMacroTool,
+      'Right triangle (base, then height)': RightTriangleMacroTool,
+      'Random triangle (one tap)': RandomShapeStampTool,
+      'Random polygon (one tap)': RandomShapeStampTool,
     };
     final theme = Theme.of(tester.element(find.byType(AppBar)));
 
@@ -138,6 +149,8 @@ void main() {
 
       await tester.tap(find.byIcon(Icons.crop_square));
       await tester.pumpAndSettle();
+      // The grown menu overflows the test screen; later rows scroll in.
+      await tester.scrollUntilVisible(find.text(label), 50);
       await tester.tap(find.text(label));
       await tester.pumpAndSettle();
 
@@ -228,6 +241,86 @@ void main() {
     expect((tool! as RotatedPointTool).angle, closeTo(1.5707963, 1e-6));
     final theme = Theme.of(tester.element(find.byType(AppBar)));
     expect(iconColor(tester, Icons.flip), theme.colorScheme.primary);
+  });
+
+  testWidgets('the regular-polygon item asks for the side count; cancel '
+      'activates nothing', (tester) async {
+    await pumpEditor(tester);
+
+    Future<void> pickPolygon() async {
+      await tester.tap(find.byIcon(Icons.crop_square));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('Regular polygon (two corners)…'),
+        50,
+      );
+      await tester.tap(find.text('Regular polygon (two corners)…'));
+      await tester.pumpAndSettle();
+    }
+
+    await pickPolygon();
+    expect(find.text('Number of sides'), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(container.read(toolProvider).tool, isNull);
+
+    await pickPolygon();
+    await tester.enterText(find.byType(TextField), '2');
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    expect(
+      container.read(toolProvider).tool,
+      isNull,
+      reason: 'an out-of-range count reads as cancel',
+    );
+
+    await pickPolygon();
+    await tester.enterText(find.byType(TextField), '5');
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    final tool = container.read(toolProvider).tool;
+    expect(tool, isA<RegularPolygonMacroTool>());
+    expect((tool! as RegularPolygonMacroTool).sideCount, 5);
+    final theme = Theme.of(tester.element(find.byType(AppBar)));
+    expect(iconColor(tester, Icons.crop_square), theme.colorScheme.primary);
+  });
+
+  testWidgets('the angle-by-size item asks for a size in degrees; cancel '
+      'activates nothing', (tester) async {
+    await pumpEditor(tester);
+
+    await tester.tap(find.byIcon(Icons.square_foot));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Angle by given size (arm, then vertex)…'));
+    await tester.pumpAndSettle();
+    expect(find.text('Angle size'), findsOneWidget);
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(container.read(toolProvider).tool, isNull);
+
+    await tester.tap(find.byIcon(Icons.square_foot));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Angle by given size (arm, then vertex)…'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '60');
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+
+    final tool = container.read(toolProvider).tool;
+    expect(tool, isA<AngleBySizeTool>());
+    expect((tool! as AngleBySizeTool).angle, closeTo(1.0471975, 1e-6));
+    final theme = Theme.of(tester.element(find.byType(AppBar)));
+    expect(
+      iconColor(tester, Icons.square_foot),
+      theme.colorScheme.primary,
+      reason: 'AngleBySizeTool must highlight the Angles group',
+    );
+    expect(
+      iconColor(tester, Icons.control_point),
+      isNot(theme.colorScheme.primary),
+      reason: 'it must not fall into the Points catch-all',
+    );
   });
 
   testWidgets('flyout rows show their shortcut as trailing text',
