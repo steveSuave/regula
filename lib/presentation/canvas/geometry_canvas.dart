@@ -134,24 +134,52 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
     );
   }
 
-  /// Scroll = zoom about the cursor, on any tool (per PLAN's shortcut
-  /// table; panning is space-drag / two-finger, never scroll). Registered
-  /// through the [PointerSignalResolver] so a scrollable ancestor and the
-  /// canvas can't both consume one event.
+  /// Figma-style pointer-signal mapping (decided in Phase 14, see PLAN):
+  /// plain scroll = pan (a trackpad two-finger swipe pans naturally),
+  /// pinch = zoom about the cursor (the web engine synthesizes a
+  /// [PointerScaleEvent] from a browser pinch's ctrl-flagged wheel event),
+  /// and a *physical* `Ctrl`/`Cmd` + scroll = zoom too, so mouse users
+  /// keep a wheel zoom. Registered through the [PointerSignalResolver] so
+  /// a scrollable ancestor and the canvas can't both consume one event.
   void _handlePointerSignal(PointerSignalEvent event) {
-    if (event is! PointerScrollEvent) {
-      return;
+    switch (event) {
+      case PointerScaleEvent():
+        GestureBinding.instance.pointerSignalResolver.register(event, (
+          event,
+        ) {
+          final pinch = event as PointerScaleEvent;
+          final viewport = CanvasViewport(ref.read(viewportProvider));
+          ref
+              .read(viewportProvider.notifier)
+              .set(viewport.zoomedAbout(pinch.localPosition, pinch.scale));
+        });
+      case PointerScrollEvent():
+        GestureBinding.instance.pointerSignalResolver.register(event, (
+          event,
+        ) {
+          final scroll = event as PointerScrollEvent;
+          final viewport = CanvasViewport(ref.read(viewportProvider));
+          final keyboard = HardwareKeyboard.instance;
+          if (keyboard.isControlPressed || keyboard.isMetaPressed) {
+            final factor = math.exp(
+              -scroll.scrollDelta.dy * GeometryCanvas.scrollZoomPerPixel,
+            );
+            ref
+                .read(viewportProvider.notifier)
+                .set(viewport.zoomedAbout(scroll.localPosition, factor));
+          } else {
+            // Content moves *against* the scroll delta (pannedByScreen is
+            // content-follows) — wheel-down scrolls the canvas up like a
+            // document, and a natural-scrolling trackpad's content follows
+            // the fingers.
+            ref
+                .read(viewportProvider.notifier)
+                .set(viewport.pannedByScreen(-scroll.scrollDelta));
+          }
+        });
+      default:
+        return;
     }
-    GestureBinding.instance.pointerSignalResolver.register(event, (event) {
-      final scroll = event as PointerScrollEvent;
-      final viewport = CanvasViewport(ref.read(viewportProvider));
-      final factor = math.exp(
-        -scroll.scrollDelta.dy * GeometryCanvas.scrollZoomPerPixel,
-      );
-      ref
-          .read(viewportProvider.notifier)
-          .set(viewport.zoomedAbout(scroll.localPosition, factor));
-    });
   }
 
   bool get _spaceHeld => HardwareKeyboard.instance.logicalKeysPressed

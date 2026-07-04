@@ -3,8 +3,10 @@
 // see Session 7 STATUS gotcha: semantics reroutes clicks to node centers).
 //
 // Flow:
-//   1. Phase 8: activate point tool, place two points, scroll-zoom about a
-//      fixed cursor position, confirm the point blobs spread apart.
+//   1. Phase 8/14: activate point tool, place two points; Ctrl+scroll
+//      zooms about a fixed cursor position (blobs spread apart), then a
+//      plain scroll *pans* (Phase 14 Figma-style mapping: blobs translate,
+//      spread unchanged).
 //   2. Phase 9 save: File > Save…, capture the browser download, assert it
 //      parses as a version-1 document with the two points and the zoomed
 //      viewport.
@@ -136,11 +138,14 @@ async function canvasSample(page, x, y) {
 
   const before = darkBlobs(PNG.sync.read(await page.screenshot()), 70);
 
+  // Phase 14 mapping: zoom is Ctrl+scroll now (plain scroll pans below).
   await page.mouse.move(480, 350);
+  await page.keyboard.down('Control');
   for (let i = 0; i < 3; i++) {
     await page.mouse.wheel(0, -100);
     await page.waitForTimeout(120);
   }
+  await page.keyboard.up('Control');
   await page.waitForTimeout(400);
 
   const after = darkBlobs(PNG.sync.read(await page.screenshot()), 70);
@@ -153,7 +158,25 @@ async function canvasSample(page, x, y) {
               'after:', spread(after).toFixed(1));
   check(before.length >= 2 && after.length >= 2 &&
         spread(after) > spread(before) * 1.5,
-        'zoom spreads the two point blobs about the cursor');
+        'Ctrl+scroll spreads the two point blobs about the cursor');
+
+  // Plain scroll pans: content moves against the wheel delta (wheel up
+  // = content down), spread untouched. Two −50 notches ≈ +100 px down.
+  for (let i = 0; i < 2; i++) {
+    await page.mouse.wheel(0, -50);
+    await page.waitForTimeout(120);
+  }
+  await page.waitForTimeout(400);
+  const panned = darkBlobs(PNG.sync.read(await page.screenshot()), 70);
+  const centroidY = (blobs) =>
+    blobs.reduce((s, b) => s + b.y, 0) / blobs.length;
+  console.log('pan spread:', spread(panned).toFixed(1),
+              'centroid y:', centroidY(after).toFixed(1),
+              '->', centroidY(panned).toFixed(1));
+  check(panned.length >= 2 &&
+        Math.abs(spread(panned) - spread(after)) < spread(after) * 0.05 &&
+        centroidY(panned) - centroidY(after) > 80,
+        'plain scroll pans the canvas without zooming');
 
   // ---- Phase 9: Save… downloads a parseable version-1 document ----
   // Items are 48 px rows below ~8 px padding: New, Open…, Save…. Click

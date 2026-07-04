@@ -1237,16 +1237,46 @@ void main() {
     expect(objectCount(), 1, reason: 'move/select mode places nothing');
   });
 
-  testWidgets('scroll wheel zooms about the cursor', (tester) async {
+  testWidgets('plain scroll pans the canvas — content moves against the '
+      'delta, scale untouched', (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+    final cursor = origin + const Offset(240, 180);
+    final before = CanvasViewport(container.read(viewportProvider));
+    final fixedWorld = before.screenToWorld(cursor - origin);
+    final screenBefore = before.worldToScreen(fixedWorld);
+
+    // Wheel down + right: the camera moves with the delta, so content
+    // scrolls up and left like a document.
+    final pointer = TestPointer(1, PointerDeviceKind.mouse);
+    pointer.hover(cursor);
+    await tester.sendEventToBinding(pointer.scroll(const Offset(40, 100)));
+    await tester.pump();
+
+    final after = CanvasViewport(container.read(viewportProvider));
+    expect(after.state.scale, 1, reason: 'plain scroll never zooms');
+    final screenAfter = after.worldToScreen(fixedWorld);
+    expect(screenAfter.dx - screenBefore.dx, closeTo(-40, 1e-9));
+    expect(screenAfter.dy - screenBefore.dy, closeTo(-100, 1e-9));
+
+    // Scrolling back restores the exact original pan.
+    await tester
+        .sendEventToBinding(pointer.scroll(const Offset(-40, -100)));
+    await tester.pump();
+    expect(container.read(viewportProvider).pan, before.state.pan);
+  });
+
+  testWidgets('Ctrl + scroll zooms about the cursor', (tester) async {
     await pumpEditor(tester);
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
     final cursor = origin + const Offset(240, 180);
     final before = CanvasViewport(container.read(viewportProvider));
     final fixedWorld = before.screenToWorld(cursor - origin);
 
-    // Scroll up (negative dy) = zoom in, per the exponential mapping.
+    // Scroll up (negative dy) with Ctrl held = zoom in.
     final pointer = TestPointer(1, PointerDeviceKind.mouse);
     pointer.hover(cursor);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
     await tester.sendEventToBinding(pointer.scroll(const Offset(0, -100)));
     await tester.pump();
 
@@ -1265,10 +1295,33 @@ void main() {
     // (exponential mapping is symmetric).
     await tester.sendEventToBinding(pointer.scroll(const Offset(0, 100)));
     await tester.pump();
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     expect(container.read(viewportProvider).scale, closeTo(1, 1e-9));
   });
 
-  testWidgets('scroll zoom works with a tool active and adds nothing',
+  testWidgets('a PointerScaleEvent (browser trackpad pinch) zooms about '
+      'the cursor', (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+    final cursor = origin + const Offset(240, 180);
+    final before = CanvasViewport(container.read(viewportProvider));
+    final fixedWorld = before.screenToWorld(cursor - origin);
+
+    await tester.sendEventToBinding(
+      PointerScaleEvent(position: cursor, scale: 1.25),
+    );
+    await tester.pump();
+
+    final after = CanvasViewport(container.read(viewportProvider));
+    expect(after.state.scale, closeTo(1.25, 1e-9));
+    final focalAfter = after.worldToScreen(fixedWorld);
+    expect(focalAfter.dx, closeTo(cursor.dx - origin.dx, 1e-6),
+        reason: 'the world point under the cursor must not move');
+    expect(focalAfter.dy, closeTo(cursor.dy - origin.dy, 1e-6),
+        reason: 'the world point under the cursor must not move');
+  });
+
+  testWidgets('scroll pan works with a tool active and adds nothing',
       (tester) async {
     await pumpEditor(tester);
     await tester.tap(find.byIcon(Icons.control_point));
@@ -1277,12 +1330,14 @@ void main() {
     await tester.pumpAndSettle();
 
     final cursor = tester.getCenter(find.byType(GeometryCanvas));
+    final panBefore = container.read(viewportProvider).pan;
     final pointer = TestPointer(1, PointerDeviceKind.mouse);
     pointer.hover(cursor);
     await tester.sendEventToBinding(pointer.scroll(const Offset(0, -50)));
     await tester.pump();
 
-    expect(container.read(viewportProvider).scale, greaterThan(1));
+    expect(container.read(viewportProvider).pan, isNot(panBefore));
+    expect(container.read(viewportProvider).scale, 1);
     expect(objectCount(), 0);
   });
 
