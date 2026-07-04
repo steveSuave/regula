@@ -39,6 +39,7 @@ import 'domain/tools/point_tool.dart';
 import 'domain/tools/square_macro_tool.dart';
 import 'domain/tools/three_point_tool.dart';
 import 'domain/tools/tool.dart';
+import 'domain/tools/trapezium_macro_tool.dart';
 import 'domain/tools/triangle_center_tool.dart';
 import 'domain/tools/two_line_tool.dart';
 import 'domain/tools/two_point_tool.dart';
@@ -244,8 +245,9 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     final angleConstructionActive = activeTool is TwoLineTool ||
         (activeTool is ThreePointTool &&
             activeTool.build == _buildVertexAngle);
-    final shapeMacroActive =
-        activeTool is SquareMacroTool || activeTool is ParallelogramMacroTool;
+    final shapeMacroActive = activeTool is SquareMacroTool ||
+        activeTool is ParallelogramMacroTool ||
+        activeTool is TrapeziumMacroTool;
     final undoRedo = ref.watch(commandStackProvider);
     final highlight = Theme.of(context).colorScheme.primary;
 
@@ -488,7 +490,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
             ],
           ),
           PopupMenuButton<Tool Function()>(
-            tooltip: 'Shape macros: square, parallelogram',
+            tooltip: 'Shape macros: square, parallelogram, trapezium',
             icon: Icon(
               Icons.crop_square,
               color: shapeMacroActive ? highlight : null,
@@ -503,6 +505,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
               PopupMenuItem(
                 value: () => ParallelogramMacroTool(newId: newObjectId),
                 child: const Text('Parallelogram (three corners)'),
+              ),
+              PopupMenuItem(
+                value: () => TrapeziumMacroTool(newId: newObjectId),
+                child: const Text('Trapezium (three corners, then the 4th)'),
               ),
             ],
           ),
