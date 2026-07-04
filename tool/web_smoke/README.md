@@ -19,9 +19,11 @@ Serve the *release build statically* — do not point the script at
 first Playwright session disconnects, and every later page load renders
 blank white (Session 13 gotcha; cost real debugging time).
 
-`drive.js` currently checks Phase 8 scroll-zoom (places two points,
-zooms about a cursor position, asserts the point blobs spread by the
-expected exponential factor with the focal point pinned), Phase 9
+`drive.js` currently checks Phase 8 zoom under the Phase 14 mapping
+(places two points, Ctrl+scroll-zooms about a cursor position asserting
+the blobs spread by the expected exponential factor, then plain-scrolls
+and asserts the blobs translate without spreading — scroll pans, zoom
+needs the modifier), Phase 9
 persistence + theme (Save… must download a parseable version-1 document
 carrying the points and the zoomed viewport; the theme toggle must
 darken the canvas and the choice must survive a reload), Phase 10's
