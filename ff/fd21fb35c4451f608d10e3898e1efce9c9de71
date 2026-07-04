@@ -1,0 +1,27 @@
+test/presentation/canvas/geometry_canvas_test.dart
+  s_6f73592f33ff79::t_fb915f7eea908e 13
+  s_6f73592f33ff79::t_25b1bbac64e73d 202-242
+lib/main.dart
+  s_6f73592f33ff79::t_71c02903386512 493
+  s_6f73592f33ff79::t_0bbde2cd4cdb01 42
+  s_6f73592f33ff79::t_d3f75976d5c9f3 509-512
+  s_6f73592f33ff79::t_40827b4daa7370 248-250
+test/domain/tools/trapezium_macro_tool_test.dart
+  s_6f73592f33ff79::t_658357c21929e2 9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "fffd21fb35c4451f608d10e3898e1efce9c9de71",
+  "prompts": {},
+  "sessions": {
+    "s_6f73592f33ff79": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0aede8dd-22dd-4cb3-968d-cb595996f3cb",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
