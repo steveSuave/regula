@@ -21,12 +21,16 @@ blank white (Session 13 gotcha; cost real debugging time).
 
 `drive.js` currently checks Phase 8 scroll-zoom (places two points,
 zooms about a cursor position, asserts the point blobs spread by the
-expected exponential factor with the focal point pinned) and Phase 9
+expected exponential factor with the focal point pinned), Phase 9
 persistence + theme (Save… must download a parseable version-1 document
 carrying the points and the zoomed viewport; the theme toggle must
-darken the canvas and the choice must survive a reload). Extend it per
-phase rather than rewriting from scratch (this file was lost once
-already in a session scratchpad).
+darken the canvas and the choice must survive a reload), Phase 10's
+square macro (all four sides and corners render, the hidden scaffolding
+does not), and Phase 11's keyboard shortcuts (Esc, Ctrl+Z undoing the
+whole macro as one unit, `P` point placement, `=`/`0` zoom about the
+center, arrow-key nudge, `?` cheat-sheet overlay — real browser key
+events end to end). Extend it per phase rather than rewriting from
+scratch (this file was lost once already in a session scratchpad).
 
 Blob detection is luminance-based (`r+g+b < 450`): the default object
 blue fails naive per-channel darkness thresholds. App-bar icons are

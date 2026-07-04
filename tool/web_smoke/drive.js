@@ -14,6 +14,10 @@
 //   4. Phase 10 square macro: two taps on the (reloaded, empty) canvas,
 //      assert all four sides render and the hidden scaffolding
 //      (perpendiculars past the side extents, compass circles) does not.
+//   5. Phase 11 keyboard shortcuts: Esc leaves the tool, Ctrl+Z removes
+//      the whole square (macro = one undo unit), P + clicks place points,
+//      = / 0 zoom in and back about the center, ArrowRight nudges the
+//      view, ? raises the cheat-sheet barrier and Esc drops it.
 
 const fs = require('fs');
 const { chromium } = require('playwright');
@@ -228,6 +232,80 @@ async function canvasSample(page, x, y) {
   check(!darkNear(605, 485, 3) && !darkNear(315, 485, 3),
         'hidden compass circles do not render');
   check(!darkNear(460, 340, 3), 'square interior stays empty');
+
+  // ---- Phase 11: keyboard shortcuts ----
+  // Esc leaves the still-active square tool; Ctrl+Z then removes the
+  // whole square — the macro is one undo unit, so the canvas must be
+  // completely empty afterwards.
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(200);
+  await page.keyboard.press('Control+z');
+  await page.waitForTimeout(400);
+  const afterUndo = darkBlobs(PNG.sync.read(await page.screenshot()), 70);
+  check(afterUndo.length === 0,
+        `Ctrl+Z removes the whole square in one step (${afterUndo.length} blobs left)`);
+
+  // P activates the point tool from the keyboard; two clicks place
+  // isolated dots (the connected square outline would defeat the blob
+  // spread measurement below).
+  await page.keyboard.press('p');
+  await page.waitForTimeout(200);
+  await page.mouse.click(400, 300);
+  await page.waitForTimeout(200);
+  await page.mouse.click(560, 400);
+  await page.waitForTimeout(200);
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(200);
+  const placed = darkBlobs(PNG.sync.read(await page.screenshot()), 70);
+  check(placed.length === 2,
+        `P + two clicks place two points (${placed.length} blobs)`);
+
+  // = twice zooms in about the canvas center (1.2 each, spread ×1.44);
+  // 0 returns to exactly 100 % keeping the center pinned.
+  await page.keyboard.press('=');
+  await page.waitForTimeout(150);
+  await page.keyboard.press('=');
+  await page.waitForTimeout(300);
+  const zoomed = darkBlobs(PNG.sync.read(await page.screenshot()), 70);
+  const zoomRatio = spread(zoomed) / spread(placed);
+  console.log('keyboard zoom spread ratio:', zoomRatio.toFixed(3),
+              '(expected ~1.44)');
+  check(zoomed.length === 2 && zoomRatio > 1.35 && zoomRatio < 1.55,
+        'two = presses spread the points by ~1.44');
+
+  await page.keyboard.press('0');
+  await page.waitForTimeout(300);
+  const restored = darkBlobs(PNG.sync.read(await page.screenshot()), 70);
+  check(restored.length === 2 &&
+        Math.abs(spread(restored) - spread(placed)) < 3,
+        '0 returns to 100 % (spread back to the original)');
+
+  // ArrowRight looks further right: content shifts 32 px left.
+  await page.keyboard.press('ArrowRight');
+  await page.waitForTimeout(300);
+  const nudged = darkBlobs(PNG.sync.read(await page.screenshot()), 70);
+  const meanX = (blobs) => blobs.reduce((s, b) => s + b.x, 0) / blobs.length;
+  const shift = meanX(nudged) - meanX(restored);
+  console.log('nudge shift:', shift.toFixed(1), 'px (expected -32)');
+  check(nudged.length === 2 && Math.abs(shift + 32) < 2,
+        'ArrowRight nudges the content 32 px left');
+
+  // ? raises the cheat sheet: its barrier darkens the canvas outside
+  // the card (sampled left of the centered 780 px card); Esc drops it
+  // without disturbing the construction.
+  const bareCanvas = await canvasSample(page, 60, 650);
+  await page.keyboard.press('?');
+  await page.waitForTimeout(400);
+  const behindBarrier = await canvasSample(page, 60, 650);
+  console.log('cheat-sheet barrier luminance:', bareCanvas, '→', behindBarrier);
+  check(bareCanvas > 700 && behindBarrier > 300 && behindBarrier < 620,
+        '? raises the cheat-sheet barrier');
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(300);
+  check(await canvasSample(page, 60, 650) > 700,
+        'Esc drops the cheat sheet');
+  const afterSheet = darkBlobs(PNG.sync.read(await page.screenshot()), 70);
+  check(afterSheet.length === 2, 'the construction survived the sheet');
 
   console.log('console errors:', errors.length ? errors : 'none');
   check(errors.length === 0, 'no console errors');
