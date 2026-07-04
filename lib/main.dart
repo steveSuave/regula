@@ -53,6 +53,7 @@ import 'presentation/panels/attributes_inspector.dart';
 import 'presentation/panels/delete_selection.dart';
 import 'presentation/panels/object_tree_panel.dart';
 import 'presentation/shortcuts/app_shortcuts.dart';
+import 'presentation/shortcuts/cheat_sheet.dart';
 import 'presentation/shortcuts/shortcut_table.dart';
 import 'presentation/theme/app_theme.dart';
 
@@ -156,6 +157,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   /// persisted), so it lives here rather than in a provider. Hidden by
   /// default: the tree is a secondary surface next to the canvas.
   bool _showObjectTree = false;
+
+  /// Whether the `?` cheat-sheet overlay is up. Same ephemeral-UI
+  /// reasoning as [_showObjectTree].
+  bool _showCheatSheet = false;
 
   /// Fit-to-viewport needs the canvas's laid-out size at tap time; the
   /// key reads it without threading sizes through providers.
@@ -359,6 +364,15 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   /// The one exhaustive [AppAction] switch — a binding added to the
   /// table without behaviour here fails to compile.
   void _handleShortcut(AppAction action) {
+    // Any shortcut closes the cheat sheet. Esc *only* closes it — the
+    // active tool survives, one Esc per surface — while a working
+    // shortcut (it is a reference card, after all) also executes.
+    if (_showCheatSheet && action != AppAction.toggleCheatSheet) {
+      setState(() => _showCheatSheet = false);
+      if (action == AppAction.returnToMoveSelect) {
+        return;
+      }
+    }
     final tools = ref.read(toolProvider.notifier);
     switch (action) {
       case AppAction.returnToMoveSelect:
@@ -390,9 +404,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
       case AppAction.revealAll:
         _revealAll();
       case AppAction.toggleCheatSheet:
-        // The overlay lands with the next commit; bound already so the
-        // sheet can list itself.
-        break;
+        setState(() => _showCheatSheet = !_showCheatSheet);
       case AppAction.zoomIn:
         _zoomAboutCenter(_keyZoomFactor);
       case AppAction.zoomOut:
@@ -794,21 +806,30 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
             ),
           ],
         ),
-        body: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        body: Stack(
           children: [
-            if (_showObjectTree) const ObjectTreePanel(),
-            Expanded(
-              // Clicking the canvas pulls focus back to the shortcut
-              // layer: a focused name field commits (focus-loss commit)
-              // and stops suppressing the single-letter shortcuts.
-              child: Listener(
-                behavior: HitTestBehavior.translucent,
-                onPointerDown: (_) => AppShortcuts.refocus(context),
-                child: GeometryCanvas(key: _canvasKey),
-              ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (_showObjectTree) const ObjectTreePanel(),
+                Expanded(
+                  // Clicking the canvas pulls focus back to the shortcut
+                  // layer: a focused name field commits (focus-loss
+                  // commit) and stops suppressing the single-letter
+                  // shortcuts.
+                  child: Listener(
+                    behavior: HitTestBehavior.translucent,
+                    onPointerDown: (_) => AppShortcuts.refocus(context),
+                    child: GeometryCanvas(key: _canvasKey),
+                  ),
+                ),
+                const AttributesInspector(),
+              ],
             ),
-            const AttributesInspector(),
+            if (_showCheatSheet)
+              ShortcutCheatSheet(
+                onDismiss: () => setState(() => _showCheatSheet = false),
+              ),
           ],
         ),
       ),
