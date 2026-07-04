@@ -1,0 +1,43 @@
+lib/domain/tools/tool.dart
+  s_b7c0326188340b::t_414a267df73199 13-20,22-27,31-36
+lib/domain/tools/intersection_tool.dart
+  s_b7c0326188340b::t_fb3ce1f91ecc23 12-15
+  s_b7c0326188340b::t_82604ef5a9ea00 60-62
+  s_b7c0326188340b::t_01ca36e8c5ce3a 5
+test/domain/tools/point_tool_test.dart
+  s_b7c0326188340b::t_4e8ae13762eba2 68-71,73-76,78,81-126
+  s_b7c0326188340b::t_c624f94d48623a 3,5,7
+test/domain/tools/two_point_tool_test.dart
+  s_b7c0326188340b::t_b7f4741f7fd884 74-143
+  s_b7c0326188340b::t_975d9d644f41f3 6,9
+  s_b7c0326188340b::t_242aff8bcb65c9 144
+test/domain/tools/point_resolution_test.dart
+  s_b7c0326188340b::t_4df898fd56aa77 1-239
+test/domain/tools/triangle_center_tool_test.dart
+  s_b7c0326188340b::t_bfd2c31737ee17 95,103-105
+  s_b7c0326188340b::t_96495f635be07a 8
+lib/domain/tools/point_resolution.dart
+  s_b7c0326188340b::t_416722303f7cbd 1-106
+lib/domain/tools/point_tool.dart
+  s_b7c0326188340b::t_a13b28d956edfd 2,5-10,13,24-25,28
+lib/domain/tools/multi_point_tool.dart
+  s_b7c0326188340b::t_b46375282bf65a 12-17,19,23-25
+  s_b7c0326188340b::t_72385a273014fe 6
+  s_b7c0326188340b::t_e57102b11d5fc6 69-72,79-82
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f38bf75990f763cfcb5c55fc1686e74fdf600f10",
+  "prompts": {},
+  "sessions": {
+    "s_b7c0326188340b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ee2ecc25-3973-4468-8ac7-f83543f23fd4",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
