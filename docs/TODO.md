@@ -131,11 +131,11 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [ ] New `X` chords (`E`/`⇧ I`/`⇧ R`/`G` proposed in PLAN — plain `X I`/`X R` went to Phase 18's quadrilaterals) + cheat-sheet entries
 
 ## Phase 17 — Discoverability & styling polish
-- [ ] Cheat-sheet app-bar button (keyboard icon between Reset and the theme toggle — keeps drive.js's "theme toggle is last" indexing; toggles the same `_showCheatSheet` state as `?`; widget test)
-- [ ] Shortcut hints in toolbar flyouts (`shortcutDisplayFor(AppAction)` lookup over the shortcut table — first cheat-sheet-visible binding wins; flyout item tuple gains an `AppAction?`; rows show dimmed trailing key text in a fixed-width row; group tooltips list their keys)
-- [ ] Dashed stroke style (`dashPeriod` on `ObjectAttributes`, 0 = solid, dash = gap = period/2; hand-rolled `dashPath` via `PathMetrics`; painter draws dashed strokes as Paths — angle markers and selection halo stay solid; inspector Solid/Fine/Medium/Coarse presets 0/4/8/16; codec kitchen-sink + golden updates)
-- [ ] Draggable labels (`labelDx`/`labelDy` screen-px attributes defaulting to the old (6, −18) constant; shared `labelScreenRect` in `label_layout.dart`; label hit before geometry hit on pan-start in move/select mode; preview as canvas widget state, offset clamped radially to 40 px; exactly one `ChangeAttributesCommand` per gesture; canvas widget tests + codec round-trip)
-- [ ] Verification: analyze + tests green, goldens regenerated (dash + label scenes), web smoke re-run with drive.js icon comment updated
+- [x] Cheat-sheet app-bar button (keyboard icon between Reset and the theme toggle — keeps drive.js's "theme toggle is last" indexing; toggles the same `_showCheatSheet` state as `?`; widget test)
+- [x] Shortcut hints in toolbar flyouts (`shortcutDisplayFor(AppAction)` lookup over the shortcut table — first cheat-sheet-visible binding wins; flyout item tuple gains an `AppAction?`; rows show dimmed trailing key text in a fixed-width row; group tooltips list their keys)
+- [x] Dashed stroke style (`dashPeriod` on `ObjectAttributes`, 0 = solid, dash = gap = period/2; hand-rolled `dashPath` via `PathMetrics`; painter draws dashed strokes as Paths — angle markers and selection halo stay solid; inspector Solid/Fine/Medium/Coarse presets 0/4/8/16; codec kitchen-sink + golden updates)
+- [x] Draggable labels (`labelDx`/`labelDy` screen-px attributes defaulting to the old (6, −18) constant; shared `labelScreenRect` in `label_layout.dart`; label hit before geometry hit on pan-start in move/select mode; preview as canvas widget state, offset clamped radially to 40 px; exactly one `ChangeAttributesCommand` per gesture; canvas widget tests + codec round-trip)
+- [x] Verification: analyze + tests green, goldens regenerated (dash + label scenes), web smoke re-run with drive.js icon comment updated (564 tests, SMOKE PASS with 10 icons; the Phase 17 features themselves are widget-tested — drive.js pixel sections not extended, per the parallelogram precedent)
 
 ## Phase 18 — Quadrilateral macros
 - [ ] `mirrorPointAcross` scaffolding helper (hidden perpendicular + branch-0 foot + `SegmentRatioPoint` ratio 2 — continuous under drags across the axis, unlike circle-branch mirroring; own test file)
