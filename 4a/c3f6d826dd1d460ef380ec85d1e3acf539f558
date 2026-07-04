@@ -1,0 +1,24 @@
+tool/web_smoke/drive.js
+  s_b802c1fa8f6fd0::t_681f59cc37d80a 61,63-66
+lib/main.dart
+  s_b802c1fa8f6fd0::t_1430775f50b674 474-479
+  s_b802c1fa8f6fd0::t_2f1d60d2ababce 473
+test/presentation/shortcuts/cheat_sheet_test.dart
+  s_b802c1fa8f6fd0::t_7970537c8e3e53 95-108
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "4ac3f6d826dd1d460ef380ec85d1e3acf539f558",
+  "prompts": {},
+  "sessions": {
+    "s_b802c1fa8f6fd0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "17efa3f0-97e2-4404-a9f3-cbfa554b401f",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
