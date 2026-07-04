@@ -99,8 +99,8 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] Widget tests sending key events (18 editor wiring tests + 4 cheat-sheet tests + table/resolver units; web smoke extended with a real-browser keyboard section — SMOKE PASS)
 
 ## Phase 12 — Tests & polish
-- [ ] Widget tests for representative tool flows
-- [ ] Golden tests (light + dark) for each object kind
-- [ ] Save/load round-trip on a non-trivial construction
-- [ ] Manual cross-platform smoke (`flutter run -d chrome`, Android emulator, iOS simulator)
-- [ ] `flutter build apk` and `flutter build ios` succeed
+- [x] Widget tests for representative tool flows (audit found 15 sessions of per-phase coverage already dense — creation flows, undo units, selection, drags, pan/zoom, file menu, every shortcut path; the one missing PLAN scenario landed: a circumcircle recomputing live under a real vertex-drag gesture, restored by undo)
+- [x] Golden tests (light + dark) for each object kind (Session 2 decision resolved: discontinued `golden_toolkit` dropped for plain `matchesGoldenFile` — five scenes ×2 themes framed by `fittedViewport`, tagged `golden` via new `dart_test.yaml`; CI's `--exclude-tags golden` still skips them, regenerate with `flutter test --update-goldens --tags golden`)
+- [x] Save/load round-trip on a non-trivial construction (already covered since Phase 9: the codec kitchen-sink test round-trips every concrete kind + attributes + viewport, `file_menu_test` drives Save/Open at the widget level, and the browser smoke parses a real downloaded document — no new work needed)
+- [ ] Manual cross-platform smoke (`flutter run -d chrome`, Android emulator, iOS simulator) (web done — full `tool/web_smoke/drive.js` suite SMOKE PASS on a release build, zero console errors; Android emulator needs an AVD first, and no system image is installed — a multi-GB `sdkmanager` download to approve; iOS simulator blocked on the incomplete Xcode install)
+- [ ] `flutter build apk` and `flutter build ios` succeed (`flutter build apk` ✓ — 49.5 MB release APK; `flutter build ios` still blocked: Xcode incomplete + CocoaPods missing since Session 2 — needs an App Store install and `sudo xcode-select --switch`, then `sudo xcodebuild -runFirstLaunch`)
