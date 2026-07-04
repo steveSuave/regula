@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'application/object_ids.dart';
 import 'application/persistence/file_io.dart';
 import 'application/providers/command_stack_provider.dart';
 import 'application/providers/construction_provider.dart';
+import 'application/providers/preferences_provider.dart';
+import 'application/providers/theme_provider.dart';
 import 'application/providers/tool_provider.dart';
 import 'application/providers/viewport_provider.dart';
 import 'domain/construction/construction.dart';
@@ -42,19 +45,31 @@ import 'presentation/canvas/fit_viewport.dart';
 import 'presentation/canvas/geometry_canvas.dart';
 import 'presentation/panels/attributes_inspector.dart';
 import 'presentation/panels/object_tree_panel.dart';
+import 'presentation/theme/app_theme.dart';
 
-void main() {
-  runApp(const ProviderScope(child: MainApp()));
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Loaded once here so settings providers can read stored values
+  // synchronously (see preferences_provider.dart).
+  final preferences = await SharedPreferences.getInstance();
+  runApp(
+    ProviderScope(
+      overrides: [sharedPreferencesProvider.overrideWithValue(preferences)],
+      child: const MainApp(),
+    ),
+  );
 }
 
-class MainApp extends StatelessWidget {
+class MainApp extends ConsumerWidget {
   const MainApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp(
       title: 'fgex',
-      theme: ThemeData.light(),
+      theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
+      themeMode: ref.watch(themeModeProvider),
       home: const EditorScreen(),
     );
   }
@@ -477,6 +492,19 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
             tooltip: 'Reset view (origin at 100 %)',
             icon: const Icon(Icons.filter_center_focus),
             onPressed: () => ref.read(viewportProvider.notifier).reset(),
+          ),
+          IconButton(
+            tooltip: Theme.of(context).brightness == Brightness.dark
+                ? 'Switch to light theme'
+                : 'Switch to dark theme',
+            icon: Icon(
+              Theme.of(context).brightness == Brightness.dark
+                  ? Icons.light_mode_outlined
+                  : Icons.dark_mode_outlined,
+            ),
+            onPressed: () => ref
+                .read(themeModeProvider.notifier)
+                .toggle(Theme.of(context).brightness),
           ),
           IconButton(
             tooltip: 'Undo',
