@@ -6,6 +6,24 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 16 — 2026-07-04
+
+**Done**
+- Phase 12 started on `phase-12-polish` (3 commits, merged to `main`) — everything except the two environment-blocked items landed.
+- Goldens: the Session 2 decision resolved — `golden_toolkit` (discontinued) removed from `pubspec.yaml`, plain `matchesGoldenFile` instead, zero new dependencies. `test/presentation/goldens/object_kinds_golden_test.dart`: five scenes (points / lines / circles / angles / decorations — the last covers labels, custom color/stroke/point-size, a filled sector, selection halos, preview markers) × light + dark = 10 goldens, every concrete object kind rendered. Scenes framed by `fittedViewport`, background painted inside the `RepaintBoundary` (the real canvas paints over the scaffold, so the boundary needs its own `ColoredBox`). New `dart_test.yaml` declares the `golden` tag; CI's `flutter test --exclude-tags golden` verified to still run the other 520.
+- Tool-flow widget tests: audit first — 15 sessions of per-phase coverage were already dense (creation flows with undo units, selection, drags, pan/zoom, file menu, every shortcut path). The one missing PLAN scenario landed in `geometry_canvas_test.dart`: circumcircle via the circles menu, apex vertex dragged — the circle recomputes per preview frame, lands equidistant from all three vertices, undo restores the dependent. Save/load round-trip box ticked with no new work (Phase 9's kitchen-sink codec test + `file_menu_test` + browser save check already cover it).
+- Builds/smoke: `flutter build apk` ✓ (49.5 MB release, first Gradle run installed CMake). Full web smoke re-run on this branch against a fresh release build: SMOKE PASS, zero console errors. 531 tests green locally (520 in CI mode), `flutter analyze` clean.
+
+**Next**
+- The two remaining Phase 12 boxes are blocked on the environment, not code: (1) iOS — install Xcode from the App Store, `sudo xcode-select --switch`, `sudo xcodebuild -runFirstLaunch`, install CocoaPods, then `flutter build ios` + simulator smoke; (2) Android emulator smoke — approve a multi-GB system image (`sdkmanager "system-images;android-XX;google_apis;arm64-v8a"`), `flutter emulators --create`, then `flutter run -d emulator`. After those, Phase 12 (and the plan) is done; consider a v0.1 tag.
+- Optional backlog if development continues: intersection *tool* (unblocks the `I` binding), sliding `PointOnObject` along its curve, angle hit-target world-radius hint, pending-leader indicator.
+
+**Open questions / gotchas**
+- Goldens are macOS-rendered pixels — regenerate with `flutter test --update-goldens --tags golden` on a Mac only; other platforms will diff. CI keeps excluding the tag.
+- Golden labels render in the test framework's default Ahem font (solid boxes): label *position and metrics* are locked, glyph shapes are not. Don't chase font loading unless glyph regressions ever matter.
+- `dart_test.yaml` now exists at the repo root; new tags must be declared there or `flutter test` warns.
+- The decorations golden's filled sector at `fillAlpha: 0.25` is faint on the light canvas — deliberate (it matches the app), not a rendering bug.
+
 ## Session 15 — 2026-07-04
 
 **Done**
