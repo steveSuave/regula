@@ -24,10 +24,15 @@ import '../../domain/construction/objects/segment_ratio_point.dart';
 import '../../domain/construction/objects/three_point_circle.dart';
 import '../../domain/construction/objects/vertex_angle.dart';
 import '../../domain/tools/intersection_tool.dart';
+import '../../domain/tools/isosceles_trapezium_macro_tool.dart';
+import '../../domain/tools/kite_macro_tool.dart';
 import '../../domain/tools/parallelogram_macro_tool.dart';
 import '../../domain/tools/point_and_line_tool.dart';
 import '../../domain/tools/point_on_object_tool.dart';
 import '../../domain/tools/point_tool.dart';
+import '../../domain/tools/rectangle_macro_tool.dart';
+import '../../domain/tools/rhombus_macro_tool.dart';
+import '../../domain/tools/right_trapezium_macro_tool.dart';
 import '../../domain/tools/square_macro_tool.dart';
 import '../../domain/tools/three_point_tool.dart';
 import '../../domain/tools/tool.dart';
@@ -131,7 +136,12 @@ class GeometryToolbar extends ConsumerWidget {
     final macrosActive =
         tool is SquareMacroTool ||
         tool is ParallelogramMacroTool ||
-        tool is TrapeziumMacroTool;
+        tool is TrapeziumMacroTool ||
+        tool is RectangleMacroTool ||
+        tool is RhombusMacroTool ||
+        tool is KiteMacroTool ||
+        tool is IsoscelesTrapeziumMacroTool ||
+        tool is RightTrapeziumMacroTool;
 
     Future<Tool?> ratioPick() async {
       final build = await askRatioBuilder(context);
@@ -264,7 +274,7 @@ class GeometryToolbar extends ConsumerWidget {
         ),
         _ToolGroup(
           icon: Icons.crop_square,
-          tooltip: 'Shape macros: square, parallelogram, trapezium',
+          tooltip: 'Shape macros: quadrilaterals',
           active: macrosActive,
           items: [
             (
@@ -273,14 +283,39 @@ class GeometryToolbar extends ConsumerWidget {
               AppAction.squareMacroTool,
             ),
             (
+              'Rectangle (two corners, then height)',
+              _pick(() => RectangleMacroTool(newId: newObjectId)),
+              AppAction.rectangleMacroTool,
+            ),
+            (
               'Parallelogram (three corners)',
               _pick(() => ParallelogramMacroTool(newId: newObjectId)),
               AppAction.parallelogramMacroTool,
             ),
             (
+              'Rhombus (two corners, then direction)',
+              _pick(() => RhombusMacroTool(newId: newObjectId)),
+              AppAction.rhombusMacroTool,
+            ),
+            (
               'Trapezium (three corners, then the 4th)',
               _pick(() => TrapeziumMacroTool(newId: newObjectId)),
               AppAction.trapeziumMacroTool,
+            ),
+            (
+              'Isosceles trapezium (base, then a top corner)',
+              _pick(() => IsoscelesTrapeziumMacroTool(newId: newObjectId)),
+              AppAction.isoscelesTrapeziumMacroTool,
+            ),
+            (
+              'Right trapezium (base, then the far corner)',
+              _pick(() => RightTrapeziumMacroTool(newId: newObjectId)),
+              AppAction.rightTrapeziumMacroTool,
+            ),
+            (
+              'Kite (apex, side corner, apex)',
+              _pick(() => KiteMacroTool(newId: newObjectId)),
+              AppAction.kiteMacroTool,
             ),
           ],
         ),

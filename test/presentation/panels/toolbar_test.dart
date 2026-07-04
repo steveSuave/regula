@@ -1,5 +1,10 @@
 import 'package:fgex/application/providers/tool_provider.dart';
 import 'package:fgex/domain/tools/intersection_tool.dart';
+import 'package:fgex/domain/tools/isosceles_trapezium_macro_tool.dart';
+import 'package:fgex/domain/tools/kite_macro_tool.dart';
+import 'package:fgex/domain/tools/rectangle_macro_tool.dart';
+import 'package:fgex/domain/tools/rhombus_macro_tool.dart';
+import 'package:fgex/domain/tools/right_trapezium_macro_tool.dart';
 import 'package:fgex/domain/tools/two_point_tool.dart';
 import 'package:fgex/main.dart';
 import 'package:flutter/gestures.dart';
@@ -110,6 +115,37 @@ void main() {
       findsOneWidget,
     );
     expect(find.byTooltip(idleTooltip), findsNothing);
+  });
+
+  testWidgets('every quadrilateral macro activates from the Macros flyout '
+      'and highlights the group', (tester) async {
+    await pumpEditor(tester);
+    final rows = {
+      'Rectangle (two corners, then height)': RectangleMacroTool,
+      'Rhombus (two corners, then direction)': RhombusMacroTool,
+      'Isosceles trapezium (base, then a top corner)':
+          IsoscelesTrapeziumMacroTool,
+      'Right trapezium (base, then the far corner)': RightTrapeziumMacroTool,
+      'Kite (apex, side corner, apex)': KiteMacroTool,
+    };
+    final theme = Theme.of(tester.element(find.byType(AppBar)));
+
+    for (final MapEntry(key: label, value: toolType) in rows.entries) {
+      container.read(toolProvider.notifier).deactivate();
+      await tester.pump();
+
+      await tester.tap(find.byIcon(Icons.crop_square));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(label));
+      await tester.pumpAndSettle();
+
+      expect(container.read(toolProvider).tool.runtimeType, toolType);
+      expect(
+        iconColor(tester, Icons.crop_square),
+        theme.colorScheme.primary,
+        reason: '$label must highlight the Macros group',
+      );
+    }
   });
 
   testWidgets('flyout rows show their shortcut as trailing text',

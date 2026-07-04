@@ -54,6 +54,11 @@ enum AppAction {
   squareMacroTool,
   parallelogramMacroTool,
   trapeziumMacroTool,
+  rectangleMacroTool,
+  rhombusMacroTool,
+  kiteMacroTool,
+  isoscelesTrapeziumMacroTool,
+  rightTrapeziumMacroTool,
 }
 
 /// Cheat-sheet grouping, mirroring the PLAN's shortcut tables.
@@ -515,6 +520,26 @@ final List<ShortcutBinding> shortcutTable = [
     'X P',
   ),
   _x(LogicalKeyboardKey.keyT, AppAction.trapeziumMacroTool, 'Trapezium', 'X T'),
+  _x(
+    LogicalKeyboardKey.keyR,
+    AppAction.rectangleMacroTool,
+    'Rectangle',
+    'X R',
+  ),
+  _x(LogicalKeyboardKey.keyH, AppAction.rhombusMacroTool, 'Rhombus', 'X H'),
+  _x(LogicalKeyboardKey.keyK, AppAction.kiteMacroTool, 'Kite', 'X K'),
+  _x(
+    LogicalKeyboardKey.keyI,
+    AppAction.isoscelesTrapeziumMacroTool,
+    'Isosceles trapezium',
+    'X I',
+  ),
+  _x(
+    LogicalKeyboardKey.keyL,
+    AppAction.rightTrapeziumMacroTool,
+    'Right trapezium',
+    'X L',
+  ),
 ];
 
 /// The render-ready key text for [action]'s primary binding — the first
