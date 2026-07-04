@@ -1,0 +1,46 @@
+test/application/persistence/construction_codec_test.dart
+  s_b802c1fa8f6fd0::t_f72186bd64e16a 65-69
+test/presentation/panels/attributes_inspector_test.dart
+  s_b802c1fa8f6fd0::t_1a6e62159551a3 281-290
+  s_b802c1fa8f6fd0::t_f535721b43c323 240-267
+test/presentation/canvas/dash_path_test.dart
+  s_b802c1fa8f6fd0::t_45fbc5a8df0a33 1-45
+lib/presentation/panels/attributes_inspector.dart
+  s_b802c1fa8f6fd0::t_8cef17ddb8c073 144-156
+  s_b802c1fa8f6fd0::t_455e4c0fad3178 419-478
+lib/domain/construction/object_attributes.dart
+  s_b802c1fa8f6fd0::t_1b0f2bf598071e 29-33
+lib/presentation/canvas/geometry_painter.dart
+  s_b802c1fa8f6fd0::t_98153ff4846f0f 13
+  s_b802c1fa8f6fd0::t_af3bf6a30f8b39 103-109
+  s_b802c1fa8f6fd0::t_cc7ecb3f114901 213,262,264,266,269-284
+  s_b802c1fa8f6fd0::t_4bf33c407a0281 237-243,248
+  s_b802c1fa8f6fd0::t_23d624e1d01928 130-134,141,151-152,156,159,161,169,179,183-191,197-212
+  s_b802c1fa8f6fd0::t_20070a461358ac 312,324-325,329
+  s_b802c1fa8f6fd0::t_fcc00f8b8064f7 214-215
+lib/domain/construction/object_attributes.freezed.dart
+  s_b802c1fa8f6fd0::t_ef089c2ee2b077 21-24,39,44,48,59,76,83,171,174,192,195,212,215,227,238-241,260,265,269,280,297,304
+test/presentation/goldens/object_kinds_golden_test.dart
+  s_b802c1fa8f6fd0::t_495c35dfe20395 261-266
+  s_b802c1fa8f6fd0::t_6a1024188ad67c 249-254
+lib/presentation/canvas/dash_path.dart
+  s_b802c1fa8f6fd0::t_c4eba986fec04e 1-29
+lib/domain/construction/object_attributes.g.dart
+  s_b802c1fa8f6fd0::t_ef089c2ee2b077 16,28
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "e4673b1d82776986725856524b0e155b608c498b",
+  "prompts": {},
+  "sessions": {
+    "s_b802c1fa8f6fd0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "17efa3f0-97e2-4404-a9f3-cbfa554b401f",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
