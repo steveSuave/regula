@@ -1,0 +1,27 @@
+lib/presentation/shortcuts/shortcut_table.dart
+  s_959c52499198a8::t_2fa51e44c8aae7 191
+  s_959c52499198a8::t_7b0617117bbe35 519-557
+  s_959c52499198a8::t_606f2680e75f28 177-178
+lib/presentation/shortcuts/cheat_sheet.dart
+  s_959c52499198a8::t_101a02a4343e13 84-85,87-90,99,108,116
+test/presentation/shortcuts/cheat_sheet_test.dart
+  s_959c52499198a8::t_9b837572af0fa6 48-54
+docs/TODO.md
+  s_959c52499198a8::t_c82fb4e303af4a 110-113
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "c6a1391a7335d0ca0eda9fac01bf4b01c34ae938",
+  "prompts": {},
+  "sessions": {
+    "s_959c52499198a8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3a01199b-89bb-4eb5-b8c7-fe6d213f5944",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
