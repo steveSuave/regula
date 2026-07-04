@@ -1,0 +1,29 @@
+tool/web_smoke/drive.js
+  s_04096c1d14434b::t_be859bc4542e7f 141,143,148,161-179
+  s_04096c1d14434b::t_e210a82d1963c5 6-9
+lib/presentation/shortcuts/shortcut_table.dart
+  s_04096c1d14434b::t_a144a6e3420eac 582-586,597
+docs/PLAN.md
+  s_04096c1d14434b::t_04099cd5cd6fc7 90
+lib/presentation/canvas/geometry_canvas.dart
+  s_04096c1d14434b::t_343dd2391fc6c8 171-174,177
+  s_04096c1d14434b::t_442c22da36aa27 137-143,145-170,175-176,178-181
+test/presentation/canvas/geometry_canvas_test.dart
+  s_04096c1d14434b::t_a869a3a1660486 1240-1241,1247,1249-1250,1253-1279,1298,1302-1324,1333,1339-1340
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "63f98b6161d3f14813c5acebeeeb34a8dc71c8ad",
+  "prompts": {},
+  "sessions": {
+    "s_04096c1d14434b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "529d8c0b-0503-4508-9a65-c99c5ad3dfaf",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
