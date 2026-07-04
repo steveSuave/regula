@@ -155,9 +155,9 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [ ] Stretch: hand-written SVG writer mirroring the painter per kind (`dashPeriod` → `stroke-dasharray`, labels as `<text>`) + "Export as SVG…" entry — may slip; PDF and clipboard-copy stay out of scope
 
 ## Phase 20 — Smart point placement
-- [ ] `ToolInput` gains `extraHits` (ranked in-threshold candidates beyond `hit`) + `snapThreshold` (world units; 0 disables intersection snapping), backward compatible
-- [ ] Shared resolver `domain/tools/point_resolution.dart`: `resolvePoint` ladder (existing point → `IntersectionPoint` at nearest in-threshold branch → `PointOnObject` on ranked-best curve → `FreePoint`) + `nearestIntersectionBranch` (null when curves disjoint); `IntersectionTool` switches to the shared branch helper
-- [ ] `PointTool` uses the resolver (merges the Point-on-object tool); `MultiPointTool.collectVertex` uses it (line/segment/circle/midpoint/angle-bisector/transforms/macros all snap to curves and crossings); delete `point_on_object_tool.dart`
-- [ ] `CanvasHitTester.hitTestAll` (ranked list; `hitTest` = first) + `_handleTap` passes `extraHits`/`snapThreshold`; toolbar drops the "Point on object" row
-- [ ] Tests: new `point_resolution_test.dart`; point_tool/two_point_tool/canvas_hit_tester/toolbar tests updated; `point_on_object_tool_test.dart` retired
-- [ ] Docs + web smoke (glue/crossing/undo ladder), drive.js Points-flyout indices re-checked
+- [x] `ToolInput` gains `extraHits` (ranked in-threshold candidates beyond `hit`) + `snapThreshold` (world units; 0 disables intersection snapping), backward compatible
+- [x] Shared resolver `domain/tools/point_resolution.dart`: `resolvePoint` ladder (existing point → `IntersectionPoint` at nearest in-threshold branch → `PointOnObject` on ranked-best curve → `FreePoint`) + `nearestIntersectionBranch` (null when curves disjoint); `IntersectionTool` switches to the shared branch helper
+- [x] `PointTool` uses the resolver (merges the Point-on-object tool); `MultiPointTool.collectVertex` uses it (line/segment/circle/midpoint/angle-bisector/transforms/macros all snap to curves and crossings); delete `point_on_object_tool.dart`
+- [x] `CanvasHitTester.hitTestAll` (ranked list; `hitTest` = first) + `_handleTap` passes `extraHits`/`snapThreshold`; toolbar drops the "Point on object" row
+- [x] Tests: new `point_resolution_test.dart`; point_tool/two_point_tool/canvas_hit_tester/toolbar tests updated; `point_on_object_tool_test.dart` retired
+- [x] Docs + web smoke (glue/crossing/undo ladder), drive.js Points-flyout indices re-checked

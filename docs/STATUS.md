@@ -6,6 +6,24 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 23 — 2026-07-04
+
+**Done**
+- **Phase 20 complete** on `phase-20-smart-point-placement` (4 commits). User request: merge Point / Point-on-object and fix "snap to line doesn't work for the angle bisector" — exploration showed *no* point-collecting tool glued to curves (shared `MultiPointTool.collectVertex` only snapped to existing points), so one fix covers both.
+- New shared resolver `domain/tools/point_resolution.dart` — the ladder: existing point → `IntersectionPoint` at the nearest in-threshold branch (GeoGebra-style crossing snap, user opted in) → `PointOnObject` on the ranked-best curve → `FreePoint`. Used by `PointTool` and `collectVertex`, so point/line/segment/circle/midpoint/angle-bisector/transforms/macros all snap identically. `IntersectionTool`'s private `_nearestBranch` generalized into the resolver's `nearestIntersectionBranch` (returns null when disjoint; the tool maps null → 0 to keep committing non-intersecting pairs).
+- `ToolInput` gains `extraHits` + `snapThreshold` (defaults keep all ~85 existing call sites bit-identical; `snapThreshold: 0` disables crossing snap). `CanvasHitTester.hitTestAll` returns the ranked in-threshold list; `hitTest` is now its `firstOrNull`. `_handleTap` passes the full ranked list + threshold. `PointOnObjectTool` deleted; toolbar row removed (it had no shortcut/action, so `main.dart`/`shortcut_table` untouched).
+- 670 tests green (analyze clean): new `point_resolution_test.dart` (14 cases incl. branch picking, threshold fall-through, rank-order tie-break), point/two-point/triangle-center tool tests flipped to the glued expectation, `hitTestAll` ordering tests. drive.js extended with a Phase 20 section (glue + crossing snap verified through the saved doc's object types): **SMOKE PASS**, zero console errors.
+- Deliberate behavior change (in PLAN): a free point can no longer be dropped *exactly on* a curve — place off-curve and drag if wanted.
+
+**Next**
+- Merge `phase-20-smart-point-placement` to `main`. Then Phase 16 (angle-by-size + triangle/polygon macros) or Phase 19 (export) as before.
+
+**Open questions / gotchas**
+- drive.js: File > New pops the discard-confirmation dialog whenever the construction is non-empty — a scripted click sequence that assumes the menu just closes silently eats the next clicks. The Phase 20 section clears the canvas with Ctrl+Z instead.
+- A macro corner glued to a curve routes the macro's rigid drag through that curve's free ancestors (consistent with existing derived-parent semantics, but new for macros).
+- `PointOnObject`/`IntersectionPoint` still bind to infinite carriers, so a P-tap near a crossing just *past* a segment's endpoint can snap to a point off the drawn extent — same pre-existing wart as `IntersectionTool`.
+- Crossing snap reuses the 8 px hit threshold; if it feels too eager/timid, tune the `snapThreshold` the canvas passes — no domain change needed.
+
 ## Session 22 — 2026-07-04
 
 **Done**
