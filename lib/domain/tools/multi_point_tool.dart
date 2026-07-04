@@ -7,7 +7,7 @@ import '../math/vec2.dart';
 import 'tool.dart';
 
 /// Base for tools that collect a fixed number of *distinct* point inputs,
-/// then build one object on them.
+/// then build one or more objects on them.
 ///
 /// A tap on an existing point consumes it as the next input; the same
 /// point twice is ignored (coincident *positions* from separate taps are
@@ -16,9 +16,10 @@ import 'tool.dart';
 /// point at the tap position, exactly like `PointTool`.
 ///
 /// New free points are held privately until the last input lands, then
-/// committed together with the built object as one `MacroCommand`, so the
+/// committed together with the built objects as one `MacroCommand`, so the
 /// whole construction step is a single undo unit (a bare
-/// `AddObjectCommand` when every input was an existing point).
+/// `AddObjectCommand` when every input was an existing point and the tool
+/// builds a single object).
 /// In-progress input is exposed for marker rendering via
 /// [ToolInputPreview] (and, typed, via [collectedVertices]).
 abstract class MultiPointTool implements ToolInputPreview {
@@ -27,12 +28,17 @@ abstract class MultiPointTool implements ToolInputPreview {
   /// Produces a fresh unique object id per call (see `PointTool.newId`).
   final String Function() newId;
 
-  /// How many point inputs [buildObject] needs.
+  /// How many point inputs [buildObjects] needs.
   int get pointCount;
 
-  /// Builds the derived object once [pointCount] points are collected,
-  /// in tap order. Runs at commit time; use [newId] for the object's id.
-  GeoObject buildObject(List<GeoPoint> points);
+  /// Builds the derived objects once [pointCount] points are collected,
+  /// in tap order. Runs at commit time; use [newId] for the objects' ids.
+  ///
+  /// The returned list must be in dependency order (an object only after
+  /// its parents) — each is added with its own `AddObjectCommand`, in
+  /// order. Single-object tools return a one-element list; macro tools
+  /// (square, …) return the whole shape, hidden scaffolding included.
+  List<GeoObject> buildObjects(List<GeoPoint> points);
 
   final List<({GeoPoint point, bool isNew})> _collected = [];
 
@@ -48,11 +54,30 @@ abstract class MultiPointTool implements ToolInputPreview {
 
   @override
   ToolResult onInput(ToolInput input) {
+    if (collectVertex(input) == null) {
+      return const ToolIgnored();
+    }
+    if (_collected.length < pointCount) {
+      return const ToolAccepted();
+    }
+    return commitCollected();
+  }
+
+  /// Turns [input] into the next collected vertex — the tapped existing
+  /// point, or a new private `FreePoint` at the tap position — and
+  /// records it. Returns null (recording nothing) when the input is
+  /// unusable: an already-collected point.
+  ///
+  /// Subclass hook: [onInput] is collect + commit-when-full; a tool
+  /// whose collection ends with a non-point input (the trapezium's
+  /// position-only fourth tap) overrides [onInput] and calls this and
+  /// [commitCollected] itself.
+  GeoPoint? collectVertex(ToolInput input) {
     final hit = input.hit;
     final ({GeoPoint point, bool isNew}) vertex;
     if (hit is GeoPoint) {
       if (_collected.any((v) => identical(v.point, hit))) {
-        return const ToolIgnored();
+        return null;
       }
       vertex = (point: hit, isNew: false);
     } else {
@@ -61,18 +86,20 @@ abstract class MultiPointTool implements ToolInputPreview {
         isNew: true,
       );
     }
-
     _collected.add(vertex);
-    if (_collected.length < pointCount) {
-      return const ToolAccepted();
-    }
+    return vertex.point;
+  }
 
+  /// Commits everything collected — new free points first, then
+  /// [buildObjects] — as one undo unit, and resets the collection.
+  ToolCommitted commitCollected() {
     final vertices = List.of(_collected);
     _collected.clear();
     final commands = <Command>[
       for (final v in vertices)
         if (v.isNew) AddObjectCommand(v.point),
-      AddObjectCommand(buildObject([for (final v in vertices) v.point])),
+      for (final object in buildObjects([for (final v in vertices) v.point]))
+        AddObjectCommand(object),
     ];
     return ToolCommitted(
       commands.length == 1 ? commands.single : MacroCommand(commands),

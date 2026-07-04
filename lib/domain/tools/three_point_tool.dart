@@ -24,6 +24,6 @@ class ThreePointTool extends MultiPointTool {
   int get pointCount => 3;
 
   @override
-  GeoObject buildObject(List<GeoPoint> points) =>
-      build(newId(), points[0], points[1], points[2]);
+  List<GeoObject> buildObjects(List<GeoPoint> points) =>
+      [build(newId(), points[0], points[1], points[2])];
 }
