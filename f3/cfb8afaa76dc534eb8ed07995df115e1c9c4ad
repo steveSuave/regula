@@ -1,0 +1,23 @@
+lib/domain/tools/square_macro_tool.dart
+  s_6f73592f33ff79::t_3b9608dbe19a8c 1-94
+test/domain/tools/square_macro_tool_test.dart
+  s_6f73592f33ff79::t_d4f21e3328c3fa 1-61,64-137,140-143
+  s_6f73592f33ff79::t_d883d06784d086 62-63
+  s_6f73592f33ff79::t_bdaf9aee7dc972 138-139
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f3cfb8afaa76dc534eb8ed07995df115e1c9c4ad",
+  "prompts": {},
+  "sessions": {
+    "s_6f73592f33ff79": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0aede8dd-22dd-4cb3-968d-cb595996f3cb",
+        "model": "claude-fable-5"
+      },
+      "human_author": null
+    }
+  }
+}
