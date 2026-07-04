@@ -6,6 +6,27 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 18 — 2026-07-04
+
+**Done**
+- **Phase 13 complete** on `phase-13-toolbar` (4 commits), merged to `main`. In landing order:
+- `IntersectionTool` (`domain/tools/intersection_tool.dart`): collects two distinct curves — lines *or* circles, carriers count — like `TwoLineTool`, then commits one `IntersectionPoint`. Branch disambiguation: the branch nearest the *second* tap wins, resolved by constructing both branch objects as throwaway probes so the choice rides the documented deterministic branch order (no duplicated intersection dispatch). Non-intersecting curves still commit a branch-0 point (undefined until dragged together). The previously deferred `I` binding landed with it. 11 domain tests + editor-wiring and canvas-flow widget tests.
+- Toolbar regrouped into five flyouts and extracted from `main.dart` (940→600 lines) to `presentation/panels/toolbar.dart` per PLAN's layout table: Points / Lines / Circles / Angles / Macros. Standalone Point, Point-on-object (and the hours-old Intersection) buttons plus the line-constructions and triangle-centers menus retired. Builders are now *public* canonicalized tear-offs shared by menus and the keyboard switch; the Points highlight is a catch-all for any `TwoPointTool` builder no tear-off claims (the segment-ratio closure captures its ratio, so it can never be one).
+- Deselect affordances: double-clicking the active (highlighted) group icon deactivates its tool; the `GestureDetector` mounts *only while active*, so the double-tap-timeout delay on opening a flyout applies only then; the active tooltip appends "double-click to deselect". New `toolbar_test.dart` (4 tests) + a rewritten deactivation canvas test.
+- Cheat sheet: `V` unhidden (was a deliberate Esc twin — user asked for it); new display-only `GestureRow` list renders Space+drag / scroll / two-finger / pinch rows in the Viewport section — the resolver never sees them.
+- Web smoke re-indexed and re-run against a fresh release build: **SMOKE PASS**, zero console errors. 548 tests green, `flutter analyze` clean.
+
+**Next**
+- Phase 14 — drag & gesture fixes: `PointOnObject` slide-drag via a new `SetPointOnObjectParameterCommand`, `CompassCircle` center-only drag, and the trackpad pan-mapping decision for web (no drag-to-pan exists in the browser today; see the Phase 14 TODO entry for the full diagnosis). Start a `phase-14-drag` branch.
+- The two environment-blocked Phase 12 boxes (iOS build, Android emulator smoke) remain open.
+
+**Open questions / gotchas**
+- With only 9 enabled app-bar icons the whole action cluster sits right of the window midline, so **every** `PopupMenuButton` menu — File included — now opens *left-aligned* to its button (Flutter grows menus toward the side with more room). drive.js clicks left of every icon; any future menu test near the right edge needs the same treatment.
+- Opening a flyout whose tool is active waits out the double-tap timeout (~300 ms) before the menu appears — the accepted cost of the double-click-to-deselect affordance; it exists only on the active group. In widget tests, `pumpAndSettle` alone won't fire the delayed tap: `pump(kDoubleTapTimeout)` first (see `toolbar_test.dart`).
+- `find.text('Point')` is ambiguous in widget tests when the inspector is open (kind header) — use `.last` for the flyout item.
+- The `hit == null ||` guard in `IntersectionTool.onInput` is load-bearing: Dart flow analysis won't promote `GeoObject?` through `hit is! GeoLine && hit is! GeoCircle` alone (same as the Session 8 gotcha).
+- PLAN's "adapt the toolbar to mobile with a bottom sheet" remains open — not scoped into any phase yet.
+
 ## Session 17 — 2026-07-04
 
 **Done**
