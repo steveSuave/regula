@@ -338,8 +338,8 @@ ToolPick _center(TriangleCenterBuilder build) =>
 
 /// One flyout group: an icon opening a popup menu of [items]. While
 /// [active], the icon is tinted and a double-click deactivates the tool.
-/// Each row shows its tool's shortcut as dimmed trailing text, and the
-/// group tooltip lists all of its keys (Phase 17 discoverability).
+/// Each row shows its tool's shortcut as dimmed trailing text (Phase 17
+/// discoverability); the group tooltip stays keys-free.
 class _ToolGroup extends ConsumerWidget {
   const _ToolGroup({
     required this.icon,
@@ -355,14 +355,8 @@ class _ToolGroup extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final keys = [
-      for (final (_, _, action) in items)
-        if (action != null && shortcutDisplayFor(action) != null)
-          shortcutDisplayFor(action)!,
-    ].join(' · ');
-    final withKeys = keys.isEmpty ? tooltip : '$tooltip\nKeys: $keys';
     final button = PopupMenuButton<ToolPick>(
-      tooltip: active ? '$withKeys — double-click to deselect' : withKeys,
+      tooltip: active ? '$tooltip — double-click to deselect' : tooltip,
       icon: Icon(
         icon,
         color: active ? Theme.of(context).colorScheme.primary : null,

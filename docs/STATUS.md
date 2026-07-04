@@ -6,6 +6,19 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 20 — 2026-07-04
+
+**Done**
+- Plan-only session: **Phase 19 — Export** specced in PLAN/TODO, no code. PLAN gained an "Export (`application/export/`)" subsection after Persistence: PNG committed (off-screen `PictureRecorder` + existing `GeometryPainter` — never a widget screenshot, so no UI chrome; fit-vs-current-viewport framing via `fittedViewport`; 1×/2×/4× scale; theme vs transparent background; bytes out through the existing `saveFile(bytes:)`), SVG as an explicit stretch (hand-written writer mirroring the painter), PDF/clipboard out of scope. Export is read-only view work — no `Command`, not undoable, no save-format change.
+- Build-order item 18, `Ctrl/Cmd + E` in the shortcut table (marked Phase 19), and the app-bar file-menu mention added; TODO gained the Phase 19 checklist (renderer, dialog + menu + shortcut, delivery/platform verify, tests, SVG stretch).
+- Reverted the Phase 17B group-tooltip keys line (user request): group-icon tooltips no longer list shortcut keys — the dimmed trailing hints next to the flyout subtool names are the only place keys show. Dead `keys` computation removed from `_ToolGroup`, tooltip test updated, PLAN's toolbar bullet corrected. Analyze clean, toolbar tests green (6).
+
+**Next**
+- Phase 14 remains the top open *implementation* phase (slide-drag, compass-circle drag, trackpad pan); Phase 19 queues behind 14–16 unless the user pulls it forward.
+
+**Open questions / gotchas**
+- `Ctrl/Cmd + E` verified unbound today — re-check for collisions when Phase 15/16 bindings land, since those are still proposals.
+
 ## Session 19 — 2026-07-04
 
 **Done**

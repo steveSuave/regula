@@ -98,10 +98,8 @@ void main() {
   testWidgets('the active group tooltip advertises double-click to deselect',
       (tester) async {
     await pumpEditor(tester);
-    // The tooltip carries the group's shortcut keys on a second line
-    // (point-on-object has no binding and is skipped).
-    const idleTooltip = 'Points: free, derived and constrained points'
-        '\nKeys: P · M · G R · I · G C · G O · G I · G U';
+    // Shortcut keys live next to the flyout rows, not in the tooltip.
+    const idleTooltip = 'Points: free, derived and constrained points';
 
     expect(find.byTooltip(idleTooltip), findsOneWidget);
 
