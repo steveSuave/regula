@@ -32,11 +32,14 @@ import 'domain/construction/objects/segment_ratio_point.dart';
 import 'domain/construction/objects/three_point_circle.dart';
 import 'domain/construction/objects/vertex_angle.dart';
 import 'domain/math/vec2.dart';
+import 'domain/tools/parallelogram_macro_tool.dart';
 import 'domain/tools/point_and_line_tool.dart';
 import 'domain/tools/point_on_object_tool.dart';
 import 'domain/tools/point_tool.dart';
+import 'domain/tools/square_macro_tool.dart';
 import 'domain/tools/three_point_tool.dart';
 import 'domain/tools/tool.dart';
+import 'domain/tools/trapezium_macro_tool.dart';
 import 'domain/tools/triangle_center_tool.dart';
 import 'domain/tools/two_line_tool.dart';
 import 'domain/tools/two_point_tool.dart';
@@ -242,6 +245,9 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     final angleConstructionActive = activeTool is TwoLineTool ||
         (activeTool is ThreePointTool &&
             activeTool.build == _buildVertexAngle);
+    final shapeMacroActive = activeTool is SquareMacroTool ||
+        activeTool is ParallelogramMacroTool ||
+        activeTool is TrapeziumMacroTool;
     final undoRedo = ref.watch(commandStackProvider);
     final highlight = Theme.of(context).colorScheme.primary;
 
@@ -480,6 +486,29 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
               PopupMenuItem(
                 value: Circumcenter.new,
                 child: Text('Circumcenter'),
+              ),
+            ],
+          ),
+          PopupMenuButton<Tool Function()>(
+            tooltip: 'Shape macros: square, parallelogram, trapezium',
+            icon: Icon(
+              Icons.crop_square,
+              color: shapeMacroActive ? highlight : null,
+            ),
+            onSelected: (createTool) =>
+                ref.read(toolProvider.notifier).activate(createTool()),
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: () => SquareMacroTool(newId: newObjectId),
+                child: const Text('Square (two adjacent corners)'),
+              ),
+              PopupMenuItem(
+                value: () => ParallelogramMacroTool(newId: newObjectId),
+                child: const Text('Parallelogram (three corners)'),
+              ),
+              PopupMenuItem(
+                value: () => TrapeziumMacroTool(newId: newObjectId),
+                child: const Text('Trapezium (three corners, then the 4th)'),
               ),
             ],
           ),

@@ -7,8 +7,10 @@ import 'package:fgex/application/providers/viewport_provider.dart';
 import 'package:fgex/domain/construction/objects/arc.dart';
 import 'package:fgex/domain/construction/objects/compass_circle.dart';
 import 'package:fgex/domain/construction/objects/free_point.dart';
+import 'package:fgex/domain/construction/objects/intersection_point.dart';
 import 'package:fgex/domain/construction/objects/line_angle.dart';
 import 'package:fgex/domain/construction/objects/midpoint.dart';
+import 'package:fgex/domain/construction/objects/point_on_object.dart';
 import 'package:fgex/domain/construction/objects/sector.dart';
 import 'package:fgex/domain/construction/objects/segment_ratio_point.dart';
 import 'package:fgex/domain/construction/objects/three_point_circle.dart';
@@ -111,6 +113,131 @@ void main() {
     await tester.tap(find.byIcon(Icons.redo));
     await tester.pump();
     expect(objectCount(), 4);
+  });
+
+  testWidgets(
+      'square macro via the shapes menu: two taps commit one undo unit',
+      (tester) async {
+    await pumpEditor(tester);
+
+    await tester.tap(find.byIcon(Icons.crop_square));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Square (two adjacent corners)'));
+    await tester.pumpAndSettle();
+
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+    await tester.tapAt(origin + const Offset(100, 100));
+    await tester.pump();
+    expect(objectCount(), 0,
+        reason: 'nothing is committed until the second corner lands');
+
+    await tester.tapAt(origin + const Offset(200, 100));
+    await tester.pump();
+    expect(objectCount(), 12,
+        reason: '2 free points + side + 2 perpendiculars + 2 circles + '
+            '2 corners + 3 sides');
+
+    // World is y-up at scale 1: screen (100,100)/(200,100) are world
+    // A=(100,-100), B=(200,-100), so the square's derived corners sit
+    // one side length above at y=0 (left of the A->B direction).
+    final corners = container
+        .read(constructionProvider)
+        .construction
+        .objects
+        .whereType<IntersectionPoint>()
+        .toList();
+    expect(corners.map((c) => c.position),
+        [const Vec2(200, 0), const Vec2(100, 0)]);
+
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(objectCount(), 0,
+        reason: 'the whole square is one undo unit');
+
+    await tester.tap(find.byIcon(Icons.redo));
+    await tester.pump();
+    expect(objectCount(), 12);
+  });
+
+  testWidgets(
+      'parallelogram macro via the shapes menu: three taps, one undo unit',
+      (tester) async {
+    await pumpEditor(tester);
+
+    await tester.tap(find.byIcon(Icons.crop_square));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Parallelogram (three corners)'));
+    await tester.pumpAndSettle();
+
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+    await tester.tapAt(origin + const Offset(100, 200));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(200, 200));
+    await tester.pump();
+    expect(objectCount(), 0,
+        reason: 'nothing is committed until the third corner lands');
+
+    await tester.tapAt(origin + const Offset(250, 100));
+    await tester.pump();
+    expect(objectCount(), 10,
+        reason: '3 free points + 2 sides + 2 parallels + corner + 2 sides');
+
+    // D = A + (C − B): screen (150, 100).
+    final corner = container
+        .read(constructionProvider)
+        .construction
+        .objects
+        .whereType<IntersectionPoint>()
+        .single;
+    expect(corner.position!.x, closeTo(150, 1e-9));
+    expect(corner.position!.y, closeTo(-100, 1e-9),
+        reason: 'world is y-up: screen y 100 is world y -100');
+
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(objectCount(), 0,
+        reason: 'the whole parallelogram is one undo unit');
+  });
+
+  testWidgets(
+      'trapezium macro via the shapes menu: three corners plus the D pick',
+      (tester) async {
+    await pumpEditor(tester);
+
+    await tester.tap(find.byIcon(Icons.crop_square));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Trapezium (three corners, then the 4th)'));
+    await tester.pumpAndSettle();
+
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+    await tester.tapAt(origin + const Offset(100, 200));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(200, 200));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(250, 100));
+    await tester.pump();
+    expect(objectCount(), 0,
+        reason: 'the third corner does not commit — D is still pending');
+
+    await tester.tapAt(origin + const Offset(120, 80));
+    await tester.pump();
+    expect(objectCount(), 9,
+        reason: '3 free points + 2 sides + parallel + D + 2 sides');
+
+    // D = the 4th tap projected onto the horizontal parallel through C.
+    final corner = container
+        .read(constructionProvider)
+        .construction
+        .objects
+        .whereType<PointOnObject>()
+        .single;
+    expect(corner.position!.x, closeTo(120, 1e-9));
+    expect(corner.position!.y, closeTo(-100, 1e-9),
+        reason: 'projected to C\'s height (y-up world: screen y 100)');
+
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(objectCount(), 0, reason: 'the whole trapezium is one undo unit');
   });
 
   testWidgets('undo mid-collection clears collected input, not an exception',
