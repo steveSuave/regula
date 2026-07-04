@@ -124,11 +124,11 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] Codec entries for the new kinds (+ version bump only if the schema shape changes); tests for every new `domain/` API — invariants: double reflection = identity, rotation preserves distance to center, translation preserves the vector (no version bump — same schema shape, `RotatedPoint.angle` rides `params`; kitchen-sink round-trip gains all four kinds; 37 new tests incl. glados properties; web smoke re-run: SMOKE PASS)
 
 ## Phase 16 — Angle-by-size & shape macros
-- [ ] `AngleBySizeTool`: arm point, vertex, size dialog → `RotatedPoint` + `VertexAngle` (GeoGebra convention; depends on Phase 15's rotation)
-- [ ] Triangle macros: equilateral, isosceles, right (input schemes to spec in PLAN before coding, like the square/parallelogram/trapezium)
-- [ ] Random triangle + random polygon (one-tap stamps placing randomized *free* points, fully editable afterwards)
-- [ ] Regular polygon (side count via dialog; "normal polygon" in the original feedback assumed to mean regular — correct here if wrong)
-- [ ] New `X` chords (`E`/`⇧ I`/`⇧ R`/`G` proposed in PLAN — plain `X I`/`X R` went to Phase 18's quadrilaterals) + cheat-sheet entries
+- [x] `AngleBySizeTool`: arm point, vertex, size dialog → `RotatedPoint` + `VertexAngle` (GeoGebra convention; a negative size swaps the marker's arms so it measures |size|; Angles flyout row + `G D` chord — settled in PLAN first; the angle dialog generalized to serve rotation and angle-size with their own titles)
+- [x] Triangle macros: equilateral, isosceles, right (PLAN specced first: equilateral apex = `RotatedPoint` by +60° — no scaffolding, no branch; isosceles apex = position-only tap projected onto the hidden perpendicular bisector; right triangle = the rectangle's height-tap mechanics with the right angle at B; all left-of-A→B, one `MacroCommand`, degeneracy round-trips tested)
+- [x] Random triangle + random polygon (one `RandomShapeStampTool` class, 3–3 and 4–7 vertices: one tap stamps free points at sorted random angles — non-self-intersecting — and jittered radii scaled by the snap threshold; injectable `math.Random` keeps tests deterministic; menu-only, no chord)
+- [x] Regular polygon (side count via dialog, integer 3–100 else reads as cancel; remaining vertices chain as `RotatedPoint`s by 2π/n − π so the polygon is regular and continuous with no hidden scaffolding; dedicated `RegularPolygonMacroTool` for the highlight)
+- [x] New `X` chords (`E`/`⇧ I`/`⇧ R`/`G` as proposed — `_x` helper grew a shift flag for the second stroke) + cheat-sheet entries (auto-render from the table)
 
 ## Phase 17 — Discoverability & styling polish
 - [x] Cheat-sheet app-bar button (keyboard icon between Reset and the theme toggle — keeps drive.js's "theme toggle is last" indexing; toggles the same `_showCheatSheet` state as `?`; widget test)

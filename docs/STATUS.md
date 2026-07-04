@@ -6,6 +6,24 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 24 — 2026-07-04
+
+**Done**
+- Merged `phase-20-smart-point-placement` to `main`, then **Phase 16 complete** on `phase-16-angle-macros` (6 commits). In landing order:
+- `AngleBySizeTool` (arm point, vertex; size from a degrees dialog): emits a `RotatedPoint` + a `VertexAngle` in one undo unit. A negative size swaps the marker's arms so it measures |size| on the clockwise side instead of the 2π complement. Angles flyout row + `G D` chord (settled in PLAN first — "degrees", `A` was taken); the rotation dialog generalized to `_askDegrees(title)` serving both tools.
+- Triangle macros (PLAN input schemes first): **equilateral** = 2 taps, apex = `RotatedPoint` by +60° — no scaffolding, no branch, left of A→B; **isosceles** = 2 base taps + position-only apex projected onto the hidden perpendicular bisector (hidden `Midpoint` + `PerpendicularLine`); **right** = the rectangle's height-tap mechanics, right angle at B. All one `MacroCommand`, degeneracy round-trips tested.
+- `RegularPolygonMacroTool` (side count via dialog, integer 3–100 else cancel): vertices chain as `RotatedPoint`s — v₍ₖ₊₁₎ = v₍ₖ₋₁₎ about vₖ by 2π/n − π — regular, continuous, scaffolding-free. `RandomShapeStampTool` (one class, 3–3 and 4–7 ranges): one tap stamps free points at *sorted* random angles (non-self-intersecting) and jittered radii scaled ≈10× the snap threshold; injected `math.Random` keeps tests deterministic; menu-only.
+- Wiring: 6 new Macros rows, `X E`/`X ⇧I`/`X ⇧R`/`X G` chords (`_x` helper grew a `shift` flag for the second stroke), 4 `AppAction`s + main.dart cases, side-count dialog. 703 tests green (33 new), analyze clean, web smoke re-run on a fresh release build: **SMOKE PASS**, zero console errors (no drive.js changes needed — no new app-bar icons, Square stays the Macros menu's row 1).
+
+**Next**
+- Phase 19 (export) is the last speced phase; the two environment-blocked Phase 12 boxes (iOS build, Android emulator smoke) remain open. Consider a v0.1 tag after Phase 19.
+
+**Open questions / gotchas**
+- The Macros flyout (14 rows) now overflows the 600-px widget-test screen — menu taps on later rows need `scrollUntilVisible` (the sweep test does this now).
+- The random stamps read the tap's `snapThreshold` to size the stamp (≈80 screen px at any zoom); a `ToolInput` built without it (tests, programmatic) falls back to 80 world units.
+- `X I` (isosceles trapezium) vs `X ⇧I` (isosceles triangle) rely on the resolver's per-stroke shift matching; the table test's ambiguity sweep covers the pair.
+- drive.js not extended with Phase 16 sections (widget + domain tests cover the flows — the parallelogram precedent).
+
 ## Session 23 — 2026-07-04
 
 **Done**

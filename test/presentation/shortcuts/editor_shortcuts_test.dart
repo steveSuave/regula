@@ -12,9 +12,14 @@ import 'package:fgex/domain/construction/objects/intersection_point.dart';
 import 'package:fgex/domain/construction/objects/midpoint.dart';
 import 'package:fgex/domain/construction/objects/segment.dart';
 import 'package:fgex/domain/math/vec2.dart';
+import 'package:fgex/domain/tools/angle_by_size_tool.dart';
+import 'package:fgex/domain/tools/equilateral_triangle_macro_tool.dart';
 import 'package:fgex/domain/tools/intersection_tool.dart';
 import 'package:fgex/domain/tools/point_and_line_tool.dart';
 import 'package:fgex/domain/tools/point_tool.dart';
+import 'package:fgex/domain/tools/rectangle_macro_tool.dart';
+import 'package:fgex/domain/tools/regular_polygon_macro_tool.dart';
+import 'package:fgex/domain/tools/right_triangle_macro_tool.dart';
 import 'package:fgex/domain/tools/rotated_point_tool.dart';
 import 'package:fgex/domain/tools/square_macro_tool.dart';
 import 'package:fgex/domain/tools/three_point_tool.dart';
@@ -190,6 +195,53 @@ void main() {
     expect(activeTool(), isA<SquareMacroTool>());
   });
 
+  testWidgets('shifted X chords pick the triangles, unshifted the '
+      'quadrilaterals', (tester) async {
+    await pumpEditor(tester);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyX);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyE);
+    expect(activeTool(), isA<EquilateralTriangleMacroTool>());
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyX);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyR);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    expect(activeTool(), isA<RightTriangleMacroTool>());
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyX);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyR);
+    expect(
+      activeTool(),
+      isA<RectangleMacroTool>(),
+      reason: 'plain X R still belongs to the rectangle',
+    );
+  });
+
+  testWidgets('X G asks for the side count; OK activates the '
+      'regular-polygon tool, cancel activates nothing', (tester) async {
+    await pumpEditor(tester);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyX);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
+    await tester.pumpAndSettle();
+    expect(find.text('Number of sides'), findsOneWidget);
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(activeTool(), isNull);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyX);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '6');
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+
+    final tool = activeTool();
+    expect(tool, isA<RegularPolygonMacroTool>());
+    expect((tool! as RegularPolygonMacroTool).sideCount, 6);
+  });
+
   testWidgets('G chords reach the transform tools', (tester) async {
     await pumpEditor(tester);
 
@@ -234,6 +286,30 @@ void main() {
     final tool = activeTool();
     expect(tool, isA<RotatedPointTool>());
     expect((tool! as RotatedPointTool).angle, closeTo(-0.7853981, 1e-6));
+  });
+
+  testWidgets('G D asks for the angle size; OK in degrees activates the '
+      'angle-by-size tool, cancel activates nothing', (tester) async {
+    await pumpEditor(tester);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyD);
+    await tester.pumpAndSettle();
+    expect(find.text('Angle size'), findsOneWidget);
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(activeTool(), isNull);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyD);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '30');
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+
+    final tool = activeTool();
+    expect(tool, isA<AngleBySizeTool>());
+    expect((tool! as AngleBySizeTool).angle, closeTo(0.5235987, 1e-6));
   });
 
   testWidgets('G R asks for the ratio; cancel activates nothing', (
