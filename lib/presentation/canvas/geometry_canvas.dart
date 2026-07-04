@@ -391,15 +391,25 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
     // Read (not the build-time capture): the construction mutates between
     // rebuilds, and the hit test must see the tap-time state.
     final construction = ref.read(constructionProvider).construction;
-    final hit = const CanvasHitTester().hitTest(
+    final threshold =
+        viewport.screenToWorldLength(GeometryCanvas.hitThresholdPx);
+    final hits = const CanvasHitTester().hitTestAll(
       construction.objects,
       world,
-      viewport.screenToWorldLength(GeometryCanvas.hitThresholdPx),
+      threshold,
     );
+    final hit = hits.firstOrNull;
     if (ref.read(toolProvider).tool != null) {
       // An active tool owns every tap — including ones it ignores, so a
       // stray tap mid-collection can't silently retarget the selection.
-      ref.read(toolProvider.notifier).handleInput(ToolInput(world, hit: hit));
+      ref.read(toolProvider.notifier).handleInput(
+            ToolInput(
+              world,
+              hit: hit,
+              extraHits: hits.length > 1 ? hits.sublist(1) : const [],
+              snapThreshold: threshold,
+            ),
+          );
       return;
     }
     final selection = ref.read(selectionProvider.notifier);
