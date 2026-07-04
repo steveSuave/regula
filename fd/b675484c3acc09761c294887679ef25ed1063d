@@ -1,0 +1,23 @@
+docs/TODO.md
+  s_04096c1d14434b::t_37ddca006b3e7f 118-120
+tool/web_smoke/README.md
+  s_04096c1d14434b::t_964ef56f8cc21b 22-26
+docs/STATUS.md
+  s_04096c1d14434b::t_98b6b1c1ae8d0b 9-27
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "fdb675484c3acc09761c294887679ef25ed1063d",
+  "prompts": {},
+  "sessions": {
+    "s_04096c1d14434b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "529d8c0b-0503-4508-9a65-c99c5ad3dfaf",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
