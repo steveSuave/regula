@@ -310,15 +310,16 @@ async function canvasSample(page, x, y) {
         Math.abs(spread(restored) - spread(placed)) < 3,
         '0 returns to 100 % (spread back to the original)');
 
-  // ArrowRight looks further right: content shifts 32 px left.
+  // ArrowRight moves the drawing right 32 px (content semantics since
+  // Session 21, matching the Phase 14 scroll-pan direction).
   await page.keyboard.press('ArrowRight');
   await page.waitForTimeout(300);
   const nudged = darkBlobs(PNG.sync.read(await page.screenshot()), 70);
   const meanX = (blobs) => blobs.reduce((s, b) => s + b.x, 0) / blobs.length;
   const shift = meanX(nudged) - meanX(restored);
-  console.log('nudge shift:', shift.toFixed(1), 'px (expected -32)');
-  check(nudged.length === 2 && Math.abs(shift + 32) < 2,
-        'ArrowRight nudges the content 32 px left');
+  console.log('nudge shift:', shift.toFixed(1), 'px (expected +32)');
+  check(nudged.length === 2 && Math.abs(shift - 32) < 2,
+        'ArrowRight nudges the content 32 px right');
 
   // ? raises the cheat sheet: its barrier darkens the canvas outside
   // the card (sampled left of the centered 780 px card); Esc drops it
