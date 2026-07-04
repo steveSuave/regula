@@ -579,6 +579,11 @@ const List<GestureRow> gestureRows = [
   ),
   GestureRow(
     display: 'Scroll',
+    label: 'Pan (mouse wheel or two-finger swipe)',
+    section: ShortcutSection.viewport,
+  ),
+  GestureRow(
+    display: 'Ctrl/Cmd + scroll',
     label: 'Zoom about the cursor',
     section: ShortcutSection.viewport,
   ),
@@ -589,7 +594,7 @@ const List<GestureRow> gestureRows = [
   ),
   GestureRow(
     display: 'Pinch',
-    label: 'Zoom (touch)',
+    label: 'Zoom about the cursor (touch or trackpad)',
     section: ShortcutSection.viewport,
   ),
 ];

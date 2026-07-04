@@ -1048,6 +1048,115 @@ void main() {
   });
 
   testWidgets(
+      'dragging a point-on-object slides it along its curve, one undo unit',
+      (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+
+    // A horizontal segment, then a point constrained onto it.
+    await tester.tap(find.byIcon(Icons.timeline));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Segment'));
+    await tester.pumpAndSettle();
+    await tester.tapAt(origin + const Offset(100, 100));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(300, 100));
+    await tester.pump();
+    await tester.tap(find.byIcon(Icons.control_point));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Point on object'));
+    await tester.pumpAndSettle();
+    await tester.tapAt(origin + const Offset(200, 100));
+    await tester.pump();
+    container.read(toolProvider.notifier).deactivate(); // move/select mode
+    await tester.pump();
+
+    PointOnObject point() => container
+        .read(constructionProvider)
+        .construction
+        .objects
+        .whereType<PointOnObject>()
+        .single;
+    expect(point().position, const Vec2(200, -100));
+
+    // Drag well past the pan slop (~36 px), pulling away from the segment:
+    // the point must slide along it, not leave it (and not translate the
+    // segment's endpoints).
+    final drag = await tester.startGesture(origin + const Offset(200, 100));
+    await drag.moveTo(origin + const Offset(260, 220));
+    await tester.pump();
+    expect(point().position, const Vec2(260, -100),
+        reason: 'the preview projects the pointer onto the carrier');
+    await drag.up();
+    await tester.pump();
+    expect(point().position, const Vec2(260, -100));
+
+    final endpoints = container
+        .read(constructionProvider)
+        .construction
+        .objects
+        .whereType<FreePoint>()
+        .map((p) => p.position)
+        .toList();
+    expect(endpoints, [const Vec2(100, -100), const Vec2(300, -100)],
+        reason: 'sliding the constrained point never moves the curve');
+
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(point().position, const Vec2(200, -100),
+        reason: 'the whole slide is one undo unit');
+  });
+
+  testWidgets(
+      'dragging a compass circle moves only its center — the radius '
+      'points stay put', (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+
+    await tester.tap(find.byIcon(Icons.circle_outlined));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Compass (radius points, then center)'));
+    await tester.pumpAndSettle();
+    await tester.tapAt(origin + const Offset(100, 100)); // radius point 1
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(150, 100)); // radius point 2
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(300, 200)); // center
+    await tester.pump();
+    container.read(toolProvider.notifier).deactivate(); // move/select mode
+    await tester.pump();
+
+    List<Vec2> freePositions() => [
+          for (final object in container
+              .read(constructionProvider)
+              .construction
+              .objects
+              .whereType<FreePoint>())
+            object.position,
+        ];
+
+    // Grab the rim (radius 50, right of the center) and drag.
+    final drag = await tester.startGesture(origin + const Offset(350, 200));
+    await drag.moveTo(origin + const Offset(380, 260));
+    await tester.pump();
+    await drag.up();
+    await tester.pump();
+    expect(freePositions(), [
+      const Vec2(100, -100),
+      const Vec2(150, -100),
+      const Vec2(330, -260),
+    ], reason: 'only the center translates; the radius pair is a measurement');
+
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(freePositions(), [
+      const Vec2(100, -100),
+      const Vec2(150, -100),
+      const Vec2(300, -200),
+    ], reason: 'the whole drag is one undo unit');
+  });
+
+  testWidgets(
       'dragging a circumcircle vertex recomputes the circle, and undo '
       'restores it', (tester) async {
     await pumpEditor(tester);
@@ -1128,16 +1237,46 @@ void main() {
     expect(objectCount(), 1, reason: 'move/select mode places nothing');
   });
 
-  testWidgets('scroll wheel zooms about the cursor', (tester) async {
+  testWidgets('plain scroll pans the canvas — content moves against the '
+      'delta, scale untouched', (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+    final cursor = origin + const Offset(240, 180);
+    final before = CanvasViewport(container.read(viewportProvider));
+    final fixedWorld = before.screenToWorld(cursor - origin);
+    final screenBefore = before.worldToScreen(fixedWorld);
+
+    // Wheel down + right: the camera moves with the delta, so content
+    // scrolls up and left like a document.
+    final pointer = TestPointer(1, PointerDeviceKind.mouse);
+    pointer.hover(cursor);
+    await tester.sendEventToBinding(pointer.scroll(const Offset(40, 100)));
+    await tester.pump();
+
+    final after = CanvasViewport(container.read(viewportProvider));
+    expect(after.state.scale, 1, reason: 'plain scroll never zooms');
+    final screenAfter = after.worldToScreen(fixedWorld);
+    expect(screenAfter.dx - screenBefore.dx, closeTo(-40, 1e-9));
+    expect(screenAfter.dy - screenBefore.dy, closeTo(-100, 1e-9));
+
+    // Scrolling back restores the exact original pan.
+    await tester
+        .sendEventToBinding(pointer.scroll(const Offset(-40, -100)));
+    await tester.pump();
+    expect(container.read(viewportProvider).pan, before.state.pan);
+  });
+
+  testWidgets('Ctrl + scroll zooms about the cursor', (tester) async {
     await pumpEditor(tester);
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
     final cursor = origin + const Offset(240, 180);
     final before = CanvasViewport(container.read(viewportProvider));
     final fixedWorld = before.screenToWorld(cursor - origin);
 
-    // Scroll up (negative dy) = zoom in, per the exponential mapping.
+    // Scroll up (negative dy) with Ctrl held = zoom in.
     final pointer = TestPointer(1, PointerDeviceKind.mouse);
     pointer.hover(cursor);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
     await tester.sendEventToBinding(pointer.scroll(const Offset(0, -100)));
     await tester.pump();
 
@@ -1156,10 +1295,33 @@ void main() {
     // (exponential mapping is symmetric).
     await tester.sendEventToBinding(pointer.scroll(const Offset(0, 100)));
     await tester.pump();
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     expect(container.read(viewportProvider).scale, closeTo(1, 1e-9));
   });
 
-  testWidgets('scroll zoom works with a tool active and adds nothing',
+  testWidgets('a PointerScaleEvent (browser trackpad pinch) zooms about '
+      'the cursor', (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+    final cursor = origin + const Offset(240, 180);
+    final before = CanvasViewport(container.read(viewportProvider));
+    final fixedWorld = before.screenToWorld(cursor - origin);
+
+    await tester.sendEventToBinding(
+      PointerScaleEvent(position: cursor, scale: 1.25),
+    );
+    await tester.pump();
+
+    final after = CanvasViewport(container.read(viewportProvider));
+    expect(after.state.scale, closeTo(1.25, 1e-9));
+    final focalAfter = after.worldToScreen(fixedWorld);
+    expect(focalAfter.dx, closeTo(cursor.dx - origin.dx, 1e-6),
+        reason: 'the world point under the cursor must not move');
+    expect(focalAfter.dy, closeTo(cursor.dy - origin.dy, 1e-6),
+        reason: 'the world point under the cursor must not move');
+  });
+
+  testWidgets('scroll pan works with a tool active and adds nothing',
       (tester) async {
     await pumpEditor(tester);
     await tester.tap(find.byIcon(Icons.control_point));
@@ -1168,12 +1330,14 @@ void main() {
     await tester.pumpAndSettle();
 
     final cursor = tester.getCenter(find.byType(GeometryCanvas));
+    final panBefore = container.read(viewportProvider).pan;
     final pointer = TestPointer(1, PointerDeviceKind.mouse);
     pointer.hover(cursor);
     await tester.sendEventToBinding(pointer.scroll(const Offset(0, -50)));
     await tester.pump();
 
-    expect(container.read(viewportProvider).scale, greaterThan(1));
+    expect(container.read(viewportProvider).pan, isNot(panBefore));
+    expect(container.read(viewportProvider).scale, 1);
     expect(objectCount(), 0);
   });
 

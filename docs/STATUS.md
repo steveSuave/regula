@@ -6,6 +6,25 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 21 — 2026-07-04
+
+**Done**
+- **Phase 14 complete** on `phase-14-drag` (3 commits), merged to `main`. In landing order:
+- `PointOnObject` slide-drag: `Construction.setPointOnObjectParameter` (the constrained-point sibling of `moveFreePoint` — recomputes the point itself *then* its dependents) + `SetPointOnObjectParameterCommand` (from/to parameters, float-exact replay). `DragSession` refactored into an abstract base with `_TranslateDragSession` (the old behavior, unchanged) and `_SlideDragSession`: the host curve's analytic form is captured once at grab (the drag can't change the curve), the pointer projects onto it per frame with a grab offset so the point rides the pointer instead of jumping under the cursor. `PointOnObject.parameter` is now a mutable field. tool_provider/canvas needed zero changes — they only know the `DragSession` interface.
+- `CompassCircle` center-only drag: one special case in `DragSession.start` — the translated set is `freePointAncestors(target.center)`. Radius points stay put (the radius is a measurement); a derived/constrained center drags its own free ancestors.
+- Web trackpad mapping decided and shipped (PLAN updated first): Figma-style. Plain scroll = pan (content moves against the wheel delta — document-like for wheels, content-follows-fingers for natural trackpads), pinch = zoom about cursor via `PointerScaleEvent`, physical Ctrl/Cmd+scroll = zoom. Cheat-sheet gesture rows reworded.
+- 615 tests green (13 new domain + 4 canvas widget tests incl. slide-on-circle, compass drag, scroll-pan/Ctrl-zoom/`PointerScaleEvent`), analyze clean. Web smoke reworked (zoom section holds Ctrl; new plain-scroll pan check asserts translation without spread change) and re-run on a fresh release build: SMOKE PASS, zero console errors.
+
+**Next**
+- Phase 15 — transformations: four derived-point kinds (reflect about line/point, rotate by fixed angle, translate by vector) + tools + codec entries + invariant tests. Then Phase 16 (angle-by-size, triangle/polygon macros) and Phase 19 (export). The two environment-blocked Phase 12 boxes remain open.
+
+**Open questions / gotchas**
+- `pannedByScreen` is *content-follows* ("content follows a rightward/downward delta" — its doc), not camera semantics: the scroll handler negates the wheel delta. Sign errors here read as inverted scrolling; the canvas test pins both axes.
+- On the ±π atan2 cut of a circle host, a slide-drag's stored parameter can legitimately come back as −π where +π went in (same rim position — the parameter is periodic); tests assert position, not raw parameter, there.
+- The angular grab-offset normalization keeps circle parameters within one turn of the principal range; without it, repeated grabs near the cut could accumulate +2π per gesture.
+- A compass circle whose center's free ancestors overlap the radius pair's (e.g. center = midpoint of the radius points) *does* change radius when dragged — deliberate, the rule is "the center's ancestors".
+- Playwright can't fake a browser pinch (the engine synthesizes `PointerScaleEvent` only for ctrl-flagged wheels with no physical Ctrl down; `keyboard.down('Control')` makes it a real Ctrl+scroll) — the pinch path is widget-tested, the smoke covers Ctrl+scroll.
+
 ## Session 20 — 2026-07-04
 
 **Done**
