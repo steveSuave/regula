@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -6,6 +8,7 @@ import '../../application/providers/tool_provider.dart';
 import '../../domain/construction/geo_object.dart';
 import '../../domain/construction/objects/angle_bisector_line.dart';
 import '../../domain/construction/objects/arc.dart';
+import '../../domain/construction/objects/central_reflection_point.dart';
 import '../../domain/construction/objects/centroid.dart';
 import '../../domain/construction/objects/circle_center_point.dart';
 import '../../domain/construction/objects/circumcenter.dart';
@@ -18,10 +21,12 @@ import '../../domain/construction/objects/orthocenter.dart';
 import '../../domain/construction/objects/parallel_line.dart';
 import '../../domain/construction/objects/perpendicular_line.dart';
 import '../../domain/construction/objects/ray.dart';
+import '../../domain/construction/objects/reflected_point.dart';
 import '../../domain/construction/objects/sector.dart';
 import '../../domain/construction/objects/segment.dart';
 import '../../domain/construction/objects/segment_ratio_point.dart';
 import '../../domain/construction/objects/three_point_circle.dart';
+import '../../domain/construction/objects/translated_point.dart';
 import '../../domain/construction/objects/vertex_angle.dart';
 import '../../domain/tools/intersection_tool.dart';
 import '../../domain/tools/isosceles_trapezium_macro_tool.dart';
@@ -33,6 +38,7 @@ import '../../domain/tools/point_tool.dart';
 import '../../domain/tools/rectangle_macro_tool.dart';
 import '../../domain/tools/rhombus_macro_tool.dart';
 import '../../domain/tools/right_trapezium_macro_tool.dart';
+import '../../domain/tools/rotated_point_tool.dart';
 import '../../domain/tools/square_macro_tool.dart';
 import '../../domain/tools/three_point_tool.dart';
 import '../../domain/tools/tool.dart';
@@ -92,6 +98,21 @@ GeoObject buildVertexAngle(String id, GeoPoint a, GeoPoint b, GeoPoint c) =>
 GeoObject buildLineAngle(String id, GeoLine first, GeoLine second) =>
     LineAngle(id: id, line1: first, line2: second);
 
+GeoObject buildCentralReflection(String id, GeoPoint a, GeoPoint b) =>
+    CentralReflectionPoint(id: id, point: a, center: b);
+
+GeoObject buildTranslatedPoint(String id, GeoPoint a, GeoPoint b, GeoPoint c) =>
+    TranslatedPoint(id: id, point: a, vectorFrom: b, vectorTo: c);
+
+/// Named parameters match [PointAndLineBuilder]; the point slot is the
+/// point to mirror, the line slot the mirror axis.
+GeoObject buildReflectedPoint({
+  required String id,
+  required GeoPoint through,
+  required GeoLine reference,
+}) =>
+    ReflectedPoint(id: id, point: through, mirror: reference);
+
 const _lineBuilders = {buildLine, buildSegment, buildRay};
 const _circleBuilders = {
   buildThreePointCircle,
@@ -112,9 +133,9 @@ class GeometryToolbar extends ConsumerWidget {
     final tool = ref.watch(toolProvider).tool;
 
     // Points is the catch-all for TwoPointTools whose builder isn't
-    // claimed by Lines or Circles: that covers buildMidpoint *and* the
-    // segment-ratio dialog's closure, which captures the ratio and so
-    // can never be a canonicalized tear-off.
+    // claimed by Lines, Circles or Transform: that covers buildMidpoint
+    // *and* the segment-ratio dialog's closure, which captures the ratio
+    // and so can never be a canonicalized tear-off.
     final pointsActive =
         tool is PointTool ||
         tool is PointOnObjectTool ||
@@ -122,9 +143,10 @@ class GeometryToolbar extends ConsumerWidget {
         tool is TriangleCenterTool ||
         (tool is TwoPointTool &&
             !_lineBuilders.contains(tool.build) &&
-            tool.build != buildCircle);
+            tool.build != buildCircle &&
+            tool.build != buildCentralReflection);
     final linesActive =
-        tool is PointAndLineTool ||
+        (tool is PointAndLineTool && tool.build != buildReflectedPoint) ||
         (tool is ThreePointTool && tool.build == buildAngleBisector) ||
         (tool is TwoPointTool && _lineBuilders.contains(tool.build));
     final circlesActive =
@@ -133,6 +155,11 @@ class GeometryToolbar extends ConsumerWidget {
     final anglesActive =
         tool is TwoLineTool ||
         (tool is ThreePointTool && tool.build == buildVertexAngle);
+    final transformActive =
+        tool is RotatedPointTool ||
+        (tool is PointAndLineTool && tool.build == buildReflectedPoint) ||
+        (tool is TwoPointTool && tool.build == buildCentralReflection) ||
+        (tool is ThreePointTool && tool.build == buildTranslatedPoint);
     final macrosActive =
         tool is SquareMacroTool ||
         tool is ParallelogramMacroTool ||
@@ -148,6 +175,13 @@ class GeometryToolbar extends ConsumerWidget {
       return build == null
           ? null
           : TwoPointTool(newId: newObjectId, build: build);
+    }
+
+    Future<Tool?> rotatePick() async {
+      final angle = await askRotationAngle(context);
+      return angle == null
+          ? null
+          : RotatedPointTool(newId: newObjectId, angle: angle);
     }
 
     return Row(
@@ -269,6 +303,38 @@ class GeometryToolbar extends ConsumerWidget {
               'Angle between two lines',
               _pick(() => TwoLineTool(newId: newObjectId, build: buildLineAngle)),
               AppAction.lineAngleTool,
+            ),
+          ],
+        ),
+        _ToolGroup(
+          icon: Icons.flip,
+          tooltip: 'Transform: reflect, rotate or translate a point',
+          active: transformActive,
+          items: [
+            (
+              'Reflect about line (point and line)',
+              _pick(
+                () => PointAndLineTool(
+                  newId: newObjectId,
+                  build: buildReflectedPoint,
+                ),
+              ),
+              AppAction.reflectAboutLineTool,
+            ),
+            (
+              'Reflect about point (point, then center)',
+              _twoPoint(buildCentralReflection),
+              AppAction.reflectAboutPointTool,
+            ),
+            (
+              'Rotate around point (point, then center)…',
+              rotatePick,
+              AppAction.rotateAroundPointTool,
+            ),
+            (
+              'Translate by vector (point, then tail, tip)',
+              _threePoint(buildTranslatedPoint),
+              AppAction.translateByVectorTool,
             ),
           ],
         ),
@@ -443,6 +509,18 @@ Future<TwoPointBuilder?> askRatioBuilder(BuildContext context) async {
   return build;
 }
 
+/// Asks for a rotation angle in degrees (counter-clockwise; negative =
+/// clockwise) and returns it in *radians* — the shared path behind the
+/// Transform flyout item and the `G T` shortcut. Null when cancelled or
+/// unparseable, mirroring [askRatioBuilder].
+Future<double?> askRotationAngle(BuildContext context) async {
+  final degrees = await showDialog<double>(
+    context: context,
+    builder: (context) => const _AngleDialog(),
+  );
+  return degrees == null ? null : degrees * math.pi / 180;
+}
+
 /// The dialog owns its [TextEditingController] so it outlives the exit
 /// animation (disposing right after `showDialog` returns crashes the
 /// still-rendering `TextField`).
@@ -471,6 +549,50 @@ class _RatioDialogState extends State<_RatioDialog> {
         autofocus: true,
         decoration: const InputDecoration(
           hintText: '0 = first point, 1 = second — e.g. 0.25 or 1/4',
+        ),
+        onSubmitted: (text) => Navigator.pop(context, _parseRatio(text)),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () =>
+              Navigator.pop(context, _parseRatio(_controller.text)),
+          child: const Text('OK'),
+        ),
+      ],
+    );
+  }
+}
+
+/// Degree twin of [_RatioDialog] (same controller-lifetime reasoning).
+class _AngleDialog extends StatefulWidget {
+  const _AngleDialog();
+
+  @override
+  State<_AngleDialog> createState() => _AngleDialogState();
+}
+
+class _AngleDialogState extends State<_AngleDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Rotation angle'),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        decoration: const InputDecoration(
+          hintText: 'degrees, counter-clockwise — e.g. 45 or -30',
         ),
         onSubmitted: (text) => Navigator.pop(context, _parseRatio(text)),
       ),

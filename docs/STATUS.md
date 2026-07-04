@@ -6,6 +6,24 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 22 — 2026-07-04
+
+**Done**
+- **Phase 15 complete** on `phase-15-transforms` (3 commits), merged to `main`. In landing order:
+- Four transformation point kinds, planned names kept: `ReflectedPoint` (point + `GeoLine` mirror, via new `LineEq.reflect`), `CentralReflectionPoint` (half-turn about a center), `RotatedPoint` (fixed CCW angle in radians about a center, via new `Vec2.rotated`), `TranslatedPoint` (by the live vector between two points). All ordinary derived `GeoPoint`s — painter/hit-tester/drag untouched. Codec entries with no version bump (`RotatedPoint.angle` rides `params`); kitchen-sink round-trip covers all four. Math helpers glados-tested (double reflection identity, perpendicular-bisector swap — the PLAN test-strategy property — rotation preserves length and composes additively).
+- Tools: reflect-about-line reuses `PointAndLineTool`, reflect-about-point `TwoPointTool`, translate `ThreePointTool` (tap the point first, then center / vector tail+tip); rotation is a dedicated `RotatedPointTool` over `MultiPointTool` because a `TwoPointTool` closure capturing the dialog angle could never be a canonicalized tear-off, which the toolbar highlight keys on. Angle dialog takes degrees (CCW, negative = clockwise), stores radians, shared by flyout + chord like the ratio dialog.
+- New Transform flyout (`Icons.flip`, between Angles and Macros per PLAN); Points catch-all and Lines highlights now exclude the transform builders. Chords `G L`/`G P`/`G T`/`G V` (PLAN updated first; `G T` = "turn", `R` taken); the failed-chord resolver test moved from `G P` to still-unbound `G Q`.
+- 652 tests green (37 new), analyze clean. Web smoke re-run on a fresh release build: **SMOKE PASS**, zero console errors — drive.js re-indexed for 11 icons (Macros moved to `icons[6]`), and the File menu now opens *right*-aligned (button sits left of the midline with 11 icons), so the Save click moved to `fileX + 30`.
+- Housekeeping: `devtools_options.yaml` (user-deleted, tool-regenerated) is now gitignored.
+
+**Next**
+- Phase 16 — angle-by-size (`AngleBySizeTool` = arm point, vertex, size dialog → `RotatedPoint` + `VertexAngle`; rotation dependency now landed) + triangle/polygon macros (input schemes to spec in PLAN first). Then Phase 19 (export). The two environment-blocked Phase 12 boxes remain open.
+
+**Open questions / gotchas**
+- Menu-open alignment is now split across the app bar: File (left of the window midline) opens right-aligned, the flyout groups farther right open left-aligned. Any smoke click into a menu must pick the side per button — the old "every menu opens left" note no longer holds.
+- The transform flyout/highlight relies on builder tear-off identity like the rest of the toolbar; `RotatedPointTool` must stay a distinct class (see the PLAN tool-system note) or its highlight falls into the Points catch-all.
+- Tap order convention chosen for transforms: the point being transformed is always the *first* tap (then center, or vector tail → tip). GeoGebra-compatible; flyout labels spell it out.
+
 ## Session 21 — 2026-07-04
 
 **Done**
