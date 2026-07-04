@@ -124,7 +124,7 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] Codec entries for the new kinds (+ version bump only if the schema shape changes); tests for every new `domain/` API — invariants: double reflection = identity, rotation preserves distance to center, translation preserves the vector (no version bump — same schema shape, `RotatedPoint.angle` rides `params`; kitchen-sink round-trip gains all four kinds; 37 new tests incl. glados properties; web smoke re-run: SMOKE PASS)
 
 ## Phase 16 — Angle-by-size & shape macros
-- [ ] `AngleBySizeTool`: arm point, vertex, size dialog → `RotatedPoint` + `VertexAngle` (GeoGebra convention; depends on Phase 15's rotation)
+- [x] `AngleBySizeTool`: arm point, vertex, size dialog → `RotatedPoint` + `VertexAngle` (GeoGebra convention; a negative size swaps the marker's arms so it measures |size|; Angles flyout row + `G D` chord — settled in PLAN first; the angle dialog generalized to serve rotation and angle-size with their own titles)
 - [ ] Triangle macros: equilateral, isosceles, right (input schemes to spec in PLAN before coding, like the square/parallelogram/trapezium)
 - [ ] Random triangle + random polygon (one-tap stamps placing randomized *free* points, fully editable afterwards)
 - [ ] Regular polygon (side count via dialog; "normal polygon" in the original feedback assumed to mean regular — correct here if wrong)

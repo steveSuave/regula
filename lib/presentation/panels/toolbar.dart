@@ -28,6 +28,7 @@ import '../../domain/construction/objects/segment_ratio_point.dart';
 import '../../domain/construction/objects/three_point_circle.dart';
 import '../../domain/construction/objects/translated_point.dart';
 import '../../domain/construction/objects/vertex_angle.dart';
+import '../../domain/tools/angle_by_size_tool.dart';
 import '../../domain/tools/intersection_tool.dart';
 import '../../domain/tools/isosceles_trapezium_macro_tool.dart';
 import '../../domain/tools/kite_macro_tool.dart';
@@ -152,6 +153,7 @@ class GeometryToolbar extends ConsumerWidget {
         (tool is ThreePointTool && _circleBuilders.contains(tool.build));
     final anglesActive =
         tool is TwoLineTool ||
+        tool is AngleBySizeTool ||
         (tool is ThreePointTool && tool.build == buildVertexAngle);
     final transformActive =
         tool is RotatedPointTool ||
@@ -180,6 +182,13 @@ class GeometryToolbar extends ConsumerWidget {
       return angle == null
           ? null
           : RotatedPointTool(newId: newObjectId, angle: angle);
+    }
+
+    Future<Tool?> angleSizePick() async {
+      final angle = await askAngleSize(context);
+      return angle == null
+          ? null
+          : AngleBySizeTool(newId: newObjectId, angle: angle);
     }
 
     return Row(
@@ -296,6 +305,11 @@ class GeometryToolbar extends ConsumerWidget {
               'Angle between two lines',
               _pick(() => TwoLineTool(newId: newObjectId, build: buildLineAngle)),
               AppAction.lineAngleTool,
+            ),
+            (
+              'Angle by given size (arm, then vertex)…',
+              angleSizePick,
+              AppAction.angleBySizeTool,
             ),
           ],
         ),
@@ -506,10 +520,19 @@ Future<TwoPointBuilder?> askRatioBuilder(BuildContext context) async {
 /// clockwise) and returns it in *radians* — the shared path behind the
 /// Transform flyout item and the `G T` shortcut. Null when cancelled or
 /// unparseable, mirroring [askRatioBuilder].
-Future<double?> askRotationAngle(BuildContext context) async {
+Future<double?> askRotationAngle(BuildContext context) =>
+    _askDegrees(context, 'Rotation angle');
+
+/// The angle-by-size twin of [askRotationAngle], behind the Angles flyout
+/// item and the `G D` shortcut. Same convention: degrees in, radians out,
+/// negative = clockwise.
+Future<double?> askAngleSize(BuildContext context) =>
+    _askDegrees(context, 'Angle size');
+
+Future<double?> _askDegrees(BuildContext context, String title) async {
   final degrees = await showDialog<double>(
     context: context,
-    builder: (context) => const _AngleDialog(),
+    builder: (context) => _AngleDialog(title: title),
   );
   return degrees == null ? null : degrees * math.pi / 180;
 }
@@ -562,7 +585,9 @@ class _RatioDialogState extends State<_RatioDialog> {
 
 /// Degree twin of [_RatioDialog] (same controller-lifetime reasoning).
 class _AngleDialog extends StatefulWidget {
-  const _AngleDialog();
+  const _AngleDialog({required this.title});
+
+  final String title;
 
   @override
   State<_AngleDialog> createState() => _AngleDialogState();
@@ -580,7 +605,7 @@ class _AngleDialogState extends State<_AngleDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Rotation angle'),
+      title: Text(widget.title),
       content: TextField(
         controller: _controller,
         autofocus: true,

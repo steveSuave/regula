@@ -1,4 +1,5 @@
 import 'package:fgex/application/providers/tool_provider.dart';
+import 'package:fgex/domain/tools/angle_by_size_tool.dart';
 import 'package:fgex/domain/tools/intersection_tool.dart';
 import 'package:fgex/domain/tools/isosceles_trapezium_macro_tool.dart';
 import 'package:fgex/domain/tools/kite_macro_tool.dart';
@@ -228,6 +229,44 @@ void main() {
     expect((tool! as RotatedPointTool).angle, closeTo(1.5707963, 1e-6));
     final theme = Theme.of(tester.element(find.byType(AppBar)));
     expect(iconColor(tester, Icons.flip), theme.colorScheme.primary);
+  });
+
+  testWidgets('the angle-by-size item asks for a size in degrees; cancel '
+      'activates nothing', (tester) async {
+    await pumpEditor(tester);
+
+    await tester.tap(find.byIcon(Icons.square_foot));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Angle by given size (arm, then vertex)…'));
+    await tester.pumpAndSettle();
+    expect(find.text('Angle size'), findsOneWidget);
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(container.read(toolProvider).tool, isNull);
+
+    await tester.tap(find.byIcon(Icons.square_foot));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Angle by given size (arm, then vertex)…'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '60');
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+
+    final tool = container.read(toolProvider).tool;
+    expect(tool, isA<AngleBySizeTool>());
+    expect((tool! as AngleBySizeTool).angle, closeTo(1.0471975, 1e-6));
+    final theme = Theme.of(tester.element(find.byType(AppBar)));
+    expect(
+      iconColor(tester, Icons.square_foot),
+      theme.colorScheme.primary,
+      reason: 'AngleBySizeTool must highlight the Angles group',
+    );
+    expect(
+      iconColor(tester, Icons.control_point),
+      isNot(theme.colorScheme.primary),
+      reason: 'it must not fall into the Points catch-all',
+    );
   });
 
   testWidgets('flyout rows show their shortcut as trailing text',
