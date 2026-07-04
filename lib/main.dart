@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'application/object_ids.dart';
+import 'application/persistence/file_io.dart';
 import 'application/providers/command_stack_provider.dart';
 import 'application/providers/construction_provider.dart';
+import 'application/providers/preferences_provider.dart';
+import 'application/providers/theme_provider.dart';
 import 'application/providers/tool_provider.dart';
 import 'application/providers/viewport_provider.dart';
+import 'domain/construction/construction.dart';
 import 'domain/construction/geo_object.dart';
 import 'domain/construction/objects/angle_bisector_line.dart';
 import 'domain/construction/objects/arc.dart';
@@ -26,6 +31,7 @@ import 'domain/construction/objects/segment.dart';
 import 'domain/construction/objects/segment_ratio_point.dart';
 import 'domain/construction/objects/three_point_circle.dart';
 import 'domain/construction/objects/vertex_angle.dart';
+import 'domain/math/vec2.dart';
 import 'domain/tools/point_and_line_tool.dart';
 import 'domain/tools/point_on_object_tool.dart';
 import 'domain/tools/point_tool.dart';
@@ -34,23 +40,36 @@ import 'domain/tools/tool.dart';
 import 'domain/tools/triangle_center_tool.dart';
 import 'domain/tools/two_line_tool.dart';
 import 'domain/tools/two_point_tool.dart';
+import 'presentation/canvas/canvas_viewport.dart';
 import 'presentation/canvas/fit_viewport.dart';
 import 'presentation/canvas/geometry_canvas.dart';
 import 'presentation/panels/attributes_inspector.dart';
 import 'presentation/panels/object_tree_panel.dart';
+import 'presentation/theme/app_theme.dart';
 
-void main() {
-  runApp(const ProviderScope(child: MainApp()));
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Loaded once here so settings providers can read stored values
+  // synchronously (see preferences_provider.dart).
+  final preferences = await SharedPreferences.getInstance();
+  runApp(
+    ProviderScope(
+      overrides: [sharedPreferencesProvider.overrideWithValue(preferences)],
+      child: const MainApp(),
+    ),
+  );
 }
 
-class MainApp extends StatelessWidget {
+class MainApp extends ConsumerWidget {
   const MainApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp(
       title: 'fgex',
-      theme: ThemeData.light(),
+      theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
+      themeMode: ref.watch(themeModeProvider),
       home: const EditorScreen(),
     );
   }
@@ -112,6 +131,85 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   /// key reads it without threading sizes through providers.
   final GlobalKey _canvasKey = GlobalKey();
 
+  /// World origin at the canvas center, 100 % — where File > New puts the
+  /// view. (The app still *launches* with the origin at the top-left; the
+  /// canvas has no laid-out size before the first frame. Revisit with the
+  /// Phase 11 shortcuts if it grates.)
+  ViewportState _centeredViewport() {
+    final size = _canvasKey.currentContext?.size;
+    if (size == null) {
+      return const ViewportState();
+    }
+    return CanvasViewport.pinning(
+      world: Vec2.zero,
+      focal: size.center(Offset.zero),
+      scale: 1,
+    );
+  }
+
+  Future<void> _newConstruction() async {
+    final construction = ref.read(constructionProvider).construction;
+    if (!construction.isEmpty) {
+      final discard = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('New construction'),
+          content: const Text(
+            'Discard the current construction? This cannot be undone.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Discard'),
+            ),
+          ],
+        ),
+      );
+      if (discard != true || !mounted) {
+        return;
+      }
+    }
+    ref.read(constructionProvider.notifier).replace(Construction());
+    ref.read(viewportProvider.notifier).set(_centeredViewport());
+  }
+
+  Future<void> _openConstruction() async {
+    try {
+      final decoded = await openConstructionFile();
+      if (decoded == null) {
+        return;
+      }
+      ref.read(constructionProvider.notifier).replace(decoded.construction);
+      ref.read(viewportProvider.notifier).set(decoded.viewport);
+    } on FormatException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Could not open file'),
+          content: Text(error.message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  Future<void> _saveConstruction() => saveConstructionFile(
+        ref.read(constructionProvider).construction,
+        viewport: ref.read(viewportProvider),
+      );
+
   void _fitConstruction() {
     final size = _canvasKey.currentContext?.size;
     if (size == null) {
@@ -159,6 +257,25 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         ),
         title: const Text('fgex'),
         actions: [
+          PopupMenuButton<Future<void> Function()>(
+            tooltip: 'File: new, open, save',
+            icon: const Icon(Icons.folder_outlined),
+            onSelected: (action) => action(),
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: _newConstruction,
+                child: const Text('New'),
+              ),
+              PopupMenuItem(
+                value: _openConstruction,
+                child: const Text('Open…'),
+              ),
+              PopupMenuItem(
+                value: _saveConstruction,
+                child: const Text('Save…'),
+              ),
+            ],
+          ),
           IconButton(
             tooltip: pointToolActive
                 ? 'Leave point tool (back to move/select)'
@@ -375,6 +492,19 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
             tooltip: 'Reset view (origin at 100 %)',
             icon: const Icon(Icons.filter_center_focus),
             onPressed: () => ref.read(viewportProvider.notifier).reset(),
+          ),
+          IconButton(
+            tooltip: Theme.of(context).brightness == Brightness.dark
+                ? 'Switch to light theme'
+                : 'Switch to dark theme',
+            icon: Icon(
+              Theme.of(context).brightness == Brightness.dark
+                  ? Icons.light_mode_outlined
+                  : Icons.dark_mode_outlined,
+            ),
+            onPressed: () => ref
+                .read(themeModeProvider.notifier)
+                .toggle(Theme.of(context).brightness),
           ),
           IconButton(
             tooltip: 'Undo',

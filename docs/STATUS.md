@@ -6,6 +6,26 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 13 — 2026-07-04
+
+**Done**
+- Phase 9 complete on `phase-9-persistence` (5 commits), merged to `main`. PLAN updated first: encode + decode live in *one* centralized codec (`application/persistence/construction_codec.dart`) instead of per-class `toJson` — the type↔constructor registry must exist centrally for decoding anyway, and the domain layer stays persistence-free. The cost (a forgotten kind fails at runtime) is covered by a kitchen-sink round-trip test instantiating every concrete object kind.
+- Codec: `version: 1` stamped, files with a newer version rejected; objects written in insertion (= topological) order, parents resolved by id on decode; viewport snapshotted outside undo history per the Phase 8 decision. Every decode failure — malformed JSON/UTF-8, unknown type, unknown/ill-kinded parent, duplicate id, constructor-level `ArgumentError` — normalizes to `FormatException` with the offending object's id, so File > Open shows one dialog for any bad file.
+- File menu (app bar): New confirms before discarding a non-empty construction (replace drops undo history) and centers the world origin — closing the Session 12 open question; app *launch* is unchanged (no size before first frame). Save hands bytes to `FilePicker.saveFile` (writes on all platforms, download on web). Widget tests override `FilePickerPlatform.instance` with a hand-rolled fake (the mocktail route fails `verifyToken`).
+- Theme: `AppTheme` pins primary (default object color) and tertiary (selection) with ≥ 3:1 WCAG contrast against the canvas (= scaffold background) in both themes, test-enforced. `main()` awaits `SharedPreferences` once, injects via ProviderScope override; `themeModeProvider` reads the stored choice synchronously, defaults to system, persists explicit choices; app-bar toggle flips against the *rendered* brightness.
+- 462 tests green, `flutter analyze` clean. Real-browser smoke extended in-repo (`tool/web_smoke/drive.js`): Save's download parses as a version-1 doc carrying the placed points and the zoomed viewport (scale 1.822 = e^0.6); theme toggle drops canvas luminance 765→73 and survives a reload.
+
+**Next**
+- Phase 10 — macros: square / parallelogram / trapezium tools over the existing `MacroCommand` machinery. Start a `phase-10-macros` branch. (Phase 11 shortcuts and Phase 12 goldens after that; remember the `golden_toolkit` replacement decision from Session 2.)
+
+**Open questions / gotchas**
+- **Do not smoke-test against `flutter run -d web-server`**: the debug DWDS server wedges after the first Playwright session disconnects and then serves blank white pages. Serve `flutter build web --release` statically (README updated). Cost real debugging time this session.
+- The smoke script indexes app-bar icons by *enabled* glyph runs — disabled undo/redo sit below the darkness threshold. The theme toggle is the last enabled icon (after fit/reset), not before them; keep drive.js's order comment in sync with `main.dart`'s actions row.
+- `PopupMenuButton` items in the smoke script are hit by coordinates (menu opens over the button, 48 px rows, ~8 px top padding) — works, but recheck if menu contents change.
+- Codec decode wraps constructor `ArgumentError`s (bad branch index, self-intersection, duplicate id) into `FormatException` at the `Construction.add` call site — new object kinds with constructor validation get file-error handling for free, but a new kind must be added to *both* codec switches (encode + decode); the kitchen-sink test fails loudly if forgotten.
+- `ObjectAttributes.fromJson` throws `TypeError` (not `CheckedFromJsonException`) on ill-typed fields — the codec catches all `Object` there deliberately.
+- File > Open keeps the *file's* viewport; Fit remains the recovery if a file was saved zoomed into nowhere. Still open from earlier phases: sliding `PointOnObject` along its curve; angle hit-target world-radius hint.
+
 ## Session 12 — 2026-07-04
 
 **Done**

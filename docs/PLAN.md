@@ -110,9 +110,11 @@ The `domain/` layer must not import `package:flutter/*`. This is the boundary th
     ]
   }
   ```
-- Save: serialize each object via its `toJson`, in topological order.
-- Load: parse, then construct in order — each constructor receives already-deserialized parents by id. Use `freezed`'s json support for attributes; hand-write `toJson` per `GeoObject` subclass to keep params explicit.
-- Schema version field from day one to allow future migrations.
+- Save: serialize each object in topological order (= the construction's insertion order).
+- Load: parse, then construct in order — each constructor receives already-deserialized parents by id. Use `freezed`'s json support for attributes.
+- Encode/decode both live in one hand-written codec (`application/persistence/construction_codec.dart`) that switches on concrete object type, rather than `toJson` methods spread across the domain classes: the type↔constructor registry must exist centrally for *decoding* anyway, keeping the encoder beside it means one file to update per new object kind, and the domain layer stays free of persistence concerns. The cost — a forgotten kind fails at runtime, not compile time — is covered by the round-trip test that instantiates every concrete kind.
+- Decode failures (malformed file, unknown type, unknown version, ill-typed parents) throw `FormatException` with the offending object's id, so File > Open can show one dialog for any bad file.
+- Schema version field from day one to allow future migrations. A file with a *newer* version than the app understands is rejected, not best-effort parsed.
 
 ## Critical files to create
 

@@ -1,0 +1,417 @@
+import '../../domain/construction/construction.dart';
+import '../../domain/construction/geo_object.dart';
+import '../../domain/construction/object_attributes.dart';
+import '../../domain/construction/objects/angle_bisector_line.dart';
+import '../../domain/construction/objects/arc.dart';
+import '../../domain/construction/objects/centroid.dart';
+import '../../domain/construction/objects/circle_center_point.dart';
+import '../../domain/construction/objects/circumcenter.dart';
+import '../../domain/construction/objects/compass_circle.dart';
+import '../../domain/construction/objects/free_point.dart';
+import '../../domain/construction/objects/incenter.dart';
+import '../../domain/construction/objects/intersection_point.dart';
+import '../../domain/construction/objects/line_angle.dart';
+import '../../domain/construction/objects/line_through_two_points.dart';
+import '../../domain/construction/objects/midpoint.dart';
+import '../../domain/construction/objects/orthocenter.dart';
+import '../../domain/construction/objects/parallel_line.dart';
+import '../../domain/construction/objects/perpendicular_line.dart';
+import '../../domain/construction/objects/point_on_object.dart';
+import '../../domain/construction/objects/ray.dart';
+import '../../domain/construction/objects/sector.dart';
+import '../../domain/construction/objects/segment.dart';
+import '../../domain/construction/objects/segment_ratio_point.dart';
+import '../../domain/construction/objects/three_point_circle.dart';
+import '../../domain/construction/objects/vertex_angle.dart';
+import '../../domain/math/vec2.dart';
+import '../providers/viewport_provider.dart';
+
+/// Version stamped into every saved document. Bump on any breaking schema
+/// change and add a migration in [decodeDocument].
+const int constructionFormatVersion = 1;
+
+/// The result of decoding a saved document: a freshly built [Construction]
+/// (no listeners, geometry recomputed) plus the viewport snapshot the file
+/// carried (the default viewport when the file had none).
+class DecodedDocument {
+  const DecodedDocument({required this.construction, required this.viewport});
+
+  final Construction construction;
+  final ViewportState viewport;
+}
+
+/// Encodes [construction] and the current [viewport] into a JSON-encodable
+/// map (see PLAN's persistence schema).
+///
+/// Objects are written in the construction's insertion order, which is a
+/// topological order — [decodeDocument] relies on parents appearing before
+/// their children.
+Map<String, dynamic> encodeDocument(
+  Construction construction, {
+  required ViewportState viewport,
+}) {
+  return <String, dynamic>{
+    'version': constructionFormatVersion,
+    'viewport': <String, dynamic>{
+      'pan': [viewport.pan.x, viewport.pan.y],
+      'scale': viewport.scale,
+    },
+    'objects': [
+      for (final object in construction.objects) _encodeObject(object),
+    ],
+  };
+}
+
+/// Decodes a document produced by [encodeDocument].
+///
+/// Throws [FormatException] — never [ArgumentError] or [TypeError] — for
+/// anything wrong with the file: missing/newer version, malformed fields,
+/// unknown object types, unknown or ill-typed parents, duplicate ids.
+/// Callers (File > Open) can therefore show one dialog for any bad file.
+DecodedDocument decodeDocument(Map<String, dynamic> json) {
+  final version = json['version'];
+  if (version is! int) {
+    throw const FormatException('Missing or invalid "version" field');
+  }
+  if (version > constructionFormatVersion) {
+    throw FormatException(
+      'File format version $version is newer than this app understands '
+      '(latest known: $constructionFormatVersion)',
+    );
+  }
+  // Version 1 is the only schema so far; migrations slot in here.
+  final viewport = _decodeViewport(json['viewport']);
+  final objectsJson = json['objects'];
+  if (objectsJson is! List) {
+    throw const FormatException('Missing or invalid "objects" list');
+  }
+  final construction = Construction();
+  for (final entry in objectsJson) {
+    if (entry is! Map<String, dynamic>) {
+      throw const FormatException('Every object must be a JSON object');
+    }
+    try {
+      construction.add(_decodeObject(entry, construction));
+    } on ArgumentError catch (error) {
+      // Constructor/graph validation (bad branch index, self-intersection,
+      // duplicate id, …) — a malformed file, not a programming error.
+      throw FormatException('Object "${entry['id']}": ${error.message}');
+    }
+  }
+  return DecodedDocument(construction: construction, viewport: viewport);
+}
+
+Map<String, dynamic> _encodeObject(GeoObject object) {
+  final (String type, Map<String, Object?> params) = switch (object) {
+    FreePoint(:final position) => (
+        'FreePoint',
+        {'x': position.x, 'y': position.y}
+      ),
+    Midpoint() => ('Midpoint', const {}),
+    SegmentRatioPoint(:final ratio) => ('SegmentRatioPoint', {'ratio': ratio}),
+    PointOnObject(:final parameter) => (
+        'PointOnObject',
+        {'parameter': parameter}
+      ),
+    IntersectionPoint(:final branchIndex) => (
+        'IntersectionPoint',
+        {'branchIndex': branchIndex}
+      ),
+    Centroid() => ('Centroid', const {}),
+    Orthocenter() => ('Orthocenter', const {}),
+    Incenter() => ('Incenter', const {}),
+    Circumcenter() => ('Circumcenter', const {}),
+    LineThroughTwoPoints() => ('LineThroughTwoPoints', const {}),
+    Segment() => ('Segment', const {}),
+    Ray() => ('Ray', const {}),
+    PerpendicularLine() => ('PerpendicularLine', const {}),
+    ParallelLine() => ('ParallelLine', const {}),
+    AngleBisectorLine() => ('AngleBisectorLine', const {}),
+    CircleCenterPoint() => ('CircleCenterPoint', const {}),
+    ThreePointCircle() => ('ThreePointCircle', const {}),
+    CompassCircle() => ('CompassCircle', const {}),
+    Arc() => ('Arc', const {}),
+    Sector() => ('Sector', const {}),
+    VertexAngle() => ('VertexAngle', const {}),
+    LineAngle() => ('LineAngle', const {}),
+    // The round-trip codec test instantiates every concrete kind, so a new
+    // object type missing here fails in CI, not in a user's save.
+    _ => throw UnsupportedError(
+        'No codec for object type ${object.runtimeType}',
+      ),
+  };
+  return <String, dynamic>{
+    'id': object.id,
+    'type': type,
+    'parents': [for (final parent in object.parents) parent.id],
+    'params': params,
+    'attributes': object.attributes.toJson(),
+  };
+}
+
+GeoObject _decodeObject(Map<String, dynamic> json, Construction construction) {
+  final id = json['id'];
+  if (id is! String || id.isEmpty) {
+    throw const FormatException('Object with missing or invalid "id"');
+  }
+  final type = json['type'];
+  if (type is! String) {
+    throw FormatException('Object "$id": missing "type"');
+  }
+  final parentsJson = json['parents'];
+  if (parentsJson is! List) {
+    throw FormatException('Object "$id": missing "parents" list');
+  }
+  final parents = <GeoObject>[
+    for (final parentId in parentsJson)
+      _resolveParent(id, parentId, construction),
+  ];
+  final rawParams = json['params'];
+  final params =
+      rawParams is Map<String, dynamic> ? rawParams : const <String, dynamic>{};
+  final attributes = _decodeAttributes(id, json['attributes']);
+
+  GeoPoint point(int index) => _typedParent<GeoPoint>(id, parents, index);
+  GeoLine line(int index) => _typedParent<GeoLine>(id, parents, index);
+  GeoObject any(int index) => _typedParent<GeoObject>(id, parents, index);
+
+  return switch (type) {
+    'FreePoint' => FreePoint(
+        id: id,
+        position: Vec2(
+          _doubleParam(id, params, 'x'),
+          _doubleParam(id, params, 'y'),
+        ),
+        attributes: attributes,
+      ),
+    'Midpoint' => Midpoint(
+        id: id,
+        point1: point(0),
+        point2: point(1),
+        attributes: attributes,
+      ),
+    'SegmentRatioPoint' => SegmentRatioPoint(
+        id: id,
+        point1: point(0),
+        point2: point(1),
+        ratio: _doubleParam(id, params, 'ratio'),
+        attributes: attributes,
+      ),
+    'PointOnObject' => PointOnObject(
+        id: id,
+        curve: any(0),
+        parameter: _doubleParam(id, params, 'parameter'),
+        attributes: attributes,
+      ),
+    'IntersectionPoint' => IntersectionPoint(
+        id: id,
+        curve1: any(0),
+        curve2: any(1),
+        branchIndex: _intParam(id, params, 'branchIndex'),
+        attributes: attributes,
+      ),
+    'Centroid' => Centroid(
+        id: id,
+        vertex1: point(0),
+        vertex2: point(1),
+        vertex3: point(2),
+        attributes: attributes,
+      ),
+    'Orthocenter' => Orthocenter(
+        id: id,
+        vertex1: point(0),
+        vertex2: point(1),
+        vertex3: point(2),
+        attributes: attributes,
+      ),
+    'Incenter' => Incenter(
+        id: id,
+        vertex1: point(0),
+        vertex2: point(1),
+        vertex3: point(2),
+        attributes: attributes,
+      ),
+    'Circumcenter' => Circumcenter(
+        id: id,
+        vertex1: point(0),
+        vertex2: point(1),
+        vertex3: point(2),
+        attributes: attributes,
+      ),
+    'LineThroughTwoPoints' => LineThroughTwoPoints(
+        id: id,
+        point1: point(0),
+        point2: point(1),
+        attributes: attributes,
+      ),
+    'Segment' => Segment(
+        id: id,
+        point1: point(0),
+        point2: point(1),
+        attributes: attributes,
+      ),
+    'Ray' => Ray(
+        id: id,
+        origin: point(0),
+        through: point(1),
+        attributes: attributes,
+      ),
+    'PerpendicularLine' => PerpendicularLine(
+        id: id,
+        through: point(0),
+        reference: line(1),
+        attributes: attributes,
+      ),
+    'ParallelLine' => ParallelLine(
+        id: id,
+        through: point(0),
+        reference: line(1),
+        attributes: attributes,
+      ),
+    'AngleBisectorLine' => AngleBisectorLine(
+        id: id,
+        arm1: point(0),
+        vertex: point(1),
+        arm2: point(2),
+        attributes: attributes,
+      ),
+    'CircleCenterPoint' => CircleCenterPoint(
+        id: id,
+        center: point(0),
+        onCircle: point(1),
+        attributes: attributes,
+      ),
+    'ThreePointCircle' => ThreePointCircle(
+        id: id,
+        point1: point(0),
+        point2: point(1),
+        point3: point(2),
+        attributes: attributes,
+      ),
+    'CompassCircle' => CompassCircle(
+        id: id,
+        radiusPoint1: point(0),
+        radiusPoint2: point(1),
+        center: point(2),
+        attributes: attributes,
+      ),
+    'Arc' => Arc(
+        id: id,
+        start: point(0),
+        via: point(1),
+        end: point(2),
+        attributes: attributes,
+      ),
+    'Sector' => Sector(
+        id: id,
+        center: point(0),
+        start: point(1),
+        end: point(2),
+        attributes: attributes,
+      ),
+    'VertexAngle' => VertexAngle(
+        id: id,
+        arm1: point(0),
+        vertex: point(1),
+        arm2: point(2),
+        attributes: attributes,
+      ),
+    'LineAngle' => LineAngle(
+        id: id,
+        line1: line(0),
+        line2: line(1),
+        attributes: attributes,
+      ),
+    _ => throw FormatException('Object "$id": unknown type "$type"'),
+  };
+}
+
+GeoObject _resolveParent(
+  String id,
+  Object? parentId,
+  Construction construction,
+) {
+  if (parentId is! String) {
+    throw FormatException('Object "$id": parent ids must be strings');
+  }
+  final parent = construction.byId(parentId);
+  if (parent == null) {
+    // Also hit by forward references — the file must be topologically
+    // ordered, parents before children.
+    throw FormatException('Object "$id": unknown parent "$parentId"');
+  }
+  return parent;
+}
+
+T _typedParent<T extends GeoObject>(
+  String id,
+  List<GeoObject> parents,
+  int index,
+) {
+  if (index >= parents.length) {
+    throw FormatException(
+      'Object "$id": expected at least ${index + 1} parents, '
+      'got ${parents.length}',
+    );
+  }
+  final parent = parents[index];
+  if (parent is! T) {
+    throw FormatException(
+      'Object "$id": parent "${parent.id}" has the wrong kind',
+    );
+  }
+  return parent;
+}
+
+double _doubleParam(String id, Map<String, dynamic> params, String key) {
+  final value = params[key];
+  if (value is! num) {
+    throw FormatException('Object "$id": missing numeric param "$key"');
+  }
+  return value.toDouble();
+}
+
+int _intParam(String id, Map<String, dynamic> params, String key) {
+  final value = params[key];
+  if (value is! int) {
+    throw FormatException('Object "$id": missing integer param "$key"');
+  }
+  return value;
+}
+
+ObjectAttributes _decodeAttributes(String id, Object? json) {
+  if (json == null) {
+    return const ObjectAttributes();
+  }
+  if (json is! Map<String, dynamic>) {
+    throw FormatException('Object "$id": invalid "attributes"');
+  }
+  try {
+    return ObjectAttributes.fromJson(json);
+  } on Object {
+    // json_serializable throws TypeError on ill-typed fields; normalize to
+    // the codec's single failure type.
+    throw FormatException('Object "$id": invalid "attributes"');
+  }
+}
+
+ViewportState _decodeViewport(Object? json) {
+  if (json == null) {
+    return const ViewportState();
+  }
+  if (json is! Map<String, dynamic>) {
+    throw const FormatException('Invalid "viewport"');
+  }
+  final pan = json['pan'];
+  final scale = json['scale'];
+  if (pan is! List || pan.length != 2 || pan.any((c) => c is! num)) {
+    throw const FormatException('Invalid "viewport" pan');
+  }
+  if (scale is! num || scale <= 0 || !scale.isFinite) {
+    throw const FormatException('Invalid "viewport" scale');
+  }
+  return ViewportState(
+    pan: Vec2((pan[0] as num).toDouble(), (pan[1] as num).toDouble()),
+    scale: scale.toDouble(),
+  );
+}
