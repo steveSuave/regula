@@ -5,6 +5,7 @@ import 'package:fgex/domain/construction/objects/centroid.dart';
 import 'package:fgex/domain/construction/objects/circumcenter.dart';
 import 'package:fgex/domain/construction/objects/free_point.dart';
 import 'package:fgex/domain/construction/objects/line_through_two_points.dart';
+import 'package:fgex/domain/construction/objects/point_on_object.dart';
 import 'package:fgex/domain/math/vec2.dart';
 import 'package:fgex/domain/tools/tool.dart';
 import 'package:fgex/domain/tools/triangle_center_tool.dart';
@@ -91,7 +92,7 @@ void main() {
       expect(tool.collectedVertices, hasLength(1));
     });
 
-    test('a tap on a line places an unconstrained free point vertex', () {
+    test('a tap on a line collects a glued PointOnObject vertex', () {
       final a = FreePoint(id: 'a', position: Vec2.zero);
       final b = FreePoint(id: 'b', position: const Vec2(2, 2));
       final line = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
@@ -99,7 +100,9 @@ void main() {
       final result = tool.onInput(ToolInput(const Vec2(1, 1), hit: line));
 
       expect(result, isA<ToolAccepted>());
-      expect(tool.collectedVertices.single, isA<FreePoint>());
+      final vertex = tool.collectedVertices.single;
+      expect(vertex, isA<PointOnObject>());
+      expect(vertex.parents, [line]);
     });
 
     test('collectedVertices exposes in-progress input and empties on commit',

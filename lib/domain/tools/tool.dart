@@ -10,11 +10,30 @@ import '../math/vec2.dart';
 /// canvas. Tools decide what a hit means: a point tool refuses to stack a
 /// point on an existing one, a midpoint tool consumes the hit point as its
 /// next parent.
+///
+/// [extraHits] carries the *other* objects within the hit threshold, in
+/// the same (priority, distance) rank order, [hit] excluded — so point
+/// resolution can notice a tap near the crossing of two curves even
+/// though only one of them is topmost. [snapThreshold] is the hit
+/// threshold in world units; intersection snapping never fires beyond it,
+/// and the defaults (`const []`, `0`) make a bare `ToolInput(pos, hit: x)`
+/// behave exactly as before the fields existed.
 class ToolInput {
-  const ToolInput(this.position, {this.hit});
+  const ToolInput(
+    this.position, {
+    this.hit,
+    this.extraHits = const [],
+    this.snapThreshold = 0,
+  });
 
   final Vec2 position;
   final GeoObject? hit;
+  final List<GeoObject> extraHits;
+  final double snapThreshold;
+
+  /// Every in-threshold candidate, best first: [hit] (when non-null)
+  /// followed by [extraHits].
+  List<GeoObject> get hits => [?hit, ...extraHits];
 }
 
 /// What a tool did with one input; see [Tool.onInput].
