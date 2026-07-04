@@ -31,6 +31,7 @@ import 'domain/tools/point_tool.dart';
 import 'domain/tools/rectangle_macro_tool.dart';
 import 'domain/tools/rhombus_macro_tool.dart';
 import 'domain/tools/right_trapezium_macro_tool.dart';
+import 'domain/tools/rotated_point_tool.dart';
 import 'domain/tools/square_macro_tool.dart';
 import 'domain/tools/three_point_tool.dart';
 import 'domain/tools/trapezium_macro_tool.dart';
@@ -301,6 +302,16 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         .activate(TwoPointTool(newId: newObjectId, build: build));
   }
 
+  Future<void> _activateRotateTool() async {
+    final angle = await askRotationAngle(context);
+    if (angle == null) {
+      return;
+    }
+    ref
+        .read(toolProvider.notifier)
+        .activate(RotatedPointTool(newId: newObjectId, angle: angle));
+  }
+
   /// The one exhaustive [AppAction] switch — a binding added to the
   /// table without behaviour here fails to compile.
   void _handleShortcut(AppAction action) {
@@ -423,6 +434,20 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         tools.activate(ThreePointTool(newId: newObjectId, build: buildArc));
       case AppAction.sectorTool:
         tools.activate(ThreePointTool(newId: newObjectId, build: buildSector));
+      case AppAction.reflectAboutLineTool:
+        tools.activate(
+          PointAndLineTool(newId: newObjectId, build: buildReflectedPoint),
+        );
+      case AppAction.reflectAboutPointTool:
+        tools.activate(
+          TwoPointTool(newId: newObjectId, build: buildCentralReflection),
+        );
+      case AppAction.rotateAroundPointTool:
+        _activateRotateTool();
+      case AppAction.translateByVectorTool:
+        tools.activate(
+          ThreePointTool(newId: newObjectId, build: buildTranslatedPoint),
+        );
       case AppAction.squareMacroTool:
         tools.activate(SquareMacroTool(newId: newObjectId));
       case AppAction.parallelogramMacroTool:

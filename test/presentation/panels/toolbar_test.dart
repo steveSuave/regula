@@ -2,11 +2,15 @@ import 'package:fgex/application/providers/tool_provider.dart';
 import 'package:fgex/domain/tools/intersection_tool.dart';
 import 'package:fgex/domain/tools/isosceles_trapezium_macro_tool.dart';
 import 'package:fgex/domain/tools/kite_macro_tool.dart';
+import 'package:fgex/domain/tools/point_and_line_tool.dart';
 import 'package:fgex/domain/tools/rectangle_macro_tool.dart';
 import 'package:fgex/domain/tools/rhombus_macro_tool.dart';
 import 'package:fgex/domain/tools/right_trapezium_macro_tool.dart';
+import 'package:fgex/domain/tools/rotated_point_tool.dart';
+import 'package:fgex/domain/tools/three_point_tool.dart';
 import 'package:fgex/domain/tools/two_point_tool.dart';
 import 'package:fgex/main.dart';
+import 'package:fgex/presentation/panels/toolbar.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -144,6 +148,86 @@ void main() {
         reason: '$label must highlight the Macros group',
       );
     }
+  });
+
+  testWidgets('every transform tool activates from the Transform flyout and '
+      'highlights that group, not Points or Lines', (tester) async {
+    await pumpEditor(tester);
+    final theme = Theme.of(tester.element(find.byType(AppBar)));
+
+    Future<void> pickTransform(String label) async {
+      container.read(toolProvider.notifier).deactivate();
+      await tester.pump();
+      await tester.tap(find.byIcon(Icons.flip));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(label));
+      await tester.pumpAndSettle();
+    }
+
+    void expectTransformHighlight(String label) {
+      expect(
+        iconColor(tester, Icons.flip),
+        theme.colorScheme.primary,
+        reason: '$label must highlight the Transform group',
+      );
+      expect(
+        iconColor(tester, Icons.control_point),
+        isNot(theme.colorScheme.primary),
+        reason: '$label must not fall into the Points catch-all',
+      );
+      expect(
+        iconColor(tester, Icons.timeline),
+        isNot(theme.colorScheme.primary),
+        reason: '$label must not highlight Lines',
+      );
+    }
+
+    await pickTransform('Reflect about line (point and line)');
+    final reflectTool = container.read(toolProvider).tool;
+    expect(reflectTool, isA<PointAndLineTool>());
+    expect((reflectTool! as PointAndLineTool).build, buildReflectedPoint);
+    expectTransformHighlight('Reflect about line');
+
+    await pickTransform('Reflect about point (point, then center)');
+    final centralTool = container.read(toolProvider).tool;
+    expect(centralTool, isA<TwoPointTool>());
+    expect((centralTool! as TwoPointTool).build, buildCentralReflection);
+    expectTransformHighlight('Reflect about point');
+
+    await pickTransform('Translate by vector (point, then tail, tip)');
+    final translateTool = container.read(toolProvider).tool;
+    expect(translateTool, isA<ThreePointTool>());
+    expect((translateTool! as ThreePointTool).build, buildTranslatedPoint);
+    expectTransformHighlight('Translate by vector');
+  });
+
+  testWidgets('the rotate item asks for an angle in degrees; cancel '
+      'activates nothing', (tester) async {
+    await pumpEditor(tester);
+
+    await tester.tap(find.byIcon(Icons.flip));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Rotate around point (point, then center)…'));
+    await tester.pumpAndSettle();
+    expect(find.text('Rotation angle'), findsOneWidget);
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(container.read(toolProvider).tool, isNull);
+
+    await tester.tap(find.byIcon(Icons.flip));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Rotate around point (point, then center)…'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '90');
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+
+    final tool = container.read(toolProvider).tool;
+    expect(tool, isA<RotatedPointTool>());
+    expect((tool! as RotatedPointTool).angle, closeTo(1.5707963, 1e-6));
+    final theme = Theme.of(tester.element(find.byType(AppBar)));
+    expect(iconColor(tester, Icons.flip), theme.colorScheme.primary);
   });
 
   testWidgets('flyout rows show their shortcut as trailing text',

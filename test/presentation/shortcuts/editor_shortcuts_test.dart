@@ -15,13 +15,16 @@ import 'package:fgex/domain/math/vec2.dart';
 import 'package:fgex/domain/tools/intersection_tool.dart';
 import 'package:fgex/domain/tools/point_and_line_tool.dart';
 import 'package:fgex/domain/tools/point_tool.dart';
+import 'package:fgex/domain/tools/rotated_point_tool.dart';
 import 'package:fgex/domain/tools/square_macro_tool.dart';
+import 'package:fgex/domain/tools/three_point_tool.dart';
 import 'package:fgex/domain/tools/tool.dart';
 import 'package:fgex/domain/tools/triangle_center_tool.dart';
 import 'package:fgex/domain/tools/two_line_tool.dart';
 import 'package:fgex/domain/tools/two_point_tool.dart';
 import 'package:fgex/main.dart';
 import 'package:fgex/presentation/canvas/geometry_canvas.dart';
+import 'package:fgex/presentation/panels/toolbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -173,8 +176,8 @@ void main() {
   ) async {
     await pumpEditor(tester);
     await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
-    await tester.sendKeyEvent(LogicalKeyboardKey.keyP);
-    expect(activeTool(), isNull, reason: 'G P is no chord, P must not fire');
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyQ);
+    expect(activeTool(), isNull, reason: 'G Q is no chord, Q must not fire');
 
     await tester.sendKeyEvent(LogicalKeyboardKey.keyP);
     expect(activeTool(), isA<PointTool>(), reason: 'table is clean again');
@@ -185,6 +188,52 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.keyX);
     await tester.sendKeyEvent(LogicalKeyboardKey.keyS);
     expect(activeTool(), isA<SquareMacroTool>());
+  });
+
+  testWidgets('G chords reach the transform tools', (tester) async {
+    await pumpEditor(tester);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyL);
+    var tool = activeTool();
+    expect(tool, isA<PointAndLineTool>());
+    expect((tool! as PointAndLineTool).build, buildReflectedPoint);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyP);
+    tool = activeTool();
+    expect(tool, isA<TwoPointTool>());
+    expect((tool! as TwoPointTool).build, buildCentralReflection);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyV);
+    tool = activeTool();
+    expect(tool, isA<ThreePointTool>());
+    expect((tool! as ThreePointTool).build, buildTranslatedPoint);
+  });
+
+  testWidgets('G T asks for the angle; OK in degrees activates the rotate '
+      'tool, cancel activates nothing', (tester) async {
+    await pumpEditor(tester);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyT);
+    await tester.pumpAndSettle();
+    expect(find.text('Rotation angle'), findsOneWidget);
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(activeTool(), isNull);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyT);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '-45');
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+
+    final tool = activeTool();
+    expect(tool, isA<RotatedPointTool>());
+    expect((tool! as RotatedPointTool).angle, closeTo(-0.7853981, 1e-6));
   });
 
   testWidgets('G R asks for the ratio; cancel activates nothing', (
