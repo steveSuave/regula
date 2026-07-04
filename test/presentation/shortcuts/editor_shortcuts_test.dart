@@ -297,24 +297,26 @@ void main() {
     expect(construction.contains('b'), isTrue);
   });
 
-  testWidgets('arrow keys nudge with camera semantics, repeating', (
+  testWidgets('arrow keys nudge with content semantics, repeating', (
     tester,
   ) async {
     await pumpEditor(tester);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
     var pan = container.read(viewportProvider).pan;
-    expect(pan.x, greaterThan(0), reason: '→ looks further right');
+    expect(pan.x, lessThan(0),
+        reason: '→ moves the drawing right, so the camera looks left');
     expect(pan.y, 0);
 
     await tester.sendKeyDownEvent(LogicalKeyboardKey.arrowUp);
     await tester.sendKeyRepeatEvent(LogicalKeyboardKey.arrowUp);
     await tester.sendKeyUpEvent(LogicalKeyboardKey.arrowUp);
     pan = container.read(viewportProvider).pan;
-    expect(pan.y, greaterThan(0), reason: '↑ looks further up (world y-up)');
+    expect(pan.y, lessThan(0),
+        reason: '↑ moves the drawing up, camera down (world y-up)');
     expect(
       pan.y,
-      2 * 32,
+      -2 * 32,
       reason: 'held arrows auto-repeat: one press + one repeat',
     );
   });
