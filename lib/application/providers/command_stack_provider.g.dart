@@ -63,7 +63,7 @@ final class CommandStackNotifierProvider
 }
 
 String _$commandStackNotifierHash() =>
-    r'495c7d3d7894d78446004125e37baff0876fedb8';
+    r'c994ec334a92a4a062c08d17c1e04e61b08ac24a';
 
 /// Riverpod wrapper around [CommandStack]: all user actions funnel through
 /// [execute], and the UI watches the state for undo/redo button enablement.

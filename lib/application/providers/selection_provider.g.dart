@@ -59,7 +59,7 @@ final class SelectionNotifierProvider
   }
 }
 
-String _$selectionNotifierHash() => r'239cb63ea9a63aeef5ce719579ed9dd64b86c88f';
+String _$selectionNotifierHash() => r'fc835c0ab1dbc2d2b9f571ccfd99cdb8416386d1';
 
 /// The set of selected object ids.
 ///
