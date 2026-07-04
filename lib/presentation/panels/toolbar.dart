@@ -35,11 +35,16 @@ import '../../domain/tools/trapezium_macro_tool.dart';
 import '../../domain/tools/triangle_center_tool.dart';
 import '../../domain/tools/two_line_tool.dart';
 import '../../domain/tools/two_point_tool.dart';
+import '../shortcuts/shortcut_table.dart';
 
 /// One flyout item's payload: asynchronously produces the tool to
 /// activate, or null to abort (a dialog cancelled — the current tool
 /// stays untouched).
 typedef ToolPick = Future<Tool?> Function();
+
+/// One flyout row: label, tool factory, and the [AppAction] whose
+/// shortcut is shown as trailing key text (null = no binding to show).
+typedef ToolItem = (String, ToolPick, AppAction?);
 
 // Builders as public top-level functions, not inline lambdas: their
 // tear-offs are canonicalized (`==` across separate tear-offs), which the
@@ -143,24 +148,35 @@ class GeometryToolbar extends ConsumerWidget {
           tooltip: 'Points: free, derived and constrained points',
           active: pointsActive,
           items: [
-            ('Point', _pick(() => PointTool(newId: newObjectId))),
+            (
+              'Point',
+              _pick(() => PointTool(newId: newObjectId)),
+              AppAction.pointTool,
+            ),
             (
               'Midpoint',
               _pick(() => TwoPointTool(newId: newObjectId, build: buildMidpoint)),
+              AppAction.midpointTool,
             ),
-            ('Segment-ratio point…', ratioPick),
+            ('Segment-ratio point…', ratioPick, AppAction.segmentRatioTool),
             (
               'Intersection of two curves',
               _pick(() => IntersectionTool(newId: newObjectId)),
+              AppAction.intersectionTool,
             ),
             (
               'Point on object',
               _pick(() => PointOnObjectTool(newId: newObjectId)),
+              null,
             ),
-            ('Centroid', _center(Centroid.new)),
-            ('Orthocenter', _center(Orthocenter.new)),
-            ('Incenter', _center(Incenter.new)),
-            ('Circumcenter', _center(Circumcenter.new)),
+            ('Centroid', _center(Centroid.new), AppAction.centroidTool),
+            ('Orthocenter', _center(Orthocenter.new), AppAction.orthocenterTool),
+            ('Incenter', _center(Incenter.new), AppAction.incenterTool),
+            (
+              'Circumcenter',
+              _center(Circumcenter.new),
+              AppAction.circumcenterTool,
+            ),
           ],
         ),
         _ToolGroup(
@@ -169,9 +185,13 @@ class GeometryToolbar extends ConsumerWidget {
               'bisector',
           active: linesActive,
           items: [
-            ('Line', _twoPoint(buildLine)),
-            ('Segment', _twoPoint(buildSegment)),
-            ('Ray (origin, then direction)', _twoPoint(buildRay)),
+            ('Line', _twoPoint(buildLine), AppAction.lineTool),
+            ('Segment', _twoPoint(buildSegment), AppAction.segmentTool),
+            (
+              'Ray (origin, then direction)',
+              _twoPoint(buildRay),
+              AppAction.rayTool,
+            ),
             (
               'Perpendicular line',
               _pick(
@@ -180,6 +200,7 @@ class GeometryToolbar extends ConsumerWidget {
                   build: PerpendicularLine.new,
                 ),
               ),
+              AppAction.perpendicularTool,
             ),
             (
               'Parallel line',
@@ -187,8 +208,13 @@ class GeometryToolbar extends ConsumerWidget {
                 () =>
                     PointAndLineTool(newId: newObjectId, build: ParallelLine.new),
               ),
+              AppAction.parallelTool,
             ),
-            ('Angle bisector (arm, vertex, arm)', _threePoint(buildAngleBisector)),
+            (
+              'Angle bisector (arm, vertex, arm)',
+              _threePoint(buildAngleBisector),
+              AppAction.angleBisectorTool,
+            ),
           ],
         ),
         _ToolGroup(
@@ -196,14 +222,27 @@ class GeometryToolbar extends ConsumerWidget {
           tooltip: 'Circles: center + rim, three-point, compass, arc, sector',
           active: circlesActive,
           items: [
-            ('Circle (center, then rim)', _twoPoint(buildCircle)),
-            ('Circle through three points', _threePoint(buildThreePointCircle)),
+            (
+              'Circle (center, then rim)',
+              _twoPoint(buildCircle),
+              AppAction.circleTool,
+            ),
+            (
+              'Circle through three points',
+              _threePoint(buildThreePointCircle),
+              AppAction.threePointCircleTool,
+            ),
             (
               'Compass (radius points, then center)',
               _threePoint(buildCompassCircle),
+              AppAction.compassTool,
             ),
-            ('Arc (start, via, end)', _threePoint(buildArc)),
-            ('Sector (center, rim, then angle)', _threePoint(buildSector)),
+            ('Arc (start, via, end)', _threePoint(buildArc), AppAction.arcTool),
+            (
+              'Sector (center, rim, then angle)',
+              _threePoint(buildSector),
+              AppAction.sectorTool,
+            ),
           ],
         ),
         _ToolGroup(
@@ -211,10 +250,15 @@ class GeometryToolbar extends ConsumerWidget {
           tooltip: 'Angles: at a vertex, or between two lines',
           active: anglesActive,
           items: [
-            ('Angle at vertex (arm, vertex, arm)', _threePoint(buildVertexAngle)),
+            (
+              'Angle at vertex (arm, vertex, arm)',
+              _threePoint(buildVertexAngle),
+              AppAction.vertexAngleTool,
+            ),
             (
               'Angle between two lines',
               _pick(() => TwoLineTool(newId: newObjectId, build: buildLineAngle)),
+              AppAction.lineAngleTool,
             ),
           ],
         ),
@@ -226,14 +270,17 @@ class GeometryToolbar extends ConsumerWidget {
             (
               'Square (two adjacent corners)',
               _pick(() => SquareMacroTool(newId: newObjectId)),
+              AppAction.squareMacroTool,
             ),
             (
               'Parallelogram (three corners)',
               _pick(() => ParallelogramMacroTool(newId: newObjectId)),
+              AppAction.parallelogramMacroTool,
             ),
             (
               'Trapezium (three corners, then the 4th)',
               _pick(() => TrapeziumMacroTool(newId: newObjectId)),
+              AppAction.trapeziumMacroTool,
             ),
           ],
         ),
@@ -256,6 +303,8 @@ ToolPick _center(TriangleCenterBuilder build) =>
 
 /// One flyout group: an icon opening a popup menu of [items]. While
 /// [active], the icon is tinted and a double-click deactivates the tool.
+/// Each row shows its tool's shortcut as dimmed trailing text, and the
+/// group tooltip lists all of its keys (Phase 17 discoverability).
 class _ToolGroup extends ConsumerWidget {
   const _ToolGroup({
     required this.icon,
@@ -267,12 +316,18 @@ class _ToolGroup extends ConsumerWidget {
   final IconData icon;
   final String tooltip;
   final bool active;
-  final List<(String, ToolPick)> items;
+  final List<ToolItem> items;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final keys = [
+      for (final (_, _, action) in items)
+        if (action != null && shortcutDisplayFor(action) != null)
+          shortcutDisplayFor(action)!,
+    ].join(' · ');
+    final withKeys = keys.isEmpty ? tooltip : '$tooltip\nKeys: $keys';
     final button = PopupMenuButton<ToolPick>(
-      tooltip: active ? '$tooltip — double-click to deselect' : tooltip,
+      tooltip: active ? '$withKeys — double-click to deselect' : withKeys,
       icon: Icon(
         icon,
         color: active ? Theme.of(context).colorScheme.primary : null,
@@ -284,8 +339,14 @@ class _ToolGroup extends ConsumerWidget {
         }
       },
       itemBuilder: (context) => [
-        for (final (label, pick) in items)
-          PopupMenuItem(value: pick, child: Text(label)),
+        for (final (label, pick, action) in items)
+          PopupMenuItem(
+            value: pick,
+            child: _ItemRow(
+              label: label,
+              display: action == null ? null : shortcutDisplayFor(action),
+            ),
+          ),
       ],
     );
     if (!active) {
@@ -297,6 +358,40 @@ class _ToolGroup extends ConsumerWidget {
     return GestureDetector(
       onDoubleTap: () => ref.read(toolProvider.notifier).deactivate(),
       child: button,
+    );
+  }
+}
+
+/// A flyout row: label left, dimmed shortcut text right. The fixed width
+/// gives the trailing text something to align against — popup menus size
+/// to intrinsic width, under which `Spacer`/`Expanded` misbehave.
+class _ItemRow extends StatelessWidget {
+  const _ItemRow({required this.label, required this.display});
+
+  final String label;
+  final String? display;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SizedBox(
+      width: 280,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Flexible(child: Text(label)),
+          if (display != null)
+            Padding(
+              padding: const EdgeInsets.only(left: 16),
+              child: Text(
+                display!,
+                style: theme.textTheme.labelSmall!.copyWith(
+                  color: theme.colorScheme.outline,
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

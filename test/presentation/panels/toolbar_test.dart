@@ -93,7 +93,10 @@ void main() {
   testWidgets('the active group tooltip advertises double-click to deselect',
       (tester) async {
     await pumpEditor(tester);
-    const idleTooltip = 'Points: free, derived and constrained points';
+    // The tooltip carries the group's shortcut keys on a second line
+    // (point-on-object has no binding and is skipped).
+    const idleTooltip = 'Points: free, derived and constrained points'
+        '\nKeys: P · M · G R · I · G C · G O · G I · G U';
 
     expect(find.byTooltip(idleTooltip), findsOneWidget);
 
@@ -107,5 +110,21 @@ void main() {
       findsOneWidget,
     );
     expect(find.byTooltip(idleTooltip), findsNothing);
+  });
+
+  testWidgets('flyout rows show their shortcut as trailing text',
+      (tester) async {
+    await pumpEditor(tester);
+
+    await tester.tap(find.byIcon(Icons.timeline));
+    await tester.pumpAndSettle();
+
+    // Each Lines row pairs its label with the table's display string.
+    expect(find.text('Segment'), findsOneWidget);
+    expect(find.text('S'), findsOneWidget);
+    expect(find.text('Perpendicular line'), findsOneWidget);
+    expect(find.text('T'), findsOneWidget);
+    expect(find.text('Angle bisector (arm, vertex, arm)'), findsOneWidget);
+    expect(find.text('B'), findsOneWidget);
   });
 }

@@ -4,6 +4,7 @@ import 'package:fgex/application/providers/construction_provider.dart';
 import 'package:fgex/application/providers/selection_provider.dart';
 import 'package:fgex/application/providers/tool_provider.dart';
 import 'package:fgex/application/providers/viewport_provider.dart';
+import 'package:fgex/domain/construction/object_attributes.dart';
 import 'package:fgex/domain/construction/objects/arc.dart';
 import 'package:fgex/domain/construction/objects/compass_circle.dart';
 import 'package:fgex/domain/construction/objects/free_point.dart';
@@ -16,6 +17,7 @@ import 'package:fgex/domain/construction/objects/segment_ratio_point.dart';
 import 'package:fgex/domain/construction/objects/three_point_circle.dart';
 import 'package:fgex/domain/construction/objects/vertex_angle.dart';
 import 'package:fgex/domain/math/vec2.dart';
+import 'package:fgex/domain/tools/point_tool.dart';
 import 'package:fgex/main.dart';
 import 'package:fgex/presentation/canvas/canvas_viewport.dart';
 import 'package:fgex/presentation/canvas/geometry_canvas.dart';
@@ -1366,5 +1368,110 @@ void main() {
     await tester.pump();
 
     expect(container.read(selectionProvider), isEmpty);
+  });
+
+  // ── Label dragging (Phase 17) ────────────────────────────────────
+
+  /// A named free point whose label (default offset (6, −18), 12 px
+  /// text) sits around local (106…, 82…) for a point at (100, 100).
+  FreePoint addNamedPoint() {
+    final point = FreePoint(
+      id: 'a',
+      position: const Vec2(100, -100),
+      attributes: const ObjectAttributes(name: 'A'),
+    );
+    container.read(constructionProvider).construction.add(point);
+    return point;
+  }
+
+  testWidgets('dragging a label stores its offset — one undo unit',
+      (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+    final point = addNamedPoint();
+    await tester.pump();
+
+    // Grab inside the label's text rect, well clear of the point's own
+    // 8 px hit radius; the move must beat the recognizer's pan slop.
+    final drag = await tester.startGesture(origin + const Offset(110, 88));
+    await drag.moveTo(origin + const Offset(140, 118));
+    await tester.pump();
+    expect(point.attributes.labelDx, 6,
+        reason: 'the preview must not mutate the construction per frame');
+    await drag.up();
+    await tester.pump();
+
+    expect(point.attributes.labelDx, 36);
+    expect(point.attributes.labelDy, 12);
+    expect(point.position, const Vec2(100, -100),
+        reason: 'a label drag never moves the object');
+
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(point.attributes.labelDx, 6);
+    expect(point.attributes.labelDy, -18);
+  });
+
+  testWidgets('a label drag clamps to the max offset radius',
+      (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+    final point = addNamedPoint();
+    await tester.pump();
+
+    final drag = await tester.startGesture(origin + const Offset(110, 88));
+    await drag.moveTo(origin + const Offset(400, 88));
+    await tester.pump();
+    await drag.up();
+    await tester.pump();
+
+    final offset = Offset(
+      point.attributes.labelDx,
+      point.attributes.labelDy,
+    );
+    expect(offset.distance,
+        moreOrLessEquals(GeometryCanvas.labelOffsetMaxPx, epsilon: 0.001));
+  });
+
+  testWidgets('a cancelled label drag rolls back without a command',
+      (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+    final point = addNamedPoint();
+    await tester.pump();
+
+    final drag = await tester.startGesture(origin + const Offset(110, 88));
+    await drag.moveTo(origin + const Offset(140, 118));
+    await tester.pump();
+    await drag.cancel();
+    await tester.pump();
+
+    expect(point.attributes.labelDx, 6);
+    expect(point.attributes.labelDy, -18);
+    final undoIcon = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.undo),
+    );
+    expect(undoIcon.onPressed, isNull,
+        reason: 'nothing was committed, so there is nothing to undo');
+  });
+
+  testWidgets('labels are not draggable while a tool is active',
+      (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+    final point = addNamedPoint();
+    container
+        .read(toolProvider.notifier)
+        .activate(PointTool(newId: () => 'unused'));
+    await tester.pump();
+
+    final drag = await tester.startGesture(origin + const Offset(110, 88));
+    await drag.moveTo(origin + const Offset(140, 118));
+    await tester.pump();
+    await drag.up();
+    await tester.pump();
+
+    expect(point.attributes.labelDx, 6);
+    expect(point.attributes.labelDy, -18);
   });
 }

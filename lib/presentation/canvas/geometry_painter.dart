@@ -10,7 +10,9 @@ import '../../domain/construction/objects/segment.dart';
 import '../../domain/math/circle_eq.dart';
 import '../../domain/math/vec2.dart';
 import 'canvas_viewport.dart';
+import 'dash_path.dart';
 import 'label_anchor.dart';
+import 'label_layout.dart';
 
 /// Paints the construction in insertion order (first added = bottom).
 ///
@@ -28,6 +30,7 @@ class GeometryPainter extends CustomPainter {
     required this.selectionColor,
     this.selectedIds = const {},
     this.previewMarkers = const [],
+    this.labelDragPreview,
   });
 
   /// Radii (logical px) of an in-progress input marker: a filled dot
@@ -44,12 +47,6 @@ class GeometryPainter extends CustomPainter {
   static const double _haloExtra = 5;
 
   static const double _haloAlpha = 0.4;
-
-  static const double _labelFontSize = 12;
-
-  /// Screen offset from the label's anchor to the text's top-left, sized
-  /// to sit above-right of a default point without touching it.
-  static const Offset _labelOffset = Offset(6, -18);
 
   /// Read live at paint time, in insertion (drawing) order.
   final Construction construction;
@@ -76,6 +73,12 @@ class GeometryPainter extends CustomPainter {
   /// `ToolInputPreview`), drawn as markers on top of the construction.
   final List<Vec2> previewMarkers;
 
+  /// A label mid-drag: [offset] replaces the object's stored label
+  /// offset for this frame only. The canvas holds the drag as widget
+  /// state and commits one `ChangeAttributesCommand` at gesture end, so
+  /// the construction is never mutated per frame.
+  final ({String id, Offset offset})? labelDragPreview;
+
   @override
   void paint(Canvas canvas, Size size) {
     // Infinite lines are drawn with far-away endpoints; the clip keeps
@@ -99,7 +102,13 @@ class GeometryPainter extends CustomPainter {
         ..color = color
         ..strokeWidth = object.attributes.strokeWidth
         ..style = PaintingStyle.stroke;
-      _drawObject(canvas, size, object, paint);
+      _drawObject(
+        canvas,
+        size,
+        object,
+        paint,
+        dashPeriod: object.attributes.dashPeriod,
+      );
       if (object.attributes.labelVisible &&
           object.attributes.name.isNotEmpty) {
         _drawLabel(canvas, object, color);
@@ -120,12 +129,18 @@ class GeometryPainter extends CustomPainter {
 
   /// Draws one object with [paint] — both the normal pass and, with a
   /// wider translucent paint plus [pointRadiusExtra], the selection halo.
+  ///
+  /// [dashPeriod] > 0 draws stroked kinds dashed; the halo pass leaves it
+  /// at 0 (a dashed halo under a dashed stroke is unreadable — the halo
+  /// is selection UI, not object style). Points fill regardless, and
+  /// angle markers stay solid for the wedge's readability.
   void _drawObject(
     Canvas canvas,
     Size size,
     GeoObject object,
     Paint paint, {
     double pointRadiusExtra = 0,
+    double dashPeriod = 0,
   }) {
     switch (object) {
       case GeoPoint():
@@ -135,15 +150,17 @@ class GeometryPainter extends CustomPainter {
           paint..style = PaintingStyle.fill,
         );
       case Segment():
-        canvas.drawLine(
+        _drawStraight(
+          canvas,
           viewport.worldToScreen(object.start!),
           viewport.worldToScreen(object.end!),
           paint,
+          dashPeriod,
         );
       case Ray():
-        _drawRay(canvas, size, object, paint);
+        _drawRay(canvas, size, object, paint, dashPeriod);
       case GeoLine():
-        _drawInfiniteLine(canvas, size, object, paint);
+        _drawInfiniteLine(canvas, size, object, paint, dashPeriod);
       case Arc():
         _drawCarrierBranch(
           canvas,
@@ -151,6 +168,7 @@ class GeometryPainter extends CustomPainter {
           object.startAngle!,
           object.sweep!,
           paint,
+          dashPeriod: dashPeriod,
         );
       case Sector():
         _drawCarrierBranch(
@@ -160,46 +178,78 @@ class GeometryPainter extends CustomPainter {
           object.sweep!,
           paint,
           closeToCenter: true,
+          dashPeriod: dashPeriod,
         );
       case GeoCircle():
         final circle = object.circle!;
-        canvas.drawCircle(
-          viewport.worldToScreen(circle.center),
-          viewport.worldToScreenLength(circle.radius),
-          paint,
-        );
+        final center = viewport.worldToScreen(circle.center);
+        final radius = viewport.worldToScreenLength(circle.radius);
+        if (dashPeriod > 0) {
+          final rim = Path()
+            ..addOval(Rect.fromCircle(center: center, radius: radius));
+          canvas.drawPath(dashPath(rim, dashPeriod), paint);
+        } else {
+          canvas.drawCircle(center, radius, paint);
+        }
       case GeoAngle():
         _drawAngleMarker(canvas, object, paint);
     }
   }
 
-  /// Paints the object's name beside its [labelAnchor]. Like stroke
-  /// widths, the font size and offset are in logical pixels and do not
-  /// scale with zoom.
+  /// One straight stroke — solid via `drawLine`, or rebuilt as a dashed
+  /// path when [dashPeriod] > 0.
+  void _drawStraight(
+    Canvas canvas,
+    Offset from,
+    Offset to,
+    Paint paint,
+    double dashPeriod,
+  ) {
+    if (dashPeriod > 0) {
+      final path = Path()
+        ..moveTo(from.dx, from.dy)
+        ..lineTo(to.dx, to.dy);
+      canvas.drawPath(dashPath(path, dashPeriod), paint);
+    } else {
+      canvas.drawLine(from, to, paint);
+    }
+  }
+
+  /// Paints the object's name beside its [labelAnchor], shifted by the
+  /// stored label offset (or the in-progress [labelDragPreview]). Like
+  /// stroke widths, the font size and offset are in logical pixels and
+  /// do not scale with zoom.
   void _drawLabel(Canvas canvas, GeoObject object, Color color) {
+    final preview = labelDragPreview;
+    final offset = preview != null && preview.id == object.id
+        ? preview.offset
+        : Offset(object.attributes.labelDx, object.attributes.labelDy);
     final textPainter = TextPainter(
       text: TextSpan(
         text: object.attributes.name,
-        style: TextStyle(color: color, fontSize: _labelFontSize),
+        style: TextStyle(color: color, fontSize: labelFontSize),
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    textPainter.paint(
-      canvas,
-      viewport.worldToScreen(labelAnchor(object)) + _labelOffset,
-    );
+    textPainter.paint(canvas, viewport.worldToScreen(labelAnchor(object)) + offset);
     textPainter.dispose();
   }
 
   /// Draws a ray from its start extending far past the canvas on one side
   /// (the clip in [paint] trims it). Direction comes from the parent
   /// points, not the carrier — the carrier normalizes it away.
-  void _drawRay(Canvas canvas, Size size, Ray object, Paint paint) {
+  void _drawRay(
+    Canvas canvas,
+    Size size,
+    Ray object,
+    Paint paint,
+    double dashPeriod,
+  ) {
     final start = viewport.worldToScreen(object.start!);
     final along = viewport.worldToScreen(object.throughPosition!) - start;
     final direction = along / along.distance;
     final reach = start.distance + size.width + size.height;
-    canvas.drawLine(start, start + direction * reach, paint);
+    _drawStraight(canvas, start, start + direction * reach, paint, dashPeriod);
   }
 
   /// Draws the branch of a circle carrier given by a start angle and a
@@ -213,12 +263,29 @@ class GeometryPainter extends CustomPainter {
     double sweep,
     Paint paint, {
     bool closeToCenter = false,
+    double dashPeriod = 0,
   }) {
+    final center = viewport.worldToScreen(circle.center);
     final rect = Rect.fromCircle(
-      center: viewport.worldToScreen(circle.center),
+      center: center,
       radius: viewport.worldToScreenLength(circle.radius),
     );
-    canvas.drawArc(rect, -startAngle, -sweep, closeToCenter, paint);
+    if (dashPeriod > 0) {
+      // The same screen-angle negation as the solid branch below; with
+      // [closeToCenter] the path walks center → arc start → arc → back,
+      // so the radii dash too.
+      final path = Path();
+      if (closeToCenter) {
+        path.moveTo(center.dx, center.dy);
+      }
+      path.arcTo(rect, -startAngle, -sweep, !closeToCenter);
+      if (closeToCenter) {
+        path.close();
+      }
+      canvas.drawPath(dashPath(path, dashPeriod), paint);
+    } else {
+      canvas.drawArc(rect, -startAngle, -sweep, closeToCenter, paint);
+    }
   }
 
   /// Draws an angle as a small wedge outline at its vertex, opening from
@@ -246,6 +313,7 @@ class GeometryPainter extends CustomPainter {
     Size size,
     GeoLine object,
     Paint paint,
+    double dashPeriod,
   ) {
     final line = object.line!;
     final anchor = viewport.worldToScreen(line.pointOnLine);
@@ -257,10 +325,12 @@ class GeometryPainter extends CustomPainter {
     // (the anchor is the line's closest point to the *world* origin and
     // can be far off-screen when panned/zoomed away).
     final reach = anchor.distance + size.width + size.height;
-    canvas.drawLine(
+    _drawStraight(
+      canvas,
       anchor - direction * reach,
       anchor + direction * reach,
       paint,
+      dashPeriod,
     );
   }
 
@@ -272,5 +342,6 @@ class GeometryPainter extends CustomPainter {
       oldDelegate.defaultColor != defaultColor ||
       oldDelegate.selectionColor != selectionColor ||
       !setEquals(oldDelegate.selectedIds, selectedIds) ||
-      !listEquals(oldDelegate.previewMarkers, previewMarkers);
+      !listEquals(oldDelegate.previewMarkers, previewMarkers) ||
+      oldDelegate.labelDragPreview != labelDragPreview;
 }
