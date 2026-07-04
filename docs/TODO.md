@@ -111,12 +111,13 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [ ] Move Circle (center + rim point) from the two-point menu into the circles menu
 - [ ] Rename the two-point menu to **Lines** (line, segment, ray) and absorb perpendicular / parallel / angle bisector — retire the separate line-constructions menu
 - [ ] Deselect affordances: double-click on a flyout group icon deactivates its tool; active-tool highlight consistent across single icons and groups; tooltips say "click again / double-click to deselect"
+- [ ] Discoverability in the `?` cheat sheet: unhide `V` (bound to move/select but `showInCheatSheet: false` as an Esc twin) and add display-only rows for the pointer gestures (Space+drag pan, scroll zoom) so panning is findable
 - [ ] Update the shortcut table, cheat sheet, and any goldens/smoke assertions touched by the toolbar change (drive.js indexes app-bar icons by position)
 
 ## Phase 14 — Drag & gesture fixes
 - [ ] `PointOnObject` slides along its host curve via new `SetPointOnObjectParameterCommand` (one command per gesture, preview/rollback per the existing `DragSession` contract — closes the open item carried since Phase 7; dragging stays in the no-tool move/select mode, the dedicated Drag tool idea was shelved)
 - [ ] `CompassCircle` drag moves only its center's free-point ancestors; the radius-defining points stay put
-- [ ] Fix: multi-finger trackpad pan on macOS in the browser both pans *and* zooms (expected pure pan). Trackpad pan-zoom reports as ≥2 pointers (Phase 8 note), so it lands in `_scaleUpdate`'s nav branch where `CanvasViewport.pinning` applies `nav.startScale * details.scale` — the scale factor evidently drifts from 1 during a pure pan on web. Reproduce in-browser, find where the spurious scale originates (browser trackpad events vs the scale recognizer's synthesis), and pin scale for pan-only gestures
+- [ ] Trackpad pan mapping on web: there is currently *no* trackpad drag-to-pan in the browser — Mac multi-finger swipes arrive as wheel events → `_handlePointerSignal` → zoom-about-cursor (scales *and* shifts the drawing when the cursor is off-center, reads as "pan also resizes"), and a macOS three-finger drag is a synthetic mouse drag that rubber-bands. Space+drag / arrow keys are the only web pans. Decide the mapping (e.g. plain scroll = pan, pinch / Ctrl+scroll = zoom, Figma-style — note browsers deliver trackpad pinch as Ctrl+wheel) and check a native desktop build separately (non-web trackpads deliver PointerPanZoom gestures into the scale recognizer's nav branch instead)
 
 ## Phase 15 — Transformations
 - [ ] Four derived-point objects + tools: reflect about line (`ReflectedPoint`), reflect about point (`CentralReflectionPoint`), rotate around point by a fixed angle (`RotatedPoint`, angle via dialog), translate by vector (`TranslatedPoint`, vector given by two points) — names refinable at implementation

@@ -85,7 +85,7 @@ The `domain/` layer must not import `package:flutter/*`. This is the boundary th
 - `HitTester`: iterates visible objects, returns the closest under an 8 px threshold, with priority order points > arcs/circles > segments/rays/lines > angles. Used by both tools (input picking) and the selection drag.
 - Dragging (in the no-tool move/select mode): a free point moves directly (`MoveFreePointCommand`). Any *other* object drags as a rigid translation of its free-point ancestors — grab a circle's rim and the whole circle moves because its defining points do — emitting one `TranslateObjectsCommand` per gesture. Two planned exceptions (Phase 14): a `PointOnObject` slides along its host curve (new `SetPointOnObjectParameterCommand`, one per gesture, same preview/rollback contract as the other drags), and a `CompassCircle` drags by moving only its *center's* free ancestors — the radius-defining points stay put, because the radius is a measurement, not part of the rigid body. Fully-derived objects with no free ancestors (e.g. an intersection point) don't drag. (A dedicated Drag tool with a select-only no-tool default was considered and shelved — dragging stays in the no-tool mode.)
 - `GeometryPainter` walks the construction in insertion order, applies the viewport transform, draws each object using its attributes. Labels rendered via `TextPainter`.
-- Multi-touch on mobile: pinch = zoom, two-finger drag = pan. On web/desktop: scroll = zoom, drag empty = pan. Known bug (Phase 14): a multi-finger trackpad pan on macOS in the browser both pans *and* zooms the drawing — trackpad pan-zoom reaches the scale recognizer as a navigation gesture and `CanvasViewport.pinning` applies a `details.scale` that drifts from 1 even for a pure pan; pan-only gestures must pin the scale.
+- Multi-touch on mobile: pinch = zoom, two-finger drag = pan. On web/desktop: scroll = zoom, drag empty = pan. Known gap (Phase 14): on web there is no trackpad drag-to-pan at all — a Mac multi-finger swipe arrives as browser wheel events, which the app maps to zoom-about-cursor; with the cursor off-center each step scales *and* shifts the drawing, easily read as "panning also resizes". A macOS three-finger drag (accessibility) is a synthetic mouse drag and rubber-bands instead. Space+drag and arrow keys are the only web pans today. Phase 14 decides the trackpad mapping (e.g. plain scroll = pan, pinch / Ctrl+scroll = zoom, Figma-style) and makes the pan gestures discoverable.
 
 ### Panels (`presentation/panels/`)
 
@@ -248,7 +248,7 @@ The full table is rendered in a `?`-key cheat sheet overlay. Bindings live in `l
 10. Macro/advanced tools (square, parallelogram, trapezium) on top of the macro-command machinery.
 11. Golden tests + widget tests for tool flows.
 12. Toolbar rework & tool-selection UX: unified Points menu (incl. new intersection tool), Lines menu absorbs the line constructions, circle moves to the circles menu, deselect affordances. (TODO Phase 13)
-13. Drag & gesture fixes: `PointOnObject` slide-drag, compass-circle center-only drag, trackpad pan-also-zooms bug. (TODO Phase 14)
+13. Drag & gesture fixes: `PointOnObject` slide-drag, compass-circle center-only drag, trackpad pan mapping on web. (TODO Phase 14)
 14. Transformations: reflect about line / about point, rotate around point, translate by vector. (TODO Phase 15)
 15. Angle-by-given-size + triangle/polygon macros. (TODO Phase 16)
 
