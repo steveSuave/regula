@@ -1,0 +1,25 @@
+docs/TODO.md
+  s_959c52499198a8::t_62cd9a8a60e753 114-115
+tool/web_smoke/drive.js
+  s_959c52499198a8::t_ad905c8d116710 208
+  s_959c52499198a8::t_8a754991bc33c8 159-160,164
+  s_959c52499198a8::t_af123580b36a07 116-117,121,126-127,134
+  s_959c52499198a8::t_ebbbf5282e1f31 61-65
+  s_959c52499198a8::t_5de28863b9799e 122-125,128
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "64ecccece7edd440cb2d31e1dd967a888958d90d",
+  "prompts": {},
+  "sessions": {
+    "s_959c52499198a8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3a01199b-89bb-4eb5-b8c7-fe6d213f5944",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
