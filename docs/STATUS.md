@@ -6,6 +6,22 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 17 — 2026-07-04
+
+**Done**
+- Docs-only session: hands-on user feedback (11 items) folded into the plan as **Phases 13–16**. No code changed.
+- `docs/TODO.md`: four new phases — Phase 13 toolbar rework & tool-selection UX (intersection tool + `I`, unified Points flyout, Circle → circles menu, two-point menu → Lines absorbing perpendicular/parallel/bisector, deselect affordances), Phase 14 drag rework (dedicated `DragTool`, select-only no-tool default, `PointOnObject` slide-drag, compass-circle center-only drag), Phase 15 transformations (reflect about line/point, rotate, translate by vector), Phase 16 angle-by-size + triangle/polygon macros.
+- `docs/PLAN.md` updated to match: Panels toolbar grouping rewritten (Drag / Points / Lines / Circles / Angles / Transform / Macros) + new tool activation/deactivation paragraph; Canvas dragging bullet rewritten for the Drag-tool model incl. the `PointOnObject` and `CompassCircle` exceptions; Points subclass list gains the four planned transformation points; Tool system gains the planned tools; `I` un-deferred, `V` re-pointed at the Drag tool, proposed `X E`/`X I`/`X R`/`X G` chords; Build order extended 12–15.
+
+**Next**
+- Start Phase 13 on a `phase-13-toolbar` branch. First concrete step: `IntersectionTool` (object already exists; tool + toolbar entry + `I` binding), then the menu regrouping in `lib/main.dart`.
+- The two environment-blocked Phase 12 boxes (iOS build, Android emulator smoke) remain open and independent of Phases 13–16.
+
+**Open questions / gotchas**
+- Assumptions baked into the docs, to correct if wrong: "normal polygon" = regular polygon (n via dialog); "random" macros = one-tap stamps of randomized free points; angle-by-size = GeoGebra convention (arm point, vertex, size → rotated point + `VertexAngle`), which makes Phase 16 depend on Phase 15's rotation.
+- Phase 14 flips a default: no-tool mode stops dragging. Existing drag-related widget tests and the web smoke will need to activate the Drag tool first — budget for test churn, it isn't a regression.
+- Transformation-point class names (`ReflectedPoint`, `CentralReflectionPoint`, `RotatedPoint`, `TranslatedPoint`) are placeholders; refine at implementation per the naming convention.
+
 ## Session 16 — 2026-07-04
 
 **Done**

@@ -104,3 +104,27 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] Save/load round-trip on a non-trivial construction (already covered since Phase 9: the codec kitchen-sink test round-trips every concrete kind + attributes + viewport, `file_menu_test` drives Save/Open at the widget level, and the browser smoke parses a real downloaded document — no new work needed)
 - [ ] Manual cross-platform smoke (`flutter run -d chrome`, Android emulator, iOS simulator) (web done — full `tool/web_smoke/drive.js` suite SMOKE PASS on a release build, zero console errors; Android emulator needs an AVD first, and no system image is installed — a multi-GB `sdkmanager` download to approve; iOS simulator blocked on the incomplete Xcode install)
 - [ ] `flutter build apk` and `flutter build ios` succeed (`flutter build apk` ✓ — 49.5 MB release APK; `flutter build ios` still blocked: Xcode incomplete + CocoaPods missing since Session 2 — needs an App Store install and `sudo xcode-select --switch`, then `sudo xcodebuild -runFirstLaunch`)
+
+## Phase 13 — Toolbar rework & tool-selection UX
+- [ ] `IntersectionTool` + toolbar entry + `I` shortcut (the `IntersectionPoint` object exists since Phase 2 — macros build them internally; tool picks two curves and creates the branch nearest the tap; decide disambiguation when the curves intersect twice)
+- [ ] Unified **Points** flyout: free point, midpoint, segment-ratio point, intersection, point-on-object, centroid, orthocenter, incenter, circumcenter — retire the standalone Point and Point-on-object buttons and the Triangle-centers menu
+- [ ] Move Circle (center + rim point) from the two-point menu into the circles menu
+- [ ] Rename the two-point menu to **Lines** (line, segment, ray) and absorb perpendicular / parallel / angle bisector — retire the separate line-constructions menu
+- [ ] Deselect affordances: double-click on a flyout group icon deactivates its tool; active-tool highlight consistent across single icons and groups; tooltips say "click again / double-click to deselect"
+- [ ] Update the shortcut table, cheat sheet, and any goldens/smoke assertions touched by the toolbar change (drive.js indexes app-bar icons by position)
+
+## Phase 14 — Drag rework
+- [ ] New `DragTool` (`V` rebinds to it); no-tool mode becomes select-only — `_panStart` in `geometry_canvas.dart` no longer starts drags without a tool
+- [ ] `PointOnObject` slides along its host curve via new `SetPointOnObjectParameterCommand` (one command per gesture, preview/rollback per the existing `DragSession` contract — closes the open item carried since Phase 7)
+- [ ] `CompassCircle` drag moves only its center's free-point ancestors; the radius-defining points stay put
+
+## Phase 15 — Transformations
+- [ ] Four derived-point objects + tools: reflect about line (`ReflectedPoint`), reflect about point (`CentralReflectionPoint`), rotate around point by a fixed angle (`RotatedPoint`, angle via dialog), translate by vector (`TranslatedPoint`, vector given by two points) — names refinable at implementation
+- [ ] Codec entries for the new kinds (+ version bump only if the schema shape changes); tests for every new `domain/` API — invariants: double reflection = identity, rotation preserves distance to center, translation preserves the vector
+
+## Phase 16 — Angle-by-size & shape macros
+- [ ] `AngleBySizeTool`: arm point, vertex, size dialog → `RotatedPoint` + `VertexAngle` (GeoGebra convention; depends on Phase 15's rotation)
+- [ ] Triangle macros: equilateral, isosceles, right (input schemes to spec in PLAN before coding, like the square/parallelogram/trapezium)
+- [ ] Random triangle + random polygon (one-tap stamps placing randomized *free* points, fully editable afterwards)
+- [ ] Regular polygon (side count via dialog; "normal polygon" in the original feedback assumed to mean regular — correct here if wrong)
+- [ ] New `X` chords (`E`/`I`/`R`/`G` proposed in PLAN) + cheat-sheet entries
