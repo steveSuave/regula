@@ -23,9 +23,14 @@ import 'domain/construction/objects/parallel_line.dart';
 import 'domain/construction/objects/perpendicular_line.dart';
 import 'domain/math/vec2.dart';
 import 'domain/tools/intersection_tool.dart';
+import 'domain/tools/isosceles_trapezium_macro_tool.dart';
+import 'domain/tools/kite_macro_tool.dart';
 import 'domain/tools/parallelogram_macro_tool.dart';
 import 'domain/tools/point_and_line_tool.dart';
 import 'domain/tools/point_tool.dart';
+import 'domain/tools/rectangle_macro_tool.dart';
+import 'domain/tools/rhombus_macro_tool.dart';
+import 'domain/tools/right_trapezium_macro_tool.dart';
 import 'domain/tools/square_macro_tool.dart';
 import 'domain/tools/three_point_tool.dart';
 import 'domain/tools/trapezium_macro_tool.dart';
@@ -421,6 +426,16 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         tools.activate(ParallelogramMacroTool(newId: newObjectId));
       case AppAction.trapeziumMacroTool:
         tools.activate(TrapeziumMacroTool(newId: newObjectId));
+      case AppAction.rectangleMacroTool:
+        tools.activate(RectangleMacroTool(newId: newObjectId));
+      case AppAction.rhombusMacroTool:
+        tools.activate(RhombusMacroTool(newId: newObjectId));
+      case AppAction.kiteMacroTool:
+        tools.activate(KiteMacroTool(newId: newObjectId));
+      case AppAction.isoscelesTrapeziumMacroTool:
+        tools.activate(IsoscelesTrapeziumMacroTool(newId: newObjectId));
+      case AppAction.rightTrapeziumMacroTool:
+        tools.activate(RightTrapeziumMacroTool(newId: newObjectId));
     }
   }
 
