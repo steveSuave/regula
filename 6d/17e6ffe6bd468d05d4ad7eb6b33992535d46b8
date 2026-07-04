@@ -1,0 +1,38 @@
+docs/TODO.md
+  s_3bd26fd0554e78::t_6c46a235344b1f 149-155
+test/presentation/panels/toolbar_test.dart
+  s_3bd26fd0554e78::t_f2e9b3bf8f95af 101-102
+docs/PLAN.md
+  s_3bd26fd0554e78::t_cd494d0f757e3f 98
+  s_3bd26fd0554e78::t_ec3d8840f2d026 275
+  s_3bd26fd0554e78::t_8f249635bbd782 94
+  s_3bd26fd0554e78::t_71e320aa802781 195
+  s_3bd26fd0554e78::t_1d4bf48b141bc8 123-133
+docs/STATUS.md
+  s_3bd26fd0554e78::t_7e4cfd079acee2 9-13,15-21
+  s_3bd26fd0554e78::t_0319a8b132863b 14
+lib/presentation/panels/toolbar.dart
+  s_3bd26fd0554e78::t_193eae02e16d89 359
+  s_3bd26fd0554e78::t_eb81773f7a940f 341-342
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "6d17e6ffe6bd468d05d4ad7eb6b33992535d46b8",
+  "prompts": {},
+  "humans": {
+    "h_7b6bd6d3048c34": {
+      "author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  },
+  "sessions": {
+    "s_3bd26fd0554e78": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f4c16763-8faf-4996-ae3e-18da8e95dce4",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
