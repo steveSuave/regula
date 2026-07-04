@@ -26,6 +26,11 @@ abstract class ObjectAttributes with _$ObjectAttributes {
     /// Stroke width in logical pixels (lines, circles, arcs).
     @Default(2.0) double strokeWidth,
 
+    /// Dash period in logical pixels for stroked kinds: 0 = solid,
+    /// > 0 = dashed with dash = gap = period / 2. Like stroke widths,
+    /// it does not scale with zoom.
+    @Default(0.0) double dashPeriod,
+
     /// Point radius in logical pixels (point kinds only).
     @Default(4.0) double pointSize,
 

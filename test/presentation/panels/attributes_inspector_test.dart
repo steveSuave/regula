@@ -237,6 +237,34 @@ void main() {
     expect(a.attributes.pointSize, 4.0);
   });
 
+  testWidgets('dash selector: strokes only, one command per tap, undo '
+      'restores solid', (tester) async {
+    await pumpEditor(tester);
+    final a = addPoint('a', Vec2.zero);
+    final b = addPoint('b', const Vec2(4, 0));
+    final s = Segment(id: 's', point1: a, point2: b);
+    container.read(constructionProvider).construction.add(s);
+
+    container.read(selectionProvider.notifier).select('a');
+    await tester.pump();
+    expect(find.byKey(const ValueKey('dash-style')), findsNothing,
+        reason: 'dashing means nothing for a point-only selection');
+
+    container.read(selectionProvider.notifier).select('s');
+    await tester.pump();
+    final dashStyle = find.byKey(const ValueKey('dash-style'));
+    expect(dashStyle, findsOneWidget);
+
+    await tester
+        .tap(find.descendant(of: dashStyle, matching: find.text('Medium')));
+    await tester.pump();
+    expect(s.attributes.dashPeriod, 8.0);
+
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(s.attributes.dashPeriod, 0.0);
+  });
+
   testWidgets('multi-selection: count header and a read-only list',
       (tester) async {
     await pumpEditor(tester);
@@ -250,6 +278,16 @@ void main() {
     await tester.pump();
 
     expect(find.text('3 selected'), findsOneWidget);
+    // The dash selector pushed the read-only list below the lazy
+    // ListView's fold — scroll it into existence first.
+    await tester.scrollUntilVisible(
+      find.text('Segment'),
+      100,
+      scrollable: find.descendant(
+        of: find.byType(AttributesInspector),
+        matching: find.byType(Scrollable),
+      ),
+    );
     expect(find.text('Point'), findsNWidgets(2));
     expect(find.text('Segment'), findsOneWidget);
     expect(find.byType(TextField), findsNothing);
