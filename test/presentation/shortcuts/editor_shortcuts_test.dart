@@ -8,9 +8,11 @@ import 'package:fgex/application/providers/viewport_provider.dart';
 import 'package:fgex/domain/commands/add_object_command.dart';
 import 'package:fgex/domain/construction/objects/centroid.dart';
 import 'package:fgex/domain/construction/objects/free_point.dart';
+import 'package:fgex/domain/construction/objects/intersection_point.dart';
 import 'package:fgex/domain/construction/objects/midpoint.dart';
 import 'package:fgex/domain/construction/objects/segment.dart';
 import 'package:fgex/domain/math/vec2.dart';
+import 'package:fgex/domain/tools/intersection_tool.dart';
 import 'package:fgex/domain/tools/point_and_line_tool.dart';
 import 'package:fgex/domain/tools/point_tool.dart';
 import 'package:fgex/domain/tools/square_macro_tool.dart';
@@ -99,6 +101,36 @@ void main() {
         .toList();
     expect(objects, hasLength(3));
     expect(objects.last, isA<Segment>());
+  });
+
+  testWidgets('I builds an intersection point end to end', (tester) async {
+    await pumpEditor(tester);
+    final stack = container.read(commandStackProvider.notifier);
+    final a = FreePoint(id: 'a', position: const Vec2(0, 0));
+    final b = FreePoint(id: 'b', position: const Vec2(4, 0));
+    final c = FreePoint(id: 'c', position: const Vec2(2, -2));
+    final d = FreePoint(id: 'd', position: const Vec2(2, 2));
+    final ab = Segment(id: 'ab', point1: a, point2: b);
+    final cd = Segment(id: 'cd', point1: c, point2: d);
+    for (final object in [a, b, c, d, ab, cd]) {
+      stack.execute(AddObjectCommand(object));
+    }
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyI);
+    expect(activeTool(), isA<IntersectionTool>());
+
+    final tools = container.read(toolProvider.notifier);
+    tools.handleInput(ToolInput(const Vec2(1, 0.1), hit: ab));
+    tools.handleInput(ToolInput(const Vec2(1.9, 1), hit: cd));
+
+    final objects = container
+        .read(constructionProvider)
+        .construction
+        .objects
+        .toList();
+    expect(objects.last, isA<IntersectionPoint>());
+    final point = objects.last as IntersectionPoint;
+    expect(point.position!.closeTo(const Vec2(2, 0)), isTrue);
   });
 
   testWidgets('shifted letters pick the shifted variant', (tester) async {
