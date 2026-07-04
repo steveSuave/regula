@@ -23,6 +23,13 @@ abstract class ObjectAttributes with _$ObjectAttributes {
     @Default(true) bool visible,
     @Default(true) bool labelVisible,
 
+    /// Label offset from the object's anchor to the text's top-left, in
+    /// *screen* logical pixels (so zoom never flings a label away from
+    /// its object). The defaults match the pre-Phase-17 fixed offset;
+    /// label dragging clamps the magnitude, the fields themselves don't.
+    @Default(6.0) double labelDx,
+    @Default(-18.0) double labelDy,
+
     /// Stroke width in logical pixels (lines, circles, arcs).
     @Default(2.0) double strokeWidth,
 
