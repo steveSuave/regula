@@ -87,10 +87,10 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] Round-trip test on a complex construction (kitchen-sink test instantiates every concrete object kind — also the safety net for kinds missing from the codec — plus a real-browser check: Save downloads a valid document, dark theme survives a reload)
 
 ## Phase 10 — Macros / advanced shapes
-- [ ] Square macro tool
+- [x] Macro framework (groups primitive commands inside one undoable `MacroCommand`) (`MacroCommand` existed since Phase 3; the missing piece was `MultiPointTool.buildObjects` returning a *list* — one `AddObjectCommand` per object, dependency order, single undo unit)
+- [x] Square macro tool (two taps = adjacent corners A, B; corners C, D are branch-1 intersections of hidden perpendiculars with hidden compass circles over the visible side AB — pure composition of existing kinds, so codec/painter/hit-tester untouched; square lies left of A→B and tracks drags continuously)
 - [ ] Parallelogram macro tool
 - [ ] Trapezium macro tool
-- [ ] Macro framework (groups primitive commands inside one undoable `MacroCommand`)
 
 ## Phase 11 — Keyboard shortcuts (`lib/presentation/shortcuts/`)
 - [ ] `Shortcuts` / `Actions` wiring + central `ShortcutTable`
