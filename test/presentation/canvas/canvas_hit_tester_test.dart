@@ -216,6 +216,70 @@ void main() {
     });
   });
 
+  group('hitTestAll', () {
+    List<String> allIds(Construction construction, Vec2 point) => [
+          for (final object
+              in tester.hitTestAll(construction.objects, point, threshold))
+            object.id,
+        ];
+
+    test('returns every in-threshold object, best first', () {
+      final construction = Construction();
+      final a = FreePoint(id: 'a', position: Vec2.zero);
+      final b = FreePoint(id: 'b', position: const Vec2(10, 0));
+      final c = FreePoint(id: 'c', position: const Vec2(5, -10));
+      final d = FreePoint(id: 'd', position: const Vec2(5, 10));
+      construction
+        ..add(a)
+        ..add(b)
+        ..add(c)
+        ..add(d)
+        ..add(LineThroughTwoPoints(id: 'h', point1: a, point2: b))
+        ..add(LineThroughTwoPoints(id: 'v', point1: c, point2: d))
+        ..add(FreePoint(id: 'p', position: const Vec2(5, 0.4)));
+
+      // Tap near the crossing of h and v: the point wins on priority, the
+      // vertical line is closer than the horizontal one.
+      expect(allIds(construction, const Vec2(5, 0.2)), ['p', 'v', 'h']);
+      expect(allIds(construction, const Vec2(20, 20)), isEmpty);
+    });
+
+    test('excludes invisible and undefined objects', () {
+      final construction = Construction()
+        ..add(FreePoint(
+          id: 'h',
+          position: Vec2.zero,
+          attributes: const ObjectAttributes(visible: false),
+        ));
+
+      expect(allIds(construction, Vec2.zero), isEmpty);
+    });
+
+    test('hitTest is exactly the first hitTestAll entry', () {
+      final construction = Construction();
+      final a = FreePoint(id: 'a', position: Vec2.zero);
+      final b = FreePoint(id: 'b', position: const Vec2(10, 0));
+      construction
+        ..add(a)
+        ..add(b)
+        ..add(LineThroughTwoPoints(id: 'l', point1: a, point2: b));
+
+      for (final tap in const [Vec2(5, 0.2), Vec2(0.1, 0), Vec2(20, 20)]) {
+        final all = tester.hitTestAll(construction.objects, tap, threshold);
+        expect(tester.hitTest(construction.objects, tap, threshold),
+            all.firstOrNull);
+      }
+    });
+
+    test('exact ties go to the object added latest (topmost)', () {
+      final construction = Construction()
+        ..add(FreePoint(id: 'under', position: Vec2.zero))
+        ..add(FreePoint(id: 'over', position: Vec2.zero));
+
+      expect(allIds(construction, const Vec2(0.1, 0)), ['over', 'under']);
+    });
+  });
+
   group('objectsInRect', () {
     List<String> inRect(Construction construction, Vec2 c1, Vec2 c2) => [
           for (final object in tester.objectsInRect(construction.objects, c1, c2))

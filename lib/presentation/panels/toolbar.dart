@@ -33,7 +33,6 @@ import '../../domain/tools/isosceles_trapezium_macro_tool.dart';
 import '../../domain/tools/kite_macro_tool.dart';
 import '../../domain/tools/parallelogram_macro_tool.dart';
 import '../../domain/tools/point_and_line_tool.dart';
-import '../../domain/tools/point_on_object_tool.dart';
 import '../../domain/tools/point_tool.dart';
 import '../../domain/tools/rectangle_macro_tool.dart';
 import '../../domain/tools/rhombus_macro_tool.dart';
@@ -138,7 +137,6 @@ class GeometryToolbar extends ConsumerWidget {
     // and so can never be a canonicalized tear-off.
     final pointsActive =
         tool is PointTool ||
-        tool is PointOnObjectTool ||
         tool is IntersectionTool ||
         tool is TriangleCenterTool ||
         (tool is TwoPointTool &&
@@ -207,11 +205,6 @@ class GeometryToolbar extends ConsumerWidget {
               'Intersection of two curves',
               _pick(() => IntersectionTool(newId: newObjectId)),
               AppAction.intersectionTool,
-            ),
-            (
-              'Point on object',
-              _pick(() => PointOnObjectTool(newId: newObjectId)),
-              null,
             ),
             ('Centroid', _center(Centroid.new), AppAction.centroidTool),
             ('Orthocenter', _center(Orthocenter.new), AppAction.orthocenterTool),
