@@ -1,0 +1,56 @@
+lib/main.dart
+  s_0a159edc7b5c66::t_08504f8ae2b8b9 34
+  s_0a159edc7b5c66::t_46ed0e41a8fa89 437-450
+  s_0a159edc7b5c66::t_09edd7027f8f63 305-314
+lib/presentation/panels/toolbar.dart
+  s_0a159edc7b5c66::t_37770fe1dafa88 41
+  s_0a159edc7b5c66::t_120bf0420c4a36 158-162
+  s_0a159edc7b5c66::t_63ae2da42f2859 11
+  s_0a159edc7b5c66::t_87ea4851b60a5f 101-115
+  s_0a159edc7b5c66::t_a7d15daf2dec3b 136-138,146-147,149
+  s_0a159edc7b5c66::t_8461b6caee2a39 310-340
+  s_0a159edc7b5c66::t_6593eec33a1bb0 29
+  s_0a159edc7b5c66::t_2889fea3c0380e 24
+  s_0a159edc7b5c66::t_fbbb30530636fc 1-2
+  s_0a159edc7b5c66::t_932ece989013d6 570-613
+  s_0a159edc7b5c66::t_3bb7ec5034f6fd 180-186
+  s_0a159edc7b5c66::t_ebb3592c9d877e 512-523
+  s_0a159edc7b5c66::t_8b7383f833bff4 309
+test/presentation/panels/toolbar_test.dart
+  s_0a159edc7b5c66::t_25d3e7c188eaed 5,9-10,13
+  s_0a159edc7b5c66::t_2574e7dbd2587f 153-232
+lib/presentation/shortcuts/shortcut_table.dart
+  s_0a159edc7b5c66::t_ffa4ca46769a87 53-56
+  s_0a159edc7b5c66::t_252aa08b6640c3 518-541
+docs/PLAN.md
+  s_0a159edc7b5c66::t_9a97665ea161c9 68
+  s_0a159edc7b5c66::t_dd9f55d283e340 46
+  s_0a159edc7b5c66::t_8a8e6bc0846e61 256
+  s_0a159edc7b5c66::t_d6d35950416433 94
+  s_0a159edc7b5c66::t_e74f61848b1caa 235-238
+lib/domain/tools/rotated_point_tool.dart
+  s_0a159edc7b5c66::t_011b73fb40e89c 1-31
+test/domain/tools/rotated_point_tool_test.dart
+  s_0a159edc7b5c66::t_cf9219595c4a03 1-67
+test/presentation/shortcuts/editor_shortcuts_test.dart
+  s_0a159edc7b5c66::t_5a360d36d41d37 18,20
+  s_0a159edc7b5c66::t_e945d861c5a447 27
+  s_0a159edc7b5c66::t_7c7893c1b93b4a 179-180
+  s_0a159edc7b5c66::t_eddf4a55b110b6 193-238
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "777b670d143ba8afc5d1d21b0073a9818448ef66",
+  "prompts": {},
+  "sessions": {
+    "s_0a159edc7b5c66": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4c9397c7-bb56-4ff1-aaf3-f3f40ec03611",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
