@@ -32,6 +32,7 @@ import 'domain/construction/objects/segment_ratio_point.dart';
 import 'domain/construction/objects/three_point_circle.dart';
 import 'domain/construction/objects/vertex_angle.dart';
 import 'domain/math/vec2.dart';
+import 'domain/tools/parallelogram_macro_tool.dart';
 import 'domain/tools/point_and_line_tool.dart';
 import 'domain/tools/point_on_object_tool.dart';
 import 'domain/tools/point_tool.dart';
@@ -243,7 +244,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     final angleConstructionActive = activeTool is TwoLineTool ||
         (activeTool is ThreePointTool &&
             activeTool.build == _buildVertexAngle);
-    final shapeMacroActive = activeTool is SquareMacroTool;
+    final shapeMacroActive =
+        activeTool is SquareMacroTool || activeTool is ParallelogramMacroTool;
     final undoRedo = ref.watch(commandStackProvider);
     final highlight = Theme.of(context).colorScheme.primary;
 
@@ -486,7 +488,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
             ],
           ),
           PopupMenuButton<Tool Function()>(
-            tooltip: 'Shape macros: square',
+            tooltip: 'Shape macros: square, parallelogram',
             icon: Icon(
               Icons.crop_square,
               color: shapeMacroActive ? highlight : null,
@@ -497,6 +499,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
               PopupMenuItem(
                 value: () => SquareMacroTool(newId: newObjectId),
                 child: const Text('Square (two adjacent corners)'),
+              ),
+              PopupMenuItem(
+                value: () => ParallelogramMacroTool(newId: newObjectId),
+                child: const Text('Parallelogram (three corners)'),
               ),
             ],
           ),
