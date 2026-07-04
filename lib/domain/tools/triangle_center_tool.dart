@@ -25,10 +25,12 @@ class TriangleCenterTool extends MultiPointTool {
   int get pointCount => 3;
 
   @override
-  GeoObject buildObject(List<GeoPoint> points) => buildCenter(
-        id: newId(),
-        vertex1: points[0],
-        vertex2: points[1],
-        vertex3: points[2],
-      );
+  List<GeoObject> buildObjects(List<GeoPoint> points) => [
+        buildCenter(
+          id: newId(),
+          vertex1: points[0],
+          vertex2: points[1],
+          vertex3: points[2],
+        ),
+      ];
 }
