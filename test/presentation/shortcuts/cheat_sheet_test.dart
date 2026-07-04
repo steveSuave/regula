@@ -92,4 +92,18 @@ void main() {
     await tester.pump();
     expect(find.byType(ShortcutCheatSheet), findsNothing);
   });
+
+  testWidgets('the app-bar keyboard button toggles the sheet', (tester) async {
+    await pumpEditor(tester);
+    final button = find.byTooltip('Keyboard shortcuts (?)');
+    expect(button, findsOneWidget);
+
+    await tester.tap(button);
+    await tester.pump();
+    expect(find.byType(ShortcutCheatSheet), findsOneWidget);
+
+    await tester.tap(button);
+    await tester.pump();
+    expect(find.byType(ShortcutCheatSheet), findsNothing);
+  });
 }
