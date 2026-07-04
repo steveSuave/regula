@@ -86,6 +86,15 @@ void main() {
     }
   });
 
+  test('shortcutDisplayFor returns the primary binding, never a hidden '
+      'alternate', () {
+    expect(shortcutDisplayFor(AppAction.segmentTool), 'S');
+    expect(shortcutDisplayFor(AppAction.centroidTool), 'G C');
+    expect(shortcutDisplayFor(AppAction.squareMacroTool), 'X S');
+    // Redo's Ctrl+Y twin is cheat-sheet-hidden and must not win.
+    expect(shortcutDisplayFor(AppAction.redo), isNot(contains('Y')));
+  });
+
   test('labels and displays are non-empty, sequences one or two strokes', () {
     for (final binding in shortcutTable) {
       expect(binding.label, isNotEmpty);
