@@ -1,0 +1,21 @@
+docs/PLAN.md
+  s_6f73592f33ff79::t_ca59b83802d490 68
+lib/domain/tools/multi_point_tool.dart
+  s_6f73592f33ff79::t_0cc66733709f93 57-75,80,90-91,93-95
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "5d09b363d6b4271f84e603c883c8a6f7e147b670",
+  "prompts": {},
+  "sessions": {
+    "s_6f73592f33ff79": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0aede8dd-22dd-4cb3-968d-cb595996f3cb",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
