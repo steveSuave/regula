@@ -3,8 +3,10 @@ import 'package:fgex/domain/commands/macro_command.dart';
 import 'package:fgex/domain/construction/construction.dart';
 import 'package:fgex/domain/construction/objects/circle_center_point.dart';
 import 'package:fgex/domain/construction/objects/free_point.dart';
+import 'package:fgex/domain/construction/objects/intersection_point.dart';
 import 'package:fgex/domain/construction/objects/line_through_two_points.dart';
 import 'package:fgex/domain/construction/objects/midpoint.dart';
+import 'package:fgex/domain/construction/objects/point_on_object.dart';
 import 'package:fgex/domain/math/vec2.dart';
 import 'package:fgex/domain/tools/tool.dart';
 import 'package:fgex/domain/tools/two_point_tool.dart';
@@ -67,6 +69,77 @@ void main() {
       expect(tool.onInput(ToolInput(a.position, hit: a)), isA<ToolAccepted>());
       expect(tool.onInput(ToolInput(a.position, hit: a)), isA<ToolIgnored>());
       expect(tool.collectedVertices, hasLength(1));
+    });
+
+    test('a tap on a curve collects a glued PointOnObject vertex', () {
+      final construction = Construction();
+      final a = FreePoint(id: 'a', position: Vec2.zero);
+      final b = FreePoint(id: 'b', position: const Vec2(4, 0));
+      final line = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
+      construction
+        ..add(a)
+        ..add(b)
+        ..add(line);
+      final tool = toolFor(
+        (id, p, q) => Midpoint(id: id, point1: p, point2: q),
+      );
+
+      tool.onInput(ToolInput(const Vec2(1, 0.1), hit: line));
+      final result =
+          tool.onInput(ToolInput(a.position, hit: a)) as ToolCommitted;
+
+      expect(result.command, isA<MacroCommand>());
+      result.command.apply(construction);
+      expect(construction.length, 5, reason: 'glued vertex + the midpoint');
+      final vertex =
+          construction.objects.whereType<PointOnObject>().single;
+      expect(vertex.parents, [line]);
+      expect(vertex.position!.closeTo(const Vec2(1, 0)), isTrue,
+          reason: 'the vertex projects onto the curve');
+      final midpoint = construction.objects.whereType<Midpoint>().single;
+      expect(midpoint.position!.closeTo(const Vec2(0.5, 0)), isTrue);
+
+      result.command.undo(construction);
+      expect(construction.length, 3,
+          reason: 'glued vertex and midpoint undo as one unit');
+    });
+
+    test('a tap near a curve crossing collects an IntersectionPoint vertex',
+        () {
+      final construction = Construction();
+      final a = FreePoint(id: 'a', position: Vec2.zero);
+      final b = FreePoint(id: 'b', position: const Vec2(4, 0));
+      final c = FreePoint(id: 'c', position: const Vec2(2, -2));
+      final d = FreePoint(id: 'd', position: const Vec2(2, 2));
+      final l1 = LineThroughTwoPoints(id: 'l1', point1: a, point2: b);
+      final l2 = LineThroughTwoPoints(id: 'l2', point1: c, point2: d);
+      construction
+        ..add(a)
+        ..add(b)
+        ..add(c)
+        ..add(d)
+        ..add(l1)
+        ..add(l2);
+      final tool = toolFor(
+        (id, p, q) => Midpoint(id: id, point1: p, point2: q),
+      );
+
+      tool.onInput(
+        ToolInput(
+          const Vec2(2.1, 0.1),
+          hit: l1,
+          extraHits: [l2],
+          snapThreshold: 1,
+        ),
+      );
+      final result =
+          tool.onInput(ToolInput(a.position, hit: a)) as ToolCommitted;
+
+      result.command.apply(construction);
+      final vertex =
+          construction.objects.whereType<IntersectionPoint>().single;
+      expect(vertex.parents, [l1, l2]);
+      expect(vertex.position!.closeTo(const Vec2(2, 0)), isTrue);
     });
 
     test('previewPositions tracks collection and clears on commit', () {

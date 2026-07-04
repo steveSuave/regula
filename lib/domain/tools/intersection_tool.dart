@@ -2,18 +2,17 @@ import '../commands/add_object_command.dart';
 import '../construction/geo_object.dart';
 import '../construction/objects/intersection_point.dart';
 import '../math/vec2.dart';
+import 'point_resolution.dart';
 import 'tool.dart';
 
 /// Collects two distinct curves (lines and/or circles; segments, rays,
 /// arcs and sectors count through their carriers), then creates the
 /// [IntersectionPoint] branch nearest the second tap.
 ///
-/// Branch picking probes both branch objects and keeps the closer one, so
-/// the choice rides `IntersectionPoint`'s documented deterministic
-/// ordering instead of duplicating the intersection dispatch. Curves that
-/// don't currently intersect still commit (branch 0): the point starts
-/// undefined and appears when the curves are dragged together, like every
-/// other derived object.
+/// Branch picking rides the shared [nearestIntersectionBranch] helper.
+/// Curves that don't currently intersect still commit (branch 0): the
+/// point starts undefined and appears when the curves are dragged
+/// together, like every other derived object.
 ///
 /// Like `TwoLineTool`, nothing is created on other taps: both inputs must
 /// be existing curves, so empty-canvas, point and angle taps are ignored.
@@ -58,7 +57,9 @@ class IntersectionTool implements ToolInputPreview {
         IntersectionPoint(
           curve1: first,
           curve2: hit,
-          branchIndex: _nearestBranch(first, hit, input.position),
+          branchIndex:
+              nearestIntersectionBranch(first, hit, input.position)?.index ??
+                  0,
           id: newId(),
         ),
       ),
@@ -70,25 +71,6 @@ class IntersectionTool implements ToolInputPreview {
     _first = null;
     _firstTap = null;
   }
-}
-
-/// Which branch of `first ∩ second` lies nearest [tap]. The probe objects
-/// are never added to a construction — they exist only to evaluate the
-/// two branch positions. A tie, a single intersection (the clamped index
-/// makes both probes coincide) and no intersection all resolve to 0.
-int _nearestBranch(GeoObject first, GeoObject second, Vec2 tap) {
-  IntersectionPoint probe(int branch) => IntersectionPoint(
-    curve1: first,
-    curve2: second,
-    branchIndex: branch,
-    id: 'branch-probe-$branch',
-  );
-  final p0 = probe(0).position;
-  final p1 = probe(1).position;
-  if (p0 == null || p1 == null) {
-    return 0;
-  }
-  return p1.distanceTo(tap) < p0.distanceTo(tap) ? 1 : 0;
 }
 
 /// [tap] projected onto [curve]'s live carrier (orthogonally for lines,
