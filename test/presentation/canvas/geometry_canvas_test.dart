@@ -158,6 +158,46 @@ void main() {
     expect(objectCount(), 12);
   });
 
+  testWidgets(
+      'parallelogram macro via the shapes menu: three taps, one undo unit',
+      (tester) async {
+    await pumpEditor(tester);
+
+    await tester.tap(find.byIcon(Icons.crop_square));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Parallelogram (three corners)'));
+    await tester.pumpAndSettle();
+
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+    await tester.tapAt(origin + const Offset(100, 200));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(200, 200));
+    await tester.pump();
+    expect(objectCount(), 0,
+        reason: 'nothing is committed until the third corner lands');
+
+    await tester.tapAt(origin + const Offset(250, 100));
+    await tester.pump();
+    expect(objectCount(), 10,
+        reason: '3 free points + 2 sides + 2 parallels + corner + 2 sides');
+
+    // D = A + (C − B): screen (150, 100).
+    final corner = container
+        .read(constructionProvider)
+        .construction
+        .objects
+        .whereType<IntersectionPoint>()
+        .single;
+    expect(corner.position!.x, closeTo(150, 1e-9));
+    expect(corner.position!.y, closeTo(-100, 1e-9),
+        reason: 'world is y-up: screen y 100 is world y -100');
+
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(objectCount(), 0,
+        reason: 'the whole parallelogram is one undo unit');
+  });
+
   testWidgets('undo mid-collection clears collected input, not an exception',
       (tester) async {
     await pumpEditor(tester);
