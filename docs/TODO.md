@@ -138,11 +138,11 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] Verification: analyze + tests green, goldens regenerated (dash + label scenes), web smoke re-run with drive.js icon comment updated (564 tests, SMOKE PASS with 10 icons; the Phase 17 features themselves are widget-tested — drive.js pixel sections not extended, per the parallelogram precedent)
 
 ## Phase 18 — Quadrilateral macros
-- [ ] `mirrorPointAcross` scaffolding helper (hidden perpendicular + branch-0 foot + `SegmentRatioPoint` ratio 2 — continuous under drags across the axis, unlike circle-branch mirroring; own test file)
-- [ ] `RectangleMacroTool` (2 corner taps + position-only height tap; hidden perpendiculars through A/B + parallel-to-AB through C; D = branch-0 line∩line; documents the `PointOnObject` analytic-parameter caveat)
-- [ ] `RightTrapeziumMacroTool` (3 taps A, B, C; D = branch-0 intersection of perpendicular-through-A with parallel-to-AB-through-C)
-- [ ] `RhombusMacroTool` (2 side taps + position-only direction tap; C = `PointOnObject.near` on hidden `CompassCircle(A, B, center: B)`; D via the parallelogram trick)
-- [ ] `IsoscelesTrapeziumMacroTool` (3 taps A, B, C; D = C mirrored across the perpendicular bisector of AB; UI label "Isosceles trapezium", equilateral-trapezium synonym noted in PLAN)
-- [ ] `KiteMacroTool` (3 taps apex A, side vertex B, apex C; hidden diagonal segment AC as the mirror axis; D = B mirrored)
-- [ ] Wiring: Macros flyout rows + `macrosActive` check, `AppAction` entries, `X R`/`X H`/`X K`/`X I`/`X L` chords, cheat sheet auto-updates
-- [ ] Tests per tool (tap flow, invariant checked numerically and after dragging each free corner incl. across-axis drags, one undo unit, degeneracy round-trip, hidden scaffolding) + toolbar widget test + web smoke re-run
+- [x] `mirrorPointAcross` scaffolding helper (hidden perpendicular + branch-0 foot + `SegmentRatioPoint` ratio 2 — continuous under drags across the axis, unlike circle-branch mirroring; own test file)
+- [x] `RectangleMacroTool` (2 corner taps + position-only height tap; hidden perpendiculars through A/B + parallel-to-AB through C; D = branch-0 line∩line; documents the `PointOnObject` analytic-parameter caveat)
+- [x] `RightTrapeziumMacroTool` (3 taps A, B, C; D = branch-0 intersection of perpendicular-through-A with parallel-to-AB-through-C)
+- [x] `RhombusMacroTool` (2 side taps + position-only direction tap; C = `PointOnObject.near` on hidden `CompassCircle(A, B, center: B)`; D via the parallelogram trick; zero-radius/center-tap degeneracies fall back to parameter 0)
+- [x] `IsoscelesTrapeziumMacroTool` (3 taps A, B, C; D = C mirrored across the perpendicular bisector of AB; UI label "Isosceles trapezium", equilateral-trapezium synonym noted in PLAN)
+- [x] `KiteMacroTool` (3 taps apex A, side vertex B, apex C; hidden diagonal segment AC as the mirror axis; D = B mirrored; B on the diagonal = flat kite, not an error)
+- [x] Wiring: Macros flyout rows + `macrosActive` check, `AppAction` entries, `X R`/`X H`/`X K`/`X I`/`X L` chords, cheat sheet auto-updates
+- [x] Tests per tool (tap flow, invariant checked numerically and after dragging each free corner incl. across-axis drags, one undo unit, degeneracy round-trip, hidden scaffolding) + toolbar widget test + web smoke re-run (596 tests green, SMOKE PASS — Square stays the Macros menu's row 1, so drive.js's macro section is untouched)
