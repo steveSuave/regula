@@ -1,0 +1,21 @@
+test/presentation/goldens/object_kinds_golden_test.dart
+  s_c15ee795841d01::t_023694e27e5b31 1-297
+dart_test.yaml
+  s_c15ee795841d01::t_90282bc6b030c2 1-5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "5c30b5e94305b9bf95aba6ed649ecf5d55a371dd",
+  "prompts": {},
+  "sessions": {
+    "s_c15ee795841d01": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4f039a1c-2a0d-4ca4-85e7-f6f534671fab",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
