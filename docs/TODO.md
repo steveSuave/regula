@@ -93,10 +93,10 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] Trapezium macro tool (PLAN updated first with the point story: three corner taps + a *position-only* fourth tap projecting D onto the hidden parallel-to-AB through C as a `PointOnObject` — AB ∥ CD by construction; the 4th tap never consumes an existing point; degenerate collections fall back to parameter 0 instead of `PointOnObject.near`'s throw)
 
 ## Phase 11 — Keyboard shortcuts (`lib/presentation/shortcuts/`)
-- [ ] `Shortcuts` / `Actions` wiring + central `ShortcutTable`
-- [ ] All bindings from PLAN's shortcut tables
-- [ ] Cheat-sheet overlay (`?`)
-- [ ] Widget tests sending key events
+- [x] `Shortcuts` / `Actions` wiring + central `ShortcutTable` (landed as a root `Focus` + pure `ShortcutResolver` instead — PLAN updated first: leader chords and the focused-text-field guard don't fit `ShortcutActivator`'s single-stroke model; the table stays the single source of truth)
+- [x] All bindings from PLAN's shortcut tables (tools, G/X chords, undo/redo on either primary modifier, select-all, hide/reveal, Del/Backspace via the extracted `deleteSelectionWithConfirmation`, file, theme, zoom/fit/nudge — arrow-key nudge finally wires `CanvasViewport.pannedByScreen`; deferred per PLAN: `I` (no intersection tool exists) and Tab-cycle (needs cursor tracking))
+- [x] Cheat-sheet overlay (`?`) (in-tree overlay, not a dialog route — a route's focus scope would cut `AppShortcuts` off from keys; Esc only closes the sheet, any other shortcut closes it *and* fires)
+- [x] Widget tests sending key events (18 editor wiring tests + 4 cheat-sheet tests + table/resolver units; web smoke extended with a real-browser keyboard section — SMOKE PASS)
 
 ## Phase 12 — Tests & polish
 - [ ] Widget tests for representative tool flows

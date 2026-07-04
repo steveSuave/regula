@@ -1,0 +1,510 @@
+import 'package:flutter/services.dart';
+
+/// Everything a keyboard shortcut can do, by semantic name. The editor
+/// screen maps each action to behaviour in one exhaustive switch, so a
+/// binding added here without wiring fails to compile rather than
+/// silently doing nothing.
+enum AppAction {
+  // Selection / app level.
+  returnToMoveSelect,
+  deleteSelection,
+  undo,
+  redo,
+  selectAll,
+  saveFile,
+  openFile,
+  newFile,
+  toggleTheme,
+  hideSelection,
+  revealAll,
+  toggleCheatSheet,
+  // Viewport.
+  zoomIn,
+  zoomOut,
+  zoomTo100,
+  fitView,
+  nudgeLeft,
+  nudgeRight,
+  nudgeUp,
+  nudgeDown,
+  // Tools (single letter).
+  pointTool,
+  lineTool,
+  segmentTool,
+  rayTool,
+  circleTool,
+  midpointTool,
+  angleBisectorTool,
+  vertexAngleTool,
+  lineAngleTool,
+  perpendicularTool,
+  parallelTool,
+  compassTool,
+  // Constructions behind the G leader.
+  centroidTool,
+  orthocenterTool,
+  incenterTool,
+  circumcenterTool,
+  threePointCircleTool,
+  segmentRatioTool,
+  arcTool,
+  sectorTool,
+  // Shape macros behind the X leader.
+  squareMacroTool,
+  parallelogramMacroTool,
+  trapeziumMacroTool,
+}
+
+/// Cheat-sheet grouping, mirroring the PLAN's shortcut tables.
+enum ShortcutSection {
+  appLevel('Selection & app'),
+  viewport('Viewport'),
+  tools('Tools'),
+  constructions('Constructions (G, then…)'),
+  macros('Shape macros (X, then…)');
+
+  const ShortcutSection(this.title);
+
+  final String title;
+}
+
+/// One key press with its required modifier state.
+///
+/// [shift] is three-valued: `true` requires Shift, `false` forbids it
+/// (so `H` and `Shift+H` are distinct bindings), and `null` accepts
+/// either — for keys like `=`/`+` where the shifted and unshifted
+/// characters should behave the same.
+///
+/// [primary] models the PLAN's "Ctrl/Cmd": `true` matches when either
+/// Control or Meta is down, `false` requires both up. Alt is always
+/// required to be up — no binding uses it, and an Alt-modified letter
+/// types special characters on macOS.
+class KeyStroke {
+  const KeyStroke(this.key, {this.shift = false, this.primary = false});
+
+  final LogicalKeyboardKey key;
+  final bool? shift;
+  final bool primary;
+
+  bool matches(
+    LogicalKeyboardKey pressed, {
+    required bool shiftDown,
+    required bool controlDown,
+    required bool metaDown,
+    required bool altDown,
+  }) {
+    if (pressed != key || altDown) {
+      return false;
+    }
+    if (shift != null && shift != shiftDown) {
+      return false;
+    }
+    return primary == (controlDown || metaDown);
+  }
+}
+
+/// One row of the shortcut table: a one- or two-stroke [sequence]
+/// triggering [action]. Two-stroke sequences are leader chords — the
+/// first stroke is consumed and the resolver waits for the second.
+///
+/// [repeats] lets a held key auto-repeat the action (viewport nudge and
+/// zoom); everything else fires once per physical press.
+///
+/// [showInCheatSheet] hides redundant alternates (numpad twins,
+/// `Backspace` next to `Delete`) from the overlay while keeping them
+/// live; [display] is the human-readable key text the cheat sheet and
+/// tooltips render.
+class ShortcutBinding {
+  const ShortcutBinding({
+    required this.sequence,
+    required this.action,
+    required this.label,
+    required this.section,
+    required this.display,
+    this.repeats = false,
+    this.showInCheatSheet = true,
+  });
+
+  /// One stroke, or two for a leader chord — enforced by the table test
+  /// (a const constructor can't assert on a list's length).
+
+  final List<KeyStroke> sequence;
+  final AppAction action;
+  final String label;
+  final ShortcutSection section;
+  final String display;
+  final bool repeats;
+  final bool showInCheatSheet;
+}
+
+/// A `G`-leader chord (constructions).
+ShortcutBinding _g(
+  LogicalKeyboardKey second,
+  AppAction action,
+  String label,
+  String display,
+) => ShortcutBinding(
+  sequence: [const KeyStroke(LogicalKeyboardKey.keyG), KeyStroke(second)],
+  action: action,
+  label: label,
+  section: ShortcutSection.constructions,
+  display: display,
+);
+
+/// An `X`-leader chord (shape macros).
+ShortcutBinding _x(
+  LogicalKeyboardKey second,
+  AppAction action,
+  String label,
+  String display,
+) => ShortcutBinding(
+  sequence: [const KeyStroke(LogicalKeyboardKey.keyX), KeyStroke(second)],
+  action: action,
+  label: label,
+  section: ShortcutSection.macros,
+  display: display,
+);
+
+/// The binding table — the single source of truth for every keyboard
+/// shortcut (PLAN "Keyboard shortcuts"). The cheat-sheet overlay renders
+/// it; the resolver matches against it; `shortcut_table_test.dart`
+/// rejects ambiguous entries.
+///
+/// Deliberately absent, per PLAN: `I` (no intersection tool exists yet)
+/// and `Tab` object cycling (needs cursor tracking; Tab traverses focus
+/// meanwhile). `Space`+drag panning lives in the canvas's gesture code,
+/// not here — it is a modifier for a pointer gesture, not a key action.
+final List<ShortcutBinding> shortcutTable = [
+  // ── Selection / app level ────────────────────────────────────────
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.escape)],
+    action: AppAction.returnToMoveSelect,
+    label: 'Cancel tool, back to move/select',
+    section: ShortcutSection.appLevel,
+    display: 'Esc',
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.keyV)],
+    action: AppAction.returnToMoveSelect,
+    label: 'Move/select tool',
+    section: ShortcutSection.appLevel,
+    display: 'V',
+    showInCheatSheet: false,
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.delete)],
+    action: AppAction.deleteSelection,
+    label: 'Delete selection (cascades to dependents)',
+    section: ShortcutSection.appLevel,
+    display: 'Del / ⌫',
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.backspace)],
+    action: AppAction.deleteSelection,
+    label: 'Delete selection',
+    section: ShortcutSection.appLevel,
+    display: '⌫',
+    showInCheatSheet: false,
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.keyZ, primary: true)],
+    action: AppAction.undo,
+    label: 'Undo',
+    section: ShortcutSection.appLevel,
+    display: 'Ctrl/⌘ Z',
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.keyZ, primary: true, shift: true)],
+    action: AppAction.redo,
+    label: 'Redo',
+    section: ShortcutSection.appLevel,
+    display: 'Ctrl/⌘ ⇧ Z',
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.keyY, primary: true)],
+    action: AppAction.redo,
+    label: 'Redo',
+    section: ShortcutSection.appLevel,
+    display: 'Ctrl/⌘ Y',
+    showInCheatSheet: false,
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.keyA, primary: true)],
+    action: AppAction.selectAll,
+    label: 'Select all',
+    section: ShortcutSection.appLevel,
+    display: 'Ctrl/⌘ A',
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.keyS, primary: true)],
+    action: AppAction.saveFile,
+    label: 'Save construction',
+    section: ShortcutSection.appLevel,
+    display: 'Ctrl/⌘ S',
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.keyO, primary: true)],
+    action: AppAction.openFile,
+    label: 'Open construction',
+    section: ShortcutSection.appLevel,
+    display: 'Ctrl/⌘ O',
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.keyN, primary: true)],
+    action: AppAction.newFile,
+    label: 'New construction',
+    section: ShortcutSection.appLevel,
+    display: 'Ctrl/⌘ N',
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.keyD, primary: true)],
+    action: AppAction.toggleTheme,
+    label: 'Toggle dark mode',
+    section: ShortcutSection.appLevel,
+    display: 'Ctrl/⌘ D',
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.keyH)],
+    action: AppAction.hideSelection,
+    label: 'Hide selected objects',
+    section: ShortcutSection.appLevel,
+    display: 'H',
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.keyH, shift: true)],
+    action: AppAction.revealAll,
+    label: 'Reveal all hidden objects',
+    section: ShortcutSection.appLevel,
+    display: '⇧ H',
+  ),
+  const ShortcutBinding(
+    // Shifted `/` arrives as `?` on some platforms and as shifted slash
+    // on others; the twin binding below catches the latter.
+    sequence: [KeyStroke(LogicalKeyboardKey.question, shift: null)],
+    action: AppAction.toggleCheatSheet,
+    label: 'Keyboard shortcut cheat sheet',
+    section: ShortcutSection.appLevel,
+    display: '?',
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.slash, shift: true)],
+    action: AppAction.toggleCheatSheet,
+    label: 'Keyboard shortcut cheat sheet',
+    section: ShortcutSection.appLevel,
+    display: '?',
+    showInCheatSheet: false,
+  ),
+  // ── Viewport ─────────────────────────────────────────────────────
+  const ShortcutBinding(
+    // `=` and its shifted `+` both zoom in, so a bare press works on
+    // every layout without hunting for the plus.
+    sequence: [KeyStroke(LogicalKeyboardKey.equal, shift: null)],
+    action: AppAction.zoomIn,
+    label: 'Zoom in',
+    section: ShortcutSection.viewport,
+    display: '+ / =',
+    repeats: true,
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.add, shift: null)],
+    action: AppAction.zoomIn,
+    label: 'Zoom in',
+    section: ShortcutSection.viewport,
+    display: '+',
+    repeats: true,
+    showInCheatSheet: false,
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.numpadAdd)],
+    action: AppAction.zoomIn,
+    label: 'Zoom in',
+    section: ShortcutSection.viewport,
+    display: 'Numpad +',
+    repeats: true,
+    showInCheatSheet: false,
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.minus)],
+    action: AppAction.zoomOut,
+    label: 'Zoom out',
+    section: ShortcutSection.viewport,
+    display: '−',
+    repeats: true,
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.numpadSubtract)],
+    action: AppAction.zoomOut,
+    label: 'Zoom out',
+    section: ShortcutSection.viewport,
+    display: 'Numpad −',
+    repeats: true,
+    showInCheatSheet: false,
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.digit0)],
+    action: AppAction.zoomTo100,
+    label: 'Zoom to 100 %',
+    section: ShortcutSection.viewport,
+    display: '0',
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.keyF)],
+    action: AppAction.fitView,
+    label: 'Fit construction to view',
+    section: ShortcutSection.viewport,
+    display: 'F',
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.arrowLeft)],
+    action: AppAction.nudgeLeft,
+    label: 'Nudge view',
+    section: ShortcutSection.viewport,
+    display: '← ↑ ↓ →',
+    repeats: true,
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.arrowRight)],
+    action: AppAction.nudgeRight,
+    label: 'Nudge view',
+    section: ShortcutSection.viewport,
+    display: '→',
+    repeats: true,
+    showInCheatSheet: false,
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.arrowUp)],
+    action: AppAction.nudgeUp,
+    label: 'Nudge view',
+    section: ShortcutSection.viewport,
+    display: '↑',
+    repeats: true,
+    showInCheatSheet: false,
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.arrowDown)],
+    action: AppAction.nudgeDown,
+    label: 'Nudge view',
+    section: ShortcutSection.viewport,
+    display: '↓',
+    repeats: true,
+    showInCheatSheet: false,
+  ),
+  // ── Tools ────────────────────────────────────────────────────────
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.keyP)],
+    action: AppAction.pointTool,
+    label: 'Point',
+    section: ShortcutSection.tools,
+    display: 'P',
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.keyL)],
+    action: AppAction.lineTool,
+    label: 'Line through two points',
+    section: ShortcutSection.tools,
+    display: 'L',
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.keyS)],
+    action: AppAction.segmentTool,
+    label: 'Segment',
+    section: ShortcutSection.tools,
+    display: 'S',
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.keyR)],
+    action: AppAction.rayTool,
+    label: 'Ray',
+    section: ShortcutSection.tools,
+    display: 'R',
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.keyC)],
+    action: AppAction.circleTool,
+    label: 'Circle (center, then rim)',
+    section: ShortcutSection.tools,
+    display: 'C',
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.keyM)],
+    action: AppAction.midpointTool,
+    label: 'Midpoint',
+    section: ShortcutSection.tools,
+    display: 'M',
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.keyB)],
+    action: AppAction.angleBisectorTool,
+    label: 'Angle bisector',
+    section: ShortcutSection.tools,
+    display: 'B',
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.keyA)],
+    action: AppAction.vertexAngleTool,
+    label: 'Angle at vertex',
+    section: ShortcutSection.tools,
+    display: 'A',
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.keyA, shift: true)],
+    action: AppAction.lineAngleTool,
+    label: 'Angle between two lines',
+    section: ShortcutSection.tools,
+    display: '⇧ A',
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.keyT)],
+    action: AppAction.perpendicularTool,
+    label: 'Perpendicular line',
+    section: ShortcutSection.tools,
+    display: 'T',
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.keyT, shift: true)],
+    action: AppAction.parallelTool,
+    label: 'Parallel line',
+    section: ShortcutSection.tools,
+    display: '⇧ T',
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.keyO)],
+    action: AppAction.compassTool,
+    label: 'Compass circle',
+    section: ShortcutSection.tools,
+    display: 'O',
+  ),
+  // ── G leader: constructions ──────────────────────────────────────
+  _g(LogicalKeyboardKey.keyC, AppAction.centroidTool, 'Centroid', 'G C'),
+  _g(LogicalKeyboardKey.keyO, AppAction.orthocenterTool, 'Orthocenter', 'G O'),
+  _g(LogicalKeyboardKey.keyI, AppAction.incenterTool, 'Incenter', 'G I'),
+  _g(
+    LogicalKeyboardKey.keyU,
+    AppAction.circumcenterTool,
+    'Circumcenter',
+    'G U',
+  ),
+  _g(
+    LogicalKeyboardKey.digit3,
+    AppAction.threePointCircleTool,
+    'Circle through three points',
+    'G 3',
+  ),
+  _g(
+    LogicalKeyboardKey.keyR,
+    AppAction.segmentRatioTool,
+    'Segment-ratio point…',
+    'G R',
+  ),
+  _g(LogicalKeyboardKey.keyA, AppAction.arcTool, 'Arc (three points)', 'G A'),
+  _g(LogicalKeyboardKey.keyS, AppAction.sectorTool, 'Sector', 'G S'),
+  // ── X leader: shape macros ───────────────────────────────────────
+  _x(LogicalKeyboardKey.keyS, AppAction.squareMacroTool, 'Square', 'X S'),
+  _x(
+    LogicalKeyboardKey.keyP,
+    AppAction.parallelogramMacroTool,
+    'Parallelogram',
+    'X P',
+  ),
+  _x(LogicalKeyboardKey.keyT, AppAction.trapeziumMacroTool, 'Trapezium', 'X T'),
+];
