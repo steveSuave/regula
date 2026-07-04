@@ -972,6 +972,59 @@ void main() {
     expect(container.read(selectionProvider), isEmpty);
   });
 
+  testWidgets(
+      'dragging a circumcircle vertex recomputes the circle, and undo '
+      'restores it', (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+
+    await tester.tap(find.byIcon(Icons.circle_outlined));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Circle through three points'));
+    await tester.pumpAndSettle();
+    await tester.tapAt(origin + const Offset(100, 100));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(300, 100));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(200, 250));
+    await tester.pump();
+    container.read(toolProvider.notifier).deactivate(); // move/select mode
+    await tester.pump();
+
+    ThreePointCircle circle() => container
+        .read(constructionProvider)
+        .construction
+        .objects
+        .whereType<ThreePointCircle>()
+        .single;
+    final centerBefore = circle().circle!.center;
+
+    // Drag the apex vertex; the circumcircle must track it live and land
+    // equidistant from all three vertices after the gesture.
+    final drag = await tester.startGesture(origin + const Offset(200, 250));
+    await drag.moveTo(origin + const Offset(200, 320));
+    await tester.pump();
+    expect(circle().circle!.center, isNot(centerBefore),
+        reason: 'the preview recomputes dependents frame by frame');
+    await drag.up();
+    await tester.pump();
+
+    final moved = circle().circle!;
+    for (final vertex in const [
+      Vec2(100, -100),
+      Vec2(300, -100),
+      Vec2(200, -320),
+    ]) {
+      expect(moved.center.distanceTo(vertex),
+          closeTo(moved.radius, defaultEpsilon));
+    }
+
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(circle().circle!.center.closeTo(centerBefore), isTrue,
+        reason: 'undoing the drag restores the dependent too');
+  });
+
   testWidgets('deactivating the point tool stops point placement',
       (tester) async {
     await pumpEditor(tester);
