@@ -1,0 +1,19 @@
+test/presentation/canvas/geometry_canvas_test.dart
+  s_c15ee795841d01::t_2468017a1ea7a2 975-1027
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ad5e3d376b4a5830dcfabbfac67531f37b86088f",
+  "prompts": {},
+  "sessions": {
+    "s_c15ee795841d01": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4f039a1c-2a0d-4ca4-85e7-f6f534671fab",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
