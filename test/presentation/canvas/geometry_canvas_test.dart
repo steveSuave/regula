@@ -1108,6 +1108,55 @@ void main() {
   });
 
   testWidgets(
+      'dragging a compass circle moves only its center — the radius '
+      'points stay put', (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+
+    await tester.tap(find.byIcon(Icons.circle_outlined));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Compass (radius points, then center)'));
+    await tester.pumpAndSettle();
+    await tester.tapAt(origin + const Offset(100, 100)); // radius point 1
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(150, 100)); // radius point 2
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(300, 200)); // center
+    await tester.pump();
+    container.read(toolProvider.notifier).deactivate(); // move/select mode
+    await tester.pump();
+
+    List<Vec2> freePositions() => [
+          for (final object in container
+              .read(constructionProvider)
+              .construction
+              .objects
+              .whereType<FreePoint>())
+            object.position,
+        ];
+
+    // Grab the rim (radius 50, right of the center) and drag.
+    final drag = await tester.startGesture(origin + const Offset(350, 200));
+    await drag.moveTo(origin + const Offset(380, 260));
+    await tester.pump();
+    await drag.up();
+    await tester.pump();
+    expect(freePositions(), [
+      const Vec2(100, -100),
+      const Vec2(150, -100),
+      const Vec2(330, -260),
+    ], reason: 'only the center translates; the radius pair is a measurement');
+
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(freePositions(), [
+      const Vec2(100, -100),
+      const Vec2(150, -100),
+      const Vec2(300, -200),
+    ], reason: 'the whole drag is one undo unit');
+  });
+
+  testWidgets(
       'dragging a circumcircle vertex recomputes the circle, and undo '
       'restores it', (tester) async {
     await pumpEditor(tester);
