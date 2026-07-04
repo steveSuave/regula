@@ -1,0 +1,28 @@
+docs/PLAN.md
+  s_b802c1fa8f6fd0::t_c92fc2e0e6955d 98
+  s_b802c1fa8f6fd0::t_1bb8d99ad07fee 88-89
+  s_b802c1fa8f6fd0::t_d04b46980f11d3 96
+  s_b802c1fa8f6fd0::t_7616fff8a67b1b 70
+  s_b802c1fa8f6fd0::t_42f1af71d3d814 51
+  s_b802c1fa8f6fd0::t_19541d18e9e4e4 261-262
+  s_b802c1fa8f6fd0::t_da09945a6615f9 94
+  s_b802c1fa8f6fd0::t_a6fa1ed7f99bd0 230-234,236-237
+docs/TODO.md
+  s_b802c1fa8f6fd0::t_72efa037e473e1 131-148
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "5ba76c958b06a9a4a741120d83485e859ad6528d",
+  "prompts": {},
+  "sessions": {
+    "s_b802c1fa8f6fd0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "17efa3f0-97e2-4404-a9f3-cbfa554b401f",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
