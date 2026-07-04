@@ -1,0 +1,40 @@
+test/presentation/theme/app_theme_test.dart
+  s_729e817b2ed70e::t_7fc56a583627d1 1-60
+test/smoke_test.dart
+  s_729e817b2ed70e::t_10c00f536ba365 1,6,10-19
+lib/application/providers/preferences_provider.g.dart
+  s_729e817b2ed70e::t_b7378aa7a26a63 1-79
+test/application/providers/theme_provider_test.dart
+  s_729e817b2ed70e::t_fe8d36be87538e 1-72
+lib/application/providers/theme_provider.g.dart
+  s_729e817b2ed70e::t_b7378aa7a26a63 1-87
+test/presentation/theme_toggle_test.dart
+  s_729e817b2ed70e::t_9ee42fd114030d 1-52
+lib/application/providers/theme_provider.dart
+  s_729e817b2ed70e::t_0cc480662a451a 1-46
+lib/main.dart
+  s_729e817b2ed70e::t_4b7a4025c130fd 48,50-60,63,67,70-72
+  s_729e817b2ed70e::t_54c7f1b44cb45e 3,9-10
+  s_729e817b2ed70e::t_5295382e651632 497-508
+  s_729e817b2ed70e::t_4fcae267276fc1 496
+lib/presentation/theme/app_theme.dart
+  s_729e817b2ed70e::t_14b4af419d1fa5 1-50
+lib/application/providers/preferences_provider.dart
+  s_729e817b2ed70e::t_8515778c79d67d 1-17
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "c9edb992ba7a79c7e0fd0360724bad2a448dc248",
+  "prompts": {},
+  "sessions": {
+    "s_729e817b2ed70e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1c48dc7e-d00a-4db7-9595-c3e462aa0011",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
