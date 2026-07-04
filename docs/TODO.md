@@ -111,8 +111,8 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] Move Circle (center + rim point) from the two-point menu into the circles menu
 - [x] Rename the two-point menu to **Lines** (line, segment, ray) and absorb perpendicular / parallel / angle bisector — retire the separate line-constructions menu
 - [x] Deselect affordances: double-click on a flyout group icon deactivates its tool (deactivation `GestureDetector` mounts only while the group is active, so the double-tap delay on opening the menu applies only then); every tool now lives in a group, so the group-icon highlight is the one consistent indicator; the active group's tooltip appends "double-click to deselect"
-- [ ] Discoverability in the `?` cheat sheet: unhide `V` (bound to move/select but `showInCheatSheet: false` as an Esc twin) and add display-only rows for the pointer gestures (Space+drag pan, scroll zoom) so panning is findable
-- [ ] Update the shortcut table, cheat sheet, and any goldens/smoke assertions touched by the toolbar change (drive.js indexes app-bar icons by position)
+- [x] Discoverability in the `?` cheat sheet: unhide `V` (bound to move/select but `showInCheatSheet: false` as an Esc twin) and add display-only rows for the pointer gestures (Space+drag pan, scroll zoom, two-finger pan, pinch) via a new `GestureRow` list the resolver never sees
+- [x] Update the shortcut table, cheat sheet, and any goldens/smoke assertions touched by the toolbar change (goldens untouched — the scenes have no app bar; drive.js re-indexed for 9 enabled icons and re-run: SMOKE PASS. New gotcha: with 9 icons the whole action cluster sits right of the window midline, so *every* popup menu — File included — now opens left-aligned to its button; the script clicks left of the icons)
 
 ## Phase 14 — Drag & gesture fixes
 - [ ] `PointOnObject` slides along its host curve via new `SetPointOnObjectParameterCommand` (one command per gesture, preview/rollback per the existing `DragSession` contract — closes the open item carried since Phase 7; dragging stays in the no-tool move/select mode, the dedicated Drag tool idea was shelved)
