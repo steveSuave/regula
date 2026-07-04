@@ -1,0 +1,29 @@
+test/domain/tools/isosceles_triangle_macro_tool_test.dart
+  s_402d41618a9d11::t_609bf5ff05ea01 1-154
+lib/domain/tools/isosceles_triangle_macro_tool.dart
+  s_402d41618a9d11::t_a2f5c12c73455a 1-85
+test/domain/tools/equilateral_triangle_macro_tool_test.dart
+  s_402d41618a9d11::t_800bc04505b085 1-112
+lib/domain/tools/right_triangle_macro_tool.dart
+  s_402d41618a9d11::t_fcdc032ac0b3ee 1-83
+lib/domain/tools/equilateral_triangle_macro_tool.dart
+  s_402d41618a9d11::t_54c0036aced23a 1-36
+test/domain/tools/right_triangle_macro_tool_test.dart
+  s_402d41618a9d11::t_2ab356ef9f3211 1-140
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "0d2e4adb2db8b35229db1215406d96a0a39ea18e",
+  "prompts": {},
+  "sessions": {
+    "s_402d41618a9d11": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b5bee080-981c-41da-94d5-df8864cfa684",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
