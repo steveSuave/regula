@@ -342,6 +342,82 @@ async function canvasSample(page, x, y) {
   const afterSheet = darkBlobs(PNG.sync.read(await page.screenshot()), 70);
   check(afterSheet.length === 2, 'the construction survived the sheet');
 
+  // ---- Phase 20: smart point placement (glue + intersection snap) ----
+  // Empty the canvas (two Ctrl+Z for the two Phase 11 points — File >
+  // New would raise the discard-confirmation dialog and eat the next
+  // clicks), then: a horizontal segment; P-tap 4 px off it (must glue a
+  // PointOnObject, not drop a free point); P-tap far away (free point);
+  // a vertical segment crossing the first; P-tap ~3 px from the crossing
+  // (must snap an IntersectionPoint). Verified through the saved
+  // document's types — pixel blobs can't tell a glued dot from a free
+  // one.
+  await page.keyboard.press('Control+z');
+  await page.waitForTimeout(200);
+  await page.keyboard.press('Control+z');
+  await page.waitForTimeout(300);
+  const cleared = darkBlobs(PNG.sync.read(await page.screenshot()), 70);
+  check(cleared.length === 0,
+        `Ctrl+Z twice empties the canvas for Phase 20 (${cleared.length} blobs left)`);
+
+  const linesX = icons[2];
+  const segmentRow = async () => {
+    await page.mouse.click(linesX, 28);
+    await page.waitForTimeout(500);
+    await page.mouse.click(linesX - 60, 8 + 48 + 24); // second item: Segment
+    await page.waitForTimeout(300);
+  };
+  await segmentRow();
+  await page.mouse.click(350, 300);
+  await page.waitForTimeout(200);
+  await page.mouse.click(650, 300);
+  await page.waitForTimeout(300);
+
+  await page.keyboard.press('p');
+  await page.waitForTimeout(200);
+  await page.mouse.click(500, 304); // 4 px off the segment: glue
+  await page.waitForTimeout(200);
+  await page.mouse.click(500, 150); // empty canvas: free point
+  await page.waitForTimeout(200);
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(200);
+
+  await segmentRow();
+  await page.mouse.click(550, 200);
+  await page.waitForTimeout(200);
+  await page.mouse.click(550, 400); // crosses the first segment at (550, 300)
+  await page.waitForTimeout(300);
+
+  await page.keyboard.press('p');
+  await page.waitForTimeout(200);
+  await page.mouse.click(552, 302); // ~3 px from the crossing: intersection
+  await page.waitForTimeout(200);
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(300);
+
+  await page.mouse.click(fileX, 28);
+  await page.waitForTimeout(500);
+  const snapDownload = page.waitForEvent('download', { timeout: 5000 });
+  await page.mouse.click(fileX + 30, 8 + 2 * 48 + 24); // third item: Save…
+  let snapDoc = null;
+  try {
+    snapDoc = JSON.parse(fs.readFileSync(await (await snapDownload).path(), 'utf8'));
+  } catch (e) {
+    console.log('download failed:', String(e));
+  }
+  check(snapDoc !== null, 'Phase 20 scene saves and parses');
+  if (snapDoc) {
+    const kinds = snapDoc.objects.map((o) => o.type);
+    const count = (t) => kinds.filter((k) => k === t).length;
+    console.log('Phase 20 saved kinds:', kinds.join(' '));
+    check(count('PointOnObject') === 1,
+          'P-tap on the segment glued a PointOnObject');
+    check(count('IntersectionPoint') === 1,
+          'P-tap near the crossing snapped an IntersectionPoint');
+    check(count('FreePoint') === 5 && count('Segment') === 2,
+          'segment endpoints and the off-curve tap stayed free points');
+  }
+  await page.waitForTimeout(400);
+
   console.log('console errors:', errors.length ? errors : 'none');
   check(errors.length === 0, 'no console errors');
 

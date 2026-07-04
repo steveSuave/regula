@@ -36,12 +36,22 @@ class CanvasHitTester {
     Iterable<GeoObject> objects,
     Vec2 point,
     double threshold,
-  ) {
-    GeoObject? best;
-    var bestPriority = 0;
-    var bestDistance = double.infinity;
+  ) =>
+      hitTestAll(objects, point, threshold).firstOrNull;
 
+  /// Every visible, defined object within [threshold] world units of
+  /// [point], best first — the same (priority, distance) order as
+  /// [hitTest], with ties going to the object added latest (topmost).
+  /// Point resolution reads the runners-up to spot curve crossings.
+  List<GeoObject> hitTestAll(
+    Iterable<GeoObject> objects,
+    Vec2 point,
+    double threshold,
+  ) {
+    final candidates = <(GeoObject, int, double, int)>[];
+    var index = 0;
     for (final object in objects) {
+      index++;
       if (!object.attributes.visible || !object.isDefined) {
         continue;
       }
@@ -55,16 +65,18 @@ class CanvasHitTester {
         GeoLine() => 2,
         GeoAngle() => 3,
       };
-      final atLeastAsGood = best == null ||
-          priority < bestPriority ||
-          (priority == bestPriority && distance <= bestDistance);
-      if (atLeastAsGood) {
-        best = object;
-        bestPriority = priority;
-        bestDistance = distance;
-      }
+      candidates.add((object, priority, distance, index));
     }
-    return best;
+    candidates.sort((a, b) {
+      if (a.$2 != b.$2) {
+        return a.$2.compareTo(b.$2);
+      }
+      if (a.$3 != b.$3) {
+        return a.$3.compareTo(b.$3);
+      }
+      return b.$4.compareTo(a.$4); // exact tie: latest inserted first
+    });
+    return [for (final c in candidates) c.$1];
   }
 
   /// The visible, defined objects wholly inside the axis-aligned world

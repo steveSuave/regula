@@ -1,15 +1,16 @@
 import '../commands/add_object_command.dart';
-import '../construction/geo_object.dart';
-import '../construction/objects/free_point.dart';
+import 'point_resolution.dart';
 import 'tool.dart';
 
-/// Places a [FreePoint] wherever the user taps.
+/// Places a point wherever the user taps, resolved through the shared
+/// [resolvePoint] ladder: a tap near the crossing of two curves snaps to
+/// an `IntersectionPoint`, a tap near one curve glues a `PointOnObject`
+/// to it, anywhere else drops a `FreePoint`. Taps that hit an existing
+/// point are ignored — stacking a coincident point on top of one is never
+/// what the user meant.
 ///
 /// Stateless: every usable input immediately commits an
-/// [AddObjectCommand]. Taps that hit an existing point are ignored —
-/// stacking a coincident free point on top of one is never what the user
-/// meant. Taps on lines/circles still place an unconstrained free point;
-/// snapping those to a `PointOnObject` is Phase 6.
+/// [AddObjectCommand].
 class PointTool implements Tool {
   PointTool({required this.newId});
 
@@ -20,12 +21,11 @@ class PointTool implements Tool {
 
   @override
   ToolResult onInput(ToolInput input) {
-    if (input.hit is GeoPoint) {
+    final resolved = resolvePoint(input, newId);
+    if (!resolved.isNew) {
       return const ToolIgnored();
     }
-    return ToolCommitted(
-      AddObjectCommand(FreePoint(id: newId(), position: input.position)),
-    );
+    return ToolCommitted(AddObjectCommand(resolved.point));
   }
 
   @override
