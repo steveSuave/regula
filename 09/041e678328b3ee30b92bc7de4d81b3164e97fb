@@ -1,0 +1,24 @@
+lib/main.dart
+  s_6f73592f33ff79::t_92112c2c188fc5 488-502
+  s_6f73592f33ff79::t_417b5143b4872a 246
+  s_6f73592f33ff79::t_426121a6994da1 38
+test/presentation/canvas/geometry_canvas_test.dart
+  s_6f73592f33ff79::t_d52126176a24a6 117-160
+  s_6f73592f33ff79::t_8c09480251bed5 10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "09041e678328b3ee30b92bc7de4d81b3164e97fb",
+  "prompts": {},
+  "sessions": {
+    "s_6f73592f33ff79": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0aede8dd-22dd-4cb3-968d-cb595996f3cb",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
