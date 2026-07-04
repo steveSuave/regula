@@ -71,6 +71,9 @@ class LineEq {
   /// Orthogonal projection of [p] onto the line (the closest point).
   Vec2 project(Vec2 p) => p - normal * signedDistanceTo(p);
 
+  /// The mirror image of [p] across the line.
+  Vec2 reflect(Vec2 p) => p - normal * (2 * signedDistanceTo(p));
+
   /// The point at signed arc-length [t] along [direction] from
   /// [pointOnLine] — the inverse of [parameterAt].
   ///

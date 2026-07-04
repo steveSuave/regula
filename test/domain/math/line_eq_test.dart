@@ -58,6 +58,13 @@ void main() {
       expect(l.normal.dot(l.direction), 0);
     });
 
+    test('reflect mirrors across the line', () {
+      final l = LineEq(0, 1, -2); // y = 2
+      expect(l.reflect(const Vec2(3, 5)).closeTo(const Vec2(3, -1)), isTrue);
+      // A point on the line is its own image.
+      expect(l.reflect(const Vec2(7, 2)).closeTo(const Vec2(7, 2)), isTrue);
+    });
+
     test('isCollinear on known cases', () {
       expect(
         isCollinear(Vec2.zero, const Vec2(1, 1), const Vec2(2, 2)),
@@ -134,6 +141,33 @@ void main() {
       if (p == q) return;
       final l = LineEq.throughPoints(p, q);
       expect(l.pointAt(l.parameterAt(r)).closeTo(l.project(r), 1e-6), isTrue);
+    });
+
+    Glados3(any.vec2, any.vec2, any.vec2).test('double reflection is identity',
+        (p, q, x) {
+      if (p == q) return;
+      final l = LineEq.throughPoints(p, q);
+      expect(l.reflect(l.reflect(x)).closeTo(x, 1e-6), isTrue);
+    });
+
+    Glados3(any.vec2, any.vec2, any.vec2)
+        .test('reflection negates the signed distance', (p, q, x) {
+      if (p == q) return;
+      final l = LineEq.throughPoints(p, q);
+      expect(
+        l.signedDistanceTo(l.reflect(x)),
+        closeTo(-l.signedDistanceTo(x), 1e-9),
+      );
+    });
+
+    Glados2(any.vec2, any.vec2)
+        .test('reflection across the perpendicular bisector swaps the points',
+            (a, b) {
+      if (a == b) return;
+      final mid = a.lerp(b, 0.5);
+      final bisector = LineEq.pointDirection(mid, (b - a).perpendicular);
+      expect(bisector.reflect(a).closeTo(b, 1e-6), isTrue);
+      expect(bisector.reflect(b).closeTo(a, 1e-6), isTrue);
     });
   });
 }

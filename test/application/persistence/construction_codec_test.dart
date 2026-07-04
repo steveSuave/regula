@@ -7,6 +7,7 @@ import 'package:fgex/domain/construction/geo_object.dart';
 import 'package:fgex/domain/construction/object_attributes.dart';
 import 'package:fgex/domain/construction/objects/angle_bisector_line.dart';
 import 'package:fgex/domain/construction/objects/arc.dart';
+import 'package:fgex/domain/construction/objects/central_reflection_point.dart';
 import 'package:fgex/domain/construction/objects/centroid.dart';
 import 'package:fgex/domain/construction/objects/circle_center_point.dart';
 import 'package:fgex/domain/construction/objects/circumcenter.dart';
@@ -22,10 +23,13 @@ import 'package:fgex/domain/construction/objects/parallel_line.dart';
 import 'package:fgex/domain/construction/objects/perpendicular_line.dart';
 import 'package:fgex/domain/construction/objects/point_on_object.dart';
 import 'package:fgex/domain/construction/objects/ray.dart';
+import 'package:fgex/domain/construction/objects/reflected_point.dart';
+import 'package:fgex/domain/construction/objects/rotated_point.dart';
 import 'package:fgex/domain/construction/objects/sector.dart';
 import 'package:fgex/domain/construction/objects/segment.dart';
 import 'package:fgex/domain/construction/objects/segment_ratio_point.dart';
 import 'package:fgex/domain/construction/objects/three_point_circle.dart';
+import 'package:fgex/domain/construction/objects/translated_point.dart';
 import 'package:fgex/domain/construction/objects/vertex_angle.dart';
 import 'package:fgex/domain/math/vec2.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -108,7 +112,11 @@ Construction buildKitchenSink() {
         branchIndex: 1,
       ),
     )
-    ..add(PointOnObject(id: 'poo', curve: circle, parameter: 1.25));
+    ..add(PointOnObject(id: 'poo', curve: circle, parameter: 1.25))
+    ..add(ReflectedPoint(id: 'refl', point: c, mirror: lineAb))
+    ..add(CentralReflectionPoint(id: 'crefl', point: c, center: a))
+    ..add(RotatedPoint(id: 'rot', point: b, center: a, angle: 0.75))
+    ..add(TranslatedPoint(id: 'trans', point: c, vectorFrom: a, vectorTo: b));
   return construction;
 }
 
@@ -171,6 +179,7 @@ void main() {
       expect((decoded.byId('ratio')! as SegmentRatioPoint).ratio, 2.25);
       expect((decoded.byId('poo')! as PointOnObject).parameter, 1.25);
       expect((decoded.byId('int')! as IntersectionPoint).branchIndex, 1);
+      expect((decoded.byId('rot')! as RotatedPoint).angle, 0.75);
     });
 
     test('preserves the viewport snapshot', () {

@@ -56,6 +56,13 @@ class Vec2 {
   /// This vector rotated 90° counter-clockwise (same length).
   Vec2 get perpendicular => Vec2(-y, x);
 
+  /// This vector rotated by [angle] radians counter-clockwise (same length).
+  Vec2 rotated(double angle) {
+    final cos = math.cos(angle);
+    final sin = math.sin(angle);
+    return Vec2(x * cos - y * sin, x * sin + y * cos);
+  }
+
   /// Linear interpolation: `this` at t = 0, [other] at t = 1.
   ///
   /// t is not clamped, so values outside [0, 1] extrapolate.
