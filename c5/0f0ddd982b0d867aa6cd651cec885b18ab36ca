@@ -1,0 +1,42 @@
+test/domain/commands/set_point_on_object_parameter_command_test.dart
+  s_04096c1d14434b::t_b38e1d33de3f80 1-73
+test/domain/tools/drag_session_test.dart
+  s_04096c1d14434b::t_1044a7d9710e1c 192-194
+  s_04096c1d14434b::t_931bc31a83330a 1-2,4,7,10
+  s_04096c1d14434b::t_32bf5666991e4a 142-191,195-232,239,241-261
+  s_04096c1d14434b::t_fb48112ce1bd12 233-238,240
+lib/domain/commands/set_point_on_object_parameter_command.dart
+  s_04096c1d14434b::t_4eee751c29b87b 1-30
+lib/domain/tools/drag_session.dart
+  s_04096c1d14434b::t_a37af584888712 1-2,5,11,26-31,35,37-39,45-47,55,63-86,95-97,105,120,134-158,160-221
+  s_04096c1d14434b::t_6b415dae36cd1a 159
+lib/domain/construction/construction.dart
+  s_04096c1d14434b::t_d8cdef8df7f1bb 7
+  s_04096c1d14434b::t_1ff12aa7f7ddfd 84-100
+test/presentation/canvas/geometry_canvas_test.dart
+  s_04096c1d14434b::t_3eae1ab16a94cf 1051-1109
+  s_04096c1d14434b::t_b85908855c97bd 1050
+lib/domain/construction/objects/point_on_object.dart
+  s_04096c1d14434b::t_4fc420c929d040 63,66
+  s_04096c1d14434b::t_f06c65c5b310b1 16-18
+  s_04096c1d14434b::t_f5ab996a65ddd4 64-65
+test/domain/construction/construction_test.dart
+  s_04096c1d14434b::t_efbc36e34b3043 8
+  s_04096c1d14434b::t_74926ec3070d99 88-129
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "c50f0ddd982b0d867aa6cd651cec885b18ab36ca",
+  "prompts": {},
+  "sessions": {
+    "s_04096c1d14434b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "529d8c0b-0503-4508-9a65-c99c5ad3dfaf",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
