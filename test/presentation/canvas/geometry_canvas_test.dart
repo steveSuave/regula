@@ -1048,6 +1048,66 @@ void main() {
   });
 
   testWidgets(
+      'dragging a point-on-object slides it along its curve, one undo unit',
+      (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+
+    // A horizontal segment, then a point constrained onto it.
+    await tester.tap(find.byIcon(Icons.timeline));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Segment'));
+    await tester.pumpAndSettle();
+    await tester.tapAt(origin + const Offset(100, 100));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(300, 100));
+    await tester.pump();
+    await tester.tap(find.byIcon(Icons.control_point));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Point on object'));
+    await tester.pumpAndSettle();
+    await tester.tapAt(origin + const Offset(200, 100));
+    await tester.pump();
+    container.read(toolProvider.notifier).deactivate(); // move/select mode
+    await tester.pump();
+
+    PointOnObject point() => container
+        .read(constructionProvider)
+        .construction
+        .objects
+        .whereType<PointOnObject>()
+        .single;
+    expect(point().position, const Vec2(200, -100));
+
+    // Drag well past the pan slop (~36 px), pulling away from the segment:
+    // the point must slide along it, not leave it (and not translate the
+    // segment's endpoints).
+    final drag = await tester.startGesture(origin + const Offset(200, 100));
+    await drag.moveTo(origin + const Offset(260, 220));
+    await tester.pump();
+    expect(point().position, const Vec2(260, -100),
+        reason: 'the preview projects the pointer onto the carrier');
+    await drag.up();
+    await tester.pump();
+    expect(point().position, const Vec2(260, -100));
+
+    final endpoints = container
+        .read(constructionProvider)
+        .construction
+        .objects
+        .whereType<FreePoint>()
+        .map((p) => p.position)
+        .toList();
+    expect(endpoints, [const Vec2(100, -100), const Vec2(300, -100)],
+        reason: 'sliding the constrained point never moves the curve');
+
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(point().position, const Vec2(200, -100),
+        reason: 'the whole slide is one undo unit');
+  });
+
+  testWidgets(
       'dragging a circumcircle vertex recomputes the circle, and undo '
       'restores it', (tester) async {
     await pumpEditor(tester);

@@ -4,6 +4,7 @@ import '../math/vec2.dart';
 import 'geo_object.dart';
 import 'object_attributes.dart';
 import 'objects/free_point.dart';
+import 'objects/point_on_object.dart';
 
 /// The construction graph — the single source of truth for the app.
 ///
@@ -76,6 +77,23 @@ class Construction {
       throw ArgumentError('$id is not a FreePoint in this construction');
     }
     object.position = position;
+    _recomputeDependentsOf(id);
+    _notify();
+  }
+
+  /// Re-parameterizes the constrained point [id] to [parameter] and
+  /// recomputes it and its transitive dependents (in topological order).
+  ///
+  /// The constrained-point sibling of [moveFreePoint] — the parameter is
+  /// the one mutable input a [PointOnObject] has, everything downstream is
+  /// derived. Throws [ArgumentError] when [id] is not a [PointOnObject].
+  void setPointOnObjectParameter(String id, double parameter) {
+    final object = _objects[id];
+    if (object is! PointOnObject) {
+      throw ArgumentError('$id is not a PointOnObject in this construction');
+    }
+    object.parameter = parameter;
+    object.recompute();
     _recomputeDependentsOf(id);
     _notify();
   }

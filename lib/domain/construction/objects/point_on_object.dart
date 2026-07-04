@@ -13,9 +13,9 @@ import '../geo_object.dart';
 /// the curve but does not stick to the points that defined it (e.g.
 /// translating a line along itself leaves the constrained point where it
 /// was). Deterministic, same spirit as the intersection-branch ordering
-/// wart in PLAN. Dragging the point *along* its curve is a later phase:
-/// that will re-set [parameter] via a command, the same way free points
-/// move.
+/// wart in PLAN. Dragging the point *along* its curve re-sets [parameter]
+/// via `Construction.setPointOnObjectParameter`, the same way free points
+/// move through `moveFreePoint`.
 ///
 /// Segments and rays constrain to their infinite carrier line for now,
 /// matching `IntersectionPoint`'s deferred-clipping caveat.
@@ -60,7 +60,10 @@ class PointOnObject extends GeoPoint {
 
   /// Position on the curve: arc-length along a line's direction, polar
   /// angle (radians) on a circle. See the class doc for stability caveats.
-  final double parameter;
+  ///
+  /// Mutated only by `Construction.setPointOnObjectParameter` (via
+  /// commands) so every change goes through dependent recomputation.
+  double parameter;
 
   Vec2? _position;
 
