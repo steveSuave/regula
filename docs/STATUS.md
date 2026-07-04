@@ -6,6 +6,27 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 15 — 2026-07-04
+
+**Done**
+- Phase 11 complete on `phase-11-shortcuts` (6 commits), merged to `main`. PLAN updated first: the stock `Shortcuts`/`Actions` sketch was replaced by a declarative `ShortcutTable` + pure `ShortcutResolver` + one root-`Focus` `AppShortcuts` widget — two-stroke leader chords (`G`/`X`) and the "stand down while an `EditableText` has focus" guard don't fit `ShortcutActivator`'s single-stroke model.
+- Table (`shortcut_table.dart`): every PLAN binding incl. modifier axes (`shift: null` = don't-care for `=`/`+`; `primary` = Ctrl *or* Cmd), hidden alternates (numpad twins, Backspace, Ctrl+Y), `repeats` for viewport keys, cheat-sheet labels/sections. Table tests reject ambiguous bindings and leaders shadowed by single strokes. Deferred per PLAN: `I` (no intersection tool exists — users currently can't build one; macros do it internally) and Tab-cycle (needs cursor tracking).
+- Resolver: single strokes win; leaders go pending (no timeout); Esc or a missed second stroke *swallows* the chord rather than firing the stroke standalone; pure-modifier presses don't cancel a pending leader. Key auto-repeat bypasses the resolver (a held leader would cancel its own chord) and only drives `repeats` bindings.
+- EditorScreen owns the one exhaustive `AppAction` switch (a new binding without wiring fails to compile). Arrow-key nudge (camera semantics, 32 px) finally wires `CanvasViewport.pannedByScreen` from Phase 8; `=`/`-` zoom about the canvas center; `0` = 100 % keeping the center pinned (unlike Reset). Del/Backspace shares the inspector's cascade-confirmation via extracted `deleteSelectionWithConfirmation`. Two-point menu builders became top-level functions shared with the keyboard path.
+- Cheat sheet (`?`): in-tree overlay, deliberately not a dialog route (a route's focus scope cuts `AppShortcuts` off from keys, so `?` couldn't toggle it closed). Esc only closes the sheet — the active tool survives; any other shortcut closes it and executes.
+- 542 tests green, `flutter analyze` clean. Web smoke extended (real browser key events): Ctrl+Z removes the whole square macro in one step, `=`×2 spread ratio 1.440 vs 1.44 expected, ArrowRight −32.0 px, `?` barrier 765→459 luminance. SMOKE PASS, zero console errors.
+
+**Next**
+- Phase 12 — tests & polish: golden tests light+dark per object kind (remember the Session 2 decision point: `golden_toolkit` is discontinued — pick `alchemist` or plain `matchesGoldenFile` first), representative tool-flow widget tests, cross-platform smoke (`flutter build apk` / iOS — Xcode was incomplete in Session 2, check `flutter doctor` before betting on iOS). Start a `phase-12-polish` branch.
+
+**Open questions / gotchas**
+- Clicking the canvas refocuses the shortcut layer via `AppShortcuts.refocus` (a `Listener` wrapper in `EditorScreen`) — plain `unfocus()` would strand key events on a focus scope that isn't an ancestor of the shortcut node, killing all shortcuts. Keep that wrapper if the canvas gets rehosted.
+- Shift+H (reveal all) also reveals hidden macro scaffolding — "all" means all, and it's one undoable command. Revisit only if it confuses in practice.
+- `?` arrives as `question` on some platforms and shifted `slash` on others; the table carries both (the twin is cheat-sheet-hidden). Same pattern for any future punctuation binding.
+- Browser-reserved combos (Cmd+N new window, possibly Cmd+D) can't be intercepted on web even though Flutter preventDefaults handled keys; the bindings still work on desktop and in the widget tests. Not worth chasing.
+- No pending-leader UI: after pressing `G`/`X` nothing indicates the chord is armed. Add an indicator if chords prove hard to trust.
+- Still open from earlier phases: intersection *tool* (now also blocks the `I` binding); sliding `PointOnObject` along its curve; angle hit-target world-radius hint.
+
 ## Session 14 — 2026-07-04
 
 **Done**

@@ -7,11 +7,14 @@ import 'application/persistence/file_io.dart';
 import 'application/providers/command_stack_provider.dart';
 import 'application/providers/construction_provider.dart';
 import 'application/providers/preferences_provider.dart';
+import 'application/providers/selection_provider.dart';
 import 'application/providers/theme_provider.dart';
 import 'application/providers/tool_provider.dart';
 import 'application/providers/viewport_provider.dart';
+import 'domain/commands/change_attributes_command.dart';
 import 'domain/construction/construction.dart';
 import 'domain/construction/geo_object.dart';
+import 'domain/construction/object_attributes.dart';
 import 'domain/construction/objects/angle_bisector_line.dart';
 import 'domain/construction/objects/arc.dart';
 import 'domain/construction/objects/centroid.dart';
@@ -47,7 +50,11 @@ import 'presentation/canvas/canvas_viewport.dart';
 import 'presentation/canvas/fit_viewport.dart';
 import 'presentation/canvas/geometry_canvas.dart';
 import 'presentation/panels/attributes_inspector.dart';
+import 'presentation/panels/delete_selection.dart';
 import 'presentation/panels/object_tree_panel.dart';
+import 'presentation/shortcuts/app_shortcuts.dart';
+import 'presentation/shortcuts/cheat_sheet.dart';
+import 'presentation/shortcuts/shortcut_table.dart';
 import 'presentation/theme/app_theme.dart';
 
 Future<void> main() async {
@@ -82,6 +89,23 @@ class MainApp extends ConsumerWidget {
 /// for the picked object, or null to abort (ratio dialog cancelled).
 typedef TwoPointPick = Future<TwoPointBuilder?> Function();
 
+// Two-point builders as top-level functions so the menu items and the
+// keyboard shortcuts activate identical tools.
+GeoObject _buildLine(String id, GeoPoint a, GeoPoint b) =>
+    LineThroughTwoPoints(id: id, point1: a, point2: b);
+
+GeoObject _buildSegment(String id, GeoPoint a, GeoPoint b) =>
+    Segment(id: id, point1: a, point2: b);
+
+GeoObject _buildRay(String id, GeoPoint a, GeoPoint b) =>
+    Ray(id: id, origin: a, through: b);
+
+GeoObject _buildCircle(String id, GeoPoint a, GeoPoint b) =>
+    CircleCenterPoint(id: id, center: a, onCircle: b);
+
+GeoObject _buildMidpoint(String id, GeoPoint a, GeoPoint b) =>
+    Midpoint(id: id, point1: a, point2: b);
+
 // ThreePointTool builders as top-level functions, not inline lambdas:
 // their tear-offs are canonicalized, so the app bar can tell which menu
 // the active ThreePointTool came from and highlight the right icon.
@@ -89,8 +113,11 @@ GeoObject _buildAngleBisector(String id, GeoPoint a, GeoPoint b, GeoPoint c) =>
     AngleBisectorLine(id: id, arm1: a, vertex: b, arm2: c);
 
 GeoObject _buildThreePointCircle(
-        String id, GeoPoint a, GeoPoint b, GeoPoint c) =>
-    ThreePointCircle(id: id, point1: a, point2: b, point3: c);
+  String id,
+  GeoPoint a,
+  GeoPoint b,
+  GeoPoint c,
+) => ThreePointCircle(id: id, point1: a, point2: b, point3: c);
 
 GeoObject _buildCompassCircle(String id, GeoPoint a, GeoPoint b, GeoPoint c) =>
     CompassCircle(id: id, radiusPoint1: a, radiusPoint2: b, center: c);
@@ -110,7 +137,8 @@ GeoObject _buildLineAngle(String id, GeoLine first, GeoLine second) =>
 /// Wraps a ready [TwoPointBuilder] as a trivial [TwoPointPick]; also
 /// gives the builder lambda's parameters their types (a bare async
 /// closure's `FutureOr` return context doesn't reach them).
-TwoPointPick _pick(TwoPointBuilder builder) => () async => builder;
+TwoPointPick _pick(TwoPointBuilder builder) =>
+    () async => builder;
 
 /// Canvas plus a bare-bones app bar: point tool toggle and undo/redo.
 ///
@@ -129,6 +157,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   /// persisted), so it lives here rather than in a provider. Hidden by
   /// default: the tree is a secondary surface next to the canvas.
   bool _showObjectTree = false;
+
+  /// Whether the `?` cheat-sheet overlay is up. Same ephemeral-UI
+  /// reasoning as [_showObjectTree].
+  bool _showCheatSheet = false;
 
   /// Fit-to-viewport needs the canvas's laid-out size at tap time; the
   /// key reads it without threading sizes through providers.
@@ -209,9 +241,9 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   }
 
   Future<void> _saveConstruction() => saveConstructionFile(
-        ref.read(constructionProvider).construction,
-        viewport: ref.read(viewportProvider),
-      );
+    ref.read(constructionProvider).construction,
+    viewport: ref.read(viewportProvider),
+  );
 
   void _fitConstruction() {
     final size = _canvasKey.currentContext?.size;
@@ -227,6 +259,237 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     }
   }
 
+  /// Zoom step per key press; scroll zoom is continuous, keys are not.
+  static const double _keyZoomFactor = 1.2;
+
+  /// Screen pixels per arrow-key viewport nudge.
+  static const double _nudgeStep = 32;
+
+  Offset? get _canvasCenter =>
+      _canvasKey.currentContext?.size?.center(Offset.zero);
+
+  void _zoomAboutCenter(double factor) {
+    final center = _canvasCenter;
+    if (center == null) {
+      return;
+    }
+    final viewport = CanvasViewport(ref.read(viewportProvider));
+    ref
+        .read(viewportProvider.notifier)
+        .set(viewport.zoomedAbout(center, factor));
+  }
+
+  /// Back to 100 % keeping the world point at the canvas center fixed —
+  /// unlike Reset, which also jumps the view back to the origin.
+  void _zoomTo100() {
+    final center = _canvasCenter;
+    if (center == null) {
+      return;
+    }
+    final viewport = CanvasViewport(ref.read(viewportProvider));
+    ref
+        .read(viewportProvider.notifier)
+        .set(
+          CanvasViewport.pinning(
+            world: viewport.screenToWorld(center),
+            focal: center,
+            scale: 1,
+          ),
+        );
+  }
+
+  /// Arrow-key nudge with camera semantics: pressing → looks further
+  /// right, so the content shifts left ([delta] is the *content* shift
+  /// that [CanvasViewport.pannedByScreen] expects).
+  void _nudgeView(Offset delta) {
+    final viewport = CanvasViewport(ref.read(viewportProvider));
+    ref.read(viewportProvider.notifier).set(viewport.pannedByScreen(delta));
+  }
+
+  /// Hides the selection, one command for the lot (mirrors the
+  /// inspector's Visible checkbox — hiding does not deselect).
+  void _hideSelection() {
+    final construction = ref.read(constructionProvider).construction;
+    final updates = <String, ObjectAttributes>{};
+    for (final id in ref.read(selectionProvider)) {
+      final object = construction.byId(id);
+      if (object != null && object.attributes.visible) {
+        updates[object.id] = object.attributes.copyWith(visible: false);
+      }
+    }
+    if (updates.isNotEmpty) {
+      ref
+          .read(commandStackProvider.notifier)
+          .execute(ChangeAttributesCommand(updates));
+    }
+  }
+
+  /// Reveals every hidden object — including macro scaffolding, which is
+  /// deliberately hidden; "all" means all, and the command undoes.
+  void _revealAll() {
+    final updates = <String, ObjectAttributes>{
+      for (final object in ref.read(constructionProvider).construction.objects)
+        if (!object.attributes.visible)
+          object.id: object.attributes.copyWith(visible: true),
+    };
+    if (updates.isNotEmpty) {
+      ref
+          .read(commandStackProvider.notifier)
+          .execute(ChangeAttributesCommand(updates));
+    }
+  }
+
+  Future<void> _deleteSelectedObjects() {
+    final construction = ref.read(constructionProvider).construction;
+    final objects = [
+      for (final id in ref.read(selectionProvider))
+        if (construction.byId(id) case final GeoObject object) object,
+    ];
+    if (objects.isEmpty) {
+      return Future.value();
+    }
+    return deleteSelectionWithConfirmation(context, ref, objects);
+  }
+
+  Future<void> _activateSegmentRatioTool() async {
+    final build = await _askRatioBuilder(context);
+    if (build == null) {
+      return;
+    }
+    ref
+        .read(toolProvider.notifier)
+        .activate(TwoPointTool(newId: newObjectId, build: build));
+  }
+
+  /// The one exhaustive [AppAction] switch — a binding added to the
+  /// table without behaviour here fails to compile.
+  void _handleShortcut(AppAction action) {
+    // Any shortcut closes the cheat sheet. Esc *only* closes it — the
+    // active tool survives, one Esc per surface — while a working
+    // shortcut (it is a reference card, after all) also executes.
+    if (_showCheatSheet && action != AppAction.toggleCheatSheet) {
+      setState(() => _showCheatSheet = false);
+      if (action == AppAction.returnToMoveSelect) {
+        return;
+      }
+    }
+    final tools = ref.read(toolProvider.notifier);
+    switch (action) {
+      case AppAction.returnToMoveSelect:
+        tools.deactivate();
+      case AppAction.deleteSelection:
+        _deleteSelectedObjects();
+      case AppAction.undo:
+        if (ref.read(commandStackProvider).canUndo) {
+          ref.read(commandStackProvider.notifier).undo();
+        }
+      case AppAction.redo:
+        if (ref.read(commandStackProvider).canRedo) {
+          ref.read(commandStackProvider.notifier).redo();
+        }
+      case AppAction.selectAll:
+        ref.read(selectionProvider.notifier).selectAll();
+      case AppAction.saveFile:
+        _saveConstruction();
+      case AppAction.openFile:
+        _openConstruction();
+      case AppAction.newFile:
+        _newConstruction();
+      case AppAction.toggleTheme:
+        ref
+            .read(themeModeProvider.notifier)
+            .toggle(Theme.of(context).brightness);
+      case AppAction.hideSelection:
+        _hideSelection();
+      case AppAction.revealAll:
+        _revealAll();
+      case AppAction.toggleCheatSheet:
+        setState(() => _showCheatSheet = !_showCheatSheet);
+      case AppAction.zoomIn:
+        _zoomAboutCenter(_keyZoomFactor);
+      case AppAction.zoomOut:
+        _zoomAboutCenter(1 / _keyZoomFactor);
+      case AppAction.zoomTo100:
+        _zoomTo100();
+      case AppAction.fitView:
+        _fitConstruction();
+      case AppAction.nudgeLeft:
+        _nudgeView(const Offset(_nudgeStep, 0));
+      case AppAction.nudgeRight:
+        _nudgeView(const Offset(-_nudgeStep, 0));
+      case AppAction.nudgeUp:
+        _nudgeView(const Offset(0, _nudgeStep));
+      case AppAction.nudgeDown:
+        _nudgeView(const Offset(0, -_nudgeStep));
+      case AppAction.pointTool:
+        tools.activate(PointTool(newId: newObjectId));
+      case AppAction.lineTool:
+        tools.activate(TwoPointTool(newId: newObjectId, build: _buildLine));
+      case AppAction.segmentTool:
+        tools.activate(TwoPointTool(newId: newObjectId, build: _buildSegment));
+      case AppAction.rayTool:
+        tools.activate(TwoPointTool(newId: newObjectId, build: _buildRay));
+      case AppAction.circleTool:
+        tools.activate(TwoPointTool(newId: newObjectId, build: _buildCircle));
+      case AppAction.midpointTool:
+        tools.activate(TwoPointTool(newId: newObjectId, build: _buildMidpoint));
+      case AppAction.angleBisectorTool:
+        tools.activate(
+          ThreePointTool(newId: newObjectId, build: _buildAngleBisector),
+        );
+      case AppAction.vertexAngleTool:
+        tools.activate(
+          ThreePointTool(newId: newObjectId, build: _buildVertexAngle),
+        );
+      case AppAction.lineAngleTool:
+        tools.activate(TwoLineTool(newId: newObjectId, build: _buildLineAngle));
+      case AppAction.perpendicularTool:
+        tools.activate(
+          PointAndLineTool(newId: newObjectId, build: PerpendicularLine.new),
+        );
+      case AppAction.parallelTool:
+        tools.activate(
+          PointAndLineTool(newId: newObjectId, build: ParallelLine.new),
+        );
+      case AppAction.compassTool:
+        tools.activate(
+          ThreePointTool(newId: newObjectId, build: _buildCompassCircle),
+        );
+      case AppAction.centroidTool:
+        tools.activate(
+          TriangleCenterTool(newId: newObjectId, buildCenter: Centroid.new),
+        );
+      case AppAction.orthocenterTool:
+        tools.activate(
+          TriangleCenterTool(newId: newObjectId, buildCenter: Orthocenter.new),
+        );
+      case AppAction.incenterTool:
+        tools.activate(
+          TriangleCenterTool(newId: newObjectId, buildCenter: Incenter.new),
+        );
+      case AppAction.circumcenterTool:
+        tools.activate(
+          TriangleCenterTool(newId: newObjectId, buildCenter: Circumcenter.new),
+        );
+      case AppAction.threePointCircleTool:
+        tools.activate(
+          ThreePointTool(newId: newObjectId, build: _buildThreePointCircle),
+        );
+      case AppAction.segmentRatioTool:
+        _activateSegmentRatioTool();
+      case AppAction.arcTool:
+        tools.activate(ThreePointTool(newId: newObjectId, build: _buildArc));
+      case AppAction.sectorTool:
+        tools.activate(ThreePointTool(newId: newObjectId, build: _buildSector));
+      case AppAction.squareMacroTool:
+        tools.activate(SquareMacroTool(newId: newObjectId));
+      case AppAction.parallelogramMacroTool:
+        tools.activate(ParallelogramMacroTool(newId: newObjectId));
+      case AppAction.trapeziumMacroTool:
+        tools.activate(TrapeziumMacroTool(newId: newObjectId));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final activeTool = ref.watch(toolProvider).tool;
@@ -236,328 +499,339 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     final pointOnObjectActive = activeTool is PointOnObjectTool;
     // ThreePointTool serves two menus, so the highlights key on which
     // top-level builder function the active tool carries.
-    final lineConstructionActive = activeTool is PointAndLineTool ||
+    final lineConstructionActive =
+        activeTool is PointAndLineTool ||
         (activeTool is ThreePointTool &&
             activeTool.build == _buildAngleBisector);
-    final circleConstructionActive = activeTool is ThreePointTool &&
-        const {_buildThreePointCircle, _buildCompassCircle, _buildArc,
-            _buildSector}.contains(activeTool.build);
-    final angleConstructionActive = activeTool is TwoLineTool ||
-        (activeTool is ThreePointTool &&
-            activeTool.build == _buildVertexAngle);
-    final shapeMacroActive = activeTool is SquareMacroTool ||
+    final circleConstructionActive =
+        activeTool is ThreePointTool &&
+        const {
+          _buildThreePointCircle,
+          _buildCompassCircle,
+          _buildArc,
+          _buildSector,
+        }.contains(activeTool.build);
+    final angleConstructionActive =
+        activeTool is TwoLineTool ||
+        (activeTool is ThreePointTool && activeTool.build == _buildVertexAngle);
+    final shapeMacroActive =
+        activeTool is SquareMacroTool ||
         activeTool is ParallelogramMacroTool ||
         activeTool is TrapeziumMacroTool;
     final undoRedo = ref.watch(commandStackProvider);
     final highlight = Theme.of(context).colorScheme.primary;
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          tooltip:
-              _showObjectTree ? 'Hide object tree' : 'Show object tree',
-          isSelected: _showObjectTree,
-          icon: const Icon(Icons.account_tree_outlined),
-          onPressed: () =>
-              setState(() => _showObjectTree = !_showObjectTree),
+    return AppShortcuts(
+      onAction: _handleShortcut,
+      child: Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            tooltip: _showObjectTree ? 'Hide object tree' : 'Show object tree',
+            isSelected: _showObjectTree,
+            icon: const Icon(Icons.account_tree_outlined),
+            onPressed: () => setState(() => _showObjectTree = !_showObjectTree),
+          ),
+          title: const Text('fgex'),
+          actions: [
+            PopupMenuButton<Future<void> Function()>(
+              tooltip: 'File: new, open, save',
+              icon: const Icon(Icons.folder_outlined),
+              onSelected: (action) => action(),
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: _newConstruction,
+                  child: const Text('New'),
+                ),
+                PopupMenuItem(
+                  value: _openConstruction,
+                  child: const Text('Open…'),
+                ),
+                PopupMenuItem(
+                  value: _saveConstruction,
+                  child: const Text('Save…'),
+                ),
+              ],
+            ),
+            IconButton(
+              tooltip: pointToolActive
+                  ? 'Leave point tool (back to move/select)'
+                  : 'Point tool: tap the canvas to place points',
+              isSelected: pointToolActive,
+              icon: const Icon(Icons.control_point),
+              onPressed: () {
+                final notifier = ref.read(toolProvider.notifier);
+                if (pointToolActive) {
+                  notifier.deactivate();
+                } else {
+                  notifier.activate(PointTool(newId: newObjectId));
+                }
+              },
+            ),
+            // Values are async so an item can collect extra input (the
+            // segment-ratio dialog) before the tool exists; returning null
+            // (dialog cancelled) leaves the current tool untouched.
+            PopupMenuButton<TwoPointPick>(
+              tooltip: 'Two-point objects: pick one, then tap two points',
+              icon: Icon(
+                Icons.timeline,
+                color: twoPointToolActive ? highlight : null,
+              ),
+              onSelected: (pick) async {
+                final builder = await pick();
+                if (builder == null) return;
+                ref
+                    .read(toolProvider.notifier)
+                    .activate(TwoPointTool(newId: newObjectId, build: builder));
+              },
+              itemBuilder: (context) => [
+                PopupMenuItem<TwoPointPick>(
+                  value: _pick(_buildLine),
+                  child: const Text('Line'),
+                ),
+                PopupMenuItem<TwoPointPick>(
+                  value: _pick(_buildSegment),
+                  child: const Text('Segment'),
+                ),
+                PopupMenuItem<TwoPointPick>(
+                  value: _pick(_buildRay),
+                  child: const Text('Ray (origin, then direction)'),
+                ),
+                PopupMenuItem<TwoPointPick>(
+                  value: _pick(_buildCircle),
+                  child: const Text('Circle (center, then rim)'),
+                ),
+                PopupMenuItem<TwoPointPick>(
+                  value: _pick(_buildMidpoint),
+                  child: const Text('Midpoint'),
+                ),
+                PopupMenuItem<TwoPointPick>(
+                  value: () => _askRatioBuilder(context),
+                  child: const Text('Segment-ratio point…'),
+                ),
+              ],
+            ),
+            IconButton(
+              tooltip: pointOnObjectActive
+                  ? 'Leave point-on-object tool'
+                  : 'Point on object: tap a line or circle',
+              isSelected: pointOnObjectActive,
+              icon: const Icon(Icons.gps_fixed),
+              onPressed: () {
+                final notifier = ref.read(toolProvider.notifier);
+                if (pointOnObjectActive) {
+                  notifier.deactivate();
+                } else {
+                  notifier.activate(PointOnObjectTool(newId: newObjectId));
+                }
+              },
+            ),
+            PopupMenuButton<Tool Function()>(
+              tooltip: 'Line constructions: perpendicular, parallel, bisector',
+              icon: Icon(
+                Icons.line_axis,
+                color: lineConstructionActive ? highlight : null,
+              ),
+              onSelected: (createTool) =>
+                  ref.read(toolProvider.notifier).activate(createTool()),
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: () => PointAndLineTool(
+                    newId: newObjectId,
+                    build: PerpendicularLine.new,
+                  ),
+                  child: const Text('Perpendicular line'),
+                ),
+                PopupMenuItem(
+                  value: () => PointAndLineTool(
+                    newId: newObjectId,
+                    build: ParallelLine.new,
+                  ),
+                  child: const Text('Parallel line'),
+                ),
+                PopupMenuItem(
+                  value: () => ThreePointTool(
+                    newId: newObjectId,
+                    build: _buildAngleBisector,
+                  ),
+                  child: const Text('Angle bisector (arm, vertex, arm)'),
+                ),
+              ],
+            ),
+            PopupMenuButton<Tool Function()>(
+              tooltip:
+                  'Circle constructions: three-point circle, compass, '
+                  'arc, sector',
+              icon: Icon(
+                Icons.circle_outlined,
+                color: circleConstructionActive ? highlight : null,
+              ),
+              onSelected: (createTool) =>
+                  ref.read(toolProvider.notifier).activate(createTool()),
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: () => ThreePointTool(
+                    newId: newObjectId,
+                    build: _buildThreePointCircle,
+                  ),
+                  child: const Text('Circle through three points'),
+                ),
+                PopupMenuItem(
+                  value: () => ThreePointTool(
+                    newId: newObjectId,
+                    build: _buildCompassCircle,
+                  ),
+                  child: const Text('Compass (radius points, then center)'),
+                ),
+                PopupMenuItem(
+                  value: () =>
+                      ThreePointTool(newId: newObjectId, build: _buildArc),
+                  child: const Text('Arc (start, via, end)'),
+                ),
+                PopupMenuItem(
+                  value: () =>
+                      ThreePointTool(newId: newObjectId, build: _buildSector),
+                  child: const Text('Sector (center, rim, then angle)'),
+                ),
+              ],
+            ),
+            PopupMenuButton<Tool Function()>(
+              tooltip: 'Angles: at a vertex, or between two lines',
+              icon: Icon(
+                Icons.square_foot,
+                color: angleConstructionActive ? highlight : null,
+              ),
+              onSelected: (createTool) =>
+                  ref.read(toolProvider.notifier).activate(createTool()),
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: () => ThreePointTool(
+                    newId: newObjectId,
+                    build: _buildVertexAngle,
+                  ),
+                  child: const Text('Angle at vertex (arm, vertex, arm)'),
+                ),
+                PopupMenuItem(
+                  value: () =>
+                      TwoLineTool(newId: newObjectId, build: _buildLineAngle),
+                  child: const Text('Angle between two lines'),
+                ),
+              ],
+            ),
+            PopupMenuButton<TriangleCenterBuilder>(
+              tooltip: 'Triangle centers: pick one, then tap three points',
+              icon: Icon(
+                Icons.change_history,
+                color: centerToolActive ? highlight : null,
+              ),
+              onSelected: (builder) => ref
+                  .read(toolProvider.notifier)
+                  .activate(
+                    TriangleCenterTool(
+                      newId: newObjectId,
+                      buildCenter: builder,
+                    ),
+                  ),
+              itemBuilder: (context) => const [
+                PopupMenuItem(value: Centroid.new, child: Text('Centroid')),
+                PopupMenuItem(
+                  value: Orthocenter.new,
+                  child: Text('Orthocenter'),
+                ),
+                PopupMenuItem(value: Incenter.new, child: Text('Incenter')),
+                PopupMenuItem(
+                  value: Circumcenter.new,
+                  child: Text('Circumcenter'),
+                ),
+              ],
+            ),
+            PopupMenuButton<Tool Function()>(
+              tooltip: 'Shape macros: square, parallelogram, trapezium',
+              icon: Icon(
+                Icons.crop_square,
+                color: shapeMacroActive ? highlight : null,
+              ),
+              onSelected: (createTool) =>
+                  ref.read(toolProvider.notifier).activate(createTool()),
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: () => SquareMacroTool(newId: newObjectId),
+                  child: const Text('Square (two adjacent corners)'),
+                ),
+                PopupMenuItem(
+                  value: () => ParallelogramMacroTool(newId: newObjectId),
+                  child: const Text('Parallelogram (three corners)'),
+                ),
+                PopupMenuItem(
+                  value: () => TrapeziumMacroTool(newId: newObjectId),
+                  child: const Text('Trapezium (three corners, then the 4th)'),
+                ),
+              ],
+            ),
+            IconButton(
+              tooltip: 'Fit construction to view',
+              icon: const Icon(Icons.fit_screen),
+              onPressed: _fitConstruction,
+            ),
+            IconButton(
+              tooltip: 'Reset view (origin at 100 %)',
+              icon: const Icon(Icons.filter_center_focus),
+              onPressed: () => ref.read(viewportProvider.notifier).reset(),
+            ),
+            IconButton(
+              tooltip: Theme.of(context).brightness == Brightness.dark
+                  ? 'Switch to light theme'
+                  : 'Switch to dark theme',
+              icon: Icon(
+                Theme.of(context).brightness == Brightness.dark
+                    ? Icons.light_mode_outlined
+                    : Icons.dark_mode_outlined,
+              ),
+              onPressed: () => ref
+                  .read(themeModeProvider.notifier)
+                  .toggle(Theme.of(context).brightness),
+            ),
+            IconButton(
+              tooltip: 'Undo',
+              icon: const Icon(Icons.undo),
+              onPressed: undoRedo.canUndo
+                  ? () => ref.read(commandStackProvider.notifier).undo()
+                  : null,
+            ),
+            IconButton(
+              tooltip: 'Redo',
+              icon: const Icon(Icons.redo),
+              onPressed: undoRedo.canRedo
+                  ? () => ref.read(commandStackProvider.notifier).redo()
+                  : null,
+            ),
+          ],
         ),
-        title: const Text('fgex'),
-        actions: [
-          PopupMenuButton<Future<void> Function()>(
-            tooltip: 'File: new, open, save',
-            icon: const Icon(Icons.folder_outlined),
-            onSelected: (action) => action(),
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: _newConstruction,
-                child: const Text('New'),
-              ),
-              PopupMenuItem(
-                value: _openConstruction,
-                child: const Text('Open…'),
-              ),
-              PopupMenuItem(
-                value: _saveConstruction,
-                child: const Text('Save…'),
-              ),
-            ],
-          ),
-          IconButton(
-            tooltip: pointToolActive
-                ? 'Leave point tool (back to move/select)'
-                : 'Point tool: tap the canvas to place points',
-            isSelected: pointToolActive,
-            icon: const Icon(Icons.control_point),
-            onPressed: () {
-              final notifier = ref.read(toolProvider.notifier);
-              if (pointToolActive) {
-                notifier.deactivate();
-              } else {
-                notifier.activate(PointTool(newId: newObjectId));
-              }
-            },
-          ),
-          // Values are async so an item can collect extra input (the
-          // segment-ratio dialog) before the tool exists; returning null
-          // (dialog cancelled) leaves the current tool untouched.
-          PopupMenuButton<TwoPointPick>(
-            tooltip: 'Two-point objects: pick one, then tap two points',
-            icon: Icon(
-              Icons.timeline,
-              color: twoPointToolActive ? highlight : null,
+        body: Stack(
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (_showObjectTree) const ObjectTreePanel(),
+                Expanded(
+                  // Clicking the canvas pulls focus back to the shortcut
+                  // layer: a focused name field commits (focus-loss
+                  // commit) and stops suppressing the single-letter
+                  // shortcuts.
+                  child: Listener(
+                    behavior: HitTestBehavior.translucent,
+                    onPointerDown: (_) => AppShortcuts.refocus(context),
+                    child: GeometryCanvas(key: _canvasKey),
+                  ),
+                ),
+                const AttributesInspector(),
+              ],
             ),
-            onSelected: (pick) async {
-              final builder = await pick();
-              if (builder == null) return;
-              ref.read(toolProvider.notifier).activate(
-                    TwoPointTool(newId: newObjectId, build: builder),
-                  );
-            },
-            itemBuilder: (context) => [
-              PopupMenuItem<TwoPointPick>(
-                value: _pick((id, a, b) =>
-                    LineThroughTwoPoints(id: id, point1: a, point2: b)),
-                child: const Text('Line'),
+            if (_showCheatSheet)
+              ShortcutCheatSheet(
+                onDismiss: () => setState(() => _showCheatSheet = false),
               ),
-              PopupMenuItem<TwoPointPick>(
-                value:
-                    _pick((id, a, b) => Segment(id: id, point1: a, point2: b)),
-                child: const Text('Segment'),
-              ),
-              PopupMenuItem<TwoPointPick>(
-                value: _pick((id, a, b) => Ray(id: id, origin: a, through: b)),
-                child: const Text('Ray (origin, then direction)'),
-              ),
-              PopupMenuItem<TwoPointPick>(
-                value: _pick((id, a, b) =>
-                    CircleCenterPoint(id: id, center: a, onCircle: b)),
-                child: const Text('Circle (center, then rim)'),
-              ),
-              PopupMenuItem<TwoPointPick>(
-                value:
-                    _pick((id, a, b) => Midpoint(id: id, point1: a, point2: b)),
-                child: const Text('Midpoint'),
-              ),
-              PopupMenuItem<TwoPointPick>(
-                value: () async {
-                  final ratio = await _askRatio(context);
-                  if (ratio == null) return null;
-                  GeoObject build(String id, GeoPoint a, GeoPoint b) =>
-                      SegmentRatioPoint(
-                        id: id,
-                        point1: a,
-                        point2: b,
-                        ratio: ratio,
-                      );
-                  return build;
-                },
-                child: const Text('Segment-ratio point…'),
-              ),
-            ],
-          ),
-          IconButton(
-            tooltip: pointOnObjectActive
-                ? 'Leave point-on-object tool'
-                : 'Point on object: tap a line or circle',
-            isSelected: pointOnObjectActive,
-            icon: const Icon(Icons.gps_fixed),
-            onPressed: () {
-              final notifier = ref.read(toolProvider.notifier);
-              if (pointOnObjectActive) {
-                notifier.deactivate();
-              } else {
-                notifier.activate(PointOnObjectTool(newId: newObjectId));
-              }
-            },
-          ),
-          PopupMenuButton<Tool Function()>(
-            tooltip: 'Line constructions: perpendicular, parallel, bisector',
-            icon: Icon(
-              Icons.line_axis,
-              color: lineConstructionActive ? highlight : null,
-            ),
-            onSelected: (createTool) =>
-                ref.read(toolProvider.notifier).activate(createTool()),
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: () => PointAndLineTool(
-                  newId: newObjectId,
-                  build: PerpendicularLine.new,
-                ),
-                child: const Text('Perpendicular line'),
-              ),
-              PopupMenuItem(
-                value: () => PointAndLineTool(
-                  newId: newObjectId,
-                  build: ParallelLine.new,
-                ),
-                child: const Text('Parallel line'),
-              ),
-              PopupMenuItem(
-                value: () => ThreePointTool(
-                  newId: newObjectId,
-                  build: _buildAngleBisector,
-                ),
-                child: const Text('Angle bisector (arm, vertex, arm)'),
-              ),
-            ],
-          ),
-          PopupMenuButton<Tool Function()>(
-            tooltip: 'Circle constructions: three-point circle, compass, '
-                'arc, sector',
-            icon: Icon(
-              Icons.circle_outlined,
-              color: circleConstructionActive ? highlight : null,
-            ),
-            onSelected: (createTool) =>
-                ref.read(toolProvider.notifier).activate(createTool()),
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: () => ThreePointTool(
-                  newId: newObjectId,
-                  build: _buildThreePointCircle,
-                ),
-                child: const Text('Circle through three points'),
-              ),
-              PopupMenuItem(
-                value: () => ThreePointTool(
-                  newId: newObjectId,
-                  build: _buildCompassCircle,
-                ),
-                child: const Text('Compass (radius points, then center)'),
-              ),
-              PopupMenuItem(
-                value: () => ThreePointTool(
-                  newId: newObjectId,
-                  build: _buildArc,
-                ),
-                child: const Text('Arc (start, via, end)'),
-              ),
-              PopupMenuItem(
-                value: () => ThreePointTool(
-                  newId: newObjectId,
-                  build: _buildSector,
-                ),
-                child: const Text('Sector (center, rim, then angle)'),
-              ),
-            ],
-          ),
-          PopupMenuButton<Tool Function()>(
-            tooltip: 'Angles: at a vertex, or between two lines',
-            icon: Icon(
-              Icons.square_foot,
-              color: angleConstructionActive ? highlight : null,
-            ),
-            onSelected: (createTool) =>
-                ref.read(toolProvider.notifier).activate(createTool()),
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: () => ThreePointTool(
-                  newId: newObjectId,
-                  build: _buildVertexAngle,
-                ),
-                child: const Text('Angle at vertex (arm, vertex, arm)'),
-              ),
-              PopupMenuItem(
-                value: () => TwoLineTool(
-                  newId: newObjectId,
-                  build: _buildLineAngle,
-                ),
-                child: const Text('Angle between two lines'),
-              ),
-            ],
-          ),
-          PopupMenuButton<TriangleCenterBuilder>(
-            tooltip: 'Triangle centers: pick one, then tap three points',
-            icon: Icon(
-              Icons.change_history,
-              color: centerToolActive ? highlight : null,
-            ),
-            onSelected: (builder) => ref.read(toolProvider.notifier).activate(
-                  TriangleCenterTool(newId: newObjectId, buildCenter: builder),
-                ),
-            itemBuilder: (context) => const [
-              PopupMenuItem(value: Centroid.new, child: Text('Centroid')),
-              PopupMenuItem(
-                value: Orthocenter.new,
-                child: Text('Orthocenter'),
-              ),
-              PopupMenuItem(value: Incenter.new, child: Text('Incenter')),
-              PopupMenuItem(
-                value: Circumcenter.new,
-                child: Text('Circumcenter'),
-              ),
-            ],
-          ),
-          PopupMenuButton<Tool Function()>(
-            tooltip: 'Shape macros: square, parallelogram, trapezium',
-            icon: Icon(
-              Icons.crop_square,
-              color: shapeMacroActive ? highlight : null,
-            ),
-            onSelected: (createTool) =>
-                ref.read(toolProvider.notifier).activate(createTool()),
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: () => SquareMacroTool(newId: newObjectId),
-                child: const Text('Square (two adjacent corners)'),
-              ),
-              PopupMenuItem(
-                value: () => ParallelogramMacroTool(newId: newObjectId),
-                child: const Text('Parallelogram (three corners)'),
-              ),
-              PopupMenuItem(
-                value: () => TrapeziumMacroTool(newId: newObjectId),
-                child: const Text('Trapezium (three corners, then the 4th)'),
-              ),
-            ],
-          ),
-          IconButton(
-            tooltip: 'Fit construction to view',
-            icon: const Icon(Icons.fit_screen),
-            onPressed: _fitConstruction,
-          ),
-          IconButton(
-            tooltip: 'Reset view (origin at 100 %)',
-            icon: const Icon(Icons.filter_center_focus),
-            onPressed: () => ref.read(viewportProvider.notifier).reset(),
-          ),
-          IconButton(
-            tooltip: Theme.of(context).brightness == Brightness.dark
-                ? 'Switch to light theme'
-                : 'Switch to dark theme',
-            icon: Icon(
-              Theme.of(context).brightness == Brightness.dark
-                  ? Icons.light_mode_outlined
-                  : Icons.dark_mode_outlined,
-            ),
-            onPressed: () => ref
-                .read(themeModeProvider.notifier)
-                .toggle(Theme.of(context).brightness),
-          ),
-          IconButton(
-            tooltip: 'Undo',
-            icon: const Icon(Icons.undo),
-            onPressed: undoRedo.canUndo
-                ? () => ref.read(commandStackProvider.notifier).undo()
-                : null,
-          ),
-          IconButton(
-            tooltip: 'Redo',
-            icon: const Icon(Icons.redo),
-            onPressed: undoRedo.canRedo
-                ? () => ref.read(commandStackProvider.notifier).redo()
-                : null,
-          ),
-        ],
-      ),
-      body: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (_showObjectTree) const ObjectTreePanel(),
-          Expanded(child: GeometryCanvas(key: _canvasKey)),
-          const AttributesInspector(),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -567,9 +841,21 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 /// cancelled — unparseable input reads as cancel too, so OK on garbage
 /// quietly does nothing rather than committing a bogus ratio.
 Future<double?> _askRatio(BuildContext context) => showDialog<double>(
-      context: context,
-      builder: (context) => const _RatioDialog(),
-    );
+  context: context,
+  builder: (context) => const _RatioDialog(),
+);
+
+/// [_askRatio] wrapped as a [TwoPointBuilder] factory — the shared path
+/// behind the menu item and the `G R` shortcut; null when cancelled.
+Future<TwoPointBuilder?> _askRatioBuilder(BuildContext context) async {
+  final ratio = await _askRatio(context);
+  if (ratio == null) {
+    return null;
+  }
+  GeoObject build(String id, GeoPoint a, GeoPoint b) =>
+      SegmentRatioPoint(id: id, point1: a, point2: b, ratio: ratio);
+  return build;
+}
 
 /// The dialog owns its [TextEditingController] so it outlives the exit
 /// animation (disposing right after `showDialog` returns crashes the

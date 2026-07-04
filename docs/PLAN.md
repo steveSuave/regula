@@ -165,7 +165,7 @@ CI-friendly: keep golden tests in their own tagged group so they can be skipped 
 
 ## Keyboard shortcuts
 
-Tools are bound to single letters where possible; less-common variants use Shift+letter or a two-key chord. Shortcuts are wired through a `Shortcuts` + `Actions` widget at the app root, with a single `ShortcutsRegistry` so the binding table is the one source of truth (the toolbar reads tooltips from it). Mobile users obviously skip these, but on web/desktop they're essential.
+Tools are bound to single letters where possible; less-common variants use Shift+letter or a two-key chord. The one source of truth is a declarative `ShortcutTable` (`lib/presentation/shortcuts/shortcut_table.dart`): a list of bindings, each a one- or two-stroke key sequence plus a semantic `AppAction`, a human-readable label, and a cheat-sheet section. A pure `ShortcutResolver` consumes key strokes one at a time and handles the two-stroke leader chords (a pending leader is cancelled by Esc or any non-matching second stroke, which is swallowed rather than fired standalone); an `AppShortcuts` `Focus` widget at the editor root feeds it hardware key events, marks matches handled, and ignores everything while an `EditableText` has focus so typing a name can never trigger a tool. Flutter's stock `Shortcuts`/`Actions` tables are deliberately *not* used: chords and the focused-text-field guard don't fit `ShortcutActivator`'s single-stroke, always-on model. Mobile users obviously skip these, but on web/desktop they're essential.
 
 Selection / app-level:
 | Key | Action |
@@ -179,7 +179,7 @@ Selection / app-level:
 | `Ctrl`/`Cmd` + `S` / `O` / `N` | Save / Open / New construction |
 | `Ctrl`/`Cmd` + `D` | Toggle dark mode |
 | `H` | Hide selected · `Shift` + `H` reveals all |
-| `Tab` | Cycle through selectable objects under cursor |
+| `Tab` | Cycle through selectable objects under cursor *(deferred — needs cursor-position tracking; Tab does focus traversal meanwhile)* |
 
 Viewport:
 | Key | Action |
@@ -199,10 +199,10 @@ Tools (single-letter primary):
 | `R` | Ray |
 | `C` | Circle (center + point) |
 | `M` | Midpoint |
-| `I` | Intersection |
+| `I` | Intersection *(deferred — no intersection tool exists yet; macros build `IntersectionPoint`s internally, but users can't. Bind when the tool lands.)* |
 | `B` | Angle bisector |
-| `A` | Angle (between lines / at vertex) |
-| `T` | Tangent / Perpendicular line (`Shift` + `T` for parallel) |
+| `A` | Angle at vertex (`Shift` + `A` for angle between lines) |
+| `T` | Perpendicular line (`Shift` + `T` for parallel) |
 | `O` | Compass circle |
 
 Chords (`G` = "geometry", a leader key for less-frequent constructions):
