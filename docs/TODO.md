@@ -106,7 +106,7 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [ ] `flutter build apk` and `flutter build ios` succeed (`flutter build apk` ✓ — 49.5 MB release APK; `flutter build ios` still blocked: Xcode incomplete + CocoaPods missing since Session 2 — needs an App Store install and `sudo xcode-select --switch`, then `sudo xcodebuild -runFirstLaunch`)
 
 ## Phase 13 — Toolbar rework & tool-selection UX
-- [ ] `IntersectionTool` + toolbar entry + `I` shortcut (the `IntersectionPoint` object exists since Phase 2 — macros build them internally; tool picks two curves and creates the branch nearest the tap; decide disambiguation when the curves intersect twice)
+- [x] `IntersectionTool` + toolbar entry + `I` shortcut (collects two distinct curves like `TwoLineTool` but accepting circles too; the branch nearest the *second* tap wins, resolved by probing both `IntersectionPoint` branches — no duplicated intersection dispatch; non-intersecting curves commit an undefined branch-0 point; standalone `join_inner` button for now, folds into the Points flyout below)
 - [ ] Unified **Points** flyout: free point, midpoint, segment-ratio point, intersection, point-on-object, centroid, orthocenter, incenter, circumcenter — retire the standalone Point and Point-on-object buttons and the Triangle-centers menu
 - [ ] Move Circle (center + rim point) from the two-point menu into the circles menu
 - [ ] Rename the two-point menu to **Lines** (line, segment, ray) and absorb perpendicular / parallel / angle bisector — retire the separate line-constructions menu

@@ -116,6 +116,56 @@ void main() {
   });
 
   testWidgets(
+      'intersection tool via its toolbar button: tap two crossing segments, '
+      'get the point where they cross', (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+
+    // Two crossing segments via the two-point menu (4 free points + 2
+    // segments): horizontal (100,100)–(300,100), vertical (200,40)–(200,160).
+    Future<void> buildSegment(Offset from, Offset to) async {
+      await tester.tap(find.byIcon(Icons.timeline));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Segment'));
+      await tester.pumpAndSettle();
+      await tester.tapAt(origin + from);
+      await tester.pump();
+      await tester.tapAt(origin + to);
+      await tester.pump();
+    }
+
+    await buildSegment(const Offset(100, 100), const Offset(300, 100));
+    await buildSegment(const Offset(200, 40), const Offset(200, 160));
+    expect(objectCount(), 6);
+
+    await tester.tap(find.byIcon(Icons.join_inner));
+    await tester.pump();
+
+    // Taps land on the segments away from their endpoints and from the
+    // crossing, so the hit tester reports the segments themselves.
+    await tester.tapAt(origin + const Offset(150, 100));
+    await tester.pump();
+    expect(objectCount(), 6, reason: 'one curve collected, nothing built');
+
+    await tester.tapAt(origin + const Offset(200, 60));
+    await tester.pump();
+    expect(objectCount(), 7);
+
+    final objects = container
+        .read(constructionProvider)
+        .construction
+        .objects
+        .toList();
+    final point = objects.last as IntersectionPoint;
+    // Default viewport: world origin at the canvas top-left, y-up.
+    expect(point.position!.closeTo(const Vec2(200, -100)), isTrue);
+
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(objectCount(), 6, reason: 'only the intersection point undoes');
+  });
+
+  testWidgets(
       'square macro via the shapes menu: two taps commit one undo unit',
       (tester) async {
     await pumpEditor(tester);

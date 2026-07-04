@@ -35,6 +35,7 @@ import 'domain/construction/objects/segment_ratio_point.dart';
 import 'domain/construction/objects/three_point_circle.dart';
 import 'domain/construction/objects/vertex_angle.dart';
 import 'domain/math/vec2.dart';
+import 'domain/tools/intersection_tool.dart';
 import 'domain/tools/parallelogram_macro_tool.dart';
 import 'domain/tools/point_and_line_tool.dart';
 import 'domain/tools/point_on_object_tool.dart';
@@ -433,6 +434,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         tools.activate(TwoPointTool(newId: newObjectId, build: _buildCircle));
       case AppAction.midpointTool:
         tools.activate(TwoPointTool(newId: newObjectId, build: _buildMidpoint));
+      case AppAction.intersectionTool:
+        tools.activate(IntersectionTool(newId: newObjectId));
       case AppAction.angleBisectorTool:
         tools.activate(
           ThreePointTool(newId: newObjectId, build: _buildAngleBisector),
@@ -497,6 +500,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     final centerToolActive = activeTool is TriangleCenterTool;
     final twoPointToolActive = activeTool is TwoPointTool;
     final pointOnObjectActive = activeTool is PointOnObjectTool;
+    final intersectionToolActive = activeTool is IntersectionTool;
     // ThreePointTool serves two menus, so the highlights key on which
     // top-level builder function the active tool carries.
     final lineConstructionActive =
@@ -609,6 +613,21 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                   child: const Text('Segment-ratio point…'),
                 ),
               ],
+            ),
+            IconButton(
+              tooltip: intersectionToolActive
+                  ? 'Leave intersection tool'
+                  : 'Intersection: tap two lines or circles',
+              isSelected: intersectionToolActive,
+              icon: const Icon(Icons.join_inner),
+              onPressed: () {
+                final notifier = ref.read(toolProvider.notifier);
+                if (intersectionToolActive) {
+                  notifier.deactivate();
+                } else {
+                  notifier.activate(IntersectionTool(newId: newObjectId));
+                }
+              },
             ),
             IconButton(
               tooltip: pointOnObjectActive

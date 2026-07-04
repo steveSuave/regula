@@ -34,6 +34,7 @@ enum AppAction {
   rayTool,
   circleTool,
   midpointTool,
+  intersectionTool,
   angleBisectorTool,
   vertexAngleTool,
   lineAngleTool,
@@ -170,10 +171,10 @@ ShortcutBinding _x(
 /// it; the resolver matches against it; `shortcut_table_test.dart`
 /// rejects ambiguous entries.
 ///
-/// Deliberately absent, per PLAN: `I` (no intersection tool exists yet)
-/// and `Tab` object cycling (needs cursor tracking; Tab traverses focus
-/// meanwhile). `Space`+drag panning lives in the canvas's gesture code,
-/// not here — it is a modifier for a pointer gesture, not a key action.
+/// Deliberately absent, per PLAN: `Tab` object cycling (needs cursor
+/// tracking; Tab traverses focus meanwhile). `Space`+drag panning lives
+/// in the canvas's gesture code, not here — it is a modifier for a
+/// pointer gesture, not a key action.
 final List<ShortcutBinding> shortcutTable = [
   // ── Selection / app level ────────────────────────────────────────
   const ShortcutBinding(
@@ -431,6 +432,13 @@ final List<ShortcutBinding> shortcutTable = [
     label: 'Midpoint',
     section: ShortcutSection.tools,
     display: 'M',
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.keyI)],
+    action: AppAction.intersectionTool,
+    label: 'Intersection of two curves',
+    section: ShortcutSection.tools,
+    display: 'I',
   ),
   const ShortcutBinding(
     sequence: [KeyStroke(LogicalKeyboardKey.keyB)],
