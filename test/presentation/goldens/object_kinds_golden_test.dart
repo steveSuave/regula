@@ -246,13 +246,24 @@ void main() {
         attributes:
             const ObjectAttributes(colorArgb: 0xFFE64A19, strokeWidth: 4),
       ))
+      ..add(Segment(
+        id: 'dash',
+        point1: a,
+        point2: c,
+        attributes: const ObjectAttributes(dashPeriod: 8),
+      ))
       ..add(FreePoint(
         id: 'big',
         position: const Vec2(2, 3),
         attributes:
             const ObjectAttributes(colorArgb: 0xFF2E7D32, pointSize: 8),
       ))
-      ..add(CircleCenterPoint(id: 'circ', center: center, onCircle: rim))
+      ..add(CircleCenterPoint(
+        id: 'circ',
+        center: center,
+        onCircle: rim,
+        attributes: const ObjectAttributes(dashPeriod: 12),
+      ))
       ..add(Sector(
         id: 'fill',
         center: center,

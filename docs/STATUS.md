@@ -6,6 +6,27 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 19 — 2026-07-04
+
+**Done**
+- Phases 17 & 18 planned from user feedback (5 items: draggable labels, dashed lines, shortcut hints on tools, cheat-sheet icon, rectangle/isosceles-trapezium + more quad macros). PLAN/TODO updated first; user confirmed rhombus, kite and right trapezium join Phase 18, shortcut hints as trailing menu text, labels free-but-clamped, dash presets discrete.
+- **Phase 17 complete** on `phase-17-polish` (5 commits). In landing order:
+- 17A: cheat-sheet toggle `IconButton` (keyboard icon) between Reset and the theme toggle — placement keeps drive.js's "theme toggle is last enabled icon" indexing valid; only its order comment changed.
+- 17B: `shortcutDisplayFor(AppAction)` over the shortcut table (first cheat-sheet-visible binding wins, hidden alternates like Ctrl+Y never surface); toolbar flyout tuples grew an `AppAction?`; rows render the key as dimmed trailing text inside a fixed-width `SizedBox` row (popup menus size intrinsically — `Spacer` misbehaves there); group tooltips list their keys on a second line.
+- 17C: `ObjectAttributes.dashPeriod` (0 = solid, dash = gap = period/2, additive → no codec version bump); hand-rolled `dashPath` via `PathMetrics` (no dependency); painter routes all stroked kinds through it (angle markers + selection halo deliberately solid); inspector "Line style" Solid/Fine/Medium/Coarse = 0/4/8/16 on the strokes slice. Goldens regenerated (decorations scene gained a dashed segment + dashed circle).
+- 17D: `labelDx`/`labelDy` screen-px attributes (defaults = the old hardcoded (6, −18), so old saves render identically); shared `labelScreenRect` in `label_layout.dart` keeps painter and grab rect in lockstep; label drag lives in move/select mode, hit-tests labels *before* geometry on pan-start (reverse insertion order = topmost), previews via a painter `labelDragPreview` override held as canvas widget state, clamps the offset radially to 40 px, commits exactly one `ChangeAttributesCommand` (cancel just drops the state).
+- 564 tests green, `flutter analyze` clean, web smoke SMOKE PASS (10 enabled icons, zero console errors).
+
+**Next**
+- Phase 18 on a `phase-18-quad-macros` branch: `mirrorPointAcross` helper (hidden perpendicular → branch-0 foot → `SegmentRatioPoint` ratio 2 — never circle-branch mirroring, it flips sides under drags), then RectangleMacroTool (2 taps + position-only height), RightTrapezium (3 taps), Rhombus (2 taps + position-only direction on a compass circle), IsoscelesTrapezium and Kite (3 taps + mirror). Chords X R/H/K/I/L; PLAN's Phase-16 triangle proposals moved to X ⇧I/⇧R.
+- Phase 14 (drag & gesture fixes) and the two environment-blocked Phase 12 boxes remain open.
+
+**Open questions / gotchas**
+- The dash selector pushed the inspector's read-only multi-selection list below the 600-px test fold — `scrollUntilVisible` needed in one more test (the delete-button idiom).
+- Widget-test label drags must beat the recognizer's pan slop (~36 px): a 20 px `moveTo` never fires `onScaleStart` and the test passes vacuously. The label tests move 30/30.
+- Dashed *infinite* lines walk the full extended path (reach ≈ anchor distance + canvas size) through `PathMetrics` every frame — fine today; revisit only if a screenful of dashed lines ever drags.
+- drive.js not extended with Phase 17 pixel sections (label drag needs inspector-driven naming first — heavy UI scripting); widget tests cover the flows, parallelogram precedent.
+
 ## Session 18 — 2026-07-04
 
 **Done**

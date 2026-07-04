@@ -58,12 +58,12 @@ function darkBlobs(png, minY) {
 // Centers of the app-bar action icons, left to right (x > 300 skips the
 // leading object-tree toggle and the title). Column runs separated by
 // less than 8 px merge into one icon (outlined glyphs have gaps).
-// Current action order (main.dart + panels/toolbar.dart, Phase 13):
+// Current action order (main.dart + panels/toolbar.dart, Phase 17):
 // 0 file, then the five tool flyout groups — 1 Points, 2 Lines,
-// 3 Circles, 4 Angles, 5 Macros — then 6 fit, 7 reset, 8 theme toggle,
-// 9 undo, 10 redo (undo/redo start disabled and greyed below the glyph
-// threshold, so a fresh app detects 9 icons and the theme toggle is the
-// last — index it from the end, not from the front).
+// 3 Circles, 4 Angles, 5 Macros — then 6 fit, 7 reset, 8 cheat sheet,
+// 9 theme toggle, 10 undo, 11 redo (undo/redo start disabled and greyed
+// below the glyph threshold, so a fresh app detects 10 icons and the
+// theme toggle is the last — index it from the end, not from the front).
 function appBarIcons(png) {
   const isGlyphCol = (x) => {
     for (let y = 8; y < 48; y++) {

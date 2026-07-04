@@ -141,6 +141,19 @@ class AttributesInspector extends ConsumerWidget {
                       (attributes) => attributes.copyWith(strokeWidth: width),
                     ),
                   ),
+                  const SizedBox(height: 12),
+                  _DashSelector(
+                    key: const ValueKey('dash-style'),
+                    values: [
+                      for (final object in strokes)
+                        object.attributes.dashPeriod,
+                    ],
+                    onChanged: (period) => _setForAll(
+                      ref,
+                      strokes,
+                      (attributes) => attributes.copyWith(dashPeriod: period),
+                    ),
+                  ),
                 ],
                 if (points.isNotEmpty) ...[
                   const SizedBox(height: 12),
@@ -387,6 +400,66 @@ class _WidthSelector extends StatelessWidget {
           // Allowing empty lets `selected` model the mixed state; a tap
           // on the already-selected segment then arrives as an empty set,
           // which is a no-op rather than a "no width".
+          emptySelectionAllowed: true,
+          showSelectedIcon: false,
+          style: const ButtonStyle(
+            visualDensity: VisualDensity.compact,
+          ),
+          onSelectionChanged: (selection) {
+            if (selection.isNotEmpty) {
+              onChanged(selection.first);
+            }
+          },
+        ),
+      ],
+    );
+  }
+}
+
+/// The line-style presets: a dash period of 0 is solid; the rest dash at
+/// that period in logical pixels (dash = gap = period / 2).
+const _dashPresets = <(String, double)>[
+  ('Solid', 0),
+  ('Fine', 4),
+  ('Medium', 8),
+  ('Coarse', 16),
+];
+
+/// The strokes' dash style as labelled segments — the discrete-choice
+/// sibling of [_WidthSelector], so each tap is exactly one command.
+///
+/// Nothing is highlighted when the values are mixed, or uniform but not
+/// among the presets (possible once saved files arrive).
+class _DashSelector extends StatelessWidget {
+  const _DashSelector({
+    super.key,
+    required this.values,
+    required this.onChanged,
+  });
+
+  final List<double> values;
+  final ValueChanged<double> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final uniform = values.toSet().length == 1;
+    final presetValues = [for (final (_, period) in _dashPresets) period];
+    final selected = uniform && presetValues.contains(values.first)
+        ? {values.first}
+        : const <double>{};
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Line style', style: Theme.of(context).textTheme.bodyMedium),
+        const SizedBox(height: 8),
+        SegmentedButton<double>(
+          segments: [
+            for (final (label, period) in _dashPresets)
+              ButtonSegment(value: period, label: Text(label)),
+          ],
+          selected: selected,
+          // Same empty-selection idiom as _WidthSelector: a tap on the
+          // already-selected segment arrives empty and is a no-op.
           emptySelectionAllowed: true,
           showSelectedIcon: false,
           style: const ButtonStyle(

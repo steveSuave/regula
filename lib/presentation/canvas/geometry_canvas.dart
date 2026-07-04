@@ -5,15 +5,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../application/providers/command_stack_provider.dart';
 import '../../application/providers/construction_provider.dart';
 import '../../application/providers/selection_provider.dart';
 import '../../application/providers/tool_provider.dart';
 import '../../application/providers/viewport_provider.dart';
+import '../../domain/commands/change_attributes_command.dart';
 import '../../domain/math/vec2.dart';
 import '../../domain/tools/tool.dart';
 import 'canvas_hit_tester.dart';
 import 'canvas_viewport.dart';
 import 'geometry_painter.dart';
+import 'label_layout.dart';
 
 /// The drawing surface: hosts the [GeometryPainter] and turns taps into
 /// [ToolInput]s for the active tool — or, with no tool active
@@ -34,6 +37,13 @@ class GeometryCanvas extends ConsumerStatefulWidget {
   /// Hit-test radius in logical pixels (PLAN: 8 px), converted to world
   /// units per tap so it feels the same at every zoom level.
   static const double hitThresholdPx = 8;
+
+  /// How far (logical px) a dragged label's offset may stray from its
+  /// object's anchor — "an appropriate place around its parent".
+  static const double labelOffsetMaxPx = 40;
+
+  /// Slack (logical px) around the label's text rect when grabbing it.
+  static const double labelGrabSlackPx = 2;
 
   /// Exponential zoom rate per scrolled pixel: factor = e^(−dy · rate),
   /// so one mouse-wheel notch (~100 px) zooms ~22 % and scrolling is
@@ -71,6 +81,11 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
   Offset? _firstDown;
   int _downPointers = 0;
 
+  /// In-progress label drag; null when none. Like the band, this is
+  /// local widget state — the construction is untouched until the one
+  /// [ChangeAttributesCommand] commits on release (cancel just drops it).
+  _LabelDrag? _labelDrag;
+
   @override
   Widget build(BuildContext context) {
     final constructionState = ref.watch(constructionProvider);
@@ -104,6 +119,10 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
             selectedIds: ref.watch(selectionProvider),
             previewMarkers:
                 tool is ToolInputPreview ? tool.previewPositions : const [],
+            labelDragPreview: switch (_labelDrag) {
+              null => null,
+              final drag => (id: drag.id, offset: drag.offset),
+            },
           ),
           foregroundPainter: _MarqueePainter(
             band: _band,
@@ -222,15 +241,38 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
     _panEnd(viewport);
   }
 
-  /// A drag in move/select mode: starting over an object moves it (the
-  /// drag session lives in `toolProvider`), starting over empty canvas
-  /// opens a rubber band. With a tool active the pan is ignored.
+  /// A drag in move/select mode: starting over a label moves the label,
+  /// starting over an object moves it (the drag session lives in
+  /// `toolProvider`), starting over empty canvas opens a rubber band.
+  /// With a tool active the pan is ignored.
   void _panStart(CanvasViewport viewport, Offset screen) {
     if (ref.read(toolProvider).tool != null) {
       return;
     }
     final world = viewport.screenToWorld(screen);
     final construction = ref.read(constructionProvider).construction;
+    // Labels first — a label deliberately floats *off* its geometry, so
+    // the geometry hit test below can never reach it. Reverse insertion
+    // order picks the topmost of overlapping labels, like the painter's
+    // z-order.
+    for (final object in construction.objects.toList().reversed) {
+      final rect = labelScreenRect(object, viewport);
+      if (rect == null ||
+          !rect.inflate(GeometryCanvas.labelGrabSlackPx).contains(screen)) {
+        continue;
+      }
+      setState(() {
+        _labelDrag = _LabelDrag(
+          id: object.id,
+          grab: screen,
+          startOffset: Offset(
+            object.attributes.labelDx,
+            object.attributes.labelDy,
+          ),
+        );
+      });
+      return;
+    }
     final hit = const CanvasHitTester().hitTest(
       construction.objects,
       world,
@@ -249,6 +291,11 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
   }
 
   void _panUpdate(CanvasViewport viewport, Offset screen) {
+    final labelDrag = _labelDrag;
+    if (labelDrag != null) {
+      setState(() => _labelDrag = labelDrag.movedTo(screen));
+      return;
+    }
     final anchor = _bandAnchor;
     if (anchor != null) {
       setState(() => _band = Rect.fromPoints(anchor, screen));
@@ -260,6 +307,27 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
   }
 
   void _panEnd(CanvasViewport viewport) {
+    final labelDrag = _labelDrag;
+    if (labelDrag != null) {
+      setState(() => _labelDrag = null);
+      final object = ref
+          .read(constructionProvider)
+          .construction
+          .byId(labelDrag.id);
+      final offset = labelDrag.offset;
+      if (object == null || offset == labelDrag.startOffset) {
+        return;
+      }
+      ref.read(commandStackProvider.notifier).execute(
+            ChangeAttributesCommand({
+              object.id: object.attributes.copyWith(
+                labelDx: offset.dx,
+                labelDy: offset.dy,
+              ),
+            }),
+          );
+      return;
+    }
     final band = _band;
     if (band == null) {
       ref.read(toolProvider.notifier).endDrag();
@@ -286,6 +354,7 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
     setState(() {
       _band = null;
       _bandAnchor = null;
+      _labelDrag = null;
     });
   }
 
@@ -313,6 +382,38 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
     } else {
       selection.select(hit.id);
     }
+  }
+}
+
+/// One label drag: which label, where it was grabbed, and the offset it
+/// started from. [movedTo] carries the pointer delta over to the offset,
+/// clamped radially to [GeometryCanvas.labelOffsetMaxPx] so the label
+/// stays around its parent's anchor.
+class _LabelDrag {
+  const _LabelDrag({
+    required this.id,
+    required this.grab,
+    required this.startOffset,
+    Offset? offset,
+  }) : offset = offset ?? startOffset;
+
+  final String id;
+  final Offset grab;
+  final Offset startOffset;
+  final Offset offset;
+
+  _LabelDrag movedTo(Offset screen) {
+    var moved = startOffset + (screen - grab);
+    final distance = moved.distance;
+    if (distance > GeometryCanvas.labelOffsetMaxPx) {
+      moved = moved * (GeometryCanvas.labelOffsetMaxPx / distance);
+    }
+    return _LabelDrag(
+      id: id,
+      grab: grab,
+      startOffset: startOffset,
+      offset: moved,
+    );
   }
 }
 

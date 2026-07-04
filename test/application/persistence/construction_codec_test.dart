@@ -42,6 +42,8 @@ Construction buildKitchenSink() {
       name: 'A',
       colorArgb: 0xFFAA3366,
       labelVisible: false,
+      labelDx: 14,
+      labelDy: 9,
       pointSize: 6,
     ),
   );
@@ -62,7 +64,11 @@ Construction buildKitchenSink() {
         id: 'seg',
         point1: a,
         point2: c,
-        attributes: const ObjectAttributes(strokeWidth: 4, visible: false),
+        attributes: const ObjectAttributes(
+          strokeWidth: 4,
+          visible: false,
+          dashPeriod: 8,
+        ),
       ),
     )
     ..add(Ray(id: 'ray', origin: b, through: c))
