@@ -1,0 +1,51 @@
+lib/domain/construction/object_attributes.freezed.dart
+  s_b802c1fa8f6fd0::t_67993ea3d9c26a 20-24,43,48,52,63,80,86-88,177,180,198,201,218,221,233,242-247,272,277,281,292,309,315-317
+lib/domain/construction/object_attributes.g.dart
+  s_b802c1fa8f6fd0::t_67993ea3d9c26a 15-16,29-30
+lib/presentation/canvas/geometry_canvas.dart
+  s_b802c1fa8f6fd0::t_efb71e54dbc8e4 84-88
+  s_b802c1fa8f6fd0::t_740235fbb3018d 122-125
+  s_b802c1fa8f6fd0::t_1b4fafed0c3619 357
+  s_b802c1fa8f6fd0::t_1f9dd0a0425069 244-247,254-275
+  s_b802c1fa8f6fd0::t_48ede2f5b2a1a5 8,13,19
+  s_b802c1fa8f6fd0::t_f313908748dd76 388-419
+  s_b802c1fa8f6fd0::t_1d979a5232201e 41-47
+  s_b802c1fa8f6fd0::t_29cde697cce85d 294-298,310-330
+lib/domain/construction/object_attributes.dart
+  s_b802c1fa8f6fd0::t_a4699d38198180 26-32
+lib/presentation/canvas/label_layout.dart
+  s_b802c1fa8f6fd0::t_d83edc0d8594d7 1-37
+lib/presentation/canvas/geometry_painter.dart
+  s_b802c1fa8f6fd0::t_2a26e2f86f8a64 345-346
+  s_b802c1fa8f6fd0::t_b7a0bab9a53f33 33
+  s_b802c1fa8f6fd0::t_52028cf72d3d7b 218-221,223-226,230,234
+  s_b802c1fa8f6fd0::t_a3bd73c1045d01 76-81
+  s_b802c1fa8f6fd0::t_2780ea4035f9f5 15
+test/application/persistence/construction_codec_test.dart
+  s_b802c1fa8f6fd0::t_cbdc05e96587eb 45-46
+test/presentation/canvas/label_layout_test.dart
+  s_b802c1fa8f6fd0::t_9b4ecddc6fcdc6 1-70
+test/presentation/canvas/geometry_canvas_test.dart
+  s_b802c1fa8f6fd0::t_cc96def51935df 7
+  s_b802c1fa8f6fd0::t_8c45cf160975d5 1469
+  s_b802c1fa8f6fd0::t_e81ad0c3790c6a 1395,1397,1404-1405
+  s_b802c1fa8f6fd0::t_f04b58ba76a409 20
+  s_b802c1fa8f6fd0::t_910f367a0fefa7 1372-1394,1396,1398-1403,1406-1443,1445-1468,1470-1476
+  s_b802c1fa8f6fd0::t_e7a8c2e3bd7078 1444
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "c25dc0f6d551e2941a781a109661470a6b3c60ff",
+  "prompts": {},
+  "sessions": {
+    "s_b802c1fa8f6fd0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "17efa3f0-97e2-4404-a9f3-cbfa554b401f",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
