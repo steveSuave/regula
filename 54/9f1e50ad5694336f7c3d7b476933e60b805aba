@@ -1,0 +1,23 @@
+lib/application/persistence/construction_codec.dart
+  s_729e817b2ed70e::t_c8f3a1845f034f 1-417
+docs/PLAN.md
+  s_729e817b2ed70e::t_dfd5b0fa096d91 113-117
+test/application/persistence/construction_codec_test.dart
+  s_729e817b2ed70e::t_f96175b212e076 1-395
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "549f1e50ad5694336f7c3d7b476933e60b805aba",
+  "prompts": {},
+  "sessions": {
+    "s_729e817b2ed70e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1c48dc7e-d00a-4db7-9595-c3e462aa0011",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
