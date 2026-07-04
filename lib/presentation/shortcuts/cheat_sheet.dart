@@ -81,9 +81,13 @@ class _SectionColumn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final bindings = [
+    // Bindings first, then the display-only pointer-gesture rows.
+    final rows = [
       for (final binding in shortcutTable)
-        if (binding.section == section && binding.showInCheatSheet) binding,
+        if (binding.section == section && binding.showInCheatSheet)
+          (binding.display, binding.label),
+      for (final gesture in gestureRows)
+        if (gesture.section == section) (gesture.display, gesture.label),
     ];
     return SizedBox(
       width: 330,
@@ -92,7 +96,7 @@ class _SectionColumn extends StatelessWidget {
         children: [
           Text(section.title, style: theme.textTheme.titleSmall),
           const SizedBox(height: 6),
-          for (final binding in bindings)
+          for (final (display, label) in rows)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 2),
               child: Row(
@@ -101,7 +105,7 @@ class _SectionColumn extends StatelessWidget {
                   SizedBox(
                     width: 104,
                     child: Text(
-                      binding.display,
+                      display,
                       style: theme.textTheme.bodySmall!.copyWith(
                         fontWeight: FontWeight.w600,
                         color: theme.colorScheme.primary,
@@ -109,10 +113,7 @@ class _SectionColumn extends StatelessWidget {
                     ),
                   ),
                   Expanded(
-                    child: Text(
-                      binding.label,
-                      style: theme.textTheme.bodySmall,
-                    ),
+                    child: Text(label, style: theme.textTheme.bodySmall),
                   ),
                 ],
               ),

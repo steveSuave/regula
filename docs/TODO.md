@@ -107,10 +107,10 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 
 ## Phase 13 — Toolbar rework & tool-selection UX
 - [x] `IntersectionTool` + toolbar entry + `I` shortcut (collects two distinct curves like `TwoLineTool` but accepting circles too; the branch nearest the *second* tap wins, resolved by probing both `IntersectionPoint` branches — no duplicated intersection dispatch; non-intersecting curves commit an undefined branch-0 point; standalone `join_inner` button for now, folds into the Points flyout below)
-- [ ] Unified **Points** flyout: free point, midpoint, segment-ratio point, intersection, point-on-object, centroid, orthocenter, incenter, circumcenter — retire the standalone Point and Point-on-object buttons and the Triangle-centers menu
-- [ ] Move Circle (center + rim point) from the two-point menu into the circles menu
-- [ ] Rename the two-point menu to **Lines** (line, segment, ray) and absorb perpendicular / parallel / angle bisector — retire the separate line-constructions menu
-- [ ] Deselect affordances: double-click on a flyout group icon deactivates its tool; active-tool highlight consistent across single icons and groups; tooltips say "click again / double-click to deselect"
+- [x] Unified **Points** flyout: free point, midpoint, segment-ratio point, intersection, point-on-object, centroid, orthocenter, incenter, circumcenter — retire the standalone Point and Point-on-object buttons and the Triangle-centers menu (toolbar extracted to `presentation/panels/toolbar.dart` per PLAN's layout table; builders are public canonicalized tear-offs shared with the keyboard switch)
+- [x] Move Circle (center + rim point) from the two-point menu into the circles menu
+- [x] Rename the two-point menu to **Lines** (line, segment, ray) and absorb perpendicular / parallel / angle bisector — retire the separate line-constructions menu
+- [x] Deselect affordances: double-click on a flyout group icon deactivates its tool (deactivation `GestureDetector` mounts only while the group is active, so the double-tap delay on opening the menu applies only then); every tool now lives in a group, so the group-icon highlight is the one consistent indicator; the active group's tooltip appends "double-click to deselect"
 - [ ] Discoverability in the `?` cheat sheet: unhide `V` (bound to move/select but `showInCheatSheet: false` as an Esc twin) and add display-only rows for the pointer gestures (Space+drag pan, scroll zoom) so panning is findable
 - [ ] Update the shortcut table, cheat sheet, and any goldens/smoke assertions touched by the toolbar change (drive.js indexes app-bar icons by position)
 
