@@ -517,6 +517,19 @@ final List<ShortcutBinding> shortcutTable = [
   _x(LogicalKeyboardKey.keyT, AppAction.trapeziumMacroTool, 'Trapezium', 'X T'),
 ];
 
+/// The render-ready key text for [action]'s primary binding — the first
+/// cheat-sheet-visible entry in table order, so hidden alternates (the
+/// numpad twins, `Ctrl/⌘ Y`, `Backspace`) never surface in tooltips.
+/// Null when the action has no binding.
+String? shortcutDisplayFor(AppAction action) {
+  for (final binding in shortcutTable) {
+    if (binding.action == action && binding.showInCheatSheet) {
+      return binding.display;
+    }
+  }
+  return null;
+}
+
 /// A display-only cheat-sheet row for a pointer gesture. Not a binding —
 /// the resolver never sees these; they exist so the pointer-first
 /// interactions (panning, zooming) are discoverable next to their
