@@ -13,6 +13,7 @@ _ObjectAttributes _$ObjectAttributesFromJson(Map<String, dynamic> json) =>
       visible: json['visible'] as bool? ?? true,
       labelVisible: json['labelVisible'] as bool? ?? true,
       strokeWidth: (json['strokeWidth'] as num?)?.toDouble() ?? 2.0,
+      dashPeriod: (json['dashPeriod'] as num?)?.toDouble() ?? 0.0,
       pointSize: (json['pointSize'] as num?)?.toDouble() ?? 4.0,
       fillAlpha: (json['fillAlpha'] as num?)?.toDouble(),
     );
@@ -24,6 +25,7 @@ Map<String, dynamic> _$ObjectAttributesToJson(_ObjectAttributes instance) =>
       'visible': instance.visible,
       'labelVisible': instance.labelVisible,
       'strokeWidth': instance.strokeWidth,
+      'dashPeriod': instance.dashPeriod,
       'pointSize': instance.pointSize,
       'fillAlpha': instance.fillAlpha,
     };
