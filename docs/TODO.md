@@ -80,11 +80,11 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] Fit / reset / nudge (app-bar Fit button — pure `fittedViewport` over per-kind world bounds: points/circle discs/angle vertices, lines contribute nothing; Reset button = origin at 100 %; nudge's viewport op landed as `CanvasViewport.pannedByScreen`, its arrow-key wiring belongs to Phase 11's shortcut table)
 
 ## Phase 9 — Persistence & theme
-- [ ] JSON codec (encode + decode in topological order, `version: 1`)
-- [ ] Save / Open via `file_picker` (web download/upload + native picker)
-- [ ] Light/dark theme palette tuned for canvas contrast
-- [ ] Persist theme choice via `shared_preferences`
-- [ ] Round-trip test on a complex construction
+- [x] JSON codec (encode + decode in topological order, `version: 1`) (one centralized codec in `application/persistence/construction_codec.dart` — PLAN updated first; every decode failure normalizes to `FormatException` with the offending id; files newer than the app are rejected)
+- [x] Save / Open via `file_picker` (web download/upload + native picker) (`saveFile(bytes:)` writes on every platform; File > New confirms before discarding a non-empty construction and centers the world origin — app *launch* still starts at top-left; widget tests fake `FilePickerPlatform.instance`)
+- [x] Light/dark theme palette tuned for canvas contrast (`AppTheme` pins primary = default object color and tertiary = selection to explicit values with ≥ 3:1 WCAG contrast against the canvas in both themes, enforced by test)
+- [x] Persist theme choice via `shared_preferences` (`main()` awaits the instance once and injects it via ProviderScope override so `themeModeProvider` reads synchronously; fresh installs follow the OS, the app-bar toggle flips against the rendered brightness)
+- [x] Round-trip test on a complex construction (kitchen-sink test instantiates every concrete object kind — also the safety net for kinds missing from the codec — plus a real-browser check: Save downloads a valid document, dark theme survives a reload)
 
 ## Phase 10 — Macros / advanced shapes
 - [ ] Square macro tool
