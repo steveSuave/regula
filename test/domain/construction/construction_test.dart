@@ -5,6 +5,7 @@ import 'package:fgex/domain/construction/objects/free_point.dart';
 import 'package:fgex/domain/construction/objects/intersection_point.dart';
 import 'package:fgex/domain/construction/objects/line_through_two_points.dart';
 import 'package:fgex/domain/construction/objects/midpoint.dart';
+import 'package:fgex/domain/construction/objects/point_on_object.dart';
 import 'package:fgex/domain/math/vec2.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -81,6 +82,48 @@ void main() {
         ..add(m);
       expect(() => c.moveFreePoint('nope', Vec2.zero), throwsArgumentError);
       expect(() => c.moveFreePoint('m', Vec2.zero), throwsArgumentError);
+    });
+  });
+
+  group('Construction: setPointOnObjectParameter', () {
+    test('re-parameterizes the point and recomputes its dependents', () {
+      final c = Construction();
+      final a = FreePoint(id: 'a', position: Vec2.zero);
+      final b = FreePoint(id: 'b', position: const Vec2(10, 0));
+      final l = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
+      final p = PointOnObject(id: 'p', curve: l, parameter: 2);
+      final m = Midpoint(id: 'm', point1: a, point2: p);
+      c
+        ..add(a)
+        ..add(b)
+        ..add(l)
+        ..add(p)
+        ..add(m);
+
+      var notified = 0;
+      c.addListener(() => notified++);
+      c.setPointOnObjectParameter('p', 6);
+      expect(p.parameter, 6);
+      expect(p.position, const Vec2(6, 0));
+      expect(m.position, const Vec2(3, 0));
+      expect(notified, 1);
+    });
+
+    test('throws for unknown ids and for other point kinds', () {
+      final c = Construction();
+      final a = FreePoint(id: 'a', position: Vec2.zero);
+      final b = FreePoint(id: 'b', position: const Vec2(2, 0));
+      final m = Midpoint(id: 'm', point1: a, point2: b);
+      c
+        ..add(a)
+        ..add(b)
+        ..add(m);
+      expect(
+        () => c.setPointOnObjectParameter('nope', 0),
+        throwsArgumentError,
+      );
+      expect(() => c.setPointOnObjectParameter('a', 0), throwsArgumentError);
+      expect(() => c.setPointOnObjectParameter('m', 0), throwsArgumentError);
     });
   });
 
