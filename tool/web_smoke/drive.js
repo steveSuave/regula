@@ -11,6 +11,9 @@
 //   3. Phase 9 theme: toggle dark, assert the canvas darkens, reload and
 //      assert the choice persisted (shared_preferences → localStorage),
 //      toggle back to light.
+//   4. Phase 10 square macro: two taps on the (reloaded, empty) canvas,
+//      assert all four sides render and the hidden scaffolding
+//      (perpendiculars past the side extents, compass circles) does not.
 
 const fs = require('fs');
 const { chromium } = require('playwright');
@@ -53,9 +56,10 @@ function darkBlobs(png, minY) {
 // less than 8 px merge into one icon (outlined glyphs have gaps).
 // Current action order (main.dart): 0 file, 1 point tool, 2 two-point,
 // 3 point-on-object, 4 line constructions, 5 circles, 6 angles,
-// 7 triangle centers, 8 fit, 9 reset, 10 theme toggle, 11 undo, 12 redo
-// (undo/redo start disabled and greyed below the glyph threshold, so a
-// fresh app detects 11 icons and the theme toggle is the last).
+// 7 triangle centers, 8 shape macros, 9 fit, 10 reset, 11 theme toggle,
+// 12 undo, 13 redo (undo/redo start disabled and greyed below the glyph
+// threshold, so a fresh app detects 12 icons and the theme toggle is the
+// last — index it from the end, not from the front).
 function appBarIcons(png) {
   const isGlyphCol = (x) => {
     for (let y = 8; y < 48; y++) {
@@ -105,9 +109,9 @@ async function canvasSample(page, x, y) {
 
   const icons = appBarIcons(PNG.sync.read(await page.screenshot()));
   console.log('app-bar icons at:', icons.map((x) => x.toFixed(0)).join(' '));
-  check(icons.length >= 11, `found ${icons.length} app-bar icons (>= 11)`);
+  check(icons.length >= 12, `found ${icons.length} app-bar icons (>= 12)`);
   const [fileX, pointToolX] = icons;
-  const themeX = icons[10];
+  const themeX = icons[icons.length - 1];
 
   // ---- Phase 8: place two points, zoom, blobs spread ----
   await page.mouse.click(pointToolX, 28);
@@ -184,6 +188,46 @@ async function canvasSample(page, x, y) {
   await page.mouse.click(themeX, 28);
   await page.waitForTimeout(600);
   check(await canvasSample(page, 800, 600) > 700, 'toggle back to light');
+
+  // ---- Phase 10: square macro on the fresh post-reload construction ----
+  // Taps at A(400,400), B(520,400) put the derived corners one side
+  // length up (y-up world): C(520,280), D(400,280). Side BC lies on the
+  // hidden perpendicular's carrier, so pixels beyond the segment extent
+  // (x=520 below B) tell "hidden line drawn" from "side drawn" apart.
+  const shapesX = icons[8];
+  await page.mouse.click(shapesX, 28);
+  await page.waitForTimeout(500);
+  // The menu would overflow the right window edge, so it opens shifted
+  // *left* of the button — click left of shapesX, unlike the file menu.
+  await page.mouse.click(shapesX - 60, 8 + 24); // first item: Square
+  await page.waitForTimeout(300);
+  await page.mouse.click(400, 400);
+  await page.waitForTimeout(200);
+  await page.mouse.click(520, 400);
+  await page.waitForTimeout(400);
+
+  const squareShot = PNG.sync.read(await page.screenshot());
+  const darkNear = (x, y, r) => {
+    for (let dy = -r; dy <= r; dy++) {
+      for (let dx = -r; dx <= r; dx++) {
+        const i = (squareShot.width * (y + dy) + x + dx) << 2;
+        if (squareShot.data[i] + squareShot.data[i + 1] +
+            squareShot.data[i + 2] < 450) return true;
+      }
+    }
+    return false;
+  };
+  check(darkNear(460, 400, 2) && darkNear(520, 340, 2) &&
+        darkNear(460, 280, 2) && darkNear(400, 340, 2),
+        'square macro renders all four sides');
+  check(darkNear(400, 400, 2) && darkNear(520, 400, 2) &&
+        darkNear(520, 280, 2) && darkNear(400, 280, 2),
+        'square macro renders all four corner points');
+  check(!darkNear(520, 500, 3) && !darkNear(400, 500, 3),
+        'hidden perpendiculars do not render past the side extents');
+  check(!darkNear(605, 485, 3) && !darkNear(315, 485, 3),
+        'hidden compass circles do not render');
+  check(!darkNear(460, 340, 3), 'square interior stays empty');
 
   console.log('console errors:', errors.length ? errors : 'none');
   check(errors.length === 0, 'no console errors');
