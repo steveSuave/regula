@@ -5,8 +5,8 @@ import 'package:fgex/domain/construction/objects/parallel_line.dart';
 import 'package:fgex/domain/construction/objects/point_on_object.dart';
 import 'package:fgex/domain/construction/objects/segment.dart';
 import 'package:fgex/domain/math/vec2.dart';
-import 'package:fgex/domain/tools/trapezium_macro_tool.dart';
 import 'package:fgex/domain/tools/tool.dart';
+import 'package:fgex/domain/tools/trapezium_macro_tool.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
