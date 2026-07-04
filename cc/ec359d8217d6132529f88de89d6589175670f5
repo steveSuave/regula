@@ -1,0 +1,35 @@
+lib/presentation/panels/toolbar.dart
+  s_b802c1fa8f6fd0::t_d5baa5ffdabb00 38,45-47
+  s_b802c1fa8f6fd0::t_a60b0ef62b757f 151,225-234,238-244,253
+  s_b802c1fa8f6fd0::t_d760129f7e8894 325-326
+  s_b802c1fa8f6fd0::t_730f765eec4dd1 365-398
+  s_b802c1fa8f6fd0::t_fa86ec48cd6af9 254-257,261
+  s_b802c1fa8f6fd0::t_730807b8287b60 152-155,159,161,165,170-178
+  s_b802c1fa8f6fd0::t_6ef04d39397249 306-307,319,323-324,327-328,330,342-349
+  s_b802c1fa8f6fd0::t_923850bf6e2638 188-194,203,211-216
+  s_b802c1fa8f6fd0::t_ab83c2116b74c7 273,278,283
+  s_b802c1fa8f6fd0::t_b8e5cd8d6da1a1 48
+test/presentation/shortcuts/shortcut_table_test.dart
+  s_b802c1fa8f6fd0::t_5ad7d78e4b1efe 89-97
+test/presentation/panels/toolbar_test.dart
+  s_b802c1fa8f6fd0::t_6efd07ef0987a9 96-99,114-128
+  s_b802c1fa8f6fd0::t_e29cb14ee3258c 129
+lib/presentation/shortcuts/shortcut_table.dart
+  s_b802c1fa8f6fd0::t_5c734bd2a224cd 520-532
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ccec359d8217d6132529f88de89d6589175670f5",
+  "prompts": {},
+  "sessions": {
+    "s_b802c1fa8f6fd0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "17efa3f0-97e2-4404-a9f3-cbfa554b401f",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
