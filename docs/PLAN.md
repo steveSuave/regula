@@ -43,7 +43,7 @@ The `domain/` layer must not import `package:flutter/*`. This is the boundary th
 - `parents` is a getter derived from typed parent fields (e.g. `Midpoint` holds `GeoPoint point1, point2`), so ill-typed constructions are unrepresentable rather than runtime errors.
 - Derived objects support an *undefined* state (degenerate parent configuration — coincident points defining a line, curves that stopped intersecting mid-drag). Undefined objects stay in the graph, are skipped by painter/hit-tester, and recover when the degeneracy passes.
 - Subclasses (one file each, grouped by kind):
-  - **Points:** `FreePoint`, `PointOnObject` (constrained to a curve), `IntersectionPoint`, `Midpoint`, `Centroid`, `Orthocenter`, `Incenter`, `Circumcenter`, `SegmentRatioPoint`.
+  - **Points:** `FreePoint`, `PointOnObject` (constrained to a curve), `IntersectionPoint`, `Midpoint`, `Centroid`, `Orthocenter`, `Incenter`, `Circumcenter`, `SegmentRatioPoint`. Planned (Phase 15, transformations): `ReflectedPoint` (about a line), `CentralReflectionPoint` (about a point), `RotatedPoint` (about a center by a fixed angle), `TranslatedPoint` (by the vector between two points) — ordinary derived points, so recompute, persistence and hit testing work unchanged; exact names may be refined at implementation per the "subclasses end in their kind" convention.
   - **Lines:** `LineThroughTwoPoints`, `Segment`, `Ray`, `PerpendicularLine`, `ParallelLine`, `AngleBisectorLine`.
   - **Circles & arcs:** `CircleCenterPoint`, `ThreePointCircle`, `CompassCircle` (two points defining radius + center), `Arc` (through three points: endpoints first and last, the arc is the carrier branch containing the middle point; undefined while collinear), `Sector` (center + rim point fixing radius and start angle + a third point fixing only the end angle; sweep is CCW from start to end).
   - **Angles:** `VertexAngle` (arm–vertex–arm points; sweep is CCW from the first arm's ray to the second's, so the two tap orders give the two complementary markers) and `LineAngle` (between two lines; always the acute/right angle in (0, π/2], vertex at the intersection, undefined while parallel).
@@ -65,6 +65,7 @@ The `domain/` layer must not import `package:flutter/*`. This is the boundary th
 - `abstract class Tool { ToolState onTap(...); ToolState onHover(...); Command? complete(...); }`
 - One subclass per tool: `PointTool`, `LineThroughTwoPointsTool`, `MidpointTool`, `IntersectionTool`, `ThreePointCircleTool`, `AngleBisectorTool`, `CompassTool`, `SegmentRatioTool`, `SquareMacroTool`, `ParallelogramMacroTool`, `TrapeziumMacroTool`, etc.
 - A tool collects N hit-tested inputs (existing objects or new free points), then emits a `Command`. Snap-to-object during input collection.
+- Planned tool additions (Phases 13–16): `DragTool` (dragging moves out of the no-tool mode — see Canvas & interaction), `IntersectionTool` (pick two curves; creates the `IntersectionPoint` branch nearest the tap), transformation tools for the Phase 15 point kinds (reuse `PointAndLineTool` / `TwoPointTool` input shapes where they fit; rotation takes its angle from a dialog like the segment-ratio tool), `AngleBySizeTool` (arm point, vertex, size dialog → a `RotatedPoint` plus a `VertexAngle` — GeoGebra convention; depends on Phase 15's rotation), and macro tools for equilateral / isosceles / right / random triangles and random / regular polygons (regular-polygon side count via dialog; "random" macros stamp randomized *free* points, fully editable afterwards).
 - Macro tools (square, parallelogram, trapezium) are scripted compositions of primitive commands wrapped in a single undoable `MacroCommand`. Derived corners come from *hidden* scaffolding objects over the visible sides (perpendiculars + compass circles for the square, parallels for the parallelogram and trapezium), so macros introduce no new object kind — codec, painter and hit tester are untouched. Input schemes: **square** = 2 taps, adjacent corners A, B; the shape lies to the *left* of A→B (branch 1 of line∩circle along the perpendicular's direction — the AB carrier's CCW normal — which follows the points continuously, so the side never flips mid-drag). **Parallelogram** = 3 taps, consecutive corners A, B, C; D = A + (C − B) as the single-branch intersection of two hidden parallels. **Trapezium** = 3 taps for consecutive corners A, B, C plus a 4th *position-only* tap that places D as a `PointOnObject` projected onto the hidden parallel-to-AB through C — direct manipulation instead of a ratio dialog; AB ∥ CD by construction, and D inherits `PointOnObject`'s analytic-parameter caveat (translating the parallel along itself leaves D in place). The 4th tap never consumes an existing point — D must stay constrained to the parallel.
 
 ### Commands (`domain/commands/`)
@@ -82,13 +83,14 @@ The `domain/` layer must not import `package:flutter/*`. This is the boundary th
 - `Viewport` value type: `Vec2 pan` + `double scale`. World↔screen transforms live here, including zoom-about-a-focal-point (the world point under the cursor stays fixed) and scale clamping.
 - Viewport changes (pan, zoom, fit, reset) are *view* state, not construction state — they never go through `Command`s and are not undoable, for the same reason selection changes aren't: undo should replay edits to the document, not replay where the user was looking. The viewport is still snapshotted into the save format (Phase 9), just outside the undo history.
 - `HitTester`: iterates visible objects, returns the closest under an 8 px threshold, with priority order points > arcs/circles > segments/rays/lines > angles. Used by both tools (input picking) and the selection drag.
-- Dragging: a free point moves directly (`MoveFreePointCommand`). Any *other* object drags as a rigid translation of its free-point ancestors — grab a circle's rim and the whole circle moves because its defining points do — emitting one `TranslateObjectsCommand` per gesture. Fully-derived objects with no free ancestors (e.g. an intersection point) don't drag.
+- Dragging (Phase 14 rework): dragging happens only in the dedicated **Drag tool** — the no-tool default mode is *select-only* (tap / shift-tap / rubber band) and never drags. Within the Drag tool: a free point moves directly (`MoveFreePointCommand`). Any *other* object drags as a rigid translation of its free-point ancestors — grab a circle's rim and the whole circle moves because its defining points do — emitting one `TranslateObjectsCommand` per gesture. Two exceptions: a `PointOnObject` slides along its host curve (new `SetPointOnObjectParameterCommand`, one per gesture, same preview/rollback contract as the other drags), and a `CompassCircle` drags by moving only its *center's* free ancestors — the radius-defining points stay put, because the radius is a measurement, not part of the rigid body. Fully-derived objects with no free ancestors (e.g. an intersection point) still don't drag.
 - `GeometryPainter` walks the construction in insertion order, applies the viewport transform, draws each object using its attributes. Labels rendered via `TextPainter`.
 - Multi-touch on mobile: pinch = zoom, two-finger drag = pan. On web/desktop: scroll = zoom, drag empty = pan.
 
 ### Panels (`presentation/panels/`)
 
-- **Toolbar / tool palette** — grouped (point / line / circle / angle / advanced / transform), with a current-tool indicator. Adapt to mobile with a bottom sheet.
+- **Toolbar / tool palette** — target grouping (Phase 13 rework): **Drag** (single icon — the only mode that drags, Phase 14), **Points** (flyout: free point, midpoint, segment-ratio point, intersection, point-on-object, centroid, orthocenter, incenter, circumcenter), **Lines** (flyout, renamed from the two-point menu: line, segment, ray, perpendicular, parallel, angle bisector), **Circles** (flyout: circle center+rim — moved here from the two-point menu — three-point circle, compass, arc, sector), **Angles** (flyout: at vertex, between lines, by given size), **Transform** (flyout: reflect about line, reflect about point, rotate around point, translate by vector), **Macros** (flyout: square, parallelogram, trapezium, triangles, polygons). Current-tool indicator always visible. Adapt to mobile with a bottom sheet.
+- **Tool activation / deactivation** — the active tool is always visibly highlighted, whether it lives on a single icon or inside a flyout group (the group icon highlights). Clicking an active single icon deactivates it — already true, but make it discoverable (tooltip: "click again to deselect"). **Double-clicking a flyout group icon deactivates** its active tool (today `PopupMenuButton` groups have no deselect gesture at all). `Esc` always deactivates. With no tool active the app is in select-only mode (see Canvas & interaction).
 - **Attributes inspector** — shown when ≥1 object is selected. Edits name, color, visibility, label visibility, stroke width via `ChangeAttributesCommand`s (so attribute edits are undoable).
 - **Object tree** (collapsible) — flat list grouped by type, useful for selecting hidden objects.
 - **App bar** — file menu (new/open/save/save as), undo/redo, theme toggle.
@@ -171,7 +173,7 @@ Selection / app-level:
 | Key | Action |
 |---|---|
 | `Esc` | Cancel current tool, return to Move/Select |
-| `V` | Move/Select tool (pointer) |
+| `V` | Drag tool *(Phase 14 — until then, Move/Select; after it, the no-tool default is select-only)* |
 | `Del` / `Backspace` | Delete selection (cascades to dependents) |
 | `Ctrl`/`Cmd` + `Z` | Undo |
 | `Ctrl`/`Cmd` + `Shift` + `Z` (also `Ctrl`/`Cmd` + `Y`) | Redo |
@@ -199,7 +201,7 @@ Tools (single-letter primary):
 | `R` | Ray |
 | `C` | Circle (center + point) |
 | `M` | Midpoint |
-| `I` | Intersection *(deferred — no intersection tool exists yet; macros build `IntersectionPoint`s internally, but users can't. Bind when the tool lands.)* |
+| `I` | Intersection *(tool lands in Phase 13 — bind then; macros already build `IntersectionPoint`s internally)* |
 | `B` | Angle bisector |
 | `A` | Angle at vertex (`Shift` + `A` for angle between lines) |
 | `T` | Perpendicular line (`Shift` + `T` for parallel) |
@@ -223,6 +225,12 @@ Macros (`X` leader for advanced shapes):
 | `X` `S` | Square |
 | `X` `P` | Parallelogram |
 | `X` `T` | Trapezium |
+| `X` `E` | Equilateral triangle *(planned, Phase 16)* |
+| `X` `I` | Isosceles triangle *(planned, Phase 16)* |
+| `X` `R` | Right triangle *(planned, Phase 16)* |
+| `X` `G` | Regular polygon *(planned, Phase 16 — random triangle/polygon stay menu-only)* |
+
+Phase 16 chords are proposals; settle the final bindings (and any Transform-tool bindings) when the tools land.
 
 The full table is rendered in a `?`-key cheat sheet overlay. Bindings live in `lib/presentation/shortcuts/shortcut_table.dart` and are tested with widget tests that send key events and assert the active tool / command.
 
@@ -239,6 +247,10 @@ The full table is rendered in a `?`-key cheat sheet overlay. Bindings live in `l
 9. Save/load + theme + shared_preferences.
 10. Macro/advanced tools (square, parallelogram, trapezium) on top of the macro-command machinery.
 11. Golden tests + widget tests for tool flows.
+12. Toolbar rework & tool-selection UX: unified Points menu (incl. new intersection tool), Lines menu absorbs the line constructions, circle moves to the circles menu, deselect affordances. (TODO Phase 13)
+13. Drag rework: dedicated Drag tool, select-only no-tool default, `PointOnObject` slide-drag, compass-circle center-only drag. (TODO Phase 14)
+14. Transformations: reflect about line / about point, rotate around point, translate by vector. (TODO Phase 15)
+15. Angle-by-given-size + triangle/polygon macros. (TODO Phase 16)
 
 ## Multi-session workflow
 
