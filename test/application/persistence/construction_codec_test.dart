@@ -1,0 +1,395 @@
+import 'dart:convert';
+
+import 'package:fgex/application/persistence/construction_codec.dart';
+import 'package:fgex/application/providers/viewport_provider.dart';
+import 'package:fgex/domain/construction/construction.dart';
+import 'package:fgex/domain/construction/geo_object.dart';
+import 'package:fgex/domain/construction/object_attributes.dart';
+import 'package:fgex/domain/construction/objects/angle_bisector_line.dart';
+import 'package:fgex/domain/construction/objects/arc.dart';
+import 'package:fgex/domain/construction/objects/centroid.dart';
+import 'package:fgex/domain/construction/objects/circle_center_point.dart';
+import 'package:fgex/domain/construction/objects/circumcenter.dart';
+import 'package:fgex/domain/construction/objects/compass_circle.dart';
+import 'package:fgex/domain/construction/objects/free_point.dart';
+import 'package:fgex/domain/construction/objects/incenter.dart';
+import 'package:fgex/domain/construction/objects/intersection_point.dart';
+import 'package:fgex/domain/construction/objects/line_angle.dart';
+import 'package:fgex/domain/construction/objects/line_through_two_points.dart';
+import 'package:fgex/domain/construction/objects/midpoint.dart';
+import 'package:fgex/domain/construction/objects/orthocenter.dart';
+import 'package:fgex/domain/construction/objects/parallel_line.dart';
+import 'package:fgex/domain/construction/objects/perpendicular_line.dart';
+import 'package:fgex/domain/construction/objects/point_on_object.dart';
+import 'package:fgex/domain/construction/objects/ray.dart';
+import 'package:fgex/domain/construction/objects/sector.dart';
+import 'package:fgex/domain/construction/objects/segment.dart';
+import 'package:fgex/domain/construction/objects/segment_ratio_point.dart';
+import 'package:fgex/domain/construction/objects/three_point_circle.dart';
+import 'package:fgex/domain/construction/objects/vertex_angle.dart';
+import 'package:fgex/domain/math/vec2.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+/// A construction using every concrete [GeoObject] kind at least once,
+/// with non-default attributes sprinkled in. The codec's safety net: a
+/// kind missing from the encoder or decoder fails here.
+Construction buildKitchenSink() {
+  final construction = Construction();
+  final a = FreePoint(
+    id: 'a',
+    position: const Vec2(0, 0),
+    attributes: const ObjectAttributes(
+      name: 'A',
+      colorArgb: 0xFFAA3366,
+      labelVisible: false,
+      pointSize: 6,
+    ),
+  );
+  final b = FreePoint(id: 'b', position: const Vec2(4, 0));
+  final c = FreePoint(id: 'c', position: const Vec2(1, 3));
+  construction
+    ..add(a)
+    ..add(b)
+    ..add(c);
+
+  final lineAb = LineThroughTwoPoints(id: 'lab', point1: a, point2: b);
+  construction
+    ..add(Midpoint(id: 'mid', point1: a, point2: b))
+    ..add(SegmentRatioPoint(id: 'ratio', point1: a, point2: b, ratio: 2.25))
+    ..add(lineAb)
+    ..add(
+      Segment(
+        id: 'seg',
+        point1: a,
+        point2: c,
+        attributes: const ObjectAttributes(strokeWidth: 4, visible: false),
+      ),
+    )
+    ..add(Ray(id: 'ray', origin: b, through: c))
+    ..add(Centroid(id: 'cent', vertex1: a, vertex2: b, vertex3: c))
+    ..add(Orthocenter(id: 'orth', vertex1: a, vertex2: b, vertex3: c))
+    ..add(Incenter(id: 'inc', vertex1: a, vertex2: b, vertex3: c))
+    ..add(Circumcenter(id: 'circ', vertex1: a, vertex2: b, vertex3: c));
+
+  final perp = PerpendicularLine(id: 'perp', through: c, reference: lineAb);
+  final circle = CircleCenterPoint(id: 'cc', center: a, onCircle: b);
+  construction
+    ..add(perp)
+    ..add(ParallelLine(id: 'par', through: c, reference: lineAb))
+    ..add(AngleBisectorLine(id: 'bis', arm1: a, vertex: b, arm2: c))
+    ..add(circle)
+    ..add(ThreePointCircle(id: 'tpc', point1: a, point2: b, point3: c))
+    ..add(
+      CompassCircle(id: 'comp', radiusPoint1: a, radiusPoint2: b, center: c),
+    )
+    ..add(Arc(id: 'arc', start: a, via: c, end: b))
+    ..add(
+      Sector(
+        id: 'sec',
+        center: a,
+        start: b,
+        end: c,
+        attributes: const ObjectAttributes(fillAlpha: 0.25),
+      ),
+    )
+    ..add(VertexAngle(id: 'vang', arm1: a, vertex: b, arm2: c))
+    ..add(LineAngle(id: 'lang', line1: lineAb, line2: perp))
+    ..add(
+      IntersectionPoint(
+        id: 'int',
+        curve1: lineAb,
+        curve2: circle,
+        branchIndex: 1,
+      ),
+    )
+    ..add(PointOnObject(id: 'poo', curve: circle, parameter: 1.25));
+  return construction;
+}
+
+/// The current geometry of [object], by kind — what a round-trip must
+/// reproduce exactly (same parent doubles → same recompute output).
+Object? geometryOf(GeoObject object) => switch (object) {
+      GeoPoint(:final position) => position,
+      GeoLine(:final line) => line,
+      GeoCircle(:final circle) => circle,
+      GeoAngle(:final angle) => angle,
+    };
+
+DecodedDocument roundTrip(
+  Construction construction, {
+  ViewportState viewport = const ViewportState(),
+}) {
+  final encoded = jsonEncode(encodeDocument(construction, viewport: viewport));
+  return decodeDocument(jsonDecode(encoded) as Map<String, dynamic>);
+}
+
+void main() {
+  group('round-trip through a JSON string', () {
+    test('reproduces every object kind: ids, order, parents, geometry', () {
+      final original = buildKitchenSink();
+      final decoded = roundTrip(original).construction;
+
+      final originals = original.objects.toList();
+      final decodeds = decoded.objects.toList();
+      expect(decodeds.length, originals.length);
+      for (var i = 0; i < originals.length; i++) {
+        final before = originals[i];
+        final after = decodeds[i];
+        expect(after.id, before.id);
+        expect(after.runtimeType, before.runtimeType);
+        expect(
+          [for (final p in after.parents) p.id],
+          [for (final p in before.parents) p.id],
+          reason: 'parents of ${before.id}',
+        );
+        expect(after.attributes, before.attributes,
+            reason: 'attributes of ${before.id}');
+        expect(after.isDefined, before.isDefined,
+            reason: 'definedness of ${before.id}');
+        expect(geometryOf(after), geometryOf(before),
+            reason: 'geometry of ${before.id}');
+      }
+    });
+
+    test('decoded parents are the decoded instances, wired by reference', () {
+      final decoded = roundTrip(buildKitchenSink()).construction;
+      final mid = decoded.byId('mid')! as Midpoint;
+      expect(identical(mid.point1, decoded.byId('a')), isTrue);
+      // The graph is live: moving a root recomputes dependents.
+      decoded.moveFreePoint('a', const Vec2(-2, 0));
+      expect(mid.position, const Vec2(1, 0));
+    });
+
+    test('preserves per-object numeric params exactly', () {
+      final decoded = roundTrip(buildKitchenSink()).construction;
+      expect((decoded.byId('ratio')! as SegmentRatioPoint).ratio, 2.25);
+      expect((decoded.byId('poo')! as PointOnObject).parameter, 1.25);
+      expect((decoded.byId('int')! as IntersectionPoint).branchIndex, 1);
+    });
+
+    test('preserves the viewport snapshot', () {
+      const viewport = ViewportState(pan: Vec2(-3.5, 7.25), scale: 2.5);
+      final decoded = roundTrip(buildKitchenSink(), viewport: viewport);
+      expect(decoded.viewport, viewport);
+    });
+
+    test('undefined objects survive: collinear three-point circle', () {
+      final construction = Construction();
+      final a = FreePoint(id: 'a', position: const Vec2(0, 0));
+      final b = FreePoint(id: 'b', position: const Vec2(1, 0));
+      final c = FreePoint(id: 'c', position: const Vec2(2, 0));
+      construction
+        ..add(a)
+        ..add(b)
+        ..add(c)
+        ..add(ThreePointCircle(id: 'tpc', point1: a, point2: b, point3: c));
+
+      final decoded = roundTrip(construction).construction;
+      final circle = decoded.byId('tpc')! as ThreePointCircle;
+      expect(circle.isDefined, isFalse);
+      // …and recovers when the degeneracy passes, like any live object.
+      decoded.moveFreePoint('b', const Vec2(1, 1));
+      expect(circle.isDefined, isTrue);
+    });
+
+    test('an empty construction round-trips', () {
+      final decoded = roundTrip(Construction());
+      expect(decoded.construction.isEmpty, isTrue);
+      expect(decoded.viewport, const ViewportState());
+    });
+  });
+
+  group('encodeDocument', () {
+    test('stamps the current format version', () {
+      final json = encodeDocument(
+        Construction(),
+        viewport: const ViewportState(),
+      );
+      expect(json['version'], constructionFormatVersion);
+    });
+
+    test('writes objects in insertion (= topological) order', () {
+      final json =
+          encodeDocument(buildKitchenSink(), viewport: const ViewportState());
+      final objects = (json['objects'] as List).cast<Map<String, dynamic>>();
+      final seen = <Object?>{};
+      for (final object in objects) {
+        for (final parent in object['parents'] as List) {
+          expect(seen, contains(parent),
+              reason: '${object['id']} appears before its parent $parent');
+        }
+        seen.add(object['id']);
+      }
+    });
+  });
+
+  group('decodeDocument failure modes', () {
+    Map<String, dynamic> document(List<Map<String, dynamic>> objects) =>
+        <String, dynamic>{'version': 1, 'objects': objects};
+
+    Map<String, dynamic> freePoint(String id) => <String, dynamic>{
+          'id': id,
+          'type': 'FreePoint',
+          'parents': <String>[],
+          'params': <String, dynamic>{'x': 0, 'y': 0},
+        };
+
+    test('rejects a missing version', () {
+      expect(
+        () => decodeDocument(<String, dynamic>{'objects': <Object?>[]}),
+        throwsFormatException,
+      );
+    });
+
+    test('rejects a newer version than the app understands', () {
+      expect(
+        () => decodeDocument(<String, dynamic>{
+          'version': constructionFormatVersion + 1,
+          'objects': <Object?>[],
+        }),
+        throwsFormatException,
+      );
+    });
+
+    test('rejects an unknown object type', () {
+      expect(
+        () => decodeDocument(document([
+          <String, dynamic>{
+            'id': 'x',
+            'type': 'KleinBottle',
+            'parents': <String>[],
+          },
+        ])),
+        throwsFormatException,
+      );
+    });
+
+    test('rejects an unknown parent id (includes forward references)', () {
+      expect(
+        () => decodeDocument(document([
+          <String, dynamic>{
+            'id': 'm',
+            'type': 'Midpoint',
+            'parents': ['a', 'b'],
+          },
+          freePoint('a'),
+          freePoint('b'),
+        ])),
+        throwsFormatException,
+      );
+    });
+
+    test('rejects a duplicate id', () {
+      expect(
+        () => decodeDocument(document([freePoint('a'), freePoint('a')])),
+        throwsFormatException,
+      );
+    });
+
+    test('rejects an ill-kinded parent', () {
+      expect(
+        () => decodeDocument(document([
+          freePoint('a'),
+          freePoint('b'),
+          <String, dynamic>{
+            'id': 'l',
+            'type': 'LineThroughTwoPoints',
+            'parents': ['a', 'b'],
+          },
+          <String, dynamic>{
+            'id': 'm',
+            'type': 'Midpoint',
+            'parents': ['a', 'l'],
+          },
+        ])),
+        throwsFormatException,
+      );
+    });
+
+    test('rejects constructor-level validation failures as FormatException',
+        () {
+      expect(
+        () => decodeDocument(document([
+          freePoint('a'),
+          freePoint('b'),
+          <String, dynamic>{
+            'id': 'l',
+            'type': 'LineThroughTwoPoints',
+            'parents': ['a', 'b'],
+          },
+          <String, dynamic>{
+            'id': 'c',
+            'type': 'CircleCenterPoint',
+            'parents': ['a', 'b'],
+          },
+          <String, dynamic>{
+            'id': 'i',
+            'type': 'IntersectionPoint',
+            'parents': ['l', 'c'],
+            'params': <String, dynamic>{'branchIndex': 5},
+          },
+        ])),
+        throwsFormatException,
+      );
+    });
+
+    test('rejects missing params', () {
+      expect(
+        () => decodeDocument(document([
+          <String, dynamic>{
+            'id': 'a',
+            'type': 'FreePoint',
+            'parents': <String>[],
+            'params': <String, dynamic>{'x': 0},
+          },
+        ])),
+        throwsFormatException,
+      );
+    });
+
+    test('rejects a malformed viewport', () {
+      expect(
+        () => decodeDocument(<String, dynamic>{
+          'version': 1,
+          'viewport': <String, dynamic>{
+            'pan': [0],
+            'scale': 1,
+          },
+          'objects': <Object?>[],
+        }),
+        throwsFormatException,
+      );
+      expect(
+        () => decodeDocument(<String, dynamic>{
+          'version': 1,
+          'viewport': <String, dynamic>{
+            'pan': [0, 0],
+            'scale': 0,
+          },
+          'objects': <Object?>[],
+        }),
+        throwsFormatException,
+      );
+    });
+
+    test('a document without a viewport gets the default', () {
+      final decoded = decodeDocument(document([freePoint('a')]));
+      expect(decoded.viewport, const ViewportState());
+    });
+
+    test('rejects malformed attributes', () {
+      expect(
+        () => decodeDocument(document([
+          <String, dynamic>{
+            'id': 'a',
+            'type': 'FreePoint',
+            'parents': <String>[],
+            'params': <String, dynamic>{'x': 0, 'y': 0},
+            'attributes': <String, dynamic>{'strokeWidth': 'wide'},
+          },
+        ])),
+        throwsFormatException,
+      );
+    });
+  });
+}
