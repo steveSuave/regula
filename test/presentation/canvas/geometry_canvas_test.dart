@@ -350,19 +350,31 @@ void main() {
     await tester.pump();
     expect(objectCount(), 3, reason: '2 free points + the segment');
 
-    // Constrain a point onto the segment: tap between the endpoints.
+    // Constrain a point onto the segment: the smart Point tool glues a
+    // tap near the curve (within the 8 px threshold).
     await tester.tap(find.byIcon(Icons.control_point));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Point on object'));
+    await tester.tap(find.text('Point'));
     await tester.pumpAndSettle();
     await tester.tapAt(origin + const Offset(200, 103));
     await tester.pump();
     expect(objectCount(), 4);
+    expect(
+      container
+          .read(constructionProvider)
+          .construction
+          .objects
+          .whereType<PointOnObject>()
+          .single
+          .position,
+      const Vec2(200, -100),
+      reason: 'the tap projects onto the segment, not a free point at 103',
+    );
 
-    // Empty canvas is ignored by the point-on-object tool.
+    // Away from any curve the same tool drops a free point.
     await tester.tapAt(origin + const Offset(200, 300));
     await tester.pump();
-    expect(objectCount(), 4);
+    expect(objectCount(), 5);
   });
 
   testWidgets(
@@ -1064,7 +1076,7 @@ void main() {
     await tester.pump();
     await tester.tap(find.byIcon(Icons.control_point));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Point on object'));
+    await tester.tap(find.text('Point'));
     await tester.pumpAndSettle();
     await tester.tapAt(origin + const Offset(200, 100));
     await tester.pump();
