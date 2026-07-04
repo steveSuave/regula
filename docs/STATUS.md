@@ -6,6 +6,24 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 14 — 2026-07-04
+
+**Done**
+- Phase 10 started on `phase-10-macros` (4 commits, unmerged — parallelogram/trapezium still to come). Square macro landed end to end.
+- Framework first: `MultiPointTool.buildObjects` now returns a `List<GeoObject>` (one `AddObjectCommand` per object inside the same single `MacroCommand`; list must be in dependency order). The three existing subclasses wrap their single object — no behaviour change, all 462 prior tests untouched.
+- `SquareMacroTool` (2 taps): tapped points are adjacent corners A, B; C and D are *derived* — branch-1 `IntersectionPoint`s of a hidden `PerpendicularLine` (through B resp. A, referenced on the visible side `Segment` AB) with a hidden `CompassCircle` of radius |AB|. Pure composition of existing kinds: codec, painter, hit tester all untouched. Branch 1 along the carrier's CCW normal ⇒ the square lies to the *left* of A→B; tap order picks the side, and the side follows drags continuously (the carrier direction comes from parent order and is never re-canonicalized — checked against `LineEq` before coding).
+- App bar: new shape-macros menu (`Icons.crop_square`), highlighted while a `SquareMacroTool` is active. 469 tests green (`flutter analyze` clean): tool geometry, one-undo-unit, drag stays square, degeneracy round-trip, hidden-scaffolding attributes, plus a widget test driving menu → two taps.
+- Web smoke extended (`tool/web_smoke/drive.js`, release build served statically per the Session 13 rule): square renders all four sides + corner dots; hidden perpendiculars leave no pixels past the side extents (side BC lies *on* perpB's carrier, so beyond-extent pixels are the discriminator); hidden circles invisible; interior empty. SMOKE PASS.
+
+**Next**
+- Parallelogram macro (3 taps A, B, C; D = intersection of the parallel to BC through A with the parallel to AB through C — same hidden-scaffolding pattern), then trapezium (decide its third/fourth-point story first — PLAN doesn't pin one). Then Phase 11 shortcuts.
+
+**Open questions / gotchas**
+- Popup menus that would overflow the right window edge open shifted *left* of their button — the smoke script clicks left of the icon for the shapes menu, unlike the file menu. Any future menu near the right edge needs the same treatment.
+- The shapes menu added an enabled app-bar icon: drive.js now indexes the theme toggle from the *end* of the enabled-icon row instead of a fixed index (fresh app: 12 enabled icons, undo/redo greyed out). Keep the order comment in drive.js synced with `main.dart`.
+- `Sector`'s fill-alpha styling precedent may matter if macros ever want filled interiors; the square deliberately has none (interior-empty is smoke-asserted).
+- Still open from earlier phases: sliding `PointOnObject` along its curve; angle hit-target world-radius hint.
+
 ## Session 13 — 2026-07-04
 
 **Done**
