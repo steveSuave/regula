@@ -3,6 +3,7 @@ import '../../domain/construction/geo_object.dart';
 import '../../domain/construction/object_attributes.dart';
 import '../../domain/construction/objects/angle_bisector_line.dart';
 import '../../domain/construction/objects/arc.dart';
+import '../../domain/construction/objects/central_reflection_point.dart';
 import '../../domain/construction/objects/centroid.dart';
 import '../../domain/construction/objects/circle_center_point.dart';
 import '../../domain/construction/objects/circumcenter.dart';
@@ -18,10 +19,13 @@ import '../../domain/construction/objects/parallel_line.dart';
 import '../../domain/construction/objects/perpendicular_line.dart';
 import '../../domain/construction/objects/point_on_object.dart';
 import '../../domain/construction/objects/ray.dart';
+import '../../domain/construction/objects/reflected_point.dart';
+import '../../domain/construction/objects/rotated_point.dart';
 import '../../domain/construction/objects/sector.dart';
 import '../../domain/construction/objects/segment.dart';
 import '../../domain/construction/objects/segment_ratio_point.dart';
 import '../../domain/construction/objects/three_point_circle.dart';
+import '../../domain/construction/objects/translated_point.dart';
 import '../../domain/construction/objects/vertex_angle.dart';
 import '../../domain/math/vec2.dart';
 import '../providers/viewport_provider.dart';
@@ -117,6 +121,10 @@ Map<String, dynamic> _encodeObject(GeoObject object) {
         'IntersectionPoint',
         {'branchIndex': branchIndex}
       ),
+    ReflectedPoint() => ('ReflectedPoint', const {}),
+    CentralReflectionPoint() => ('CentralReflectionPoint', const {}),
+    RotatedPoint(:final angle) => ('RotatedPoint', {'angle': angle}),
+    TranslatedPoint() => ('TranslatedPoint', const {}),
     Centroid() => ('Centroid', const {}),
     Orthocenter() => ('Orthocenter', const {}),
     Incenter() => ('Incenter', const {}),
@@ -208,6 +216,32 @@ GeoObject _decodeObject(Map<String, dynamic> json, Construction construction) {
         curve1: any(0),
         curve2: any(1),
         branchIndex: _intParam(id, params, 'branchIndex'),
+        attributes: attributes,
+      ),
+    'ReflectedPoint' => ReflectedPoint(
+        id: id,
+        point: point(0),
+        mirror: line(1),
+        attributes: attributes,
+      ),
+    'CentralReflectionPoint' => CentralReflectionPoint(
+        id: id,
+        point: point(0),
+        center: point(1),
+        attributes: attributes,
+      ),
+    'RotatedPoint' => RotatedPoint(
+        id: id,
+        point: point(0),
+        center: point(1),
+        angle: _doubleParam(id, params, 'angle'),
+        attributes: attributes,
+      ),
+    'TranslatedPoint' => TranslatedPoint(
+        id: id,
+        point: point(0),
+        vectorFrom: point(1),
+        vectorTo: point(2),
         attributes: attributes,
       ),
     'Centroid' => Centroid(
