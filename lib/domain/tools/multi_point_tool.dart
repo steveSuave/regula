@@ -54,11 +54,30 @@ abstract class MultiPointTool implements ToolInputPreview {
 
   @override
   ToolResult onInput(ToolInput input) {
+    if (collectVertex(input) == null) {
+      return const ToolIgnored();
+    }
+    if (_collected.length < pointCount) {
+      return const ToolAccepted();
+    }
+    return commitCollected();
+  }
+
+  /// Turns [input] into the next collected vertex — the tapped existing
+  /// point, or a new private `FreePoint` at the tap position — and
+  /// records it. Returns null (recording nothing) when the input is
+  /// unusable: an already-collected point.
+  ///
+  /// Subclass hook: [onInput] is collect + commit-when-full; a tool
+  /// whose collection ends with a non-point input (the trapezium's
+  /// position-only fourth tap) overrides [onInput] and calls this and
+  /// [commitCollected] itself.
+  GeoPoint? collectVertex(ToolInput input) {
     final hit = input.hit;
     final ({GeoPoint point, bool isNew}) vertex;
     if (hit is GeoPoint) {
       if (_collected.any((v) => identical(v.point, hit))) {
-        return const ToolIgnored();
+        return null;
       }
       vertex = (point: hit, isNew: false);
     } else {
@@ -67,12 +86,13 @@ abstract class MultiPointTool implements ToolInputPreview {
         isNew: true,
       );
     }
-
     _collected.add(vertex);
-    if (_collected.length < pointCount) {
-      return const ToolAccepted();
-    }
+    return vertex.point;
+  }
 
+  /// Commits everything collected — new free points first, then
+  /// [buildObjects] — as one undo unit, and resets the collection.
+  ToolCommitted commitCollected() {
     final vertices = List.of(_collected);
     _collected.clear();
     final commands = <Command>[
