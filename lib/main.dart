@@ -471,6 +471,13 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
               onPressed: () => ref.read(viewportProvider.notifier).reset(),
             ),
             IconButton(
+              tooltip: 'Keyboard shortcuts (?)',
+              isSelected: _showCheatSheet,
+              icon: const Icon(Icons.keyboard_outlined),
+              onPressed: () =>
+                  setState(() => _showCheatSheet = !_showCheatSheet),
+            ),
+            IconButton(
               tooltip: Theme.of(context).brightness == Brightness.dark
                   ? 'Switch to light theme'
                   : 'Switch to dark theme',
