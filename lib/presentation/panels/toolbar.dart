@@ -8,7 +8,6 @@ import '../../application/providers/tool_provider.dart';
 import '../../domain/construction/geo_object.dart';
 import '../../domain/construction/objects/angle_bisector_line.dart';
 import '../../domain/construction/objects/arc.dart';
-import '../../domain/construction/objects/central_reflection_point.dart';
 import '../../domain/construction/objects/centroid.dart';
 import '../../domain/construction/objects/circle_center_point.dart';
 import '../../domain/construction/objects/circumcenter.dart';
@@ -21,12 +20,10 @@ import '../../domain/construction/objects/orthocenter.dart';
 import '../../domain/construction/objects/parallel_line.dart';
 import '../../domain/construction/objects/perpendicular_line.dart';
 import '../../domain/construction/objects/ray.dart';
-import '../../domain/construction/objects/reflected_point.dart';
 import '../../domain/construction/objects/sector.dart';
 import '../../domain/construction/objects/segment.dart';
 import '../../domain/construction/objects/segment_ratio_point.dart';
 import '../../domain/construction/objects/three_point_circle.dart';
-import '../../domain/construction/objects/translated_point.dart';
 import '../../domain/construction/objects/vertex_angle.dart';
 import '../../domain/tools/angle_by_size_tool.dart';
 import '../../domain/tools/equilateral_triangle_macro_tool.dart';
@@ -43,10 +40,10 @@ import '../../domain/tools/regular_polygon_macro_tool.dart';
 import '../../domain/tools/rhombus_macro_tool.dart';
 import '../../domain/tools/right_trapezium_macro_tool.dart';
 import '../../domain/tools/right_triangle_macro_tool.dart';
-import '../../domain/tools/rotated_point_tool.dart';
 import '../../domain/tools/square_macro_tool.dart';
 import '../../domain/tools/three_point_tool.dart';
 import '../../domain/tools/tool.dart';
+import '../../domain/tools/transform_object_tool.dart';
 import '../../domain/tools/trapezium_macro_tool.dart';
 import '../../domain/tools/triangle_center_tool.dart';
 import '../../domain/tools/two_line_tool.dart';
@@ -103,21 +100,6 @@ GeoObject buildVertexAngle(String id, GeoPoint a, GeoPoint b, GeoPoint c) =>
 GeoObject buildLineAngle(String id, GeoLine first, GeoLine second) =>
     LineAngle(id: id, line1: first, line2: second);
 
-GeoObject buildCentralReflection(String id, GeoPoint a, GeoPoint b) =>
-    CentralReflectionPoint(id: id, point: a, center: b);
-
-GeoObject buildTranslatedPoint(String id, GeoPoint a, GeoPoint b, GeoPoint c) =>
-    TranslatedPoint(id: id, point: a, vectorFrom: b, vectorTo: c);
-
-/// Named parameters match [PointAndLineBuilder]; the point slot is the
-/// point to mirror, the line slot the mirror axis.
-GeoObject buildReflectedPoint({
-  required String id,
-  required GeoPoint through,
-  required GeoLine reference,
-}) =>
-    ReflectedPoint(id: id, point: through, mirror: reference);
-
 const _lineBuilders = {buildLine, buildSegment, buildRay};
 const _circleBuilders = {
   buildThreePointCircle,
@@ -147,10 +129,9 @@ class GeometryToolbar extends ConsumerWidget {
         tool is TriangleCenterTool ||
         (tool is TwoPointTool &&
             !_lineBuilders.contains(tool.build) &&
-            tool.build != buildCircle &&
-            tool.build != buildCentralReflection);
+            tool.build != buildCircle);
     final linesActive =
-        (tool is PointAndLineTool && tool.build != buildReflectedPoint) ||
+        tool is PointAndLineTool ||
         (tool is ThreePointTool && tool.build == buildAngleBisector) ||
         (tool is TwoPointTool && _lineBuilders.contains(tool.build));
     final circlesActive =
@@ -160,11 +141,7 @@ class GeometryToolbar extends ConsumerWidget {
         tool is TwoLineTool ||
         tool is AngleBySizeTool ||
         (tool is ThreePointTool && tool.build == buildVertexAngle);
-    final transformActive =
-        tool is RotatedPointTool ||
-        (tool is PointAndLineTool && tool.build == buildReflectedPoint) ||
-        (tool is TwoPointTool && tool.build == buildCentralReflection) ||
-        (tool is ThreePointTool && tool.build == buildTranslatedPoint);
+    final transformActive = tool is TransformObjectTool;
     final macrosActive =
         tool is SquareMacroTool ||
         tool is ParallelogramMacroTool ||
@@ -191,7 +168,7 @@ class GeometryToolbar extends ConsumerWidget {
       final angle = await askRotationAngle(context);
       return angle == null
           ? null
-          : RotatedPointTool(newId: newObjectId, angle: angle);
+          : TransformObjectTool.rotate(newId: newObjectId, angle: angle);
     }
 
     Future<Tool?> angleSizePick() async {
@@ -332,32 +309,31 @@ class GeometryToolbar extends ConsumerWidget {
         ),
         _ToolGroup(
           icon: Icons.flip,
-          tooltip: 'Transform: reflect, rotate or translate a point',
+          tooltip: 'Transform: reflect, rotate or translate a point or curve',
           active: transformActive,
           items: [
             (
-              'Reflect about line (point and line)',
+              'Reflect about line (object and line)',
               _pick(
-                () => PointAndLineTool(
-                  newId: newObjectId,
-                  build: buildReflectedPoint,
-                ),
+                () => TransformObjectTool.reflectAboutLine(newId: newObjectId),
               ),
               AppAction.reflectAboutLineTool,
             ),
             (
-              'Reflect about point (point, then center)',
-              _twoPoint(buildCentralReflection),
+              'Reflect about point (object, then center)',
+              _pick(
+                () => TransformObjectTool.reflectAboutPoint(newId: newObjectId),
+              ),
               AppAction.reflectAboutPointTool,
             ),
             (
-              'Rotate around point (point, then center)…',
+              'Rotate around point (object, then center)…',
               rotatePick,
               AppAction.rotateAroundPointTool,
             ),
             (
-              'Translate by vector (point, then tail, tip)',
-              _threePoint(buildTranslatedPoint),
+              'Translate by vector (object, then tail, tip)',
+              _pick(() => TransformObjectTool.translate(newId: newObjectId)),
               AppAction.translateByVectorTool,
             ),
           ],
