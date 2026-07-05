@@ -665,6 +665,12 @@ class GestureRow {
 
 const List<GestureRow> gestureRows = [
   GestureRow(
+    display: 'Tap tree header',
+    label: 'Select every object of that kind '
+        '(Shift-tap or long-press adds)',
+    section: ShortcutSection.appLevel,
+  ),
+  GestureRow(
     display: 'Space + drag',
     label: 'Pan (hold Space, works with any tool)',
     section: ShortcutSection.viewport,

@@ -117,6 +117,60 @@ void main() {
     await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
   });
 
+  testWidgets('header tap selects every object of the kind, hidden included',
+      (tester) async {
+    await pumpEditor(tester);
+    final a = addPoint('a', Vec2.zero);
+    final hidden = FreePoint(
+      id: 'h',
+      position: const Vec2(1, 1),
+      attributes: const ObjectAttributes(visible: false),
+    );
+    container.read(constructionProvider).construction.add(hidden);
+    container
+        .read(constructionProvider)
+        .construction
+        .add(Segment(id: 's', point1: a, point2: hidden));
+    container.read(selectionProvider.notifier).select('s');
+    await openTree(tester);
+
+    expect(find.byTooltip('Select all points'), findsOneWidget);
+    final tree = find.byType(ObjectTreePanel);
+    await tester
+        .tap(find.descendant(of: tree, matching: find.text('Points')));
+    await tester.pump();
+    expect(container.read(selectionProvider), {'a', 'h'},
+        reason: 'replaces the selection with exactly the kind, hidden and '
+            'all — reaching hidden objects is the tree\'s raison d\'être');
+  });
+
+  testWidgets('header shift-tap and long-press union with a cross-kind '
+      'selection', (tester) async {
+    await pumpEditor(tester);
+    final a = addPoint('a', Vec2.zero);
+    final b = addPoint('b', const Vec2(2, 0));
+    container
+        .read(constructionProvider)
+        .construction
+        .add(Segment(id: 's', point1: a, point2: b));
+    container.read(selectionProvider.notifier).select('s');
+    await openTree(tester);
+
+    final tree = find.byType(ObjectTreePanel);
+    final header = find.descendant(of: tree, matching: find.text('Points'));
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.tap(header);
+    await tester.pump();
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    expect(container.read(selectionProvider), {'s', 'a', 'b'});
+
+    // Long-press is the touch shift: it also unions, never replaces.
+    container.read(selectionProvider.notifier).select('s');
+    await tester.longPress(header);
+    await tester.pump();
+    expect(container.read(selectionProvider), {'s', 'a', 'b'});
+  });
+
   testWidgets('eye toggle hides as one undoable command and shows again',
       (tester) async {
     await pumpEditor(tester);

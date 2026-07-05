@@ -6,6 +6,21 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 34 — 2026-07-05
+
+**Done**
+- **Phase 26 (select-by-kind tree headers) complete** on `phase-26-select-by-kind`, merged to `main` — the last unchecked phase.
+- Object-tree group headers (Points / Lines / Circles / Angles) are now `_GroupHeader` InkWells: tap replaces the selection with every object of that kind — hidden included, the tree's raison d'être — shift-tap unions, long-press unions (the touch shift, with `HapticFeedback.selectionClick`, matching the Phase 25b canvas convention; union-not-toggle is deliberate: headers select groups, the canvas toggles individuals). Tooltip "Select all points" etc. No new provider API — `selectMany(ids, additive:)` as planned.
+- One display-only cheat-sheet `GestureRow` in the "Selection & app" section; the sheet auto-renders it.
+- 780 tests green (2 new: header tap selects the kind incl. a hidden point after a cross-kind selection; shift-tap and long-press union with a segment selected), analyze clean. Web smoke on a fresh release build: **SMOKE PASS**, zero console errors (drive.js untouched — it never opens the tree).
+
+**Next**
+- **All planned phases are done.** Remaining open items: the optional Phase 19 SVG-export stretch, and Phase 12's two environment-blocked boxes (iOS build needs a full Xcode install; Android emulator needs an AVD system image download). Next milestone is whatever new scope the user brings — or tackling one of those blockers.
+
+**Open questions / gotchas**
+- The header sits inside a `Tooltip` whose default touch trigger is also long-press; the InkWell's recognizer is deeper so it wins the arena — long-press selects and never shows the tooltip. Fine (tooltips are hover affordances here), but worth knowing if the tooltip ever seems dead on touch.
+- The stale `python3 -m http.server 8321` from Session 32 is still serving `build/web` and was reused for the smoke (files are read per request, so the fresh build is what got tested).
+
 ## Session 33 — 2026-07-05
 
 **Done**
