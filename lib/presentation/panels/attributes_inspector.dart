@@ -65,6 +65,13 @@ class AttributesInspector extends ConsumerWidget {
       for (final object in objects)
         if (object is! GeoPoint) object,
     ];
+    // Angle markers deliberately never dash (Phase 17), so the dash row
+    // targets the strokes that do — showing it for an angle-only
+    // selection would be a silent no-op.
+    final dashables = [
+      for (final object in strokes)
+        if (object is! GeoAngle) object,
+    ];
     final angles = [
       for (final object in objects)
         if (object is GeoAngle) object,
@@ -154,18 +161,20 @@ class AttributesInspector extends ConsumerWidget {
                       (attributes) => attributes.copyWith(strokeWidth: width),
                     ),
                   ),
+                ],
+                if (dashables.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   _PresetSelector(
                     key: const ValueKey('dash-style'),
                     label: 'Line style',
                     presets: _dashPresets,
                     values: [
-                      for (final object in strokes)
+                      for (final object in dashables)
                         object.attributes.dashPeriod,
                     ],
                     onChanged: (period) => _setForAll(
                       ref,
-                      strokes,
+                      dashables,
                       (attributes) => attributes.copyWith(dashPeriod: period),
                     ),
                   ),

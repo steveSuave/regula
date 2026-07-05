@@ -58,6 +58,34 @@ void main() {
     expect(objectCount(), 0);
   });
 
+  testWidgets('tapping an angle\'s marker wedge selects the angle',
+      (tester) async {
+    await pumpEditor(tester);
+    final construction = container.read(constructionProvider).construction;
+    final a = FreePoint(id: 'a', position: const Vec2(150, -100));
+    final v = FreePoint(id: 'v', position: const Vec2(100, -100));
+    final b = FreePoint(id: 'b', position: const Vec2(100, -50));
+    construction
+      ..add(a)
+      ..add(v)
+      ..add(b)
+      ..add(VertexAngle(id: 'ang', arm1: a, vertex: v, arm2: b));
+    await tester.pump();
+
+    // Mid-sweep on the marker arc: 20 px from the vertex at 45°, which is
+    // ~20 px from the vertex point — outside even the touch threshold, so
+    // only the wedge geometry can claim this tap.
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+    await tester.tapAt(origin + const Offset(114.1, 85.9));
+    await tester.pump();
+    expect(container.read(selectionProvider), {'ang'});
+
+    // The vertex itself still belongs to the point.
+    await tester.tapAt(origin + const Offset(100, 100));
+    await tester.pump();
+    expect(container.read(selectionProvider), {'v'});
+  });
+
   testWidgets('point tool: tap to add points, tap a point again is ignored, '
       'undo/redo round-trips', (tester) async {
     await pumpEditor(tester);

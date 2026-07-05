@@ -312,6 +312,13 @@ void main() {
     expect(find.byKey(const ValueKey('marker-radius')), findsNothing,
         reason: 'a marker radius means nothing without an angle selected');
 
+    container.read(selectionProvider.notifier).select('ang');
+    await tester.pump();
+    expect(find.byKey(const ValueKey('dash-style')), findsNothing,
+        reason: 'angle markers never dash — no silent no-op row');
+    expect(find.byKey(const ValueKey('stroke-width')), findsOneWidget,
+        reason: 'stroke width does apply to the marker outline');
+
     container.read(selectionProvider.notifier).selectMany(['s', 'ang']);
     await tester.pump();
     final markerRadius = find.byKey(const ValueKey('marker-radius'));
