@@ -6,6 +6,24 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 31 — 2026-07-05
+
+**Done**
+- **Phase 19 (Export) complete** except the explicitly-optional SVG stretch, on `phase-19-export` (3 commits). User additions folded into PLAN first: transparency (already specced), a **drag-selected region** framing, and the **exact output size in pixels** always visible in the dialog.
+- `application/export/png_exporter.dart`: `renderConstructionImage` (off-screen `PictureRecorder` + the real `GeometryPainter` — no UI chrome by construction; `canvas.scale(pixelRatio)` for 1×/2×/4×; optional background fill, null = transparent) + `encodePng` + combined `exportConstructionPng`. Framing helpers return `({viewport, logicalSize})`: current view, fit (via `fittedViewport`, null when nothing visible), region (same scale, pan re-anchored at the marquee's top-left — what's inside the marquee is exactly what exports). `savePngBytes` sibling in `file_io.dart`.
+- Export dialog (`presentation/panels/export_dialog.dart`): framing radios (plain `ListTile`s — Flutter's radio tiles are mid-`RadioGroup`-migration), scale segments, transparent checkbox, live "Output: W × H px" line. "Select region…" pops the dialog with a sealed `ExportRegionPickRequested` outcome; `EditorScreen` arms `RegionPickOverlay` (stacked *on* the canvas in the editor — the canvas widget is untouched and pointer-blocked), release reopens the dialog with the region framing selected, Esc cancels back to the dialog, all other shortcuts are swallowed mid-pick. Options + region persist in editor state across round trips.
+- Wiring: "Export as PNG…" in the wide File popup and the compact overflow (below Save…), `Ctrl/⌘ E` binding + exhaustive-switch case, cheat-sheet row auto-renders.
+- 771 tests green (13 exporter: pixel-level transparency/background/scale/region-crop checks, PNG signature; 7 flow: menu → dialog → fake-picker save with IHDR dimension parsing, 2× doubles displayed and exported size, fit disabled when empty, region round trip, Esc cancel, sub-threshold drag stays armed, Ctrl+E), analyze clean. Web smoke on a fresh release build: **SMOKE PASS**, zero console errors (Export item appended *after* Save…, so the script's File-menu click coordinates held).
+
+**Next**
+- Open queue: Phases 22 (angle-mark styling) and 26 (select-by-kind); the SVG stretch stays optional. Phase 12's two environment-blocked boxes (iOS build, Android emulator) still stand — the export's native-picker path on Android rides them. **Consider the v0.1 tag now that Phase 19 has landed.**
+
+**Open questions / gotchas**
+- `RegionPickOverlay` anchors its rect at `onPanDown`, not `onPanStart` — the pan recognizer's acceptance point sits ~18 px past the true down position and would shave the marquee's corner (same class of bug as the canvas band's `_firstDown`, solved overlay-locally since it owns all pointers).
+- Widget tests that drive an export must wrap the Export tap in `tester.runAsync` and poll for the fake picker's bytes: `Picture.toImage`/`toByteData` complete on real engine futures that `pumpAndSettle` never settles.
+- The export dialog's output size uses the canvas's *laid-out* size at dialog-open time; a stale region rect survives viewport changes (it's screen-space) — deliberate, the dialog shows its pixel size so nothing is hidden.
+- drive.js not extended with an export section: the browser-download delivery is the same `FilePicker.saveFile` path the Save… check already exercises, and the render/dimension correctness is pixel-tested in widget tests (parallelogram precedent).
+
 ## Session 30 — 2026-07-05
 
 **Done**
