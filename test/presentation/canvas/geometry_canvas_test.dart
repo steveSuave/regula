@@ -1713,4 +1713,29 @@ void main() {
     await tester.pump();
     expect(objectCount(), 6, reason: 'the image is one undo unit');
   });
+
+  testWidgets('pointer-kind hit threshold: a tap 12 px from a point '
+      'selects on touch but misses with a mouse', (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+    final world = CanvasViewport(
+      container.read(viewportProvider),
+    ).screenToWorld(const Offset(200, 200));
+    container
+        .read(constructionProvider)
+        .construction
+        .add(FreePoint(id: 'a', position: world));
+    await tester.pump();
+
+    final nearby = origin + const Offset(212, 200);
+    await tester.tapAt(nearby, kind: PointerDeviceKind.mouse);
+    await tester.pump();
+    expect(container.read(selectionProvider), isEmpty,
+        reason: '12 px is outside the 8-px mouse radius');
+
+    await tester.tapAt(nearby, kind: PointerDeviceKind.touch);
+    await tester.pump();
+    expect(container.read(selectionProvider), {'a'},
+        reason: '12 px is inside the 16-px touch radius');
+  });
 }
