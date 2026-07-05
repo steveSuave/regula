@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'application/export/png_exporter.dart';
 import 'application/object_ids.dart';
 import 'application/persistence/file_io.dart';
 import 'application/providers/command_stack_provider.dart';
@@ -51,8 +52,10 @@ import 'domain/tools/two_point_tool.dart';
 import 'presentation/canvas/canvas_viewport.dart';
 import 'presentation/canvas/fit_viewport.dart';
 import 'presentation/canvas/geometry_canvas.dart';
+import 'presentation/canvas/region_pick_overlay.dart';
 import 'presentation/panels/attributes_inspector.dart';
 import 'presentation/panels/delete_selection.dart';
+import 'presentation/panels/export_dialog.dart';
 import 'presentation/panels/object_tree_panel.dart';
 import 'presentation/panels/toolbar.dart';
 import 'presentation/shortcuts/app_shortcuts.dart';
@@ -125,6 +128,17 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   /// Whether the `?` cheat-sheet overlay is up. Same ephemeral-UI
   /// reasoning as [_showObjectTree].
   bool _showCheatSheet = false;
+
+  /// True while the export region-pick overlay owns the canvas. Ephemeral
+  /// UI state like [_showCheatSheet]; while set, `_handleShortcut`
+  /// swallows everything except Esc (which cancels back to the dialog).
+  bool _pickingExportRegion = false;
+
+  /// The last drag-selected export region (canvas screen coordinates) and
+  /// the last-used export options — kept so the dialog reopens where the
+  /// user left it, both after a region pick and across separate exports.
+  Rect? _exportRegion;
+  ExportOptions _exportOptions = const ExportOptions();
 
   /// Fit-to-viewport needs the canvas's laid-out size at tap time; the
   /// key reads it without threading sizes through providers.
@@ -212,6 +226,71 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     ref.read(constructionProvider).construction,
     viewport: ref.read(viewportProvider),
   );
+
+  /// Export flow: options dialog → (optionally a region-pick round trip
+  /// via [_onExportRegionPicked]) → off-screen render → platform save.
+  /// Read-only view work throughout — no `Command`, nothing undoable.
+  Future<void> _exportPng() async {
+    final size = _canvasKey.currentContext?.size;
+    if (size == null) {
+      return;
+    }
+    final objects = ref.read(constructionProvider).construction.objects;
+    final outcome = await showExportDialog(
+      context,
+      canvasSize: size,
+      canFit: visibleWorldBounds(objects) != null,
+      region: _exportRegion,
+      initial: _exportOptions,
+    );
+    if (outcome == null || !mounted) {
+      return;
+    }
+    _exportOptions = outcome.options;
+    switch (outcome) {
+      case ExportRegionPickRequested():
+        setState(() => _pickingExportRegion = true);
+      case ExportConfirmed(:final options):
+        await _runExport(options, size);
+    }
+  }
+
+  void _onExportRegionPicked(Rect region) {
+    setState(() {
+      _pickingExportRegion = false;
+      _exportRegion = region;
+      _exportOptions =
+          _exportOptions.copyWith(framing: ExportFramingChoice.region);
+    });
+    _exportPng();
+  }
+
+  Future<void> _runExport(ExportOptions options, Size canvasSize) async {
+    final construction = ref.read(constructionProvider).construction;
+    final viewportState = ref.read(viewportProvider);
+    final framing = switch (options.framing) {
+      // Fit can be stale-selected against a construction that just went
+      // empty; falling back beats surprising the user with an error.
+      ExportFramingChoice.fitConstruction =>
+        fitConstructionFraming(construction.objects, canvasSize) ??
+            currentViewFraming(viewportState, canvasSize),
+      ExportFramingChoice.currentView =>
+        currentViewFraming(viewportState, canvasSize),
+      ExportFramingChoice.region =>
+        regionFraming(viewportState, _exportRegion!),
+    };
+    final theme = Theme.of(context);
+    final bytes = await exportConstructionPng(
+      construction,
+      viewport: framing.viewport,
+      logicalSize: framing.logicalSize,
+      pixelRatio: options.scale.toDouble(),
+      background:
+          options.transparent ? null : theme.scaffoldBackgroundColor,
+      defaultColor: theme.colorScheme.primary,
+    );
+    await savePngBytes(bytes);
+  }
 
   void _fitConstruction() {
     final size = _canvasKey.currentContext?.size;
@@ -365,6 +444,16 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   /// The one exhaustive [AppAction] switch — a binding added to the
   /// table without behaviour here fails to compile.
   void _handleShortcut(AppAction action) {
+    // The region-pick overlay owns the canvas: Esc cancels back to the
+    // export dialog, every other shortcut is swallowed (activating a tool
+    // or opening a file mid-pick would fight the overlay).
+    if (_pickingExportRegion) {
+      if (action == AppAction.returnToMoveSelect) {
+        setState(() => _pickingExportRegion = false);
+        _exportPng();
+      }
+      return;
+    }
     // Any shortcut closes the cheat sheet. Esc *only* closes it — the
     // active tool survives, one Esc per surface — while a working
     // shortcut (it is a reference card, after all) also executes.
@@ -396,6 +485,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _openConstruction();
       case AppAction.newFile:
         _newConstruction();
+      case AppAction.exportPng:
+        _exportPng();
       case AppAction.toggleTheme:
         ref
             .read(themeModeProvider.notifier)
@@ -574,6 +665,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
           value: _saveConstruction,
           child: const Text('Save…'),
         ),
+        PopupMenuItem(
+          value: _exportPng,
+          child: const Text('Export as PNG…'),
+        ),
         const PopupMenuDivider(),
         PopupMenuItem(
           value: _fitConstruction,
@@ -678,6 +773,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                     value: _saveConstruction,
                     child: const Text('Save…'),
                   ),
+                  PopupMenuItem(
+                    value: _exportPng,
+                    child: const Text('Export as PNG…'),
+                  ),
                 ],
               ),
               const GeometryToolbar(),
@@ -751,7 +850,20 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                     child: Listener(
                       behavior: HitTestBehavior.translucent,
                       onPointerDown: (_) => AppShortcuts.refocus(context),
-                      child: GeometryCanvas(key: _canvasKey),
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          GeometryCanvas(key: _canvasKey),
+                          // Sits on top of (and exactly over) the canvas,
+                          // so its local coordinates are canvas
+                          // coordinates; opaque, so the canvas can't
+                          // react to the pick drag.
+                          if (_pickingExportRegion)
+                            RegionPickOverlay(
+                              onSelected: _onExportRegionPicked,
+                            ),
+                        ],
+                      ),
                     ),
                   ),
                   if (!isCompact) const AttributesInspector(),
