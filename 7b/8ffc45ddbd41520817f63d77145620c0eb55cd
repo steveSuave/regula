@@ -1,0 +1,25 @@
+test/presentation/goldens/object_kinds_golden_test.dart
+  s_425d8cb0e00dc8::t_7dcf8145c1cfd8 277-350,357
+lib/presentation/canvas/geometry_painter.dart
+  s_425d8cb0e00dc8::t_8ab3513a72edf6 99-108
+  s_425d8cb0e00dc8::t_a3b27238da077c 1-2
+  s_425d8cb0e00dc8::t_7ad7db4ef35cdd 299,302-326,329-332,335,346-365
+  s_425d8cb0e00dc8::t_1a6bb1ac3d90db 300-301
+  s_425d8cb0e00dc8::t_ad869b4456d8a5 366
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "7b8ffc45ddbd41520817f63d77145620c0eb55cd",
+  "prompts": {},
+  "sessions": {
+    "s_425d8cb0e00dc8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "705049d1-6030-4849-a488-02c8300808b1",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
