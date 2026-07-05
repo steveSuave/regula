@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -109,6 +111,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   /// Fit-to-viewport needs the canvas's laid-out size at tap time; the
   /// key reads it without threading sizes through providers.
   final GlobalKey _canvasKey = GlobalKey();
+
+  /// Opens the compact-mode drawers from the overflow menu and the strip's
+  /// style button — both live outside the Scaffold's own context.
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   /// World origin at the canvas center, 100 % — where File > New puts the
   /// view. (The app still *launches* with the origin at the top-left; the
@@ -511,20 +517,36 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   /// Compact-only home of the [GeometryToolbar]: a 48-px strip under the
   /// app bar, horizontally scrollable so the six flyout groups are never
-  /// truncated however narrow the screen.
-  static const PreferredSizeWidget _compactToolbarStrip = PreferredSize(
-    preferredSize: Size.fromHeight(48),
-    child: SizedBox(
-      height: 48,
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: GeometryToolbar(),
+  /// truncated however narrow the screen. While the selection is
+  /// non-empty, a style button at the right end opens the inspector
+  /// drawer — the drawer never auto-opens on selection, which would
+  /// interrupt construction flow.
+  PreferredSizeWidget _toolbarStrip({required bool hasSelection}) =>
+      PreferredSize(
+        preferredSize: const Size.fromHeight(48),
+        child: SizedBox(
+          height: 48,
+          child: Row(
+            children: [
+              const Expanded(
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: GeometryToolbar(),
+                  ),
+                ),
+              ),
+              if (hasSelection)
+                IconButton(
+                  tooltip: 'Style & properties',
+                  icon: const Icon(Icons.palette_outlined),
+                  onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
+                ),
+            ],
+          ),
         ),
-      ),
-    ),
-  );
+      );
 
   /// Compact-only overflow absorbing the loose wide-layout icon buttons
   /// (fit, reset, object tree, cheat sheet, theme) — they don't fit a
@@ -545,10 +567,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
           child: const Text('Reset view'),
         ),
         PopupMenuItem(
-          value: () => setState(() => _showObjectTree = !_showObjectTree),
-          child: Text(
-            _showObjectTree ? 'Hide object tree' : 'Show object tree',
-          ),
+          value: () => _scaffoldKey.currentState?.openDrawer(),
+          child: const Text('Show object tree'),
         ),
         PopupMenuItem(
           value: () => setState(() => _showCheatSheet = !_showCheatSheet),
@@ -571,10 +591,31 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     // scrollable toolbar strip and the overflow menu; the wide layout is
     // untouched.
     final isCompact = MediaQuery.sizeOf(context).shortestSide < 600;
+    // Watched only in compact mode: the strip's style button appears with
+    // the selection; the wide layout doesn't depend on it.
+    final hasSelection =
+        isCompact && ref.watch(selectionProvider).isNotEmpty;
+    final drawerWidth = math.min(
+      AttributesInspector.panelWidth,
+      MediaQuery.sizeOf(context).width * 0.85,
+    );
 
     return AppShortcuts(
       onAction: _handleShortcut,
       child: Scaffold(
+        key: _scaffoldKey,
+        // Edge swipes belong to the canvas — a drag starting at the
+        // screen edge is usually a draw, not a panel request. The drawers
+        // open from the hamburger, the overflow menu and the style
+        // button only.
+        drawerEnableOpenDragGesture: false,
+        endDrawerEnableOpenDragGesture: false,
+        drawer: isCompact
+            ? Drawer(width: drawerWidth, child: const ObjectTreePanel())
+            : null,
+        endDrawer: isCompact
+            ? Drawer(width: drawerWidth, child: const AttributesInspector())
+            : null,
         appBar: AppBar(
           leading: isCompact
               ? null
@@ -588,7 +629,9 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                       setState(() => _showObjectTree = !_showObjectTree),
                 ),
           title: const Text('fgex'),
-          bottom: isCompact ? _compactToolbarStrip : null,
+          bottom: isCompact
+              ? _toolbarStrip(hasSelection: hasSelection)
+              : null,
           actions: [
             PopupMenuButton<Future<void> Function()>(
               tooltip: 'File: new, open, save',
@@ -664,7 +707,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (_showObjectTree) const ObjectTreePanel(),
+                if (!isCompact && _showObjectTree) const ObjectTreePanel(),
                 Expanded(
                   // Clicking the canvas pulls focus back to the shortcut
                   // layer: a focused name field commits (focus-loss
@@ -676,7 +719,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                     child: GeometryCanvas(key: _canvasKey),
                   ),
                 ),
-                const AttributesInspector(),
+                if (!isCompact) const AttributesInspector(),
               ],
             ),
             if (_showCheatSheet)
