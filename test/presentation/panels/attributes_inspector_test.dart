@@ -271,9 +271,20 @@ void main() {
     await tester.pump();
     final dashStyle = find.byKey(const ValueKey('dash-style'));
     expect(dashStyle, findsOneWidget);
+    final segments = find.descendant(
+      of: dashStyle,
+      matching: find.byType(SegmentedButton<double>),
+    );
+    expect(
+      tester.getSize(segments).width,
+      lessThanOrEqualTo(AttributesInspector.panelWidth - 32),
+      reason: 'single-letter segments fit the panel inside its padding',
+    );
 
+    // Single-letter labels (Phase 25): 'M' is Medium, tooltip carries
+    // the word.
     await tester
-        .tap(find.descendant(of: dashStyle, matching: find.text('Medium')));
+        .tap(find.descendant(of: dashStyle, matching: find.text('M')));
     await tester.pump();
     expect(s.attributes.dashPeriod, 8.0);
 
