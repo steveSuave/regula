@@ -1,0 +1,25 @@
+test/presentation/compact_layout_test.dart
+  s_63f018e983d630::t_23f4c890e6eb3a 45-47,50-51,60-64,69,79-85
+  s_63f018e983d630::t_1159db9d65fb67 16-20
+lib/main.dart
+  s_63f018e983d630::t_e9550a7a35dd59 96-98
+  s_63f018e983d630::t_95e595a29bc89b 611-613
+  s_63f018e983d630::t_ae84b987543986 638-643,655,657-662,664-682
+  s_63f018e983d630::t_74b278a5a5624d 536-550,554-557,561,565-577
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "a379471163ab3bb07454172ff4ec38025c2c1f31",
+  "prompts": {},
+  "sessions": {
+    "s_63f018e983d630": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d5dccce9-4ead-4662-bb74-e18500e5c9f6",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
