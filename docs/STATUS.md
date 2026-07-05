@@ -6,6 +6,22 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 33 — 2026-07-05
+
+**Done**
+- **Phase 22b** (user feedback on Phase 22) on `phase-22b-angle-hit-dash`, merged to `main`; **v0.1 tagged**.
+- Angles are now selectable by clicking their marker on the canvas. Root cause: the viewport-free `CanvasHitTester` picked angles at the *vertex* only (screen-sized marker, world-space tester), where the vertex point always outranked them. Fix: optional `worldPerPx` hint on `hitTest`/`hitTestAll` (default 0 keeps the old behavior for viewport-less callers); `_angleDistance` measures to the wedge outline — sweep-clamped arc at the per-object marker radius plus the two straight edges, the `_sectorDistance` analogue; the right-angle square is approximated by its arc (≤ ~0.3 × radius off). The three canvas call sites (tap, drag-start, long-press) pass `screenToWorldLength(1)`. Priority unchanged: anything else on the wedge still wins.
+- The inspector's "Line style" row is hidden when the selection has no dashable stroke: angle markers deliberately never dash (Phase 17), so the row was a silent no-op for angles — the second half of the user report (angle selected from the tree, dash change did nothing). Stroke width stays for angles: it genuinely styles the marker outline.
+- 778 tests green, analyze clean: wedge-hit unit test (arc/edge/vertex hits, outside-sweep + interior misses, radius attribute tracked), canvas widget test (tap the wedge → angle selected; tap the vertex → point wins), inspector dash-absent assertions. Web smoke on a fresh release build: **SMOKE PASS**, zero console errors.
+
+**Next**
+- Phase 26 (select-by-kind tree headers) is the last unchecked phase; SVG export stays optional; Phase 12's two environment-blocked boxes (iOS build, Android emulator) still stand.
+
+**Open questions / gotchas**
+- `worldPerPx = 0` (tests, any viewport-less caller) silently degrades angles to vertex-only hits — deliberate compatibility default; pass the hint anywhere selection UX matters.
+- The band path (`objectsInRect`) still takes an angle by its vertex — banding the vertex bands the angle; unchanged and fine.
+- An angle's wedge *interior* is not hittable (outline only, matching sectors); if users expect filled wedges (Phase 22 fill) to be clickable inside, extend `_angleDistance` to return 0 inside the wedge when `fillAlpha` is set — same question applies to filled sectors, so decide both together.
+
 ## Session 32 — 2026-07-05
 
 **Done**

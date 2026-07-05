@@ -5,6 +5,7 @@ import '../../domain/construction/objects/arc.dart';
 import '../../domain/construction/objects/ray.dart';
 import '../../domain/construction/objects/sector.dart';
 import '../../domain/construction/objects/segment.dart';
+import '../../domain/math/angle_geometry.dart';
 import '../../domain/math/circle_eq.dart';
 import '../../domain/math/vec2.dart';
 
@@ -13,7 +14,9 @@ import '../../domain/math/vec2.dart';
 /// Works entirely in world coordinates: the caller converts the screen
 /// threshold (8 px by convention) to world units via
 /// `CanvasViewport.screenToWorldLength` — so the tester itself needs no
-/// viewport and no Flutter types.
+/// viewport and no Flutter types. The one screen-sized target, an angle's
+/// marker wedge, rides the optional [hitTestAll] `worldPerPx` hint
+/// (`screenToWorldLength(1)`) instead of a viewport.
 ///
 /// Selection order is (priority, distance), lexicographically: any point
 /// within the threshold beats any circle, which beats any line — small,
@@ -35,19 +38,27 @@ class CanvasHitTester {
   GeoObject? hitTest(
     Iterable<GeoObject> objects,
     Vec2 point,
-    double threshold,
-  ) =>
-      hitTestAll(objects, point, threshold).firstOrNull;
+    double threshold, {
+    double worldPerPx = 0,
+  }) =>
+      hitTestAll(objects, point, threshold, worldPerPx: worldPerPx)
+          .firstOrNull;
 
   /// Every visible, defined object within [threshold] world units of
   /// [point], best first — the same (priority, distance) order as
   /// [hitTest], with ties going to the object added latest (topmost).
   /// Point resolution reads the runners-up to spot curve crossings.
+  ///
+  /// [worldPerPx] (`screenToWorldLength(1)`) sizes the angle markers,
+  /// which are drawn at a fixed *screen* radius: with it, an angle is
+  /// picked anywhere on its wedge; without it (0), the marker degenerates
+  /// to its vertex — the pre-22b behavior callers without a viewport get.
   List<GeoObject> hitTestAll(
     Iterable<GeoObject> objects,
     Vec2 point,
-    double threshold,
-  ) {
+    double threshold, {
+    double worldPerPx = 0,
+  }) {
     final candidates = <(GeoObject, int, double, int)>[];
     var index = 0;
     for (final object in objects) {
@@ -55,7 +66,7 @@ class CanvasHitTester {
       if (!object.attributes.visible || !object.isDefined) {
         continue;
       }
-      final distance = _distanceTo(object, point);
+      final distance = _distanceTo(object, point, worldPerPx);
       if (distance > threshold) {
         continue;
       }
@@ -149,7 +160,8 @@ class CanvasHitTester {
 
   /// Distance from [point] to the object's visible geometry. Only called
   /// on defined objects, so the force-unwraps are safe.
-  double _distanceTo(GeoObject object, Vec2 point) => switch (object) {
+  double _distanceTo(GeoObject object, Vec2 point, double worldPerPx) =>
+      switch (object) {
         GeoPoint() => object.position!.distanceTo(point),
         // An arc measures to its branch of the carrier: on the far branch
         // the nearest visible geometry is an endpoint (cf. segment/ray).
@@ -164,11 +176,36 @@ class CanvasHitTester {
         Ray() => _clampedDistance(
             object.start!, object.throughPosition!, point, double.infinity),
         GeoLine() => object.line!.distanceTo(point),
-        // An angle's marker is drawn at a fixed *screen* radius the tester
-        // can't know (it has no viewport), so an angle is picked at its
-        // vertex — lowest priority, so anything else there wins.
-        GeoAngle() => object.angle!.vertex.distanceTo(point),
+        // An angle is picked on its marker wedge (see _angleDistance) —
+        // lowest priority, so anything else there wins.
+        GeoAngle() => _angleDistance(object, point, worldPerPx),
       };
+
+  /// Distance to an angle's marker wedge: the arc at the marker radius
+  /// clamped to the sweep, plus the two straight edges — the
+  /// marker-radius analogue of [_sectorDistance]. The marker is drawn at
+  /// a fixed *screen* radius; [worldPerPx] converts it to world units,
+  /// and without it (0) the wedge degenerates to the vertex. The Phase 22
+  /// right-angle square is approximated by its arc — at most ~0.3 × the
+  /// marker radius off, well inside any usable threshold.
+  double _angleDistance(GeoAngle object, Vec2 p, double worldPerPx) {
+    final angle = object.angle!;
+    final radius = object.attributes.angleMarkerRadius * worldPerPx;
+    if (radius <= 0) {
+      return angle.vertex.distanceTo(p);
+    }
+    final rel = p - angle.vertex;
+    final d1 = angle.startDirection;
+    final arc = ccwSweep(d1.angle, rel.angle) <= angle.sweep
+        ? (rel.norm - radius).abs()
+        : double.infinity;
+    final d2 = d1.rotated(angle.sweep);
+    final edge1 =
+        _clampedDistance(angle.vertex, angle.vertex + d1 * radius, p, 1);
+    final edge2 =
+        _clampedDistance(angle.vertex, angle.vertex + d2 * radius, p, 1);
+    return math.min(arc, math.min(edge1, edge2));
+  }
 
   double _arcDistance(Arc arc, Vec2 p) {
     final circle = arc.circle!;

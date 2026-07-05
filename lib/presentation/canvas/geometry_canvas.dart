@@ -333,6 +333,7 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
       viewport.screenToWorldLength(
         GeometryCanvas.hitThresholdFor(_firstDownKind),
       ),
+      worldPerPx: viewport.screenToWorldLength(1),
     );
     if (hit != null) {
       // May refuse (derived point): then the pan does nothing — starting
@@ -430,6 +431,7 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
       viewport.screenToWorldLength(
         GeometryCanvas.hitThresholdFor(_firstDownKind),
       ),
+      worldPerPx: viewport.screenToWorldLength(1),
     );
     if (hit == null) {
       return;
@@ -454,6 +456,7 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
       construction.objects,
       world,
       threshold,
+      worldPerPx: viewport.screenToWorldLength(1),
     );
     final hit = hits.firstOrNull;
     if (ref.read(toolProvider).tool != null) {
