@@ -1,0 +1,21 @@
+lib/main.dart
+  s_2341746a6d296c::t_f192b597903e3a 3,5
+  s_2341746a6d296c::t_ead3e72205ba08 720-743,745-746,748-753
+  s_2341746a6d296c::t_672e316b5c2fe6 63-70,73-77
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "5fbf8f5320a445dfdc333bcac3a178ad9e00795b",
+  "prompts": {},
+  "sessions": {
+    "s_2341746a6d296c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1c6a2293-eef7-4439-a0ab-a6e84b1526b7",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
