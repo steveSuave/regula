@@ -274,12 +274,87 @@ void main() {
     return construction;
   }
 
+  /// Phase 22 marker styling: the automatic right-angle square (unfilled,
+  /// and filled via a LineAngle over a real PerpendicularLine — the
+  /// fp-exact π/2 source), a filled wedge, a non-default marker radius,
+  /// and a filled sector.
+  Construction markerStylesScene() {
+    final construction = Construction();
+    final v1 = FreePoint(id: 'v1', position: Vec2.zero);
+    final a1 = FreePoint(id: 'a1', position: const Vec2(3, 0));
+    final b1 = FreePoint(id: 'b1', position: const Vec2(0, 3));
+    final v2 = FreePoint(id: 'v2', position: const Vec2(7, 0));
+    final a2 = FreePoint(id: 'a2', position: const Vec2(10, 0));
+    final b2 = FreePoint(id: 'b2', position: const Vec2(9, 2));
+    final v3 = FreePoint(id: 'v3', position: const Vec2(14, 0));
+    final a3 = FreePoint(id: 'a3', position: const Vec2(17, 0));
+    final b3 = FreePoint(id: 'b3', position: const Vec2(15, 3));
+    final p1 = FreePoint(id: 'p1', position: const Vec2(1, 6));
+    final p2 = FreePoint(id: 'p2', position: const Vec2(5, 6));
+    final baseline = LineThroughTwoPoints(id: 'bl', point1: p1, point2: p2);
+    final perp = PerpendicularLine(id: 'pp', through: p2, reference: baseline);
+    final center = FreePoint(id: 'k', position: const Vec2(11, 5));
+    final rim = FreePoint(id: 'rim', position: const Vec2(13, 5));
+    final secEnd = FreePoint(id: 'se', position: const Vec2(11, 7));
+    construction
+      ..add(v1)
+      ..add(a1)
+      ..add(b1)
+      ..add(v2)
+      ..add(a2)
+      ..add(b2)
+      ..add(v3)
+      ..add(a3)
+      ..add(b3)
+      ..add(p1)
+      ..add(p2)
+      ..add(baseline)
+      ..add(perp)
+      ..add(center)
+      ..add(rim)
+      ..add(secEnd)
+      // Perpendicular arms → sweep exactly π/2 → the automatic square.
+      ..add(VertexAngle(id: 'right', arm1: a1, vertex: v1, arm2: b1))
+      ..add(VertexAngle(
+        id: 'filled',
+        arm1: a2,
+        vertex: v2,
+        arm2: b2,
+        attributes: const ObjectAttributes(fillAlpha: 0.25),
+      ))
+      ..add(VertexAngle(
+        id: 'xl',
+        arm1: a3,
+        vertex: v3,
+        arm2: b3,
+        attributes: const ObjectAttributes(angleMarkerRadius: 36),
+      ))
+      // A right angle from a real perpendicular construction, filled and
+      // resized: square + fill + radius in one marker.
+      ..add(LineAngle(
+        id: 'lright',
+        line1: baseline,
+        line2: perp,
+        attributes:
+            const ObjectAttributes(angleMarkerRadius: 28, fillAlpha: 0.25),
+      ))
+      ..add(Sector(
+        id: 'fillsec',
+        center: center,
+        start: rim,
+        end: secEnd,
+        attributes: const ObjectAttributes(fillAlpha: 0.4),
+      ));
+    return construction;
+  }
+
   final themes = {'light': AppTheme.light(), 'dark': AppTheme.dark()};
   final scenes = {
     'points': pointsScene,
     'lines': linesScene,
     'circles': circlesScene,
     'angles': anglesScene,
+    'markers': markerStylesScene,
   };
 
   for (final MapEntry(key: themeName, value: theme) in themes.entries) {

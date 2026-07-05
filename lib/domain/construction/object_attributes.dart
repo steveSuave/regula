@@ -41,7 +41,12 @@ abstract class ObjectAttributes with _$ObjectAttributes {
     /// Point radius in logical pixels (point kinds only).
     @Default(4.0) double pointSize,
 
-    /// Fill opacity in [0, 1] for filled kinds (sectors); null = unfilled.
+    /// Angle-marker radius in logical pixels (angle kinds only). Like
+    /// stroke widths, it does not scale with zoom.
+    @Default(20.0) double angleMarkerRadius,
+
+    /// Fill opacity in [0, 1] for filled kinds (sectors and angle
+    /// markers); null = unfilled.
     double? fillAlpha,
   }) = _ObjectAttributes;
 
