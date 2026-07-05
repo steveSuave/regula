@@ -31,6 +31,7 @@ import 'domain/tools/kite_macro_tool.dart';
 import 'domain/tools/parallelogram_macro_tool.dart';
 import 'domain/tools/point_and_line_tool.dart';
 import 'domain/tools/point_tool.dart';
+import 'domain/tools/random_shape_stamp_tool.dart';
 import 'domain/tools/rectangle_macro_tool.dart';
 import 'domain/tools/regular_polygon_macro_tool.dart';
 import 'domain/tools/rhombus_macro_tool.dart';
@@ -499,6 +500,18 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         tools.activate(RightTriangleMacroTool(newId: newObjectId));
       case AppAction.regularPolygonMacroTool:
         _activateRegularPolygonTool();
+      case AppAction.randomTriangleStamp:
+        tools.activate(
+          RandomShapeStampTool(
+            newId: newObjectId,
+            minVertices: 3,
+            maxVertices: 3,
+          ),
+        );
+      case AppAction.randomQuadrilateralStamp:
+        tools.activate(
+          RandomShapeStampTool.convexQuadrilateral(newId: newObjectId),
+        );
     }
   }
 

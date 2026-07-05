@@ -68,6 +68,8 @@ enum AppAction {
   isoscelesTriangleMacroTool,
   rightTriangleMacroTool,
   regularPolygonMacroTool,
+  randomTriangleStamp,
+  randomQuadrilateralStamp,
 }
 
 /// Cheat-sheet grouping, mirroring the PLAN's shortcut tables.
@@ -609,6 +611,18 @@ final List<ShortcutBinding> shortcutTable = [
     AppAction.regularPolygonMacroTool,
     'Regular polygon…',
     'X G',
+  ),
+  _x(
+    LogicalKeyboardKey.digit3,
+    AppAction.randomTriangleStamp,
+    'Random triangle',
+    'X 3',
+  ),
+  _x(
+    LogicalKeyboardKey.digit4,
+    AppAction.randomQuadrilateralStamp,
+    'Random quadrilateral',
+    'X 4',
   ),
 ];
 
