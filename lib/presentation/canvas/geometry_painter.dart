@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 
@@ -37,10 +39,6 @@ class GeometryPainter extends CustomPainter {
   /// inside a hollow ring, visually distinct from a plain point.
   static const double _markerDotRadius = 3;
   static const double _markerRingRadius = 7;
-
-  /// Radius (logical px) of an angle's marker wedge. Like stroke widths,
-  /// it does not scale with zoom.
-  static const double _angleMarkerRadius = 20;
 
   /// How much wider (logical px) a selection halo is than the stroke it
   /// sits under; also the extra radius on a selected point's halo disc.
@@ -98,6 +96,16 @@ class GeometryPainter extends CustomPainter {
       }
       final color =
           Color(object.attributes.colorArgb ?? defaultColor.toARGB32());
+      final fillAlpha = object.attributes.fillAlpha;
+      if (fillAlpha != null) {
+        _drawFill(
+          canvas,
+          object,
+          Paint()
+            ..color = color.withValues(alpha: fillAlpha)
+            ..style = PaintingStyle.fill,
+        );
+      }
       final paint = Paint()
         ..color = color
         ..strokeWidth = object.attributes.strokeWidth
@@ -288,14 +296,43 @@ class GeometryPainter extends CustomPainter {
     }
   }
 
-  /// Draws an angle as a small wedge outline at its vertex, opening from
-  /// the start direction through the sweep (angles negate on screen, as in
-  /// [_drawCarrierBranch]). The radius is fixed in screen space.
+  /// Fills the interior of a fillable kind — a sector's pie wedge, or an
+  /// angle marker's wedge/square — with [fill], drawn under the stroke
+  /// pass. Other kinds have no filled form and are skipped.
+  void _drawFill(Canvas canvas, GeoObject object, Paint fill) {
+    switch (object) {
+      case Sector():
+        final circle = object.circle!;
+        final rect = Rect.fromCircle(
+          center: viewport.worldToScreen(circle.center),
+          radius: viewport.worldToScreenLength(circle.radius),
+        );
+        canvas.drawArc(rect, -object.startAngle!, -object.sweep!, true, fill);
+      case GeoAngle():
+        _drawAngleMarker(canvas, object, fill);
+      default:
+        break;
+    }
+  }
+
+  /// Draws an angle as a small wedge at its vertex, opening from the
+  /// start direction through the sweep (angles negate on screen, as in
+  /// [_drawCarrierBranch]). The radius comes from
+  /// `attributes.angleMarkerRadius` and is fixed in screen space. A sweep
+  /// of exactly π/2 — right angles from perpendicular constructions are
+  /// fp-exact — draws the conventional square instead of the arc.
+  ///
+  /// [paint]'s style decides outline vs interior: the stroke pass and the
+  /// fill pass share this geometry.
   void _drawAngleMarker(Canvas canvas, GeoAngle object, Paint paint) {
     final angle = object.angle!;
+    if ((angle.sweep - math.pi / 2).abs() <= defaultEpsilon) {
+      canvas.drawPath(_rightAngleSquarePath(object), paint);
+      return;
+    }
     final rect = Rect.fromCircle(
       center: viewport.worldToScreen(angle.vertex),
-      radius: _angleMarkerRadius,
+      radius: object.attributes.angleMarkerRadius,
     );
     canvas.drawArc(
       rect,
@@ -304,6 +341,27 @@ class GeometryPainter extends CustomPainter {
       true,
       paint,
     );
+  }
+
+  /// The right-angle marker: a closed square with corners at the vertex,
+  /// at 0.7 × the marker radius along each arm, and at their vector sum.
+  Path _rightAngleSquarePath(GeoAngle object) {
+    final angle = object.angle!;
+    final vertex = viewport.worldToScreen(angle.vertex);
+    final side = 0.7 * object.attributes.angleMarkerRadius;
+    final d1 = angle.startDirection;
+    final d2 = d1.rotated(angle.sweep);
+    // World directions are y-up; the screen flips y.
+    Offset corner(Vec2 d) => vertex + Offset(d.x, -d.y) * side;
+    final c1 = corner(d1);
+    final c12 = corner(d1 + d2);
+    final c2 = corner(d2);
+    return Path()
+      ..moveTo(vertex.dx, vertex.dy)
+      ..lineTo(c1.dx, c1.dy)
+      ..lineTo(c12.dx, c12.dy)
+      ..lineTo(c2.dx, c2.dy)
+      ..close();
   }
 
   /// Draws the visible stretch of an infinite line by extending far past

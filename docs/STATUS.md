@@ -6,6 +6,25 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 32 — 2026-07-05
+
+**Done**
+- **Phase 22 (angle-mark styling) complete** on `phase-22-angle-styling` (4 commits incl. docs), merged to `main`. In landing order:
+- `ObjectAttributes.angleMarkerRadius` (default 20 = the old painter constant, screen px) — additive, no version bump; codec kitchen-sink gains non-default radius + `fillAlpha` on the `VertexAngle`.
+- Painter: `_drawAngleMarker` reads the per-object radius; a sweep exactly π/2 (`defaultEpsilon`) draws the **closed right-angle square** (vertex → s·d1 → s·(d1+d2) → s·d2, s = 0.7 × radius) instead of the arc wedge — one path shared by stroke and fill. Non-right angles keep the exact pre-22 `drawArc(useCenter: true)` call, so default rendering is byte-identical (points/lines/circles/angles goldens unchanged). New `_drawFill` pass in `paint()` under the stroke: sectors' pie wedge + angle markers at `color.withValues(alpha: fillAlpha)` — the first time `Sector.fillAlpha` actually paints.
+- Inspector: `_DashSelector` generalized to `_PresetSelector` (label + presets), backing both the dash row and the new "Marker size" `S`/`M`/`L`/`XL` → 12/20/28/36 row (angles slice); "Fill" tristate checkbox over angles + sectors toggling `fillAlpha` null ↔ 0.25 (the planned alpha byte 64 on the attribute's 0–1 scale — PLAN wording fixed). One `ChangeAttributesCommand` per tap via `_setForAll`, per-slice only.
+- Goldens: decorations light+dark regenerated (its `fillAlpha: 0.25` sector now fills — the pre-logged expected diff); new `markers` scene light+dark (unfilled right-angle square, filled wedge, radius-36 wedge, a filled+resized `LineAngle` square over a real `PerpendicularLine` pinning the fp-exact π/2 path, filled sector).
+- 776 tests green (2 new inspector: radius tap = one command over the angle slice only; fill tristate on a mixed angle+sector selection), analyze clean. Web smoke on a fresh release build: **SMOKE PASS**, zero console errors (drive.js untouched — it builds no angles).
+
+**Next**
+- Open queue: Phase 26 (select-by-kind tree headers) is the last unchecked phase; the SVG stretch stays optional. Phase 12's two environment-blocked boxes (iOS build, Android emulator) still stand. **The v0.1 tag suggestion from Session 31 still stands** — even more so with only Phase 26 left.
+
+**Open questions / gotchas**
+- The right-angle square keys off sweep == π/2 within `defaultEpsilon` (1e-9): perpendicular-construction angles hit it (fp-exact per PLAN), hand-placed arms at "roughly 90°" do not — deliberate, no toggle exists.
+- The Fill checkbox writes `fillAlpha: 0.25`, but any 0–1 value from a saved file renders; a non-0.25 fill shows the tristate as "on" and toggling off→on normalizes it to 0.25.
+- A stale `python3 -m http.server 8321` from an earlier session was still serving `build/web` — harmless (files are read per request, so the fresh build was what got smoked), but kill it if a *different* directory ever needs the port.
+- Angle markers ignore `dashPeriod` by design (Phase 17 rule), yet angles sit in the inspector's strokes slice, so the dash row shows for them and does nothing — pre-existing, unchanged by 22.
+
 ## Session 31 — 2026-07-05
 
 **Done**
