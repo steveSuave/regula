@@ -5,18 +5,15 @@ import 'package:fgex/domain/tools/intersection_tool.dart';
 import 'package:fgex/domain/tools/isosceles_trapezium_macro_tool.dart';
 import 'package:fgex/domain/tools/isosceles_triangle_macro_tool.dart';
 import 'package:fgex/domain/tools/kite_macro_tool.dart';
-import 'package:fgex/domain/tools/point_and_line_tool.dart';
 import 'package:fgex/domain/tools/random_shape_stamp_tool.dart';
 import 'package:fgex/domain/tools/rectangle_macro_tool.dart';
 import 'package:fgex/domain/tools/regular_polygon_macro_tool.dart';
 import 'package:fgex/domain/tools/rhombus_macro_tool.dart';
 import 'package:fgex/domain/tools/right_trapezium_macro_tool.dart';
 import 'package:fgex/domain/tools/right_triangle_macro_tool.dart';
-import 'package:fgex/domain/tools/rotated_point_tool.dart';
-import 'package:fgex/domain/tools/three_point_tool.dart';
+import 'package:fgex/domain/tools/transform_object_tool.dart';
 import 'package:fgex/domain/tools/two_point_tool.dart';
 import 'package:fgex/main.dart';
-import 'package:fgex/presentation/panels/toolbar.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -195,22 +192,31 @@ void main() {
       );
     }
 
-    await pickTransform('Reflect about line (point and line)');
+    await pickTransform('Reflect about line (object and line)');
     final reflectTool = container.read(toolProvider).tool;
-    expect(reflectTool, isA<PointAndLineTool>());
-    expect((reflectTool! as PointAndLineTool).build, buildReflectedPoint);
+    expect(reflectTool, isA<TransformObjectTool>());
+    expect(
+      (reflectTool! as TransformObjectTool).transform,
+      ObjectTransform.reflectAboutLine,
+    );
     expectTransformHighlight('Reflect about line');
 
-    await pickTransform('Reflect about point (point, then center)');
+    await pickTransform('Reflect about point (object, then center)');
     final centralTool = container.read(toolProvider).tool;
-    expect(centralTool, isA<TwoPointTool>());
-    expect((centralTool! as TwoPointTool).build, buildCentralReflection);
+    expect(centralTool, isA<TransformObjectTool>());
+    expect(
+      (centralTool! as TransformObjectTool).transform,
+      ObjectTransform.reflectAboutPoint,
+    );
     expectTransformHighlight('Reflect about point');
 
-    await pickTransform('Translate by vector (point, then tail, tip)');
+    await pickTransform('Translate by vector (object, then tail, tip)');
     final translateTool = container.read(toolProvider).tool;
-    expect(translateTool, isA<ThreePointTool>());
-    expect((translateTool! as ThreePointTool).build, buildTranslatedPoint);
+    expect(translateTool, isA<TransformObjectTool>());
+    expect(
+      (translateTool! as TransformObjectTool).transform,
+      ObjectTransform.translate,
+    );
     expectTransformHighlight('Translate by vector');
   });
 
@@ -220,7 +226,7 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.flip));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Rotate around point (point, then center)…'));
+    await tester.tap(find.text('Rotate around point (object, then center)…'));
     await tester.pumpAndSettle();
     expect(find.text('Rotation angle'), findsOneWidget);
 
@@ -230,15 +236,15 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.flip));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Rotate around point (point, then center)…'));
+    await tester.tap(find.text('Rotate around point (object, then center)…'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), '90');
     await tester.tap(find.text('OK'));
     await tester.pumpAndSettle();
 
     final tool = container.read(toolProvider).tool;
-    expect(tool, isA<RotatedPointTool>());
-    expect((tool! as RotatedPointTool).angle, closeTo(1.5707963, 1e-6));
+    expect(tool, isA<TransformObjectTool>());
+    expect((tool! as TransformObjectTool).angle, closeTo(1.5707963, 1e-6));
     final theme = Theme.of(tester.element(find.byType(AppBar)));
     expect(iconColor(tester, Icons.flip), theme.colorScheme.primary);
   });

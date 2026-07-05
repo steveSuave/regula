@@ -6,6 +6,24 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 28 — 2026-07-05
+
+**Done**
+- **Phase 24 complete** on `phase-24-object-transforms` (3 commits), merged to `main`. In landing order:
+- `TransformObjectTool` (`domain/tools/transform_object_tool.dart`): one class with named constructors per isometry (`.reflectAboutLine`/`.reflectAboutPoint`/`.rotate(angle:)`/`.translate`) + a `transform` enum field. Transformee is the first input; slot-1 resolution is *topmost in-threshold curve decides* — a point hit wins (ladder rung-1 parity), a supported curve becomes the transformee, an unsupported line under reflect becomes the mirror-first slot (Phase 15 either-order), any other unsupported curve is an ignored tap (no ladder fall-through, so the tap never glues to the transformee). Later parameter taps (center, vector tail/tip) use the full Phase 20 `resolvePoint` ladder unchanged. Point mode reproduces the Phase 15 tools exactly: bare `AddObjectCommand` when everything tapped existed, reflect's point + line in either order, empty-tap-after-line creating the free point.
+- Curve mode: same kind rebuilt over transform-point images of the defining points (identity-keyed map, shared parents image once), one `MacroCommand` in order params → images → curve, image points visible (auto-named by Phase 23 for free). Supported: `Segment`, `Ray`, `LineThroughTwoPoints`, `CircleCenterPoint`, `CompassCircle`, `ThreePointCircle`, `Arc`, `VertexAngle`, `Sector` except reflect-about-line. Reflected `VertexAngle` swaps arms (same wedge); the arc test pins the sweep sign flip; reflecting a line across itself is refused.
+- Wiring: the four Transform flyout rows and `G L`/`G P`/`G T`/`G V` switch cases activate the new tool (labels say "object"); `transformActive` is a single type check; `RotatedPointTool` deleted (point-mode tests ported) along with the `buildReflectedPoint`/`buildCentralReflection`/`buildTranslatedPoint` tear-offs, simplifying the Points/Lines highlight exclusions.
+- 742 tests green, analyze clean: 22 domain tests (transform × kind matrix, drag tracking, undo units, slot rules, previews) + a canvas widget test (`G L`, tap circle then line → congruent image circle, one undo unit); toolbar/editor-shortcut tests flipped to `TransformObjectTool`. Web smoke re-run on a fresh release build: **SMOKE PASS**, zero console errors — drive.js untouched (it never opens the Transform flyout; icon count unchanged).
+
+**Next**
+- Open queue unchanged otherwise: Phases 19 (export), 22 (angle-mark styling), 25 (mobile), 26 (select-by-kind) in any order; Phase 12's two environment-blocked boxes (iOS build, Android emulator) still stand. Consider a v0.1 tag once Phase 19 lands.
+
+**Open questions / gotchas**
+- Reflect's either-order means a *supported line* tapped first is only provisionally the transformee: a point second flips it to the mirror (Phase 15 parity), a line second commits curve mode. A circle/angle transformee + point second is ignored (no mirror possible).
+- Slot-2+ parameter taps still glue via the ladder — a rotate-center tap on the transformee curve itself glues a `PointOnObject` to it (legal, no DAG cycle: curve → glued center → image points).
+- Anything that used to type-check `RotatedPointTool` (or the deleted builder tear-offs) must switch to `TransformObjectTool` + its `transform`/`angle` fields — the updated toolbar/shortcut tests are the pattern.
+- `Sector` + reflect-about-line and the non-point-parent line kinds stay ignored taps; if object-level recursion (image of `PerpendicularLine` = perpendicular through image point on image line) is ever wanted, PLAN sketches it under Phase 24.
+
 ## Session 27 — 2026-07-05
 
 **Done**
