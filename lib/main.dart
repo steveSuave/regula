@@ -1,6 +1,8 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -58,8 +60,21 @@ import 'presentation/shortcuts/cheat_sheet.dart';
 import 'presentation/shortcuts/shortcut_table.dart';
 import 'presentation/theme/app_theme.dart';
 
+/// True on Android/iOS builds — the targets with OS chrome to hide and
+/// notches to avoid. Web stays false even in a phone browser: the
+/// browser owns its chrome.
+bool get isMobileTarget =>
+    !kIsWeb &&
+    (defaultTargetPlatform == TargetPlatform.android ||
+        defaultTargetPlatform == TargetPlatform.iOS);
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  if (isMobileTarget) {
+    // Every canvas pixel counts on a phone: hide the OS status bar
+    // (swipe from the edge peeks it back, then it re-hides).
+    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  }
   // Loaded once here so settings providers can read stored values
   // synchronously (see preferences_provider.dart).
   final preferences = await SharedPreferences.getInstance();
@@ -702,31 +717,40 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
             if (isCompact) _overflowMenu(context),
           ],
         ),
-        body: Stack(
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (!isCompact && _showObjectTree) const ObjectTreePanel(),
-                Expanded(
-                  // Clicking the canvas pulls focus back to the shortcut
-                  // layer: a focused name field commits (focus-loss
-                  // commit) and stops suppressing the single-letter
-                  // shortcuts.
-                  child: Listener(
-                    behavior: HitTestBehavior.translucent,
-                    onPointerDown: (_) => AppShortcuts.refocus(context),
-                    child: GeometryCanvas(key: _canvasKey),
+        body: SafeArea(
+          // A no-op except on notched mobile devices, where the
+          // immersive mode set in main() leaves the display cutout to
+          // avoid.
+          left: isMobileTarget,
+          top: isMobileTarget,
+          right: isMobileTarget,
+          bottom: isMobileTarget,
+          child: Stack(
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (!isCompact && _showObjectTree) const ObjectTreePanel(),
+                  Expanded(
+                    // Clicking the canvas pulls focus back to the shortcut
+                    // layer: a focused name field commits (focus-loss
+                    // commit) and stops suppressing the single-letter
+                    // shortcuts.
+                    child: Listener(
+                      behavior: HitTestBehavior.translucent,
+                      onPointerDown: (_) => AppShortcuts.refocus(context),
+                      child: GeometryCanvas(key: _canvasKey),
+                    ),
                   ),
-                ),
-                if (!isCompact) const AttributesInspector(),
-              ],
-            ),
-            if (_showCheatSheet)
-              ShortcutCheatSheet(
-                onDismiss: () => setState(() => _showCheatSheet = false),
+                  if (!isCompact) const AttributesInspector(),
+                ],
               ),
-          ],
+              if (_showCheatSheet)
+                ShortcutCheatSheet(
+                  onDismiss: () => setState(() => _showCheatSheet = false),
+                ),
+            ],
+          ),
         ),
       ),
     );
