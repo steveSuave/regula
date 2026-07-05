@@ -34,6 +34,22 @@ Future<void> saveConstructionFile(
   );
 }
 
+/// File name offered for a PNG export.
+const String defaultExportPngFileName = 'construction.png';
+
+/// Hands already-encoded PNG [bytes] to the platform's save dialog (a
+/// download on the web). Completes when the dialog does; a cancelled
+/// dialog is not an error.
+Future<void> savePngBytes(Uint8List bytes) async {
+  await FilePicker.saveFile(
+    dialogTitle: 'Export as PNG',
+    fileName: defaultExportPngFileName,
+    type: FileType.custom,
+    allowedExtensions: const ['png'],
+    bytes: bytes,
+  );
+}
+
 /// Shows the platform's open dialog and decodes the picked file.
 ///
 /// Returns null when the user cancels. Throws [FormatException] for
