@@ -1,8 +1,8 @@
-import 'package:fgex/application/providers/preferences_provider.dart';
-import 'package:fgex/application/providers/theme_provider.dart';
 import 'package:flutter/material.dart' show Brightness, ThemeMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/application/providers/preferences_provider.dart';
+import 'package:regula/application/providers/theme_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {

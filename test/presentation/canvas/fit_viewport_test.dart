@@ -1,14 +1,14 @@
 import 'dart:ui';
 
-import 'package:fgex/domain/construction/object_attributes.dart';
-import 'package:fgex/domain/construction/objects/circle_center_point.dart';
-import 'package:fgex/domain/construction/objects/free_point.dart';
-import 'package:fgex/domain/construction/objects/line_through_two_points.dart';
-import 'package:fgex/domain/construction/objects/vertex_angle.dart';
-import 'package:fgex/domain/math/vec2.dart';
-import 'package:fgex/presentation/canvas/canvas_viewport.dart';
-import 'package:fgex/presentation/canvas/fit_viewport.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/domain/construction/object_attributes.dart';
+import 'package:regula/domain/construction/objects/circle_center_point.dart';
+import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/line_through_two_points.dart';
+import 'package:regula/domain/construction/objects/vertex_angle.dart';
+import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/presentation/canvas/canvas_viewport.dart';
+import 'package:regula/presentation/canvas/fit_viewport.dart';
 
 void main() {
   FreePoint point(String id, double x, double y,

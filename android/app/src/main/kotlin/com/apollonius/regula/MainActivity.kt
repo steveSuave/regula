@@ -1,4 +1,4 @@
-package com.example.fgex
+package com.apollonius.regula
 
 import io.flutter.embedding.android.FlutterActivity
 

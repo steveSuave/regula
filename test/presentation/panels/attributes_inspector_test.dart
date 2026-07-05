@@ -1,17 +1,17 @@
-import 'package:fgex/application/providers/command_stack_provider.dart';
-import 'package:fgex/application/providers/construction_provider.dart';
-import 'package:fgex/application/providers/selection_provider.dart';
-import 'package:fgex/domain/construction/object_attributes.dart';
-import 'package:fgex/domain/construction/objects/free_point.dart';
-import 'package:fgex/domain/construction/objects/sector.dart';
-import 'package:fgex/domain/construction/objects/segment.dart';
-import 'package:fgex/domain/construction/objects/vertex_angle.dart';
-import 'package:fgex/domain/math/vec2.dart';
-import 'package:fgex/main.dart';
-import 'package:fgex/presentation/panels/attributes_inspector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/application/providers/command_stack_provider.dart';
+import 'package:regula/application/providers/construction_provider.dart';
+import 'package:regula/application/providers/selection_provider.dart';
+import 'package:regula/domain/construction/object_attributes.dart';
+import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/sector.dart';
+import 'package:regula/domain/construction/objects/segment.dart';
+import 'package:regula/domain/construction/objects/vertex_angle.dart';
+import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/main.dart';
+import 'package:regula/presentation/panels/attributes_inspector.dart';
 
 void main() {
   late ProviderContainer container;

@@ -1,10 +1,10 @@
-import 'package:fgex/domain/construction/construction.dart';
-import 'package:fgex/domain/construction/geo_object.dart';
-import 'package:fgex/domain/construction/objects/free_point.dart';
-import 'package:fgex/domain/construction/objects/segment.dart';
-import 'package:fgex/domain/math/vec2.dart';
-import 'package:fgex/domain/tools/mirror_point_scaffolding.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/domain/construction/construction.dart';
+import 'package:regula/domain/construction/geo_object.dart';
+import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/segment.dart';
+import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/tools/mirror_point_scaffolding.dart';
 
 void main() {
   late int nextId;

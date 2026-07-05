@@ -1,38 +1,38 @@
 @Tags(['golden'])
 library;
 
-import 'package:fgex/application/providers/viewport_provider.dart';
-import 'package:fgex/domain/construction/construction.dart';
-import 'package:fgex/domain/construction/object_attributes.dart';
-import 'package:fgex/domain/construction/objects/angle_bisector_line.dart';
-import 'package:fgex/domain/construction/objects/arc.dart';
-import 'package:fgex/domain/construction/objects/centroid.dart';
-import 'package:fgex/domain/construction/objects/circle_center_point.dart';
-import 'package:fgex/domain/construction/objects/circumcenter.dart';
-import 'package:fgex/domain/construction/objects/compass_circle.dart';
-import 'package:fgex/domain/construction/objects/free_point.dart';
-import 'package:fgex/domain/construction/objects/incenter.dart';
-import 'package:fgex/domain/construction/objects/intersection_point.dart';
-import 'package:fgex/domain/construction/objects/line_angle.dart';
-import 'package:fgex/domain/construction/objects/line_through_two_points.dart';
-import 'package:fgex/domain/construction/objects/midpoint.dart';
-import 'package:fgex/domain/construction/objects/orthocenter.dart';
-import 'package:fgex/domain/construction/objects/parallel_line.dart';
-import 'package:fgex/domain/construction/objects/perpendicular_line.dart';
-import 'package:fgex/domain/construction/objects/point_on_object.dart';
-import 'package:fgex/domain/construction/objects/ray.dart';
-import 'package:fgex/domain/construction/objects/sector.dart';
-import 'package:fgex/domain/construction/objects/segment.dart';
-import 'package:fgex/domain/construction/objects/segment_ratio_point.dart';
-import 'package:fgex/domain/construction/objects/three_point_circle.dart';
-import 'package:fgex/domain/construction/objects/vertex_angle.dart';
-import 'package:fgex/domain/math/vec2.dart';
-import 'package:fgex/presentation/canvas/canvas_viewport.dart';
-import 'package:fgex/presentation/canvas/fit_viewport.dart';
-import 'package:fgex/presentation/canvas/geometry_painter.dart';
-import 'package:fgex/presentation/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/application/providers/viewport_provider.dart';
+import 'package:regula/domain/construction/construction.dart';
+import 'package:regula/domain/construction/object_attributes.dart';
+import 'package:regula/domain/construction/objects/angle_bisector_line.dart';
+import 'package:regula/domain/construction/objects/arc.dart';
+import 'package:regula/domain/construction/objects/centroid.dart';
+import 'package:regula/domain/construction/objects/circle_center_point.dart';
+import 'package:regula/domain/construction/objects/circumcenter.dart';
+import 'package:regula/domain/construction/objects/compass_circle.dart';
+import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/incenter.dart';
+import 'package:regula/domain/construction/objects/intersection_point.dart';
+import 'package:regula/domain/construction/objects/line_angle.dart';
+import 'package:regula/domain/construction/objects/line_through_two_points.dart';
+import 'package:regula/domain/construction/objects/midpoint.dart';
+import 'package:regula/domain/construction/objects/orthocenter.dart';
+import 'package:regula/domain/construction/objects/parallel_line.dart';
+import 'package:regula/domain/construction/objects/perpendicular_line.dart';
+import 'package:regula/domain/construction/objects/point_on_object.dart';
+import 'package:regula/domain/construction/objects/ray.dart';
+import 'package:regula/domain/construction/objects/sector.dart';
+import 'package:regula/domain/construction/objects/segment.dart';
+import 'package:regula/domain/construction/objects/segment_ratio_point.dart';
+import 'package:regula/domain/construction/objects/three_point_circle.dart';
+import 'package:regula/domain/construction/objects/vertex_angle.dart';
+import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/presentation/canvas/canvas_viewport.dart';
+import 'package:regula/presentation/canvas/fit_viewport.dart';
+import 'package:regula/presentation/canvas/geometry_painter.dart';
+import 'package:regula/presentation/theme/app_theme.dart';
 
 /// Pixel goldens for every concrete object kind, light + dark — one scene
 /// per sealed kind plus a decorations scene (labels, custom attributes,

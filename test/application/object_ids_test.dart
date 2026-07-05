@@ -1,5 +1,5 @@
-import 'package:fgex/application/object_ids.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/application/object_ids.dart';
 
 void main() {
   test('newObjectId returns non-empty, unique ids', () {

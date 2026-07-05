@@ -6,6 +6,20 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 35 — 2026-07-05
+
+**Done**
+- Renamed the app/package from `fgex` to `regula` project-wide at the user's request: `pubspec.yaml` name, all `package:fgex` imports across `test/`, Android (`applicationId`/`namespace` `com.apollonius.regula`, manifest label, `MainActivity.kt` moved to `com/apollonius/regula`), iOS (`PRODUCT_BUNDLE_IDENTIFIER`, `CFBundleDisplayName`/`CFBundleName`), web (`index.html`, `manifest.json`), IDE `.iml` files (untracked, gitignored), and doc/prompt mentions in `CLAUDE.md` and `.claude/commands/continue-build.md`. Also swapped the placeholder `com.example` reverse-domain prefix for `com.apollonius`, and replaced hardcoded `/Users/stefanos.levantis` paths in tracked docs with `$HOME`. Older STATUS entries above are left untouched per the append-only convention — they accurately describe `fgex`/`com.example` at the time.
+- Local project folder moved from `$HOME/Code/var/fgex/` to `$HOME/Code/var/regula/` (user opted in); `docs/PLAN.md`'s path reference updated to match.
+- Wrote a succinct `README.md` (previously the one-line Flutter placeholder) and pushed the whole repo to a new remote `git@github.com:steveSuave/regula.git`.
+
+**Next**
+- No functional/phase work changed — pick up wherever Session 34 left off (all planned phases done; optional SVG export stretch and the two environment-blocked Phase 12 boxes remain).
+
+**Open questions / gotchas**
+- Anyone with a previous local clone under the old `fgex` name/path or with `package:fgex` imports in scratch/uncommitted work needs to update both.
+- `ios/Flutter/Generated.xcconfig`, `ios/Flutter/flutter_export_environment.sh`, and `android/local.properties` still have the old absolute `fgex` path baked in from the last `flutter pub get` at the old location — all three are generated, gitignored files that self-correct next time `flutter pub get`/`flutter build` runs from the new location, so they were left alone.
+
 ## Session 34 — 2026-07-05
 
 **Done**

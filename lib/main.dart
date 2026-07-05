@@ -95,7 +95,7 @@ class MainApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp(
-      title: 'fgex',
+      title: 'regula',
       // The corner DEBUG banner costs canvas pixels on a phone and says
       // nothing the user can act on.
       debugShowCheckedModeBanner: false,
@@ -747,7 +747,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                   onPressed: () =>
                       setState(() => _showObjectTree = !_showObjectTree),
                 ),
-          title: isCompact ? _scrollableToolbar() : const Text('fgex'),
+          title: isCompact ? _scrollableToolbar() : const Text('regula'),
           actions: [
             if (hasSelection)
               IconButton(

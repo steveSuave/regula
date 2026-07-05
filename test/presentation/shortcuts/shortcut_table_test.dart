@@ -1,6 +1,6 @@
-import 'package:fgex/presentation/shortcuts/shortcut_table.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/presentation/shortcuts/shortcut_table.dart';
 
 /// Whether some physical key press could match both strokes: same key,
 /// same primary requirement, and shift requirements that intersect

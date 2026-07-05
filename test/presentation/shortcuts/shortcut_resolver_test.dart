@@ -1,7 +1,7 @@
-import 'package:fgex/presentation/shortcuts/shortcut_resolver.dart';
-import 'package:fgex/presentation/shortcuts/shortcut_table.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/presentation/shortcuts/shortcut_resolver.dart';
+import 'package:regula/presentation/shortcuts/shortcut_table.dart';
 
 void main() {
   late ShortcutResolver resolver;

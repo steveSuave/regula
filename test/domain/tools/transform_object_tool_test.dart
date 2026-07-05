@@ -1,27 +1,27 @@
 import 'dart:math' as math;
 
-import 'package:fgex/domain/commands/add_object_command.dart';
-import 'package:fgex/domain/commands/macro_command.dart';
-import 'package:fgex/domain/construction/construction.dart';
-import 'package:fgex/domain/construction/objects/arc.dart';
-import 'package:fgex/domain/construction/objects/central_reflection_point.dart';
-import 'package:fgex/domain/construction/objects/circle_center_point.dart';
-import 'package:fgex/domain/construction/objects/compass_circle.dart';
-import 'package:fgex/domain/construction/objects/free_point.dart';
-import 'package:fgex/domain/construction/objects/line_through_two_points.dart';
-import 'package:fgex/domain/construction/objects/perpendicular_line.dart';
-import 'package:fgex/domain/construction/objects/point_on_object.dart';
-import 'package:fgex/domain/construction/objects/reflected_point.dart';
-import 'package:fgex/domain/construction/objects/rotated_point.dart';
-import 'package:fgex/domain/construction/objects/sector.dart';
-import 'package:fgex/domain/construction/objects/segment.dart';
-import 'package:fgex/domain/construction/objects/three_point_circle.dart';
-import 'package:fgex/domain/construction/objects/translated_point.dart';
-import 'package:fgex/domain/construction/objects/vertex_angle.dart';
-import 'package:fgex/domain/math/vec2.dart';
-import 'package:fgex/domain/tools/tool.dart';
-import 'package:fgex/domain/tools/transform_object_tool.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/domain/commands/add_object_command.dart';
+import 'package:regula/domain/commands/macro_command.dart';
+import 'package:regula/domain/construction/construction.dart';
+import 'package:regula/domain/construction/objects/arc.dart';
+import 'package:regula/domain/construction/objects/central_reflection_point.dart';
+import 'package:regula/domain/construction/objects/circle_center_point.dart';
+import 'package:regula/domain/construction/objects/compass_circle.dart';
+import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/line_through_two_points.dart';
+import 'package:regula/domain/construction/objects/perpendicular_line.dart';
+import 'package:regula/domain/construction/objects/point_on_object.dart';
+import 'package:regula/domain/construction/objects/reflected_point.dart';
+import 'package:regula/domain/construction/objects/rotated_point.dart';
+import 'package:regula/domain/construction/objects/sector.dart';
+import 'package:regula/domain/construction/objects/segment.dart';
+import 'package:regula/domain/construction/objects/three_point_circle.dart';
+import 'package:regula/domain/construction/objects/translated_point.dart';
+import 'package:regula/domain/construction/objects/vertex_angle.dart';
+import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/tools/tool.dart';
+import 'package:regula/domain/tools/transform_object_tool.dart';
 
 void main() {
   late int nextId;

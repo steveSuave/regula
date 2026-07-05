@@ -1,7 +1,7 @@
 import 'dart:ui';
 
-import 'package:fgex/presentation/canvas/dash_path.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/presentation/canvas/dash_path.dart';
 
 double _totalLength(Path path) {
   var total = 0.0;

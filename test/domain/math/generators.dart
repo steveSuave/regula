@@ -1,7 +1,7 @@
-import 'package:fgex/domain/math/circle_eq.dart';
-import 'package:fgex/domain/math/line_eq.dart';
-import 'package:fgex/domain/math/vec2.dart';
 import 'package:glados/glados.dart';
+import 'package:regula/domain/math/circle_eq.dart';
+import 'package:regula/domain/math/line_eq.dart';
+import 'package:regula/domain/math/vec2.dart';
 
 /// Shared glados generators for the math layer.
 extension MathAnys on Any {

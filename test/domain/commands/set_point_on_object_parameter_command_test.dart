@@ -1,12 +1,12 @@
-import 'package:fgex/domain/commands/set_point_on_object_parameter_command.dart';
-import 'package:fgex/domain/construction/construction.dart';
-import 'package:fgex/domain/construction/objects/circle_center_point.dart';
-import 'package:fgex/domain/construction/objects/free_point.dart';
-import 'package:fgex/domain/construction/objects/line_through_two_points.dart';
-import 'package:fgex/domain/construction/objects/midpoint.dart';
-import 'package:fgex/domain/construction/objects/point_on_object.dart';
-import 'package:fgex/domain/math/vec2.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/domain/commands/set_point_on_object_parameter_command.dart';
+import 'package:regula/domain/construction/construction.dart';
+import 'package:regula/domain/construction/objects/circle_center_point.dart';
+import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/line_through_two_points.dart';
+import 'package:regula/domain/construction/objects/midpoint.dart';
+import 'package:regula/domain/construction/objects/point_on_object.dart';
+import 'package:regula/domain/math/vec2.dart';
 
 void main() {
   test('apply/undo round-trips the parameter float-exact on a line', () {

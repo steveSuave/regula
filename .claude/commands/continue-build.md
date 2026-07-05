@@ -3,7 +3,7 @@ description: Resume work on the dynamic geometry app — read CLAUDE.md / PLAN.m
 argument-hint: "[optional: focus area, e.g. 'phase 2', 'tests', 'fix lint']"
 ---
 
-You are resuming work on the **fgex** dynamic geometry Flutter app. A previous session has already done some of the work; your first job is to orient yourself, then propose a concrete next step before writing any code.
+You are resuming work on the **regula** dynamic geometry Flutter app. A previous session has already done some of the work; your first job is to orient yourself, then propose a concrete next step before writing any code.
 
 ## Step 1 — Orient
 

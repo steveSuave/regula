@@ -1,10 +1,10 @@
 import 'dart:math' as math;
 
-import 'package:fgex/domain/construction/construction.dart';
-import 'package:fgex/domain/construction/objects/free_point.dart';
-import 'package:fgex/domain/construction/objects/sector.dart';
-import 'package:fgex/domain/math/vec2.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/domain/construction/construction.dart';
+import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/sector.dart';
+import 'package:regula/domain/math/vec2.dart';
 
 void main() {
   group('Sector', () {

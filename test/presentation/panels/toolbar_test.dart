@@ -1,23 +1,23 @@
-import 'package:fgex/application/providers/tool_provider.dart';
-import 'package:fgex/domain/tools/angle_by_size_tool.dart';
-import 'package:fgex/domain/tools/equilateral_triangle_macro_tool.dart';
-import 'package:fgex/domain/tools/intersection_tool.dart';
-import 'package:fgex/domain/tools/isosceles_trapezium_macro_tool.dart';
-import 'package:fgex/domain/tools/isosceles_triangle_macro_tool.dart';
-import 'package:fgex/domain/tools/kite_macro_tool.dart';
-import 'package:fgex/domain/tools/random_shape_stamp_tool.dart';
-import 'package:fgex/domain/tools/rectangle_macro_tool.dart';
-import 'package:fgex/domain/tools/regular_polygon_macro_tool.dart';
-import 'package:fgex/domain/tools/rhombus_macro_tool.dart';
-import 'package:fgex/domain/tools/right_trapezium_macro_tool.dart';
-import 'package:fgex/domain/tools/right_triangle_macro_tool.dart';
-import 'package:fgex/domain/tools/transform_object_tool.dart';
-import 'package:fgex/domain/tools/two_point_tool.dart';
-import 'package:fgex/main.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/application/providers/tool_provider.dart';
+import 'package:regula/domain/tools/angle_by_size_tool.dart';
+import 'package:regula/domain/tools/equilateral_triangle_macro_tool.dart';
+import 'package:regula/domain/tools/intersection_tool.dart';
+import 'package:regula/domain/tools/isosceles_trapezium_macro_tool.dart';
+import 'package:regula/domain/tools/isosceles_triangle_macro_tool.dart';
+import 'package:regula/domain/tools/kite_macro_tool.dart';
+import 'package:regula/domain/tools/random_shape_stamp_tool.dart';
+import 'package:regula/domain/tools/rectangle_macro_tool.dart';
+import 'package:regula/domain/tools/regular_polygon_macro_tool.dart';
+import 'package:regula/domain/tools/rhombus_macro_tool.dart';
+import 'package:regula/domain/tools/right_trapezium_macro_tool.dart';
+import 'package:regula/domain/tools/right_triangle_macro_tool.dart';
+import 'package:regula/domain/tools/transform_object_tool.dart';
+import 'package:regula/domain/tools/two_point_tool.dart';
+import 'package:regula/main.dart';
 
 /// Tests for the toolbar's group flyouts: activation, the active-group
 /// highlight (including the segment-ratio closure that no canonicalized
