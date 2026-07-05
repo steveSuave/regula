@@ -509,21 +509,86 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     }
   }
 
+  /// Compact-only home of the [GeometryToolbar]: a 48-px strip under the
+  /// app bar, horizontally scrollable so the six flyout groups are never
+  /// truncated however narrow the screen.
+  static const PreferredSizeWidget _compactToolbarStrip = PreferredSize(
+    preferredSize: Size.fromHeight(48),
+    child: SizedBox(
+      height: 48,
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: GeometryToolbar(),
+        ),
+      ),
+    ),
+  );
+
+  /// Compact-only overflow absorbing the loose wide-layout icon buttons
+  /// (fit, reset, object tree, cheat sheet, theme) — they don't fit a
+  /// phone app bar next to File and undo/redo.
+  Widget _overflowMenu(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return PopupMenuButton<VoidCallback>(
+      tooltip: 'More: view, panels, shortcuts, theme',
+      icon: const Icon(Icons.more_vert),
+      onSelected: (action) => action(),
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          value: _fitConstruction,
+          child: const Text('Fit construction to view'),
+        ),
+        PopupMenuItem(
+          value: () => ref.read(viewportProvider.notifier).reset(),
+          child: const Text('Reset view'),
+        ),
+        PopupMenuItem(
+          value: () => setState(() => _showObjectTree = !_showObjectTree),
+          child: Text(
+            _showObjectTree ? 'Hide object tree' : 'Show object tree',
+          ),
+        ),
+        PopupMenuItem(
+          value: () => setState(() => _showCheatSheet = !_showCheatSheet),
+          child: const Text('Keyboard shortcuts'),
+        ),
+        PopupMenuItem(
+          value: () => ref
+              .read(themeModeProvider.notifier)
+              .toggle(Theme.of(context).brightness),
+          child: Text(dark ? 'Switch to light theme' : 'Switch to dark theme'),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final undoRedo = ref.watch(commandStackProvider);
+    // Material compact breakpoint (PLAN "Mobile layout"): phones get the
+    // scrollable toolbar strip and the overflow menu; the wide layout is
+    // untouched.
+    final isCompact = MediaQuery.sizeOf(context).shortestSide < 600;
 
     return AppShortcuts(
       onAction: _handleShortcut,
       child: Scaffold(
         appBar: AppBar(
-          leading: IconButton(
-            tooltip: _showObjectTree ? 'Hide object tree' : 'Show object tree',
-            isSelected: _showObjectTree,
-            icon: const Icon(Icons.account_tree_outlined),
-            onPressed: () => setState(() => _showObjectTree = !_showObjectTree),
-          ),
+          leading: isCompact
+              ? null
+              : IconButton(
+                  tooltip: _showObjectTree
+                      ? 'Hide object tree'
+                      : 'Show object tree',
+                  isSelected: _showObjectTree,
+                  icon: const Icon(Icons.account_tree_outlined),
+                  onPressed: () =>
+                      setState(() => _showObjectTree = !_showObjectTree),
+                ),
           title: const Text('fgex'),
+          bottom: isCompact ? _compactToolbarStrip : null,
           actions: [
             PopupMenuButton<Future<void> Function()>(
               tooltip: 'File: new, open, save',
@@ -544,37 +609,39 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                 ),
               ],
             ),
-            const GeometryToolbar(),
-            IconButton(
-              tooltip: 'Fit construction to view',
-              icon: const Icon(Icons.fit_screen),
-              onPressed: _fitConstruction,
-            ),
-            IconButton(
-              tooltip: 'Reset view (origin at 100 %)',
-              icon: const Icon(Icons.filter_center_focus),
-              onPressed: () => ref.read(viewportProvider.notifier).reset(),
-            ),
-            IconButton(
-              tooltip: 'Keyboard shortcuts (?)',
-              isSelected: _showCheatSheet,
-              icon: const Icon(Icons.keyboard_outlined),
-              onPressed: () =>
-                  setState(() => _showCheatSheet = !_showCheatSheet),
-            ),
-            IconButton(
-              tooltip: Theme.of(context).brightness == Brightness.dark
-                  ? 'Switch to light theme'
-                  : 'Switch to dark theme',
-              icon: Icon(
-                Theme.of(context).brightness == Brightness.dark
-                    ? Icons.light_mode_outlined
-                    : Icons.dark_mode_outlined,
+            if (!isCompact) ...[
+              const GeometryToolbar(),
+              IconButton(
+                tooltip: 'Fit construction to view',
+                icon: const Icon(Icons.fit_screen),
+                onPressed: _fitConstruction,
               ),
-              onPressed: () => ref
-                  .read(themeModeProvider.notifier)
-                  .toggle(Theme.of(context).brightness),
-            ),
+              IconButton(
+                tooltip: 'Reset view (origin at 100 %)',
+                icon: const Icon(Icons.filter_center_focus),
+                onPressed: () => ref.read(viewportProvider.notifier).reset(),
+              ),
+              IconButton(
+                tooltip: 'Keyboard shortcuts (?)',
+                isSelected: _showCheatSheet,
+                icon: const Icon(Icons.keyboard_outlined),
+                onPressed: () =>
+                    setState(() => _showCheatSheet = !_showCheatSheet),
+              ),
+              IconButton(
+                tooltip: Theme.of(context).brightness == Brightness.dark
+                    ? 'Switch to light theme'
+                    : 'Switch to dark theme',
+                icon: Icon(
+                  Theme.of(context).brightness == Brightness.dark
+                      ? Icons.light_mode_outlined
+                      : Icons.dark_mode_outlined,
+                ),
+                onPressed: () => ref
+                    .read(themeModeProvider.notifier)
+                    .toggle(Theme.of(context).brightness),
+              ),
+            ],
             IconButton(
               tooltip: 'Undo',
               icon: const Icon(Icons.undo),
@@ -589,6 +656,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                   ? () => ref.read(commandStackProvider.notifier).redo()
                   : null,
             ),
+            if (isCompact) _overflowMenu(context),
           ],
         ),
         body: Stack(
