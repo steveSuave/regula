@@ -3,7 +3,9 @@ import 'package:fgex/application/providers/construction_provider.dart';
 import 'package:fgex/application/providers/selection_provider.dart';
 import 'package:fgex/domain/construction/object_attributes.dart';
 import 'package:fgex/domain/construction/objects/free_point.dart';
+import 'package:fgex/domain/construction/objects/sector.dart';
 import 'package:fgex/domain/construction/objects/segment.dart';
+import 'package:fgex/domain/construction/objects/vertex_angle.dart';
 import 'package:fgex/domain/math/vec2.dart';
 import 'package:fgex/main.dart';
 import 'package:fgex/presentation/panels/attributes_inspector.dart';
@@ -291,6 +293,105 @@ void main() {
     await tester.tap(find.byIcon(Icons.undo));
     await tester.pump();
     expect(s.attributes.dashPeriod, 0.0);
+  });
+
+  testWidgets('marker-radius selector: angles only, one command over the '
+      'angle slice, undo restores the default', (tester) async {
+    await pumpEditor(tester);
+    final a = addPoint('a', const Vec2(4, 0));
+    final v = addPoint('v', Vec2.zero);
+    final b = addPoint('b', const Vec2(1, 3));
+    final s = Segment(id: 's', point1: a, point2: b);
+    final angle = VertexAngle(id: 'ang', arm1: a, vertex: v, arm2: b);
+    container.read(constructionProvider).construction
+      ..add(s)
+      ..add(angle);
+
+    container.read(selectionProvider.notifier).select('s');
+    await tester.pump();
+    expect(find.byKey(const ValueKey('marker-radius')), findsNothing,
+        reason: 'a marker radius means nothing without an angle selected');
+
+    container.read(selectionProvider.notifier).selectMany(['s', 'ang']);
+    await tester.pump();
+    final markerRadius = find.byKey(const ValueKey('marker-radius'));
+    await tester.scrollUntilVisible(
+      markerRadius,
+      100,
+      scrollable: find.descendant(
+        of: find.byType(AttributesInspector),
+        matching: find.byType(Scrollable),
+      ),
+    );
+
+    // 'L' also labels a dash preset — scope the tap to the radius row.
+    await tester
+        .tap(find.descendant(of: markerRadius, matching: find.text('L')));
+    await tester.pump();
+    expect(angle.attributes.angleMarkerRadius, 28.0);
+    expect(s.attributes.angleMarkerRadius, 20.0,
+        reason: 'the command covers only the angle slice');
+
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(angle.attributes.angleMarkerRadius, 20.0);
+  });
+
+  testWidgets('fill checkbox: angles + sectors, tristate over a mixed '
+      'selection, toggles fillAlpha null ↔ 0.25', (tester) async {
+    await pumpEditor(tester);
+    final a = addPoint('a', const Vec2(4, 0));
+    final v = addPoint('v', Vec2.zero);
+    final b = addPoint('b', const Vec2(1, 3));
+    final angle = VertexAngle(id: 'ang', arm1: a, vertex: v, arm2: b);
+    final sector = Sector(
+      id: 'sec',
+      center: v,
+      start: a,
+      end: b,
+      attributes: const ObjectAttributes(fillAlpha: 0.25),
+    );
+    container.read(constructionProvider).construction
+      ..add(angle)
+      ..add(sector);
+
+    container.read(selectionProvider.notifier).select('a');
+    await tester.pump();
+    expect(find.widgetWithText(CheckboxListTile, 'Fill'), findsNothing,
+        reason: 'points have no filled form');
+
+    container.read(selectionProvider.notifier).selectMany(['ang', 'sec']);
+    await tester.pump();
+    final fill = find.widgetWithText(CheckboxListTile, 'Fill');
+    await tester.scrollUntilVisible(
+      fill,
+      100,
+      scrollable: find.descendant(
+        of: find.byType(AttributesInspector),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    expect(tester.widget<CheckboxListTile>(fill).value, isNull,
+        reason: 'one filled, one unfilled — the tristate dash');
+
+    // Anything but all-on turns everything on…
+    await tester.tap(fill);
+    await tester.pump();
+    expect(angle.attributes.fillAlpha, 0.25);
+    expect(sector.attributes.fillAlpha, 0.25);
+    expect(tester.widget<CheckboxListTile>(fill).value, isTrue);
+
+    // …and all-on turns everything off.
+    await tester.tap(fill);
+    await tester.pump();
+    expect(angle.attributes.fillAlpha, isNull);
+    expect(sector.attributes.fillAlpha, isNull);
+
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(angle.attributes.fillAlpha, 0.25,
+        reason: 'the all-off toggle was one command over both kinds');
+    expect(sector.attributes.fillAlpha, 0.25);
   });
 
   testWidgets('multi-selection: count header and a read-only list',
