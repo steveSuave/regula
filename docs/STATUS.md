@@ -6,6 +6,23 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 30 — 2026-07-05
+
+**Done**
+- **Phase 25b** (user feedback on the Session 29 mobile chrome) on `phase-25b-single-row-longpress`, merged to `main`:
+- Single-row compact bar: the two-row chrome (56-px app bar + 48-px `AppBar.bottom` strip) collapses into one 48-px row — `GeometryToolbar` scrolls in the app bar's *title slot* (`titleSpacing: 0`, `leadingWidth: 48`, `toolbarHeight: 48`), the File popup folds into the overflow menu (New/Open…/Save… above a divider; `Future<void> Function()` tear-offs assign fine to the popup's `VoidCallback`), and the style button moves from the strip's end into the actions row. `_toolbarStrip` deleted. Wide layout untouched.
+- Long-press = touch shift-click: `onLongPressStart` on the canvas toggles the topmost hit object in the selection (`SelectionNotifier.toggle`, `HapticFeedback.selectionClick`), matching the Phase 26 group-header convention. Registered **only when no tool is active** — otherwise the recognizer would swallow slow taps mid-collection. Empty-canvas long-press is a no-op (clearing stays the tap's job). Hit radius reuses `hitThresholdFor(_firstDownKind)`.
+- `debugShowCheckedModeBanner: false` — the corner DEBUG ribbon on device debug runs is gone.
+- 751 tests green, analyze clean: compact layout test reworked (AppBar height == 48 pins the single row, File out of the bar / in the overflow), new canvas tests (long-press add/remove/no-clear; slow tap with a tool active still places a point). Full drive.js on a fresh release build: **SMOKE PASS**, zero console errors. Ad-hoc phone-viewport Playwright check (400×800, touch): chrome glyphs end at y=34 (one row), strip swipe-scrolls, long-press adds then removes point B (pixel-tint assertions), style button appears with the selection.
+
+**Next**
+- Open queue unchanged: Phases 19 (export), 22 (angle-mark styling), 26 (select-by-kind); Phase 12's two environment-blocked boxes (iOS build, Android emulator) still stand — real-device smoke for the compact chrome rides on those. v0.1 tag once Phase 19 lands.
+
+**Open questions / gotchas**
+- Deliberate long-press trade-off: in move/select mode, holding still past ~500 ms *before* dragging toggles the selection instead of starting the object drag / rubber band; drags that begin moving inside the timeout are unaffected (documented at the handler).
+- The compact bar's fixed icons (hamburger + undo/redo/overflow, + style with a selection) leave ~200 px of scrolling toolbar on a 400-px phone — fine, but anything added to the compact actions row from here should go into the overflow instead.
+- Phase 26's tree-header long-press should mirror the canvas semantics (additive union there vs toggle here is intentional: headers select groups, the canvas toggles individuals).
+
 ## Session 29 — 2026-07-05
 
 **Done**
