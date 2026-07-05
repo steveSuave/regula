@@ -37,9 +37,9 @@ import 'domain/tools/regular_polygon_macro_tool.dart';
 import 'domain/tools/rhombus_macro_tool.dart';
 import 'domain/tools/right_trapezium_macro_tool.dart';
 import 'domain/tools/right_triangle_macro_tool.dart';
-import 'domain/tools/rotated_point_tool.dart';
 import 'domain/tools/square_macro_tool.dart';
 import 'domain/tools/three_point_tool.dart';
+import 'domain/tools/transform_object_tool.dart';
 import 'domain/tools/trapezium_macro_tool.dart';
 import 'domain/tools/triangle_center_tool.dart';
 import 'domain/tools/two_line_tool.dart';
@@ -315,7 +315,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     }
     ref
         .read(toolProvider.notifier)
-        .activate(RotatedPointTool(newId: newObjectId, angle: angle));
+        .activate(TransformObjectTool.rotate(newId: newObjectId, angle: angle));
   }
 
   Future<void> _activateAngleBySizeTool() async {
@@ -461,19 +461,13 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
       case AppAction.sectorTool:
         tools.activate(ThreePointTool(newId: newObjectId, build: buildSector));
       case AppAction.reflectAboutLineTool:
-        tools.activate(
-          PointAndLineTool(newId: newObjectId, build: buildReflectedPoint),
-        );
+        tools.activate(TransformObjectTool.reflectAboutLine(newId: newObjectId));
       case AppAction.reflectAboutPointTool:
-        tools.activate(
-          TwoPointTool(newId: newObjectId, build: buildCentralReflection),
-        );
+        tools.activate(TransformObjectTool.reflectAboutPoint(newId: newObjectId));
       case AppAction.rotateAroundPointTool:
         _activateRotateTool();
       case AppAction.translateByVectorTool:
-        tools.activate(
-          ThreePointTool(newId: newObjectId, build: buildTranslatedPoint),
-        );
+        tools.activate(TransformObjectTool.translate(newId: newObjectId));
       case AppAction.angleBySizeTool:
         _activateAngleBySizeTool();
       case AppAction.squareMacroTool:

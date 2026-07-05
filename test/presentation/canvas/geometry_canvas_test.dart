@@ -6,12 +6,14 @@ import 'package:fgex/application/providers/tool_provider.dart';
 import 'package:fgex/application/providers/viewport_provider.dart';
 import 'package:fgex/domain/construction/object_attributes.dart';
 import 'package:fgex/domain/construction/objects/arc.dart';
+import 'package:fgex/domain/construction/objects/circle_center_point.dart';
 import 'package:fgex/domain/construction/objects/compass_circle.dart';
 import 'package:fgex/domain/construction/objects/free_point.dart';
 import 'package:fgex/domain/construction/objects/intersection_point.dart';
 import 'package:fgex/domain/construction/objects/line_angle.dart';
 import 'package:fgex/domain/construction/objects/midpoint.dart';
 import 'package:fgex/domain/construction/objects/point_on_object.dart';
+import 'package:fgex/domain/construction/objects/reflected_point.dart';
 import 'package:fgex/domain/construction/objects/sector.dart';
 import 'package:fgex/domain/construction/objects/segment_ratio_point.dart';
 import 'package:fgex/domain/construction/objects/three_point_circle.dart';
@@ -1649,5 +1651,66 @@ void main() {
 
     expect(point.attributes.labelDx, 6);
     expect(point.attributes.labelDy, -18);
+  });
+
+  testWidgets('G L then tap a circle, then a line: the whole circle '
+      'reflects as one undo unit', (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+
+    // A circle with center (150, 150) and rim (200, 150) — radius 50.
+    await tester.tap(find.byIcon(Icons.circle_outlined));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Circle (center, then rim)'));
+    await tester.pumpAndSettle();
+    await tester.tapAt(origin + const Offset(150, 150));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(200, 150));
+    await tester.pump();
+
+    // A horizontal mirror line 100 px below the circle's center.
+    await tester.tap(find.byIcon(Icons.timeline));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Line'));
+    await tester.pumpAndSettle();
+    await tester.tapAt(origin + const Offset(100, 250));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(300, 250));
+    await tester.pump();
+    expect(objectCount(), 6);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyL);
+    await tester.pump();
+
+    // Transformee first: the circle's leftmost rim point, clear of its
+    // defining points; then the mirror.
+    await tester.tapAt(origin + const Offset(100, 150));
+    await tester.pump();
+    expect(objectCount(), 6,
+        reason: 'nothing commits until the mirror lands');
+    await tester.tapAt(origin + const Offset(250, 250));
+    await tester.pump();
+
+    expect(objectCount(), 9, reason: '2 image points + the image circle');
+    final objects = container
+        .read(constructionProvider)
+        .construction
+        .objects
+        .toList();
+    final source = objects[2] as CircleCenterPoint;
+    final image = objects.last as CircleCenterPoint;
+    expect(image.center, isA<ReflectedPoint>());
+    expect(image.circle!.radius, closeTo(source.circle!.radius, 1e-9));
+    expect(
+      image.circle!.center
+          .closeTo(source.circle!.center + const Vec2(0, -200), 1e-9),
+      isTrue,
+      reason: 'mirrored across the line 100 px below the center',
+    );
+
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(objectCount(), 6, reason: 'the image is one undo unit');
   });
 }
