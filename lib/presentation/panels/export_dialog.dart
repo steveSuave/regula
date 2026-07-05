@@ -26,12 +26,11 @@ class ExportOptions {
     ExportFramingChoice? framing,
     int? scale,
     bool? transparent,
-  }) =>
-      ExportOptions(
-        framing: framing ?? this.framing,
-        scale: scale ?? this.scale,
-        transparent: transparent ?? this.transparent,
-      );
+  }) => ExportOptions(
+    framing: framing ?? this.framing,
+    scale: scale ?? this.scale,
+    transparent: transparent ?? this.transparent,
+  );
 }
 
 /// What the export dialog resolved to; null (dialog dismissed) means
@@ -67,16 +66,15 @@ Future<ExportDialogOutcome?> showExportDialog(
   required bool canFit,
   Rect? region,
   ExportOptions initial = const ExportOptions(),
-}) =>
-    showDialog<ExportDialogOutcome>(
-      context: context,
-      builder: (context) => _ExportDialog(
-        canvasSize: canvasSize,
-        canFit: canFit,
-        region: region,
-        initial: initial,
-      ),
-    );
+}) => showDialog<ExportDialogOutcome>(
+  context: context,
+  builder: (context) => _ExportDialog(
+    canvasSize: canvasSize,
+    canFit: canFit,
+    region: region,
+    initial: initial,
+  ),
+);
 
 class _ExportDialog extends StatefulWidget {
   const _ExportDialog({
@@ -119,9 +117,9 @@ class _ExportDialogState extends State<_ExportDialog> {
   /// The output's logical size under the current framing choice; the
   /// physical pixel size shown to the user is this times the scale.
   Size get _logicalSize => switch (_options.framing) {
-        ExportFramingChoice.region => widget.region!.size,
-        _ => widget.canvasSize,
-      };
+    ExportFramingChoice.region => widget.region!.size,
+    _ => widget.canvasSize,
+  };
 
   void _setFraming(ExportFramingChoice framing) =>
       setState(() => _options = _options.copyWith(framing: framing));
@@ -161,72 +159,74 @@ class _ExportDialogState extends State<_ExportDialog> {
 
     return AlertDialog(
       title: const Text('Export as PNG'),
-      content: SizedBox(
-        width: 360,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _framingTile(
-              ExportFramingChoice.fitConstruction,
-              'Fit construction',
-              subtitle: widget.canFit ? null : 'Nothing visible to frame',
-              enabled: widget.canFit,
-            ),
-            _framingTile(
-              ExportFramingChoice.currentView,
-              'Current view',
-            ),
-            _framingTile(
-              ExportFramingChoice.region,
-              'Selected region',
-              subtitle: region == null
-                  ? 'Drag a rectangle on the canvas'
-                  : '${region.width.round()} × ${region.height.round()} px '
-                      'of the window',
-              enabled: region != null,
-              trailing: TextButton(
-                onPressed: () => Navigator.pop(
-                  context,
-                  ExportRegionPickRequested(_options),
-                ),
-                child: Text(region == null ? 'Select…' : 'Reselect…'),
+      // Scrollable so a short window (the dialog's content area can drop
+      // below the options' natural height) scrolls instead of
+      // overflowing the Column.
+      content: SingleChildScrollView(
+        child: SizedBox(
+          width: 360,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _framingTile(
+                ExportFramingChoice.fitConstruction,
+                'Fit construction',
+                subtitle: widget.canFit ? null : 'Nothing visible to frame',
+                enabled: widget.canFit,
               ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                const Text('Scale'),
-                const Spacer(),
-                SegmentedButton<int>(
-                  segments: [
-                    for (final scale in const [1, 2, 4])
-                      ButtonSegment(value: scale, label: Text('$scale×')),
-                  ],
-                  selected: {_options.scale},
-                  onSelectionChanged: (selection) => setState(
-                    () =>
-                        _options = _options.copyWith(scale: selection.single),
+              _framingTile(ExportFramingChoice.currentView, 'Current view'),
+              _framingTile(
+                ExportFramingChoice.region,
+                'Selected region',
+                subtitle: region == null
+                    ? 'Drag a rectangle on the canvas'
+                    : '${region.width.round()} × ${region.height.round()} px '
+                          'of the window',
+                enabled: region != null,
+                trailing: TextButton(
+                  onPressed: () => Navigator.pop(
+                    context,
+                    ExportRegionPickRequested(_options),
                   ),
+                  child: Text(region == null ? 'Select…' : 'Reselect…'),
                 ),
-              ],
-            ),
-            CheckboxListTile(
-              dense: true,
-              contentPadding: EdgeInsets.zero,
-              controlAffinity: ListTileControlAffinity.leading,
-              title: const Text('Transparent background'),
-              value: _options.transparent,
-              onChanged: (value) => setState(
-                () => _options = _options.copyWith(transparent: value),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Output: $outWidth × $outHeight px',
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-          ],
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Text('Scale'),
+                  const Spacer(),
+                  SegmentedButton<int>(
+                    segments: [
+                      for (final scale in const [1, 2, 4])
+                        ButtonSegment(value: scale, label: Text('$scale×')),
+                    ],
+                    selected: {_options.scale},
+                    onSelectionChanged: (selection) => setState(
+                      () =>
+                          _options = _options.copyWith(scale: selection.single),
+                    ),
+                  ),
+                ],
+              ),
+              CheckboxListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                controlAffinity: ListTileControlAffinity.leading,
+                title: const Text('Transparent background'),
+                value: _options.transparent,
+                onChanged: (value) => setState(
+                  () => _options = _options.copyWith(transparent: value),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Output: $outWidth × $outHeight px',
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+            ],
+          ),
         ),
       ),
       actions: [
@@ -235,8 +235,7 @@ class _ExportDialogState extends State<_ExportDialog> {
           child: const Text('Cancel'),
         ),
         FilledButton(
-          onPressed: () =>
-              Navigator.pop(context, ExportConfirmed(_options)),
+          onPressed: () => Navigator.pop(context, ExportConfirmed(_options)),
           child: const Text('Export'),
         ),
       ],
