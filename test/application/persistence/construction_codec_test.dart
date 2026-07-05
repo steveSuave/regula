@@ -102,7 +102,16 @@ Construction buildKitchenSink() {
         attributes: const ObjectAttributes(fillAlpha: 0.25),
       ),
     )
-    ..add(VertexAngle(id: 'vang', arm1: a, vertex: b, arm2: c))
+    ..add(
+      VertexAngle(
+        id: 'vang',
+        arm1: a,
+        vertex: b,
+        arm2: c,
+        attributes:
+            const ObjectAttributes(angleMarkerRadius: 28, fillAlpha: 0.25),
+      ),
+    )
     ..add(LineAngle(id: 'lang', line1: lineAb, line2: perp))
     ..add(
       IntersectionPoint(
