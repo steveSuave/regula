@@ -6,6 +6,24 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 27 — 2026-07-05
+
+**Done**
+- **Phase 23 complete** on `phase-23-auto-naming` (4 commits), merged to `main`. In landing order:
+- Pure allocator `domain/construction/object_naming.dart`: `nextAutoName(usedNames, object)` — points `A…Z, A1…Z1, A2…` (GeoGebra-style, letter varies fastest); lines *and* circles share one lowercase pool `a…`; angles `α…ω, α1…` (24 lowercase Greek letters, final sigma excluded). First-free scan over used names, so gaps are reused and File > Open needs nothing special. 10 unit tests.
+- Interceptor `_autoNameNewObjects` in `ToolNotifier.handleInput`, run on every `ToolCommitted` before `execute`: recurses into `MacroCommand.commands`, names only objects with an empty name **and** `visible: true` (hidden macro scaffolding burns no letters), tracks batch-local used names. Names bake into the object instance pre-first-apply, so undo/redo is stable with zero command state. Lines/circles get `labelVisible: false` at assignment (name shows in tree/inspector, not on canvas); points/angles keep their labels.
+- Inspector single-selection header now shows `A — Point` (kind-only stays for unnamed objects). Tree rows already showed name-over-kind.
+- 722 tests green (analyze clean): allocator units, provider naming tests (A then B; hidden/pre-named objects skipped in a macro batch; deleted B reused; undo/redo stable; segment named `a` with hidden label), inspector header widget test. Web smoke re-run on a fresh release build: **SMOKE PASS**, zero console errors.
+- drive.js: new `markers()` step clusters raw dark blobs within 40 px into one marker per point — every placed point now renders dot + auto-name label ("A" ~18 px above), which raw blob counting saw as 2–3 blobs per point (merge depends on antialiasing). All blob-count/spread/nudge assertions now run on markers.
+
+**Next**
+- Phase 24 (whole-object transforms) is now unblocked — image defining points will get auto-names for free. Phases 19 (export), 22, 25, 26 remain open in any order. Phase 12's two environment-blocked boxes (iOS build, Android emulator) still stand.
+
+**Open questions / gotchas**
+- The interceptor only covers the `handleInput` funnel. Objects added by other paths (tests calling `construction.add` directly, hypothetical future programmatic inserts) stay unnamed — deliberate, matches the PLAN; if a second entry point for user-created objects ever appears, route it through the same interceptor.
+- Naming keys off `attributes.visible` at commit time; a macro that ever commits a *visible* helper object would burn a letter for it.
+- Blob-based smoke assertions must use `markers(darkBlobs(...))` from now on — raw `darkBlobs` counts are 1–2 per labeled point depending on antialiased pixels bridging dot and glyph.
+
 ## Session 26 — 2026-07-05
 
 **Done**
