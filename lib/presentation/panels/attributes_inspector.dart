@@ -7,6 +7,7 @@ import '../../application/providers/selection_provider.dart';
 import '../../domain/commands/change_attributes_command.dart';
 import '../../domain/construction/geo_object.dart';
 import '../../domain/construction/object_attributes.dart';
+import '../../domain/construction/objects/sector.dart';
 import 'delete_selection.dart';
 import 'object_kind_label.dart';
 
@@ -63,6 +64,15 @@ class AttributesInspector extends ConsumerWidget {
     final strokes = [
       for (final object in objects)
         if (object is! GeoPoint) object,
+    ];
+    final angles = [
+      for (final object in objects)
+        if (object is GeoAngle) object,
+    ];
+    // The kinds the painter can fill: sectors and angle markers.
+    final fillables = [
+      for (final object in objects)
+        if (object is GeoAngle || object is Sector) object,
     ];
     return SizedBox(
       width: panelWidth,
@@ -145,8 +155,10 @@ class AttributesInspector extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  _DashSelector(
+                  _PresetSelector(
                     key: const ValueKey('dash-style'),
+                    label: 'Line style',
+                    presets: _dashPresets,
                     values: [
                       for (final object in strokes)
                         object.attributes.dashPeriod,
@@ -171,6 +183,41 @@ class AttributesInspector extends ConsumerWidget {
                       ref,
                       points,
                       (attributes) => attributes.copyWith(pointSize: size),
+                    ),
+                  ),
+                ],
+                if (angles.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  _PresetSelector(
+                    key: const ValueKey('marker-radius'),
+                    label: 'Marker size',
+                    presets: _radiusPresets,
+                    values: [
+                      for (final object in angles)
+                        object.attributes.angleMarkerRadius,
+                    ],
+                    onChanged: (radius) => _setForAll(
+                      ref,
+                      angles,
+                      (attributes) =>
+                          attributes.copyWith(angleMarkerRadius: radius),
+                    ),
+                  ),
+                ],
+                if (fillables.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  _AttributeToggle(
+                    label: 'Fill',
+                    values: [
+                      for (final object in fillables)
+                        object.attributes.fillAlpha != null,
+                    ],
+                    onChanged: (value) => _setForAll(
+                      ref,
+                      fillables,
+                      (attributes) => attributes.copyWith(
+                        fillAlpha: value ? _fillAlphaOn : null,
+                      ),
                     ),
                   ),
                 ],
@@ -287,6 +334,10 @@ class _AttributeToggle extends StatelessWidget {
     );
   }
 }
+
+/// The fill opacity the Fill checkbox turns on (the alpha byte 64 of the
+/// PLAN, as the attribute's 0–1 scale); off is null — unfilled.
+const double _fillAlphaOn = 0.25;
 
 /// The colors the inspector offers, as (tooltip, raw ARGB) pairs; null
 /// is "Auto" — inherit the theme default, the portable choice that
@@ -430,39 +481,54 @@ const _dashPresets = <(String, String, double)>[
   ('L', 'Coarse', 16),
 ];
 
-/// The strokes' dash style as labelled segments — the discrete-choice
-/// sibling of [_WidthSelector], so each tap is exactly one command.
+/// The angle-marker radius presets in logical pixels, same single-letter
+/// convention as [_dashPresets].
+const _radiusPresets = <(String, String, double)>[
+  ('S', 'Small', 12),
+  ('M', 'Medium', 20),
+  ('L', 'Large', 28),
+  ('XL', 'Extra large', 36),
+];
+
+/// A labelled-segment preset row — the discrete-choice sibling of
+/// [_WidthSelector], so each tap is exactly one command. Single-character
+/// segment labels with the full word in the tooltip (full words overflow
+/// the 280-px panel); backs the dash-style and marker-radius selectors.
 ///
 /// Nothing is highlighted when the values are mixed, or uniform but not
 /// among the presets (possible once saved files arrive).
-class _DashSelector extends StatelessWidget {
-  const _DashSelector({
+class _PresetSelector extends StatelessWidget {
+  const _PresetSelector({
     super.key,
+    required this.label,
+    required this.presets,
     required this.values,
     required this.onChanged,
   });
 
+  final String label;
+  final List<(String, String, double)> presets;
   final List<double> values;
   final ValueChanged<double> onChanged;
 
   @override
   Widget build(BuildContext context) {
     final uniform = values.toSet().length == 1;
-    final presetValues = [for (final (_, _, period) in _dashPresets) period];
+    final presetValues = [for (final (_, _, value) in presets) value];
     final selected = uniform && presetValues.contains(values.first)
         ? {values.first}
         : const <double>{};
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Line style', style: Theme.of(context).textTheme.bodyMedium),
+        Text(label, style: Theme.of(context).textTheme.bodyMedium),
         const SizedBox(height: 8),
         SegmentedButton<double>(
           segments: [
-            for (final (label, word, period) in _dashPresets)
+            for (final (short, word, value) in presets)
               ButtonSegment(
-                value: period,
-                label: Text(label),
+                value: value,
+                label: Text(short),
                 tooltip: word,
               ),
           ],
