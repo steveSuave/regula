@@ -1,0 +1,21 @@
+docs/PLAN.md
+  s_4d861c48282879::t_0874d653c2d7ed 132-133
+docs/TODO.md
+  s_4d861c48282879::t_46b8f5bf6331bc 151-155
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "efe4632471a8937d75588050b6bb6bc872246c63",
+  "prompts": {},
+  "sessions": {
+    "s_4d861c48282879": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "200c6d4e-2564-42fe-b1aa-dd30d9d8e1d0",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
