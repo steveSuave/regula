@@ -65,6 +65,23 @@ void main() {
         reason: 'undo swaps the field for one showing the restored name');
   });
 
+  testWidgets('single selection of a named object shows name + kind',
+      (tester) async {
+    await pumpEditor(tester);
+    final point = FreePoint(
+      id: 'a',
+      position: Vec2.zero,
+      attributes: const ObjectAttributes(name: 'A'),
+    );
+    container.read(constructionProvider).construction.add(point);
+    container.read(selectionProvider.notifier).select('a');
+    await tester.pump();
+
+    expect(find.text('A — Point'), findsOneWidget);
+    expect(find.text('Point'), findsNothing,
+        reason: 'the kind-only header appears only for unnamed objects');
+  });
+
   testWidgets('submitting an unchanged name adds nothing to the undo stack',
       (tester) async {
     await pumpEditor(tester);

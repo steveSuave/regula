@@ -57,6 +57,29 @@ function darkBlobs(png, minY) {
   return blobs;
 }
 
+// Since Phase 23 every placed point renders a dot *plus* an auto-name
+// label ("A") ~(6, -18) px away — one or two raw blobs per point,
+// depending on whether antialiased pixels bridge them. Merge blobs
+// within 40 px into one marker (pixel-count-weighted centroid) so blob
+// counting still means "how many points"; the label offset is constant
+// per point, so spread/shift measurements stay valid across shots.
+function markers(rawBlobs, radius = 40) {
+  const groups = [];
+  for (const blob of rawBlobs) {
+    const near = groups.find((g) =>
+      g.some((m) => Math.hypot(m.x - blob.x, m.y - blob.y) < radius));
+    if (near) near.push(blob); else groups.push([blob]);
+  }
+  return groups.map((g) => {
+    const n = g.reduce((s, m) => s + m.n, 0);
+    return {
+      x: g.reduce((s, m) => s + m.x * m.n, 0) / n,
+      y: g.reduce((s, m) => s + m.y * m.n, 0) / n,
+      n,
+    };
+  });
+}
+
 // Centers of the app-bar action icons, left to right (x > 300 skips the
 // leading object-tree toggle and the title). Column runs separated by
 // less than 8 px merge into one icon (outlined glyphs have gaps).
@@ -137,7 +160,7 @@ async function canvasSample(page, x, y) {
   await page.keyboard.press('Escape'); // deactivate (no toggle icon anymore)
   await page.waitForTimeout(300);
 
-  const before = darkBlobs(PNG.sync.read(await page.screenshot()), 70);
+  const before = markers(darkBlobs(PNG.sync.read(await page.screenshot()), 70));
 
   // Phase 14 mapping: zoom is Ctrl+scroll now (plain scroll pans below).
   await page.mouse.move(480, 350);
@@ -149,7 +172,7 @@ async function canvasSample(page, x, y) {
   await page.keyboard.up('Control');
   await page.waitForTimeout(400);
 
-  const after = darkBlobs(PNG.sync.read(await page.screenshot()), 70);
+  const after = markers(darkBlobs(PNG.sync.read(await page.screenshot()), 70));
 
   const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
   const spread = (blobs) => blobs.length >= 2
@@ -168,7 +191,7 @@ async function canvasSample(page, x, y) {
     await page.waitForTimeout(120);
   }
   await page.waitForTimeout(400);
-  const panned = darkBlobs(PNG.sync.read(await page.screenshot()), 70);
+  const panned = markers(darkBlobs(PNG.sync.read(await page.screenshot()), 70));
   const centroidY = (blobs) =>
     blobs.reduce((s, b) => s + b.y, 0) / blobs.length;
   console.log('pan spread:', spread(panned).toFixed(1),
@@ -275,7 +298,7 @@ async function canvasSample(page, x, y) {
   await page.waitForTimeout(200);
   await page.keyboard.press('Control+z');
   await page.waitForTimeout(400);
-  const afterUndo = darkBlobs(PNG.sync.read(await page.screenshot()), 70);
+  const afterUndo = markers(darkBlobs(PNG.sync.read(await page.screenshot()), 70));
   check(afterUndo.length === 0,
         `Ctrl+Z removes the whole square in one step (${afterUndo.length} blobs left)`);
 
@@ -290,7 +313,7 @@ async function canvasSample(page, x, y) {
   await page.waitForTimeout(200);
   await page.keyboard.press('Escape');
   await page.waitForTimeout(200);
-  const placed = darkBlobs(PNG.sync.read(await page.screenshot()), 70);
+  const placed = markers(darkBlobs(PNG.sync.read(await page.screenshot()), 70));
   check(placed.length === 2,
         `P + two clicks place two points (${placed.length} blobs)`);
 
@@ -300,7 +323,7 @@ async function canvasSample(page, x, y) {
   await page.waitForTimeout(150);
   await page.keyboard.press('=');
   await page.waitForTimeout(300);
-  const zoomed = darkBlobs(PNG.sync.read(await page.screenshot()), 70);
+  const zoomed = markers(darkBlobs(PNG.sync.read(await page.screenshot()), 70));
   const zoomRatio = spread(zoomed) / spread(placed);
   console.log('keyboard zoom spread ratio:', zoomRatio.toFixed(3),
               '(expected ~1.44)');
@@ -309,7 +332,7 @@ async function canvasSample(page, x, y) {
 
   await page.keyboard.press('0');
   await page.waitForTimeout(300);
-  const restored = darkBlobs(PNG.sync.read(await page.screenshot()), 70);
+  const restored = markers(darkBlobs(PNG.sync.read(await page.screenshot()), 70));
   check(restored.length === 2 &&
         Math.abs(spread(restored) - spread(placed)) < 3,
         '0 returns to 100 % (spread back to the original)');
@@ -318,7 +341,7 @@ async function canvasSample(page, x, y) {
   // Session 21, matching the Phase 14 scroll-pan direction).
   await page.keyboard.press('ArrowRight');
   await page.waitForTimeout(300);
-  const nudged = darkBlobs(PNG.sync.read(await page.screenshot()), 70);
+  const nudged = markers(darkBlobs(PNG.sync.read(await page.screenshot()), 70));
   const meanX = (blobs) => blobs.reduce((s, b) => s + b.x, 0) / blobs.length;
   const shift = meanX(nudged) - meanX(restored);
   console.log('nudge shift:', shift.toFixed(1), 'px (expected +32)');
@@ -339,7 +362,7 @@ async function canvasSample(page, x, y) {
   await page.waitForTimeout(300);
   check(await canvasSample(page, 60, 650) > 700,
         'Esc drops the cheat sheet');
-  const afterSheet = darkBlobs(PNG.sync.read(await page.screenshot()), 70);
+  const afterSheet = markers(darkBlobs(PNG.sync.read(await page.screenshot()), 70));
   check(afterSheet.length === 2, 'the construction survived the sheet');
 
   // ---- Phase 20: smart point placement (glue + intersection snap) ----
@@ -355,7 +378,7 @@ async function canvasSample(page, x, y) {
   await page.waitForTimeout(200);
   await page.keyboard.press('Control+z');
   await page.waitForTimeout(300);
-  const cleared = darkBlobs(PNG.sync.read(await page.screenshot()), 70);
+  const cleared = markers(darkBlobs(PNG.sync.read(await page.screenshot()), 70));
   check(cleared.length === 0,
         `Ctrl+Z twice empties the canvas for Phase 20 (${cleared.length} blobs left)`);
 

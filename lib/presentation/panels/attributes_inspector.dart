@@ -75,7 +75,10 @@ class AttributesInspector extends ConsumerWidget {
               children: [
                 Text(
                   single != null
-                      ? objectKindLabel(single)
+                      ? (single.attributes.name.isEmpty
+                          ? objectKindLabel(single)
+                          : '${single.attributes.name} — '
+                              '${objectKindLabel(single)}')
                       : '${objects.length} selected',
                   style: theme.textTheme.titleMedium,
                 ),
