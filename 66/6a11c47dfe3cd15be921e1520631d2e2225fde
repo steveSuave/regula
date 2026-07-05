@@ -1,0 +1,23 @@
+lib/application/export/png_exporter.dart
+  s_4d861c48282879::t_07da2a6e8c41e8 1-146
+lib/application/persistence/file_io.dart
+  s_4d861c48282879::t_1da962c7815f9d 37-52
+test/application/export/png_exporter_test.dart
+  s_4d861c48282879::t_9428916de378e9 1-231
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "666a11c47dfe3cd15be921e1520631d2e2225fde",
+  "prompts": {},
+  "sessions": {
+    "s_4d861c48282879": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "200c6d4e-2564-42fe-b1aa-dd30d9d8e1d0",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
