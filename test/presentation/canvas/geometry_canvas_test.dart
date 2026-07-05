@@ -803,6 +803,76 @@ void main() {
     expect(selection(), isEmpty);
   });
 
+  testWidgets(
+      'long-press toggles an object in the selection — the touch '
+      'shift-click; empty-canvas long-press keeps the selection',
+      (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+
+    // Two points, then back to move/select mode.
+    await tester.tap(find.byIcon(Icons.control_point));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Point'));
+    await tester.pumpAndSettle();
+    await tester.tapAt(origin + const Offset(100, 100));
+    await tester.pump();
+    await tester.tapAt(origin + const Offset(200, 100));
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape); // deactivate
+    await tester.pump();
+
+    final ids = [
+      for (final object
+          in container.read(constructionProvider).construction.objects)
+        object.id,
+    ];
+    Set<String> selection() => container.read(selectionProvider);
+
+    Future<void> longPressAt(Offset screen) async {
+      final gesture = await tester.startGesture(origin + screen);
+      await tester.pump(const Duration(seconds: 1)); // past kLongPressTimeout
+      await gesture.up();
+      await tester.pump();
+    }
+
+    // Tap the first, long-press the second: both selected.
+    await tester.tapAt(origin + const Offset(100, 100));
+    await tester.pump();
+    await longPressAt(const Offset(200, 100));
+    expect(selection(), {ids[0], ids[1]});
+
+    // Long-press again removes it (toggle, like shift-click)…
+    await longPressAt(const Offset(200, 100));
+    expect(selection(), {ids[0]});
+
+    // …and an empty-canvas long-press does NOT clear — that is the plain
+    // tap's job; an accidental hold must not drop the selection.
+    await longPressAt(const Offset(400, 300));
+    expect(selection(), {ids[0]});
+  });
+
+  testWidgets('with a tool active a long-press is a slow tap: the tool gets '
+      'the input and the selection stays untouched', (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+
+    // Point tool active: the long-press recognizer must not be in the
+    // arena, so a held tap still commits through onTapUp.
+    await tester.tap(find.byIcon(Icons.control_point));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Point'));
+    await tester.pumpAndSettle();
+
+    final gesture = await tester.startGesture(origin + const Offset(150, 150));
+    await tester.pump(const Duration(seconds: 1));
+    await gesture.up();
+    await tester.pump();
+
+    expect(objectCount(), 1, reason: 'the slow tap still placed the point');
+    expect(container.read(selectionProvider), isEmpty);
+  });
+
   testWidgets('taps while a tool is active never touch the selection',
       (tester) async {
     await pumpEditor(tester);
