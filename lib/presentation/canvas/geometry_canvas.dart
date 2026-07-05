@@ -34,9 +34,20 @@ import 'label_layout.dart';
 class GeometryCanvas extends ConsumerStatefulWidget {
   const GeometryCanvas({super.key});
 
-  /// Hit-test radius in logical pixels (PLAN: 8 px), converted to world
-  /// units per tap so it feels the same at every zoom level.
+  /// Hit-test radius in logical pixels, converted to world units per
+  /// tap so it feels the same at every zoom level. Pointer-kind based
+  /// (Phase 25): a fingertip is less precise than a cursor, so touch
+  /// doubles the radius — kind-gated rather than platform-gated, so a
+  /// touch-screen laptop and an iPad with a mouse both do the right
+  /// thing. The converted threshold flows on into `ToolInput.snapThreshold`,
+  /// the Phase 20 point ladder and the random-stamp radius.
   static const double hitThresholdPx = 8;
+  static const double touchHitThresholdPx = 16;
+
+  /// The hit radius for [kind]; null (no pointer information) reads as
+  /// mouse-like.
+  static double hitThresholdFor(PointerDeviceKind? kind) =>
+      kind == PointerDeviceKind.touch ? touchHitThresholdPx : hitThresholdPx;
 
   /// How far (logical px) a dragged label's offset may stray from its
   /// object's anchor — "an appropriate place around its parent".
@@ -81,6 +92,10 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
   Offset? _firstDown;
   int _downPointers = 0;
 
+  /// Device kind of the gesture's first pointer — decides the hit
+  /// threshold for drags, whose recognizer details don't carry a kind.
+  PointerDeviceKind? _firstDownKind;
+
   /// In-progress label drag; null when none. Like the band, this is
   /// local widget state — the construction is untouched until the one
   /// [ChangeAttributesCommand] commits on release (cancel just drops it).
@@ -105,7 +120,8 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
         // the Listener's _firstDown (the recognizer never reports the
         // pre-slop down position), and .start keeps details.scale
         // baselined at acceptance so a pinch can't open with a jump.
-        onTapUp: (details) => _handleTap(ref, viewport, details.localPosition),
+        onTapUp: (details) =>
+            _handleTap(ref, viewport, details.localPosition, details.kind),
         onScaleStart: (details) => _scaleStart(viewport, details),
         onScaleUpdate: (details) => _scaleUpdate(viewport, details),
         onScaleEnd: (details) => _scaleEnd(viewport, details),
@@ -189,6 +205,7 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
     _downPointers += 1;
     if (_downPointers == 1) {
       _firstDown = event.localPosition;
+      _firstDownKind = event.kind;
     }
   }
 
@@ -304,7 +321,9 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
     final hit = const CanvasHitTester().hitTest(
       construction.objects,
       world,
-      viewport.screenToWorldLength(GeometryCanvas.hitThresholdPx),
+      viewport.screenToWorldLength(
+        GeometryCanvas.hitThresholdFor(_firstDownKind),
+      ),
     );
     if (hit != null) {
       // May refuse (derived point): then the pan does nothing — starting
@@ -386,13 +405,18 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
     });
   }
 
-  void _handleTap(WidgetRef ref, CanvasViewport viewport, Offset screen) {
+  void _handleTap(
+    WidgetRef ref,
+    CanvasViewport viewport,
+    Offset screen,
+    PointerDeviceKind? kind,
+  ) {
     final world = viewport.screenToWorld(screen);
     // Read (not the build-time capture): the construction mutates between
     // rebuilds, and the hit test must see the tap-time state.
     final construction = ref.read(constructionProvider).construction;
     final threshold =
-        viewport.screenToWorldLength(GeometryCanvas.hitThresholdPx);
+        viewport.screenToWorldLength(GeometryCanvas.hitThresholdFor(kind));
     final hits = const CanvasHitTester().hitTestAll(
       construction.objects,
       world,

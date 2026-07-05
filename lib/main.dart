@@ -1,4 +1,8 @@
+import 'dart:math' as math;
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -56,8 +60,21 @@ import 'presentation/shortcuts/cheat_sheet.dart';
 import 'presentation/shortcuts/shortcut_table.dart';
 import 'presentation/theme/app_theme.dart';
 
+/// True on Android/iOS builds — the targets with OS chrome to hide and
+/// notches to avoid. Web stays false even in a phone browser: the
+/// browser owns its chrome.
+bool get isMobileTarget =>
+    !kIsWeb &&
+    (defaultTargetPlatform == TargetPlatform.android ||
+        defaultTargetPlatform == TargetPlatform.iOS);
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  if (isMobileTarget) {
+    // Every canvas pixel counts on a phone: hide the OS status bar
+    // (swipe from the edge peeks it back, then it re-hides).
+    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  }
   // Loaded once here so settings providers can read stored values
   // synchronously (see preferences_provider.dart).
   final preferences = await SharedPreferences.getInstance();
@@ -109,6 +126,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   /// Fit-to-viewport needs the canvas's laid-out size at tap time; the
   /// key reads it without threading sizes through providers.
   final GlobalKey _canvasKey = GlobalKey();
+
+  /// Opens the compact-mode drawers from the overflow menu and the strip's
+  /// style button — both live outside the Scaffold's own context.
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   /// World origin at the canvas center, 100 % — where File > New puts the
   /// view. (The app still *launches* with the origin at the top-left; the
@@ -509,21 +530,123 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     }
   }
 
+  /// Compact-only home of the [GeometryToolbar]: a 48-px strip under the
+  /// app bar, horizontally scrollable so the six flyout groups are never
+  /// truncated however narrow the screen. While the selection is
+  /// non-empty, a style button at the right end opens the inspector
+  /// drawer — the drawer never auto-opens on selection, which would
+  /// interrupt construction flow.
+  PreferredSizeWidget _toolbarStrip({required bool hasSelection}) =>
+      PreferredSize(
+        preferredSize: const Size.fromHeight(48),
+        child: SizedBox(
+          height: 48,
+          child: Row(
+            children: [
+              const Expanded(
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: GeometryToolbar(),
+                  ),
+                ),
+              ),
+              if (hasSelection)
+                IconButton(
+                  tooltip: 'Style & properties',
+                  icon: const Icon(Icons.palette_outlined),
+                  onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
+                ),
+            ],
+          ),
+        ),
+      );
+
+  /// Compact-only overflow absorbing the loose wide-layout icon buttons
+  /// (fit, reset, object tree, cheat sheet, theme) — they don't fit a
+  /// phone app bar next to File and undo/redo.
+  Widget _overflowMenu(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return PopupMenuButton<VoidCallback>(
+      tooltip: 'More: view, panels, shortcuts, theme',
+      icon: const Icon(Icons.more_vert),
+      onSelected: (action) => action(),
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          value: _fitConstruction,
+          child: const Text('Fit construction to view'),
+        ),
+        PopupMenuItem(
+          value: () => ref.read(viewportProvider.notifier).reset(),
+          child: const Text('Reset view'),
+        ),
+        PopupMenuItem(
+          value: () => _scaffoldKey.currentState?.openDrawer(),
+          child: const Text('Show object tree'),
+        ),
+        PopupMenuItem(
+          value: () => setState(() => _showCheatSheet = !_showCheatSheet),
+          child: const Text('Keyboard shortcuts'),
+        ),
+        PopupMenuItem(
+          value: () => ref
+              .read(themeModeProvider.notifier)
+              .toggle(Theme.of(context).brightness),
+          child: Text(dark ? 'Switch to light theme' : 'Switch to dark theme'),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final undoRedo = ref.watch(commandStackProvider);
+    // Material compact breakpoint (PLAN "Mobile layout"): phones get the
+    // scrollable toolbar strip and the overflow menu; the wide layout is
+    // untouched.
+    final isCompact = MediaQuery.sizeOf(context).shortestSide < 600;
+    // Watched only in compact mode: the strip's style button appears with
+    // the selection; the wide layout doesn't depend on it.
+    final hasSelection =
+        isCompact && ref.watch(selectionProvider).isNotEmpty;
+    final drawerWidth = math.min(
+      AttributesInspector.panelWidth,
+      MediaQuery.sizeOf(context).width * 0.85,
+    );
 
     return AppShortcuts(
       onAction: _handleShortcut,
       child: Scaffold(
+        key: _scaffoldKey,
+        // Edge swipes belong to the canvas — a drag starting at the
+        // screen edge is usually a draw, not a panel request. The drawers
+        // open from the hamburger, the overflow menu and the style
+        // button only.
+        drawerEnableOpenDragGesture: false,
+        endDrawerEnableOpenDragGesture: false,
+        drawer: isCompact
+            ? Drawer(width: drawerWidth, child: const ObjectTreePanel())
+            : null,
+        endDrawer: isCompact
+            ? Drawer(width: drawerWidth, child: const AttributesInspector())
+            : null,
         appBar: AppBar(
-          leading: IconButton(
-            tooltip: _showObjectTree ? 'Hide object tree' : 'Show object tree',
-            isSelected: _showObjectTree,
-            icon: const Icon(Icons.account_tree_outlined),
-            onPressed: () => setState(() => _showObjectTree = !_showObjectTree),
-          ),
+          leading: isCompact
+              ? null
+              : IconButton(
+                  tooltip: _showObjectTree
+                      ? 'Hide object tree'
+                      : 'Show object tree',
+                  isSelected: _showObjectTree,
+                  icon: const Icon(Icons.account_tree_outlined),
+                  onPressed: () =>
+                      setState(() => _showObjectTree = !_showObjectTree),
+                ),
           title: const Text('fgex'),
+          bottom: isCompact
+              ? _toolbarStrip(hasSelection: hasSelection)
+              : null,
           actions: [
             PopupMenuButton<Future<void> Function()>(
               tooltip: 'File: new, open, save',
@@ -544,37 +667,39 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                 ),
               ],
             ),
-            const GeometryToolbar(),
-            IconButton(
-              tooltip: 'Fit construction to view',
-              icon: const Icon(Icons.fit_screen),
-              onPressed: _fitConstruction,
-            ),
-            IconButton(
-              tooltip: 'Reset view (origin at 100 %)',
-              icon: const Icon(Icons.filter_center_focus),
-              onPressed: () => ref.read(viewportProvider.notifier).reset(),
-            ),
-            IconButton(
-              tooltip: 'Keyboard shortcuts (?)',
-              isSelected: _showCheatSheet,
-              icon: const Icon(Icons.keyboard_outlined),
-              onPressed: () =>
-                  setState(() => _showCheatSheet = !_showCheatSheet),
-            ),
-            IconButton(
-              tooltip: Theme.of(context).brightness == Brightness.dark
-                  ? 'Switch to light theme'
-                  : 'Switch to dark theme',
-              icon: Icon(
-                Theme.of(context).brightness == Brightness.dark
-                    ? Icons.light_mode_outlined
-                    : Icons.dark_mode_outlined,
+            if (!isCompact) ...[
+              const GeometryToolbar(),
+              IconButton(
+                tooltip: 'Fit construction to view',
+                icon: const Icon(Icons.fit_screen),
+                onPressed: _fitConstruction,
               ),
-              onPressed: () => ref
-                  .read(themeModeProvider.notifier)
-                  .toggle(Theme.of(context).brightness),
-            ),
+              IconButton(
+                tooltip: 'Reset view (origin at 100 %)',
+                icon: const Icon(Icons.filter_center_focus),
+                onPressed: () => ref.read(viewportProvider.notifier).reset(),
+              ),
+              IconButton(
+                tooltip: 'Keyboard shortcuts (?)',
+                isSelected: _showCheatSheet,
+                icon: const Icon(Icons.keyboard_outlined),
+                onPressed: () =>
+                    setState(() => _showCheatSheet = !_showCheatSheet),
+              ),
+              IconButton(
+                tooltip: Theme.of(context).brightness == Brightness.dark
+                    ? 'Switch to light theme'
+                    : 'Switch to dark theme',
+                icon: Icon(
+                  Theme.of(context).brightness == Brightness.dark
+                      ? Icons.light_mode_outlined
+                      : Icons.dark_mode_outlined,
+                ),
+                onPressed: () => ref
+                    .read(themeModeProvider.notifier)
+                    .toggle(Theme.of(context).brightness),
+              ),
+            ],
             IconButton(
               tooltip: 'Undo',
               icon: const Icon(Icons.undo),
@@ -589,33 +714,43 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                   ? () => ref.read(commandStackProvider.notifier).redo()
                   : null,
             ),
+            if (isCompact) _overflowMenu(context),
           ],
         ),
-        body: Stack(
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (_showObjectTree) const ObjectTreePanel(),
-                Expanded(
-                  // Clicking the canvas pulls focus back to the shortcut
-                  // layer: a focused name field commits (focus-loss
-                  // commit) and stops suppressing the single-letter
-                  // shortcuts.
-                  child: Listener(
-                    behavior: HitTestBehavior.translucent,
-                    onPointerDown: (_) => AppShortcuts.refocus(context),
-                    child: GeometryCanvas(key: _canvasKey),
+        body: SafeArea(
+          // A no-op except on notched mobile devices, where the
+          // immersive mode set in main() leaves the display cutout to
+          // avoid.
+          left: isMobileTarget,
+          top: isMobileTarget,
+          right: isMobileTarget,
+          bottom: isMobileTarget,
+          child: Stack(
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (!isCompact && _showObjectTree) const ObjectTreePanel(),
+                  Expanded(
+                    // Clicking the canvas pulls focus back to the shortcut
+                    // layer: a focused name field commits (focus-loss
+                    // commit) and stops suppressing the single-letter
+                    // shortcuts.
+                    child: Listener(
+                      behavior: HitTestBehavior.translucent,
+                      onPointerDown: (_) => AppShortcuts.refocus(context),
+                      child: GeometryCanvas(key: _canvasKey),
+                    ),
                   ),
-                ),
-                const AttributesInspector(),
-              ],
-            ),
-            if (_showCheatSheet)
-              ShortcutCheatSheet(
-                onDismiss: () => setState(() => _showCheatSheet = false),
+                  if (!isCompact) const AttributesInspector(),
+                ],
               ),
-          ],
+              if (_showCheatSheet)
+                ShortcutCheatSheet(
+                  onDismiss: () => setState(() => _showCheatSheet = false),
+                ),
+            ],
+          ),
         ),
       ),
     );
