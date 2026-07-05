@@ -21,7 +21,8 @@ import 'label_layout.dart';
 /// The drawing surface: hosts the [GeometryPainter] and turns taps into
 /// [ToolInput]s for the active tool — or, with no tool active
 /// (move/select mode), into selection changes: tap selects the hit
-/// object, shift-tap toggles it, tapping empty canvas clears, and a drag
+/// object, shift-tap toggles it — as does a long-press, the shift
+/// equivalent for touch — tapping empty canvas clears, and a drag
 /// from empty canvas rubber-bands everything wholly inside (shift adds
 /// to the selection instead of replacing it).
 ///
@@ -122,6 +123,14 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
         // baselined at acceptance so a pinch can't open with a jump.
         onTapUp: (details) =>
             _handleTap(ref, viewport, details.localPosition, details.kind),
+        // Long-press = the touch shift-click: toggles the hit object in
+        // the selection set (the Phase 26 convention). Registered only in
+        // move/select mode — with a tool active the recognizer must not
+        // enter the arena, or a slow tap mid-collection would be
+        // swallowed instead of reaching onTapUp.
+        onLongPressStart: tool == null
+            ? (details) => _handleLongPress(viewport, details.localPosition)
+            : null,
         onScaleStart: (details) => _scaleStart(viewport, details),
         onScaleUpdate: (details) => _scaleUpdate(viewport, details),
         onScaleEnd: (details) => _scaleEnd(viewport, details),
@@ -403,6 +412,30 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
       _bandAnchor = null;
       _labelDrag = null;
     });
+  }
+
+  /// Long-press in move/select mode: toggles the topmost hit object in
+  /// the selection — the multi-select path for pointers without a shift
+  /// key. An empty-canvas long-press does nothing: clearing is the plain
+  /// tap's job, and an accidental hold must not drop a built-up
+  /// selection. Trade-off, documented here on purpose: while the
+  /// recognizer is registered, holding still past the long-press timeout
+  /// before dragging toggles instead of starting the object drag / band —
+  /// drags that begin moving within the timeout are unaffected.
+  void _handleLongPress(CanvasViewport viewport, Offset screen) {
+    final construction = ref.read(constructionProvider).construction;
+    final hit = const CanvasHitTester().hitTest(
+      construction.objects,
+      viewport.screenToWorld(screen),
+      viewport.screenToWorldLength(
+        GeometryCanvas.hitThresholdFor(_firstDownKind),
+      ),
+    );
+    if (hit == null) {
+      return;
+    }
+    HapticFeedback.selectionClick();
+    ref.read(selectionProvider.notifier).toggle(hit.id);
   }
 
   void _handleTap(
