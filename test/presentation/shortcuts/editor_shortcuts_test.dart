@@ -17,6 +17,7 @@ import 'package:fgex/domain/tools/equilateral_triangle_macro_tool.dart';
 import 'package:fgex/domain/tools/intersection_tool.dart';
 import 'package:fgex/domain/tools/point_and_line_tool.dart';
 import 'package:fgex/domain/tools/point_tool.dart';
+import 'package:fgex/domain/tools/random_shape_stamp_tool.dart';
 import 'package:fgex/domain/tools/rectangle_macro_tool.dart';
 import 'package:fgex/domain/tools/regular_polygon_macro_tool.dart';
 import 'package:fgex/domain/tools/right_triangle_macro_tool.dart';
@@ -240,6 +241,26 @@ void main() {
     final tool = activeTool();
     expect(tool, isA<RegularPolygonMacroTool>());
     expect((tool! as RegularPolygonMacroTool).sideCount, 6);
+  });
+
+  testWidgets('X digit chords reach the random stamps', (tester) async {
+    await pumpEditor(tester);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyX);
+    await tester.sendKeyEvent(LogicalKeyboardKey.digit3);
+    var tool = activeTool();
+    expect(tool, isA<RandomShapeStampTool>());
+    var stamp = tool! as RandomShapeStampTool;
+    expect(stamp.convex, isFalse, reason: 'X 3 is the jittered triangle');
+    expect(stamp.maxVertices, 3);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyX);
+    await tester.sendKeyEvent(LogicalKeyboardKey.digit4);
+    tool = activeTool();
+    expect(tool, isA<RandomShapeStampTool>());
+    stamp = tool! as RandomShapeStampTool;
+    expect(stamp.convex, isTrue, reason: 'X 4 is the convex quadrilateral');
+    expect(stamp.minVertices, 4);
   });
 
   testWidgets('G chords reach the transform tools', (tester) async {
