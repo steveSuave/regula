@@ -1,0 +1,21 @@
+test/domain/construction/object_naming_test.dart
+  s_dd7e27f6bf2879::t_5631515475a02b 1-85
+lib/domain/construction/object_naming.dart
+  s_dd7e27f6bf2879::t_d977848e5e5fa3 1-46
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f88ee502125a6d0b6292bcf5836d6466025f1047",
+  "prompts": {},
+  "sessions": {
+    "s_dd7e27f6bf2879": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1cf305c3-5f45-421c-b108-f68432c5a872",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
