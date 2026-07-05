@@ -1,10 +1,10 @@
 import 'dart:math' as math;
 
-import 'package:fgex/domain/math/circle_eq.dart';
-import 'package:fgex/domain/math/intersections.dart';
-import 'package:fgex/domain/math/line_eq.dart';
-import 'package:fgex/domain/math/vec2.dart';
 import 'package:glados/glados.dart';
+import 'package:regula/domain/math/circle_eq.dart';
+import 'package:regula/domain/math/intersections.dart';
+import 'package:regula/domain/math/line_eq.dart';
+import 'package:regula/domain/math/vec2.dart';
 
 import 'generators.dart';
 

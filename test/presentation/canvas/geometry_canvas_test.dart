@@ -1,33 +1,33 @@
 import 'dart:math' as math;
 
-import 'package:fgex/application/providers/construction_provider.dart';
-import 'package:fgex/application/providers/selection_provider.dart';
-import 'package:fgex/application/providers/tool_provider.dart';
-import 'package:fgex/application/providers/viewport_provider.dart';
-import 'package:fgex/domain/construction/object_attributes.dart';
-import 'package:fgex/domain/construction/objects/arc.dart';
-import 'package:fgex/domain/construction/objects/circle_center_point.dart';
-import 'package:fgex/domain/construction/objects/compass_circle.dart';
-import 'package:fgex/domain/construction/objects/free_point.dart';
-import 'package:fgex/domain/construction/objects/intersection_point.dart';
-import 'package:fgex/domain/construction/objects/line_angle.dart';
-import 'package:fgex/domain/construction/objects/midpoint.dart';
-import 'package:fgex/domain/construction/objects/point_on_object.dart';
-import 'package:fgex/domain/construction/objects/reflected_point.dart';
-import 'package:fgex/domain/construction/objects/sector.dart';
-import 'package:fgex/domain/construction/objects/segment_ratio_point.dart';
-import 'package:fgex/domain/construction/objects/three_point_circle.dart';
-import 'package:fgex/domain/construction/objects/vertex_angle.dart';
-import 'package:fgex/domain/math/vec2.dart';
-import 'package:fgex/domain/tools/point_tool.dart';
-import 'package:fgex/main.dart';
-import 'package:fgex/presentation/canvas/canvas_viewport.dart';
-import 'package:fgex/presentation/canvas/geometry_canvas.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/application/providers/construction_provider.dart';
+import 'package:regula/application/providers/selection_provider.dart';
+import 'package:regula/application/providers/tool_provider.dart';
+import 'package:regula/application/providers/viewport_provider.dart';
+import 'package:regula/domain/construction/object_attributes.dart';
+import 'package:regula/domain/construction/objects/arc.dart';
+import 'package:regula/domain/construction/objects/circle_center_point.dart';
+import 'package:regula/domain/construction/objects/compass_circle.dart';
+import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/intersection_point.dart';
+import 'package:regula/domain/construction/objects/line_angle.dart';
+import 'package:regula/domain/construction/objects/midpoint.dart';
+import 'package:regula/domain/construction/objects/point_on_object.dart';
+import 'package:regula/domain/construction/objects/reflected_point.dart';
+import 'package:regula/domain/construction/objects/sector.dart';
+import 'package:regula/domain/construction/objects/segment_ratio_point.dart';
+import 'package:regula/domain/construction/objects/three_point_circle.dart';
+import 'package:regula/domain/construction/objects/vertex_angle.dart';
+import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/tools/point_tool.dart';
+import 'package:regula/main.dart';
+import 'package:regula/presentation/canvas/canvas_viewport.dart';
+import 'package:regula/presentation/canvas/geometry_canvas.dart';
 
 /// End-to-end tool flow: activate the point tool, tap the canvas, see
 /// free points appear in the construction, undo/redo them. This is the

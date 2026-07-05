@@ -1,11 +1,3 @@
-import 'package:fgex/application/providers/command_stack_provider.dart';
-import 'package:fgex/application/providers/construction_provider.dart';
-import 'package:fgex/domain/commands/add_object_command.dart';
-import 'package:fgex/domain/construction/objects/free_point.dart';
-import 'package:fgex/domain/math/vec2.dart';
-import 'package:fgex/main.dart';
-import 'package:fgex/presentation/canvas/geometry_canvas.dart';
-import 'package:fgex/presentation/canvas/region_pick_overlay.dart';
 import 'package:file_picker/file_picker.dart';
 // FilePickerPlatform is not re-exported by package:file_picker; overriding
 // `instance` with a fake is the plugin's own documented test seam.
@@ -16,6 +8,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/application/providers/command_stack_provider.dart';
+import 'package:regula/application/providers/construction_provider.dart';
+import 'package:regula/domain/commands/add_object_command.dart';
+import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/main.dart';
+import 'package:regula/presentation/canvas/geometry_canvas.dart';
+import 'package:regula/presentation/canvas/region_pick_overlay.dart';
 
 /// Captures the export save instead of touching the real platform.
 class _FakeFilePicker extends FilePickerPlatform {

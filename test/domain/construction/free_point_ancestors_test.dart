@@ -1,11 +1,11 @@
-import 'package:fgex/domain/construction/free_point_ancestors.dart';
-import 'package:fgex/domain/construction/objects/free_point.dart';
-import 'package:fgex/domain/construction/objects/intersection_point.dart';
-import 'package:fgex/domain/construction/objects/line_through_two_points.dart';
-import 'package:fgex/domain/construction/objects/midpoint.dart';
-import 'package:fgex/domain/construction/objects/segment.dart';
-import 'package:fgex/domain/math/vec2.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/domain/construction/free_point_ancestors.dart';
+import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/intersection_point.dart';
+import 'package:regula/domain/construction/objects/line_through_two_points.dart';
+import 'package:regula/domain/construction/objects/midpoint.dart';
+import 'package:regula/domain/construction/objects/segment.dart';
+import 'package:regula/domain/math/vec2.dart';
 
 void main() {
   Set<String> idsOf(Iterable<FreePoint> points) =>

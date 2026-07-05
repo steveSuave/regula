@@ -1,10 +1,10 @@
-import 'package:fgex/domain/commands/change_attributes_command.dart';
-import 'package:fgex/domain/construction/construction.dart';
-import 'package:fgex/domain/construction/object_attributes.dart';
-import 'package:fgex/domain/construction/objects/free_point.dart';
-import 'package:fgex/domain/construction/objects/midpoint.dart';
-import 'package:fgex/domain/math/vec2.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/domain/commands/change_attributes_command.dart';
+import 'package:regula/domain/construction/construction.dart';
+import 'package:regula/domain/construction/object_attributes.dart';
+import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/midpoint.dart';
+import 'package:regula/domain/math/vec2.dart';
 
 void main() {
   group('ChangeAttributesCommand', () {

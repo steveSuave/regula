@@ -1,20 +1,20 @@
-import 'package:fgex/application/providers/command_stack_provider.dart';
-import 'package:fgex/application/providers/construction_provider.dart';
-import 'package:fgex/application/providers/tool_provider.dart';
-import 'package:fgex/domain/commands/add_object_command.dart';
-import 'package:fgex/domain/commands/delete_objects_command.dart';
-import 'package:fgex/domain/commands/macro_command.dart';
-import 'package:fgex/domain/construction/construction.dart';
-import 'package:fgex/domain/construction/object_attributes.dart';
-import 'package:fgex/domain/construction/objects/centroid.dart';
-import 'package:fgex/domain/construction/objects/free_point.dart';
-import 'package:fgex/domain/construction/objects/segment.dart';
-import 'package:fgex/domain/math/vec2.dart';
-import 'package:fgex/domain/tools/point_tool.dart';
-import 'package:fgex/domain/tools/tool.dart';
-import 'package:fgex/domain/tools/triangle_center_tool.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/application/providers/command_stack_provider.dart';
+import 'package:regula/application/providers/construction_provider.dart';
+import 'package:regula/application/providers/tool_provider.dart';
+import 'package:regula/domain/commands/add_object_command.dart';
+import 'package:regula/domain/commands/delete_objects_command.dart';
+import 'package:regula/domain/commands/macro_command.dart';
+import 'package:regula/domain/construction/construction.dart';
+import 'package:regula/domain/construction/object_attributes.dart';
+import 'package:regula/domain/construction/objects/centroid.dart';
+import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/segment.dart';
+import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/tools/point_tool.dart';
+import 'package:regula/domain/tools/tool.dart';
+import 'package:regula/domain/tools/triangle_center_tool.dart';
 
 /// Scripted tool for exercising the notifier: replays [results] in order
 /// and records calls.

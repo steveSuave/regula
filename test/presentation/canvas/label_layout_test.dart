@@ -1,10 +1,10 @@
-import 'package:fgex/application/providers/viewport_provider.dart';
-import 'package:fgex/domain/construction/object_attributes.dart';
-import 'package:fgex/domain/construction/objects/free_point.dart';
-import 'package:fgex/domain/math/vec2.dart';
-import 'package:fgex/presentation/canvas/canvas_viewport.dart';
-import 'package:fgex/presentation/canvas/label_layout.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/application/providers/viewport_provider.dart';
+import 'package:regula/domain/construction/object_attributes.dart';
+import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/presentation/canvas/canvas_viewport.dart';
+import 'package:regula/presentation/canvas/label_layout.dart';
 
 void main() {
   const viewport = CanvasViewport(ViewportState());

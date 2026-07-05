@@ -9,7 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 /// Imports are allowlisted rather than denylisted: `package:flutter` is
 /// the obvious offender, but `dart:ui` ties code to the Flutter runtime
 /// just as hard, `dart:io`/`dart:html` break cross-platform portability,
-/// and `package:fgex/application/...` would invert the layering. Anything
+/// and `package:regula/application/...` would invert the layering. Anything
 /// not explicitly allowed fails, so new loopholes can't appear silently.
 void main() {
   // Pure-Dart libraries the domain layer may use. Extend deliberately —

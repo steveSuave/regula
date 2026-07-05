@@ -1,8 +1,8 @@
-import 'package:fgex/application/providers/preferences_provider.dart';
-import 'package:fgex/main.dart';
-import 'package:fgex/presentation/canvas/geometry_canvas.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/application/providers/preferences_provider.dart';
+import 'package:regula/main.dart';
+import 'package:regula/presentation/canvas/geometry_canvas.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -17,7 +17,7 @@ void main() {
         child: const MainApp(),
       ),
     );
-    expect(find.text('fgex'), findsOneWidget);
+    expect(find.text('regula'), findsOneWidget);
     expect(find.byType(GeometryCanvas), findsOneWidget);
   });
 }

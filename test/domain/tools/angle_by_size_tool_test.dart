@@ -1,14 +1,14 @@
 import 'dart:math' as math;
 
-import 'package:fgex/domain/commands/macro_command.dart';
-import 'package:fgex/domain/construction/construction.dart';
-import 'package:fgex/domain/construction/objects/free_point.dart';
-import 'package:fgex/domain/construction/objects/rotated_point.dart';
-import 'package:fgex/domain/construction/objects/vertex_angle.dart';
-import 'package:fgex/domain/math/vec2.dart';
-import 'package:fgex/domain/tools/angle_by_size_tool.dart';
-import 'package:fgex/domain/tools/tool.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/domain/commands/macro_command.dart';
+import 'package:regula/domain/construction/construction.dart';
+import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/rotated_point.dart';
+import 'package:regula/domain/construction/objects/vertex_angle.dart';
+import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/tools/angle_by_size_tool.dart';
+import 'package:regula/domain/tools/tool.dart';
 
 void main() {
   late int nextId;

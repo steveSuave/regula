@@ -1,12 +1,12 @@
-import 'package:fgex/domain/commands/macro_command.dart';
-import 'package:fgex/domain/construction/construction.dart';
-import 'package:fgex/domain/construction/objects/free_point.dart';
-import 'package:fgex/domain/construction/objects/segment.dart';
-import 'package:fgex/domain/construction/objects/segment_ratio_point.dart';
-import 'package:fgex/domain/math/vec2.dart';
-import 'package:fgex/domain/tools/isosceles_trapezium_macro_tool.dart';
-import 'package:fgex/domain/tools/tool.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/domain/commands/macro_command.dart';
+import 'package:regula/domain/construction/construction.dart';
+import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/segment.dart';
+import 'package:regula/domain/construction/objects/segment_ratio_point.dart';
+import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/tools/isosceles_trapezium_macro_tool.dart';
+import 'package:regula/domain/tools/tool.dart';
 
 void main() {
   late int nextId;

@@ -1,4 +1,4 @@
-# Strict analysis for fgex. The domain/ layer is pure Dart and must stay
+# Strict analysis for regula. The domain/ layer is pure Dart and must stay
 # free of package:flutter imports (see CLAUDE.md); lints here are tuned to
 # keep the whole codebase honest, not just formatted.
 

@@ -2,7 +2,7 @@
 
 ## Context
 
-Build a cross-platform (web, Android, iOS) dynamic geometry application from scratch in an empty repo. The app is a constructive geometry tool: the user drops free points and builds derived objects (lines, circles, intersections, midpoints, triangle centers, …) on top of them. Dragging a free point must propagate updates to every dependent object correctly and instantly. The project will live in `/Users/stefanos.levantis/Code/var/fgex/`.
+Build a cross-platform (web, Android, iOS) dynamic geometry application from scratch in an empty repo. The app is a constructive geometry tool: the user drops free points and builds derived objects (lines, circles, intersections, midpoints, triangle centers, …) on top of them. Dragging a free point must propagate updates to every dependent object correctly and instantly. The project will live in `$HOME/Code/var/regula/`.
 
 Decisions confirmed up front:
 

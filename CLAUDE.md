@@ -1,4 +1,4 @@
-# Claude Code Working Notes — fgex
+# Claude Code Working Notes — regula
 
 This file is auto-loaded into every Claude Code session for this project. **Read it first.**
 

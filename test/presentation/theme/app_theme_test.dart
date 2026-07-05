@@ -1,6 +1,6 @@
-import 'package:fgex/presentation/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/presentation/theme/app_theme.dart';
 
 /// WCAG contrast ratio between two colors, in [1, 21].
 double contrastRatio(Color a, Color b) {

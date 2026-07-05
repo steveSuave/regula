@@ -1,16 +1,16 @@
 import 'dart:math' as math;
 
-import 'package:fgex/domain/construction/objects/arc.dart';
-import 'package:fgex/domain/construction/objects/circle_center_point.dart';
-import 'package:fgex/domain/construction/objects/free_point.dart';
-import 'package:fgex/domain/construction/objects/line_through_two_points.dart';
-import 'package:fgex/domain/construction/objects/ray.dart';
-import 'package:fgex/domain/construction/objects/sector.dart';
-import 'package:fgex/domain/construction/objects/segment.dart';
-import 'package:fgex/domain/construction/objects/vertex_angle.dart';
-import 'package:fgex/domain/math/vec2.dart';
-import 'package:fgex/presentation/canvas/label_anchor.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/domain/construction/objects/arc.dart';
+import 'package:regula/domain/construction/objects/circle_center_point.dart';
+import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/line_through_two_points.dart';
+import 'package:regula/domain/construction/objects/ray.dart';
+import 'package:regula/domain/construction/objects/sector.dart';
+import 'package:regula/domain/construction/objects/segment.dart';
+import 'package:regula/domain/construction/objects/vertex_angle.dart';
+import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/presentation/canvas/label_anchor.dart';
 
 void main() {
   final origin = FreePoint(id: 'o', position: Vec2.zero);

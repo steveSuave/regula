@@ -1,17 +1,17 @@
-import 'package:fgex/application/providers/construction_provider.dart';
-import 'package:fgex/application/providers/selection_provider.dart';
-import 'package:fgex/application/providers/tool_provider.dart';
-import 'package:fgex/domain/construction/objects/free_point.dart';
-import 'package:fgex/domain/math/vec2.dart';
-import 'package:fgex/domain/tools/point_tool.dart';
-import 'package:fgex/main.dart';
-import 'package:fgex/presentation/panels/attributes_inspector.dart';
-import 'package:fgex/presentation/panels/object_tree_panel.dart';
-import 'package:fgex/presentation/panels/toolbar.dart';
-import 'package:fgex/presentation/shortcuts/cheat_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/application/providers/construction_provider.dart';
+import 'package:regula/application/providers/selection_provider.dart';
+import 'package:regula/application/providers/tool_provider.dart';
+import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/tools/point_tool.dart';
+import 'package:regula/main.dart';
+import 'package:regula/presentation/panels/attributes_inspector.dart';
+import 'package:regula/presentation/panels/object_tree_panel.dart';
+import 'package:regula/presentation/panels/toolbar.dart';
+import 'package:regula/presentation/shortcuts/cheat_sheet.dart';
 
 /// Phase 25 compact chrome (single-row revision): below the 600-px
 /// shortest-side breakpoint the app bar is one slim 48-px row — the

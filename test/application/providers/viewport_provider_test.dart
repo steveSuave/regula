@@ -1,7 +1,7 @@
-import 'package:fgex/application/providers/viewport_provider.dart';
-import 'package:fgex/domain/math/vec2.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/application/providers/viewport_provider.dart';
+import 'package:regula/domain/math/vec2.dart';
 
 void main() {
   late ProviderContainer container;

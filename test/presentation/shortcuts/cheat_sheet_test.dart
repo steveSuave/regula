@@ -1,12 +1,12 @@
-import 'package:fgex/application/providers/tool_provider.dart';
-import 'package:fgex/domain/tools/point_tool.dart';
-import 'package:fgex/main.dart';
-import 'package:fgex/presentation/shortcuts/cheat_sheet.dart';
-import 'package:fgex/presentation/shortcuts/shortcut_table.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/application/providers/tool_provider.dart';
+import 'package:regula/domain/tools/point_tool.dart';
+import 'package:regula/main.dart';
+import 'package:regula/presentation/shortcuts/cheat_sheet.dart';
+import 'package:regula/presentation/shortcuts/shortcut_table.dart';
 
 void main() {
   late ProviderContainer container;

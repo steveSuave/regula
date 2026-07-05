@@ -1,18 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:fgex/application/persistence/construction_codec.dart';
-import 'package:fgex/application/providers/command_stack_provider.dart';
-import 'package:fgex/application/providers/construction_provider.dart';
-import 'package:fgex/application/providers/viewport_provider.dart';
-import 'package:fgex/domain/commands/add_object_command.dart';
-import 'package:fgex/domain/construction/construction.dart';
-import 'package:fgex/domain/construction/objects/free_point.dart';
-import 'package:fgex/domain/construction/objects/midpoint.dart';
-import 'package:fgex/domain/math/vec2.dart';
-import 'package:fgex/main.dart';
-import 'package:fgex/presentation/canvas/canvas_viewport.dart';
-import 'package:fgex/presentation/canvas/geometry_canvas.dart';
 import 'package:file_picker/file_picker.dart';
 // FilePickerPlatform is not re-exported by package:file_picker; overriding
 // `instance` with a fake is the plugin's own documented test seam.
@@ -21,6 +9,18 @@ import 'package:file_picker/src/platform/file_picker_platform_interface.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/application/persistence/construction_codec.dart';
+import 'package:regula/application/providers/command_stack_provider.dart';
+import 'package:regula/application/providers/construction_provider.dart';
+import 'package:regula/application/providers/viewport_provider.dart';
+import 'package:regula/domain/commands/add_object_command.dart';
+import 'package:regula/domain/construction/construction.dart';
+import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/midpoint.dart';
+import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/main.dart';
+import 'package:regula/presentation/canvas/canvas_viewport.dart';
+import 'package:regula/presentation/canvas/geometry_canvas.dart';
 
 /// Captures saves and replays canned open results instead of touching the
 /// real platform (whose method channel does not exist under flutter_test).
