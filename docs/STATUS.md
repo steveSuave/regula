@@ -6,6 +6,21 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 26 — 2026-07-05
+
+**Done**
+- **Phase 21 complete** on `phase-21-random-stamps` (2 commits), merged to `main`. In landing order:
+- `RandomShapeStampTool.convexQuadrilateral` named constructor (+ public `convex` flag): four vertices on one circle of the usual stamp radius — no radial jitter, sorted distinct angles on a circle are always in convex position — with angles from the gap method (4 uniform draws normalized onto 2π − 4·0.25 rad, prefix-summed from a random start; the wrap-around gap gets its minimum too, no rejection loop; an all-zero draw set falls back to equal gaps rather than NaN), then one anisotropic rotate–scale–rotate stretch about the tap (axis factors in [0.7, 1.3]) for variety — affine maps preserve convexity. The jittered path was refactored behind the same offsets list but draws from the RNG in the exact old order, so the triangle stamp is unchanged.
+- Wiring: Macros flyout "Random polygon" row **replaced** by "Random quadrilateral (one tap)"; both stamp rows now carry `AppAction`s (`randomTriangleStamp`/`randomQuadrilateralStamp`) so the dimmed shortcut hints render; `X 3`/`X 4` chords (digit second strokes, `G 3` precedent; no numpad twins — `G 3` has none) + the two `main.dart` switch cases.
+- 707 tests green (analyze clean): convexity over 200 seeds (consecutive edge cross products share sign, none zero), 4 vertices + 4 closing segments each of degree 2, one undo unit, stamp distance within the stretch bounds, `X 3`/`X 4` widget test asserting convex flag + vertex counts; toolbar sweep row renamed. Web smoke re-run on a fresh release build: **SMOKE PASS**, zero console errors — the Session 25 gotcha held, drive.js needed no changes (its macro section only drives Square, row 1).
+
+**Next**
+- Phase 23 (automatic naming) should land before Phase 24 (whole-object transforms) per the Session 25 ordering; Phases 19 (export), 22, 25, 26 are open in any order. Phase 12's two environment-blocked boxes (iOS build, Android emulator) still stand.
+
+**Open questions / gotchas**
+- `RandomShapeStampTool`'s convex mode keys off the `convex` field, not a subclass — the Macros highlight (`tool is RandomShapeStampTool`) covers both rows, but anything that ever needs to distinguish them must check the flag (the `X 3`/`X 4` widget test is the pattern).
+- The convex stamp's vertex *insertion order* is the polygon order (angles are prefix-summed, hence increasing) — the convexity test relies on it; don't reorder the AddObjectCommands.
+
 ## Session 25 — 2026-07-05
 
 **Done**

@@ -139,7 +139,7 @@ void main() {
       'Isosceles triangle (base, then apex)': IsoscelesTriangleMacroTool,
       'Right triangle (base, then height)': RightTriangleMacroTool,
       'Random triangle (one tap)': RandomShapeStampTool,
-      'Random polygon (one tap)': RandomShapeStampTool,
+      'Random quadrilateral (one tap)': RandomShapeStampTool,
     };
     final theme = Theme.of(tester.element(find.byType(AppBar)));
 

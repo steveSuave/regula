@@ -436,18 +436,16 @@ class GeometryToolbar extends ConsumerWidget {
                   maxVertices: 3,
                 ),
               ),
-              null,
+              AppAction.randomTriangleStamp,
             ),
             (
-              'Random polygon (one tap)',
+              'Random quadrilateral (one tap)',
               _pick(
-                () => RandomShapeStampTool(
+                () => RandomShapeStampTool.convexQuadrilateral(
                   newId: newObjectId,
-                  minVertices: 4,
-                  maxVertices: 7,
                 ),
               ),
-              null,
+              AppAction.randomQuadrilateralStamp,
             ),
           ],
         ),
