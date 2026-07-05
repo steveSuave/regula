@@ -1,6 +1,11 @@
+import 'package:fgex/application/providers/construction_provider.dart';
+import 'package:fgex/application/providers/selection_provider.dart';
 import 'package:fgex/application/providers/tool_provider.dart';
+import 'package:fgex/domain/construction/objects/free_point.dart';
+import 'package:fgex/domain/math/vec2.dart';
 import 'package:fgex/domain/tools/point_tool.dart';
 import 'package:fgex/main.dart';
+import 'package:fgex/presentation/panels/attributes_inspector.dart';
 import 'package:fgex/presentation/panels/object_tree_panel.dart';
 import 'package:fgex/presentation/panels/toolbar.dart';
 import 'package:fgex/presentation/shortcuts/cheat_sheet.dart';
@@ -97,8 +102,8 @@ void main() {
       expect(find.byIcon(Icons.crop_square), findsOneWidget);
     });
 
-    testWidgets('overflow menu drives the absorbed actions — object tree '
-        'toggles and the cheat sheet opens', (tester) async {
+    testWidgets('overflow menu drives the absorbed actions — the object '
+        'tree opens as a drawer and the cheat sheet opens', (tester) async {
       await pumpEditor(tester, screen: phone);
       expect(find.byType(ObjectTreePanel), findsNothing);
 
@@ -106,13 +111,51 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Show object tree'));
       await tester.pumpAndSettle();
-      expect(find.byType(ObjectTreePanel), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(Drawer),
+          matching: find.byType(ObjectTreePanel),
+        ),
+        findsOneWidget,
+      );
+
+      // Close the drawer before reaching for the overflow menu again.
+      await tester.tapAt(const Offset(350, 400));
+      await tester.pumpAndSettle();
 
       await tester.tap(find.byIcon(Icons.more_vert));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Keyboard shortcuts'));
       await tester.pumpAndSettle();
       expect(find.byType(ShortcutCheatSheet), findsOneWidget);
+    });
+
+    testWidgets('style button appears with the selection and opens the '
+        'inspector drawer — never auto-opens', (tester) async {
+      await pumpEditor(tester, screen: phone);
+      expect(find.byIcon(Icons.palette_outlined), findsNothing);
+
+      container
+          .read(constructionProvider)
+          .construction
+          .add(FreePoint(id: 'a', position: Vec2.zero));
+      container.read(selectionProvider.notifier).select('a');
+      await tester.pump();
+
+      // Selection made: the button is there, but no drawer opened itself.
+      expect(find.byIcon(Icons.palette_outlined), findsOneWidget);
+      expect(find.byType(Drawer), findsNothing);
+
+      await tester.tap(find.byIcon(Icons.palette_outlined));
+      await tester.pumpAndSettle();
+      expect(
+        find.descendant(
+          of: find.byType(Drawer),
+          matching: find.byType(AttributesInspector),
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Point'), findsOneWidget);
     });
   });
 
@@ -140,6 +183,11 @@ void main() {
       expect(inAppBar(find.byIcon(Icons.undo)), findsOneWidget);
       expect(inAppBar(find.byIcon(Icons.redo)), findsOneWidget);
       expect(inAppBar(find.byIcon(Icons.more_vert)), findsNothing);
+
+      // Panels stay inline: no drawers on desktop.
+      final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
+      expect(scaffold.drawer, isNull);
+      expect(scaffold.endDrawer, isNull);
     });
   });
 }
