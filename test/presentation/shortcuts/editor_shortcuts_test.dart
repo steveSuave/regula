@@ -21,16 +21,14 @@ import 'package:fgex/domain/tools/random_shape_stamp_tool.dart';
 import 'package:fgex/domain/tools/rectangle_macro_tool.dart';
 import 'package:fgex/domain/tools/regular_polygon_macro_tool.dart';
 import 'package:fgex/domain/tools/right_triangle_macro_tool.dart';
-import 'package:fgex/domain/tools/rotated_point_tool.dart';
 import 'package:fgex/domain/tools/square_macro_tool.dart';
-import 'package:fgex/domain/tools/three_point_tool.dart';
 import 'package:fgex/domain/tools/tool.dart';
+import 'package:fgex/domain/tools/transform_object_tool.dart';
 import 'package:fgex/domain/tools/triangle_center_tool.dart';
 import 'package:fgex/domain/tools/two_line_tool.dart';
 import 'package:fgex/domain/tools/two_point_tool.dart';
 import 'package:fgex/main.dart';
 import 'package:fgex/presentation/canvas/geometry_canvas.dart';
-import 'package:fgex/presentation/panels/toolbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -269,20 +267,29 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
     await tester.sendKeyEvent(LogicalKeyboardKey.keyL);
     var tool = activeTool();
-    expect(tool, isA<PointAndLineTool>());
-    expect((tool! as PointAndLineTool).build, buildReflectedPoint);
+    expect(tool, isA<TransformObjectTool>());
+    expect(
+      (tool! as TransformObjectTool).transform,
+      ObjectTransform.reflectAboutLine,
+    );
 
     await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
     await tester.sendKeyEvent(LogicalKeyboardKey.keyP);
     tool = activeTool();
-    expect(tool, isA<TwoPointTool>());
-    expect((tool! as TwoPointTool).build, buildCentralReflection);
+    expect(tool, isA<TransformObjectTool>());
+    expect(
+      (tool! as TransformObjectTool).transform,
+      ObjectTransform.reflectAboutPoint,
+    );
 
     await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
     await tester.sendKeyEvent(LogicalKeyboardKey.keyV);
     tool = activeTool();
-    expect(tool, isA<ThreePointTool>());
-    expect((tool! as ThreePointTool).build, buildTranslatedPoint);
+    expect(tool, isA<TransformObjectTool>());
+    expect(
+      (tool! as TransformObjectTool).transform,
+      ObjectTransform.translate,
+    );
   });
 
   testWidgets('G T asks for the angle; OK in degrees activates the rotate '
@@ -305,8 +312,12 @@ void main() {
     await tester.pumpAndSettle();
 
     final tool = activeTool();
-    expect(tool, isA<RotatedPointTool>());
-    expect((tool! as RotatedPointTool).angle, closeTo(-0.7853981, 1e-6));
+    expect(tool, isA<TransformObjectTool>());
+    expect((tool! as TransformObjectTool).angle, closeTo(-0.7853981, 1e-6));
+    expect(
+      (tool as TransformObjectTool).transform,
+      ObjectTransform.rotate,
+    );
   });
 
   testWidgets('G D asks for the angle size; OK in degrees activates the '
