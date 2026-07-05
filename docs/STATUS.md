@@ -6,6 +6,26 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 29 — 2026-07-05
+
+**Done**
+- **Phase 25 complete** on `phase-25-mobile` (5 commits), merged to `main`. In landing order:
+- Compact gate + chrome: `isCompact = MediaQuery.sizeOf(context).shortestSide < 600` in the `EditorScreen` build. Compact app bar keeps File/undo/redo + one overflow popup (Fit, Reset, object tree, cheat sheet, theme); the `GeometryToolbar` moves to a 48-px horizontally scrollable strip as `AppBar.bottom`, six flyout groups reused untouched. The cheat-sheet header Row overflowed at phone widths (it's reachable from the overflow menu) — title now flexible with ellipsis.
+- Compact panels: object tree → `Scaffold.drawer`, inspector → `endDrawer` (width `min(280, 0.85 × screen)`, widgets verbatim); a style icon at the strip's right end (visible while the selection is non-empty) opens the inspector — never auto-opens. Edge-swipe drawer gestures disabled: a drag starting at the screen edge is a draw. Drawers open via the auto hamburger, the overflow item and the style button (`_scaffoldKey`).
+- `isMobileTarget` getter (`!kIsWeb` + Android/iOS): `main()` sets `SystemUiMode.immersiveSticky`; the body's `SafeArea` sides are active only on mobile targets, so web renders pixel-identically.
+- Pointer-kind hit threshold: `GeometryCanvas.hitThresholdFor(kind)` — 16 px touch / 8 px otherwise. Taps read `TapUpDetails.kind`; drags read the kind recorded at the Listener's first pointer-down (scale-recognizer details carry no kind). Flows unchanged into `ToolInput.snapThreshold`, the Phase 20 ladder and the stamp radius (touch stamps are 2×, per PLAN).
+- Dash selector: presets render `–`/`S`/`M`/`L` with the full word as segment tooltip + `bodySmall` text; width regression pinned against the 280-px panel.
+- 749 tests green, analyze clean: new `compact_layout_test.dart` (strip present/scrollable at 250-px width, app-bar icon census both modes, overflow actions, drawers, style button, wide-layout no-drawers regression), touch-vs-mouse threshold test (12-px tap selects on touch, misses with mouse), inspector dash test updated to `M`. Web smoke re-run on a fresh release build: **SMOKE PASS**, zero console errors — drive.js untouched (its default viewport is wide; the wide chrome is unchanged). Extra Playwright phone-viewport check (400×800, touch): compact chrome renders, strip flyout → touch taps place auto-named points, zero console errors.
+
+**Next**
+- Open queue: Phases 19 (export), 22 (angle-mark styling), 26 (select-by-kind) in any order; Phase 12's two environment-blocked boxes (iOS build, Android emulator) still stand — real-device mobile smoke for Phase 25 rides on those. Consider a v0.1 tag once Phase 19 lands.
+
+**Open questions / gotchas**
+- All widget tests run with `defaultTargetPlatform == android`, so `isMobileTarget` is true there and the body `SafeArea` is always mounted in tests (zero insets — harmless, but don't assert on SafeArea absence).
+- `tester.tapAt` defaults to `PointerDeviceKind.touch`, so every existing canvas test now exercises the 16-px threshold; tests needing the tight radius must pass `kind: PointerDeviceKind.mouse` (the new threshold test is the pattern).
+- The overflow menu's "Show object tree" opens the drawer in compact mode; `_showObjectTree` still backs the wide layout's inline panel only.
+- Phase 22's inspector angles slice should reuse the single-letter preset convention the dash selector now follows (S/M/L/XL radius labels).
+
 ## Session 28 — 2026-07-05
 
 **Done**
