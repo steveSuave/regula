@@ -1,0 +1,23 @@
+docs/STATUS.md
+  s_4d861c48282879::t_2b8ad0182b996d 17
+test/presentation/export_flow_test.dart
+  s_4d861c48282879::t_99f0847690d096 245-262
+lib/presentation/panels/export_dialog.dart
+  s_4d861c48282879::t_35651a84d9f56a 29-33,69-77,120-122,162-192,195-209,211-220,223-229,238
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "3573cd96a888f7239e97f9ea0ddae6474b8da4d8",
+  "prompts": {},
+  "sessions": {
+    "s_4d861c48282879": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "200c6d4e-2564-42fe-b1aa-dd30d9d8e1d0",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
