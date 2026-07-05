@@ -13,10 +13,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Phase 25 compact chrome: below the 600-px shortest-side breakpoint the
-/// toolbar becomes a scrollable strip under the app bar and the loose
-/// icon buttons collapse into one overflow menu; at desktop sizes the
-/// wide layout must be exactly as before.
+/// Phase 25 compact chrome (single-row revision): below the 600-px
+/// shortest-side breakpoint the app bar is one slim 48-px row — the
+/// toolbar scrolls in the title slot, File and the loose icon buttons
+/// collapse into one overflow menu; at desktop sizes the wide layout
+/// must be exactly as before.
 void main() {
   late ProviderContainer container;
 
@@ -41,12 +42,13 @@ void main() {
   group('compact (phone-sized screen)', () {
     const phone = Size(400, 800);
 
-    testWidgets('toolbar moves to a strip under the app bar and the loose '
-        'icons collapse into one overflow menu', (tester) async {
+    testWidgets('app bar is one slim row: the toolbar scrolls in the title '
+        'slot, File and the loose icons collapse into one overflow menu',
+        (tester) async {
       await pumpEditor(tester, screen: phone);
 
-      // The strip: the toolbar lives in a horizontal scroll view inside
-      // the app bar's bottom, not among the actions.
+      // The toolbar lives in a horizontal scroll view inside the app bar,
+      // not among the actions.
       expect(
         find.ancestor(
           of: find.byType(GeometryToolbar),
@@ -55,12 +57,16 @@ void main() {
         findsOneWidget,
       );
 
-      // App bar keeps File + undo/redo + overflow; the five loose icon
+      // Single row, slimmer than the 56-px Material default — no second
+      // strip below.
+      expect(tester.getSize(find.byType(AppBar)).height, 48);
+
+      // App bar keeps undo/redo + overflow; File, the five loose icon
       // buttons and the object-tree leading toggle are gone.
-      expect(inAppBar(find.byIcon(Icons.folder_outlined)), findsOneWidget);
       expect(inAppBar(find.byIcon(Icons.undo)), findsOneWidget);
       expect(inAppBar(find.byIcon(Icons.redo)), findsOneWidget);
       expect(inAppBar(find.byIcon(Icons.more_vert)), findsOneWidget);
+      expect(inAppBar(find.byIcon(Icons.folder_outlined)), findsNothing);
       expect(inAppBar(find.byIcon(Icons.fit_screen)), findsNothing);
       expect(inAppBar(find.byIcon(Icons.filter_center_focus)), findsNothing);
       expect(inAppBar(find.byIcon(Icons.keyboard_outlined)), findsNothing);
@@ -70,6 +76,13 @@ void main() {
         inAppBar(find.byIcon(Icons.account_tree_outlined)),
         findsNothing,
       );
+
+      // The absorbed File actions live in the overflow menu.
+      await tester.tap(find.byIcon(Icons.more_vert));
+      await tester.pumpAndSettle();
+      expect(find.text('New'), findsOneWidget);
+      expect(find.text('Open…'), findsOneWidget);
+      expect(find.text('Save…'), findsOneWidget);
     });
 
     testWidgets('strip flyouts still activate tools', (tester) async {
