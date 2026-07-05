@@ -93,6 +93,9 @@ class MainApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp(
       title: 'fgex',
+      // The corner DEBUG banner costs canvas pixels on a phone and says
+      // nothing the user can act on.
+      debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: ref.watch(themeModeProvider),
@@ -530,49 +533,48 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     }
   }
 
-  /// Compact-only home of the [GeometryToolbar]: a 48-px strip under the
-  /// app bar, horizontally scrollable so the six flyout groups are never
-  /// truncated however narrow the screen. While the selection is
-  /// non-empty, a style button at the right end opens the inspector
-  /// drawer — the drawer never auto-opens on selection, which would
-  /// interrupt construction flow.
-  PreferredSizeWidget _toolbarStrip({required bool hasSelection}) =>
-      PreferredSize(
-        preferredSize: const Size.fromHeight(48),
-        child: SizedBox(
-          height: 48,
-          child: Row(
-            children: [
-              const Expanded(
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: GeometryToolbar(),
-                  ),
-                ),
-              ),
-              if (hasSelection)
-                IconButton(
-                  tooltip: 'Style & properties',
-                  icon: const Icon(Icons.palette_outlined),
-                  onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
-                ),
-            ],
-          ),
+  /// Compact height of the app bar's single row — visibly slimmer than
+  /// the 56-px Material default while still fitting standard 48-px
+  /// icon-button touch targets.
+  static const double _compactBarHeight = 48;
+
+  /// Compact-only home of the [GeometryToolbar]: it scrolls horizontally
+  /// in the app bar's flexible title slot, so the six flyout groups share
+  /// one row with undo/redo and the overflow menu and are never truncated
+  /// however narrow the screen (the title text carries no information a
+  /// phone user needs).
+  Widget _scrollableToolbar() => const Align(
+        alignment: Alignment.centerLeft,
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: GeometryToolbar(),
         ),
       );
 
-  /// Compact-only overflow absorbing the loose wide-layout icon buttons
-  /// (fit, reset, object tree, cheat sheet, theme) — they don't fit a
-  /// phone app bar next to File and undo/redo.
+  /// Compact-only overflow absorbing the File menu and the loose
+  /// wide-layout icon buttons (fit, reset, object tree, cheat sheet,
+  /// theme) — they don't fit a phone app bar that also hosts the
+  /// scrolling toolbar and undo/redo.
   Widget _overflowMenu(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
     return PopupMenuButton<VoidCallback>(
-      tooltip: 'More: view, panels, shortcuts, theme',
+      tooltip: 'More: file, view, panels, shortcuts, theme',
       icon: const Icon(Icons.more_vert),
       onSelected: (action) => action(),
       itemBuilder: (context) => [
+        PopupMenuItem(
+          value: _newConstruction,
+          child: const Text('New'),
+        ),
+        PopupMenuItem(
+          value: _openConstruction,
+          child: const Text('Open…'),
+        ),
+        PopupMenuItem(
+          value: _saveConstruction,
+          child: const Text('Save…'),
+        ),
+        const PopupMenuDivider(),
         PopupMenuItem(
           value: _fitConstruction,
           child: const Text('Fit construction to view'),
@@ -606,8 +608,9 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     // scrollable toolbar strip and the overflow menu; the wide layout is
     // untouched.
     final isCompact = MediaQuery.sizeOf(context).shortestSide < 600;
-    // Watched only in compact mode: the strip's style button appears with
-    // the selection; the wide layout doesn't depend on it.
+    // Watched only in compact mode: the app bar's style button appears
+    // with the selection (it opens the inspector drawer, which never
+    // auto-opens); the wide layout doesn't depend on it.
     final hasSelection =
         isCompact && ref.watch(selectionProvider).isNotEmpty;
     final drawerWidth = math.min(
@@ -632,6 +635,12 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
             ? Drawer(width: drawerWidth, child: const AttributesInspector())
             : null,
         appBar: AppBar(
+          // Compact: one slim row — auto hamburger (object-tree drawer),
+          // the toolbar scrolling in the title slot, then style (with a
+          // selection), undo/redo and the overflow menu.
+          toolbarHeight: isCompact ? _compactBarHeight : null,
+          leadingWidth: isCompact ? _compactBarHeight : null,
+          titleSpacing: isCompact ? 0 : null,
           leading: isCompact
               ? null
               : IconButton(
@@ -643,31 +652,34 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                   onPressed: () =>
                       setState(() => _showObjectTree = !_showObjectTree),
                 ),
-          title: const Text('fgex'),
-          bottom: isCompact
-              ? _toolbarStrip(hasSelection: hasSelection)
-              : null,
+          title: isCompact ? _scrollableToolbar() : const Text('fgex'),
           actions: [
-            PopupMenuButton<Future<void> Function()>(
-              tooltip: 'File: new, open, save',
-              icon: const Icon(Icons.folder_outlined),
-              onSelected: (action) => action(),
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                  value: _newConstruction,
-                  child: const Text('New'),
-                ),
-                PopupMenuItem(
-                  value: _openConstruction,
-                  child: const Text('Open…'),
-                ),
-                PopupMenuItem(
-                  value: _saveConstruction,
-                  child: const Text('Save…'),
-                ),
-              ],
-            ),
+            if (hasSelection)
+              IconButton(
+                tooltip: 'Style & properties',
+                icon: const Icon(Icons.palette_outlined),
+                onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
+              ),
             if (!isCompact) ...[
+              PopupMenuButton<Future<void> Function()>(
+                tooltip: 'File: new, open, save',
+                icon: const Icon(Icons.folder_outlined),
+                onSelected: (action) => action(),
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: _newConstruction,
+                    child: const Text('New'),
+                  ),
+                  PopupMenuItem(
+                    value: _openConstruction,
+                    child: const Text('Open…'),
+                  ),
+                  PopupMenuItem(
+                    value: _saveConstruction,
+                    child: const Text('Save…'),
+                  ),
+                ],
+              ),
               const GeometryToolbar(),
               IconButton(
                 tooltip: 'Fit construction to view',
