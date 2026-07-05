@@ -1,7 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../domain/commands/add_object_command.dart';
+import '../../domain/commands/command.dart';
+import '../../domain/commands/macro_command.dart';
 import '../../domain/construction/geo_object.dart';
+import '../../domain/construction/object_naming.dart';
 import '../../domain/math/vec2.dart';
 import '../../domain/tools/drag_session.dart';
 import '../../domain/tools/tool.dart';
@@ -141,6 +145,7 @@ class ToolNotifier extends _$ToolNotifier {
     final result = tool.onInput(input);
     switch (result) {
       case ToolCommitted(:final command):
+        _autoNameNewObjects(command);
         ref.read(commandStackProvider.notifier).execute(command);
         state = ActiveToolState(tool, state.revision + 1);
       case ToolAccepted():
@@ -149,5 +154,44 @@ class ToolNotifier extends _$ToolNotifier {
         break;
     }
     return result;
+  }
+
+  /// Bakes auto-names into the objects [command] is about to add, before
+  /// its first apply. This is the one funnel every tool-created
+  /// `AddObjectCommand` passes through; since the command holds the object
+  /// instance and redo re-adds it, a name set here survives undo/redo with
+  /// no extra command state.
+  ///
+  /// Only unnamed, *visible* objects are named — hidden macro scaffolding
+  /// burns no letters. Lines and circles are named but get
+  /// `labelVisible: false`: the name shows in the tree/inspector, not on
+  /// the canvas, until the user reveals it.
+  void _autoNameNewObjects(Command command) {
+    final construction = ref.read(constructionProvider).construction;
+    final used = <String>{
+      for (final object in construction.objects)
+        if (object.attributes.name.isNotEmpty) object.attributes.name,
+    };
+    _nameObjectsIn(command, used);
+  }
+
+  void _nameObjectsIn(Command command, Set<String> used) {
+    switch (command) {
+      case AddObjectCommand(:final object)
+          when object.attributes.name.isEmpty && object.attributes.visible:
+        final name = nextAutoName(used, object);
+        used.add(name);
+        final hideLabel = object is GeoLine || object is GeoCircle;
+        object.attributes = object.attributes.copyWith(
+          name: name,
+          labelVisible: object.attributes.labelVisible && !hideLabel,
+        );
+      case MacroCommand(:final commands):
+        for (final child in commands) {
+          _nameObjectsIn(child, used);
+        }
+      default:
+        break;
+    }
   }
 }
