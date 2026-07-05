@@ -420,12 +420,14 @@ class _WidthSelector extends StatelessWidget {
 }
 
 /// The line-style presets: a dash period of 0 is solid; the rest dash at
-/// that period in logical pixels (dash = gap = period / 2).
-const _dashPresets = <(String, double)>[
-  ('Solid', 0),
-  ('Fine', 4),
-  ('Medium', 8),
-  ('Coarse', 16),
+/// that period in logical pixels (dash = gap = period / 2). Segment
+/// labels are single characters — the four full words overflow the
+/// 280-px panel (Phase 25) — with the word in the tooltip.
+const _dashPresets = <(String, String, double)>[
+  ('–', 'Solid', 0),
+  ('S', 'Fine', 4),
+  ('M', 'Medium', 8),
+  ('L', 'Coarse', 16),
 ];
 
 /// The strokes' dash style as labelled segments — the discrete-choice
@@ -446,7 +448,7 @@ class _DashSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final uniform = values.toSet().length == 1;
-    final presetValues = [for (final (_, period) in _dashPresets) period];
+    final presetValues = [for (final (_, _, period) in _dashPresets) period];
     final selected = uniform && presetValues.contains(values.first)
         ? {values.first}
         : const <double>{};
@@ -457,16 +459,23 @@ class _DashSelector extends StatelessWidget {
         const SizedBox(height: 8),
         SegmentedButton<double>(
           segments: [
-            for (final (label, period) in _dashPresets)
-              ButtonSegment(value: period, label: Text(label)),
+            for (final (label, word, period) in _dashPresets)
+              ButtonSegment(
+                value: period,
+                label: Text(label),
+                tooltip: word,
+              ),
           ],
           selected: selected,
           // Same empty-selection idiom as _WidthSelector: a tap on the
           // already-selected segment arrives empty and is a no-op.
           emptySelectionAllowed: true,
           showSelectedIcon: false,
-          style: const ButtonStyle(
+          style: ButtonStyle(
             visualDensity: VisualDensity.compact,
+            textStyle: WidgetStatePropertyAll(
+              Theme.of(context).textTheme.bodySmall,
+            ),
           ),
           onSelectionChanged: (selection) {
             if (selection.isNotEmpty) {
