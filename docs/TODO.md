@@ -212,3 +212,38 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] Group headers (Points/Lines/Circles/Angles) become `InkWell`s: tap → replace selection with the kind's ids (hidden included — the tree's raison d'être), shift-tap → additive union, **long-press → additive union** (mobile shift equivalent); tooltip "Select all points" etc. (landed as `_GroupHeader` wrapping the old header padding+text; long-press gets `HapticFeedback.selectionClick` like the Phase 25b canvas long-press)
 - [x] No new provider API — reuse `selectMany(ids, additive:)` and the tree's existing per-kind groups; one display-only cheat-sheet `GestureRow` (Phase 13 precedent) (row in the `appLevel` section: "Tap tree header — Select every object of that kind (Shift-tap or long-press adds)")
 - [x] Tests: header tap replaces selection with exactly that kind (hidden included); shift-tap and long-press union with a cross-kind selection; row-tap regressions untouched (780 tests green, analyze clean, web smoke SMOKE PASS on a fresh release build)
+
+## Phase 27 — Rename clash resolution
+- [ ] Pure evicted-name helper in `domain/construction/object_naming.dart`: strip the wanted name's trailing digit run to get the base, first-free `base1`, `base2`, … (also ≠ the wanted name); unit tests (plain, trailing-digit, collision-with-wanted)
+- [ ] Inspector `_renameTo`: when another object holds the submitted name, one `MacroCommand` of two `ChangeAttributesCommand`s — old holder → numbered variant, target → wanted name; rename-to-own-name stays a no-op
+- [ ] Tests: inspector widget test (rename to a taken name renames both objects, a single undo restores both); auto-allocator regressions untouched
+
+## Phase 28 — Label size styling
+- [ ] `ObjectAttributes.labelFontSize` (double, default 12 = the `label_layout.dart` constant) + freezed regen — additive field, **no codec change, no version bump** (`dashPeriod`/`angleMarkerRadius` precedent)
+- [ ] Painter `_drawLabel` and shared `labelScreenRect` read the per-object size (same helper, so paint and label-drag hit rect can't drift)
+- [ ] Inspector: label-size preset row `S`/`M`/`L`/`XL` → 9/12/16/22 via `_PresetSelector`, shown for selections with labelable kinds, one `ChangeAttributesCommand` per tap
+- [ ] Tests: codec kitchen-sink gains a non-default `labelFontSize`; inspector widget test (one command over the selection); label hit-rect test at a non-default size
+
+## Phase 29 — Tool-input highlighting (halo existing objects, no fake point markers)
+- [ ] `ToolInputPreview.previewObjectIds` (default empty) beside `previewPositions`; consumed existing objects are haloed, position-only taps and not-yet-committed `IntersectionPoint`/`PointOnObject` snaps keep the dot+ring marker
+- [ ] Tools report ids: `TwoLineTool` (drop its projected-marker preview), `PointAndLineTool`, `TransformObjectTool`, `IntersectionTool`, `MultiPointTool` when the Phase 20 ladder reused an existing point
+- [ ] `geometry_canvas.dart` passes the ids to `GeometryPainter`; painter draws them with the existing selection-halo pass (union with `selectedIds`)
+- [ ] Tests: per-tool preview assertions (existing point → halo id, free tap → marker position); widget test — mid-construction tapped line is haloed with no marker on it
+
+## Phase 30 — Hide & Show/Hide tools (tap-driven visibility)
+- [ ] `VisibilityTool` (`domain/tools/visibility_tool.dart`) with Hide / Show-Hide named-constructor variants (`TransformObjectTool` precedent); every tap = one `ChangeAttributesCommand` = one undo step; empty-canvas taps do nothing
+- [ ] Hide variant on `H`, Show/Hide on `Shift+H` — replacing `hideSelection`/`revealAll` actions and their `main.dart` handlers; `Esc`/`V` deactivate; no toolbar flyout entry v1; cheat sheet auto-updates from the table
+- [ ] Show/Hide wiring: canvas passes `showHidden` to `GeometryPainter` (hidden objects + labels dimmed ~35 %) and `includeHidden` to `CanvasHitTester`; tool-scoped view state — nothing persisted, PNG export never renders hidden objects
+- [ ] Tests: Hide tap hides + undo restores; Show/Hide dims hidden, taps toggle both directions, hidden objects hit-testable only while that variant is active; one command per tap; exporter unaffected while the tool is active
+
+## Phase 31 — Line-angle wedge picked by taps
+- [ ] `LineAngle` wedge from tap-picked half-directions: each tap picks the half of its line nearer the tap; wedge between rays(d1′, d2′), sweep in (0, π), start = whichever direction makes the CCW sweep < π — obtuse pair reachable, right-angle square lands in the chosen quadrant
+- [ ] Persist two sign flips relative to the canonical carrier directions (codec `params`, additive, no version bump); **absent params = legacy always-acute mode** so old saves render byte-identically; flips baked at creation, wedge follows drags continuously
+- [ ] `TwoLineTool` passes its two tap world-positions into the builder (`buildLineAngle` signature grows)
+- [ ] Tests: four tap-quadrant combinations pick the right wedge; obtuse sweep; right-angle square vertices inside the chosen quadrant; drag continuity (no flip mid-drag); codec round-trip with flips; legacy decode (no params → acute fold)
+
+## Phase 32 — Object tree: long-press multi-select + search
+- [ ] Row long-press toggles the row in/out of the selection with `HapticFeedback.selectionClick` (the touch shift-tap — canvas Phase 25b / header Phase 26 convention); shift-tap unchanged; cheat-sheet `GestureRow` updated
+- [ ] Search field pinned at the top of the tree panel: case-insensitive substring filter over each row's display label (name, or kind label when unnamed); non-matching rows and empty groups hidden; `×` clears; `EditableText` focus guard already covers typing
+- [ ] Group-header select-by-kind selects only the filtered matches while a query is active
+- [ ] Tests: long-press add/remove; filter narrows rows and hides empty groups; header-tap under filter selects matches only; typing in the field fires no tool shortcut
