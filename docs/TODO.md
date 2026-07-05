@@ -148,10 +148,11 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] Tests per tool (tap flow, invariant checked numerically and after dragging each free corner incl. across-axis drags, one undo unit, degeneracy round-trip, hidden scaffolding) + toolbar widget test + web smoke re-run (596 tests green, SMOKE PASS — Square stays the Macros menu's row 1, so drive.js's macro section is untouched)
 
 ## Phase 19 — Export
-- [ ] Off-screen PNG renderer in `lib/application/export/` (`PictureRecorder` + `GeometryPainter`; fit-vs-current-viewport framing via `fittedViewport`; scale factor 1×/2×/4×; theme-color vs transparent background; no UI chrome — selection halos, in-progress markers, band never render)
-- [ ] Export options dialog + File-menu "Export as PNG…" entry + `Ctrl/Cmd + E` shortcut + cheat-sheet row (export is read-only view work: no `Command`, not undoable, no save-format change)
-- [ ] Delivery via existing `saveFile(bytes:)` in `file_io.dart`; verify on web (download) and Android (native picker)
-- [ ] Tests: pixel check on exported PNG bytes for a known scene (decode + spot-check, or golden-style compare); widget test for the menu → dialog → save flow
+- [ ] Off-screen PNG renderer in `lib/application/export/` (`PictureRecorder` + `GeometryPainter`; framing: fit construction / current viewport / drag-selected region; scale factor 1×/2×/4×; theme-color vs transparent background; no UI chrome — selection halos, in-progress markers, band never render)
+- [ ] Export options dialog: framing choice, scale, background, and the **exact output size in pixels** shown live ("Output: 1920 × 1080 px"); File-menu "Export as PNG…" entry (wide File popup + compact overflow) + `Ctrl/Cmd + E` shortcut + cheat-sheet row (export is read-only view work: no `Command`, not undoable, no save-format change)
+- [ ] Region picking: one-shot marquee overlay stacked on the canvas (canvas widget untouched); drag → rect in canvas screen coords → dialog reopens with region framing; Esc cancels; region viewport = same scale, pan at the rect's top-left corner
+- [ ] Delivery via a `savePngBytes` sibling in `file_io.dart`; verify on web (download) — Android native-picker check rides the Phase 12 emulator blocker
+- [ ] Tests: pixel check on the rendered image for a known scene (dimensions × scale, transparent vs opaque background, object pixels present, region crop correct); widget test for the menu → dialog → save flow and the region-pick round trip
 - [ ] Stretch: hand-written SVG writer mirroring the painter per kind (`dashPeriod` → `stroke-dasharray`, labels as `<text>`) + "Export as SVG…" entry — may slip; PDF and clipboard-copy stay out of scope
 
 ## Phase 20 — Smart point placement
