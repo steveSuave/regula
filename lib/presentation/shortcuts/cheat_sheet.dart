@@ -37,12 +37,18 @@ class ShortcutCheatSheet extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'Keyboard shortcuts',
-                          style: theme.textTheme.titleLarge,
+                        // Flexible so the header survives phone widths
+                        // (Phase 25) — the sheet is reachable from the
+                        // compact overflow menu.
+                        Flexible(
+                          child: Text(
+                            'Keyboard shortcuts',
+                            style: theme.textTheme.titleLarge,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                        const Spacer(),
                         Text(
                           'Esc or ? closes',
                           style: theme.textTheme.bodySmall,
