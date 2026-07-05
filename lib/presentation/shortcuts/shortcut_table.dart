@@ -14,6 +14,7 @@ enum AppAction {
   saveFile,
   openFile,
   newFile,
+  exportPng,
   toggleTheme,
   hideSelection,
   revealAll,
@@ -277,6 +278,13 @@ final List<ShortcutBinding> shortcutTable = [
     label: 'New construction',
     section: ShortcutSection.appLevel,
     display: 'Ctrl/⌘ N',
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.keyE, primary: true)],
+    action: AppAction.exportPng,
+    label: 'Export as PNG…',
+    section: ShortcutSection.appLevel,
+    display: 'Ctrl/⌘ E',
   ),
   const ShortcutBinding(
     sequence: [KeyStroke(LogicalKeyboardKey.keyD, primary: true)],
