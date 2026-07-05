@@ -242,6 +242,24 @@ void main() {
     expect(find.text('Export as PNG'), findsNothing);
   });
 
+  testWidgets('the dialog scrolls instead of overflowing in a short window',
+      (tester) async {
+    // Short enough that the dialog's content area cannot hold the
+    // options at their natural height; a RenderFlex overflow would fail
+    // this test via FlutterError.
+    tester.view.physicalSize = const Size(800, 300);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await pumpEditor(tester);
+    addPoint();
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyE);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pumpAndSettle();
+    expect(find.text('Export as PNG'), findsOneWidget);
+    expect(find.text('Export'), findsOneWidget);
+  });
+
   testWidgets('Ctrl+E opens the export dialog', (tester) async {
     await pumpEditor(tester);
     addPoint();
