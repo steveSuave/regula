@@ -6,6 +6,26 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 25 — 2026-07-05
+
+**Done**
+- **Planning-only session** — no code. Enriched `docs/PLAN.md` + `docs/TODO.md` with six new phases (21–26) covering the 11 user-requested features/fixes, every design validated against the actual code first (three parallel exploration passes + one design pass):
+- **Phase 21** random stamps: the 4–7-vertex random polygon is *replaced* by an always-strictly-convex random quadrilateral (gap-method angles on one circle — no radial jitter — plus a convexity-preserving affine stretch); `X 3`/`X 4` chords reverse Phase 16's menu-only decision.
+- **Phase 22** angle-mark styling: `angleMarkerRadius` attribute (default 20 = today's constant), *automatic* right-angle square at exactly π/2, wedge fill via the existing-but-never-painted `fillAlpha` (same pass finally implements Sector fill); inspector angles slice with S/M/L/XL presets. Additive attributes — no version bump.
+- **Phase 23** automatic naming: pure first-free allocator (`A…` points, shared `a…` lines+circles, `α…` angles) applied in a single interceptor at `ToolNotifier.handleInput` — the one `AddObjectCommand` funnel — naming only visible objects (macro scaffolding burns no letters); undo/redo-stable for free since `AddObjectCommand` re-adds the same instance. Lines/circles named but `labelVisible: false`; points show A, B, C by default.
+- **Phase 24** whole-object transforms by macro composition (same kind rebuilt over transform-point images; no new kinds); orientation decided: reflected `VertexAngle` swaps arms, `Sector`+reflect-about-line excluded; new `TransformObjectTool` with transformee-first slot rule (curve hits must beat the Phase 20 point ladder).
+- **Phase 25** mobile: compact gate (shortest side < 600), immersive status bar, toolbar as a scrollable 48-px strip, panels as drawers, pointer-kind snap radius (16 px touch / 8 px mouse), dash-selector overflow fix (–/S/M/L + bodySmall).
+- **Phase 26** select-by-kind via tappable object-tree group headers (tap = replace, shift-tap = additive, long-press = additive on touch — user-requested).
+- User decisions recorded in PLAN: replace (not keep) the random polygon; right-angle square is automatic, no toggle; select-by-kind lives on tree headers with long-press for mobile.
+
+**Next**
+- Open queue: Phase 19 (export, last pre-existing spec) and the new Phases 21–26 — 21 is the smallest starter; 23 (naming) should land before 24 (transforms) so image points get names without rework. Phase 12's two environment-blocked boxes (iOS build, Android emulator) still gate Phase 25's real-device smoke — its acceptance is widget tests + Chrome device emulation.
+
+**Open questions / gotchas**
+- Phase 25 must keep the wide layout byte-identical (desktop web smoke zero-diff); drive.js indexing assumptions (icon count, "theme toggle is last") will need re-checking when the compact chrome lands.
+- Phase 21 removes the "Random polygon" Macros row — drive.js's macro section only touches Square (row 1), so it should survive, but re-verify.
+- Phase 22 goldens: any existing golden scene containing an exact right angle will change (square replaces arc) — regenerate deliberately.
+
 ## Session 24 — 2026-07-04
 
 **Done**

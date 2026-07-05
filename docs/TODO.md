@@ -161,3 +161,42 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] `CanvasHitTester.hitTestAll` (ranked list; `hitTest` = first) + `_handleTap` passes `extraHits`/`snapThreshold`; toolbar drops the "Point on object" row
 - [x] Tests: new `point_resolution_test.dart`; point_tool/two_point_tool/canvas_hit_tester/toolbar tests updated; `point_on_object_tool_test.dart` retired
 - [x] Docs + web smoke (glue/crossing/undo ladder), drive.js Points-flyout indices re-checked
+
+## Phase 21 — Random stamps: convex quadrilateral + chords
+- [ ] `RandomShapeStampTool` convex mode (quadrilateral only): fixed count 4, no radial jitter — all vertices on one circle (sorted distinct angles ⇒ strictly convex), gap-method angles (min gap 0.25 rad, no rejection loop), one random anisotropic affine stretch about the tap (convexity-preserving) for variety; triangle stamp byte-identical
+- [ ] Toolbar: "Random polygon" row **replaced** by "Random quadrilateral" (min = max = 4, convex); both stamp rows get `AppAction`s (`randomTriangleStamp`/`randomQuadrilateralStamp`) so flyout shortcut hints render
+- [ ] Chords `X 3` / `X 4` (digit second strokes — `G 3` precedent): shortcut-table rows + `main.dart` `_handleShortcut` cases; cheat sheet auto-renders; no save-format change
+- [ ] Tests: convexity property over many seeds (consecutive edge cross products share sign, none zero), 4 points + 4 closing segments, one `MacroCommand` = one undo unit, stamp centered near the tap; `X 3`/`X 4` widget tests; triangle regression untouched
+
+## Phase 22 — Angle-mark styling
+- [ ] `ObjectAttributes.angleMarkerRadius` (double, default 20 = today's painter constant, screen px) + freezed regen — additive field, **no codec change, no version bump** (`dashPeriod` precedent)
+- [ ] Painter: `_drawAngleMarker` reads the per-object radius; **automatic right-angle square** when sweep ≈ π/2 (shared math epsilon; polyline `v + s·d1 → v + s·(d1+d2) → v + s·d2`, s = 0.7 × radius) for both `VertexAngle` and `LineAngle`; fill pass under the stroke pass when `fillAlpha` set — same pass finally implements `Sector` fill; markers/fills stay solid (Phase 17 no-dash rule)
+- [ ] Inspector: angles slice with radius presets `S`/`M`/`L`/`XL` → 12/20/28/36 (single-letter labels — avoids the dash-selector overflow trap) + "Fill" tristate checkbox over angles + sectors toggling `fillAlpha` null ↔ 64; all via `_setForAll` → one `ChangeAttributesCommand` per tap
+- [ ] Tests: codec kitchen-sink gains non-default `angleMarkerRadius`/`fillAlpha`; inspector widget tests (radius tap = one command over the angle slice only; tristate fill); goldens regenerated + new marker-styles scene (right angle + filled wedge + non-default radius + filled sector, light + dark)
+
+## Phase 23 — Automatic naming & name display
+- [ ] Pure allocator `domain/construction/object_naming.dart`: `nextAutoName(usedNames, object)` — points `A…Z, A1…`; lines *and* circles share `a…z, a1…`; angles `α…ω, α1…`; first-free scan (gaps reused, File > Open just works, never keyed off uuid order)
+- [ ] Interceptor in `ToolNotifier.handleInput` (the single `AddObjectCommand` funnel, before `execute`): recurse into `MacroCommand.commands`, name objects with empty name **and** `visible: true` (invisible macro scaffolding burns no letters), batch-local used-name tracking; names baked pre-first-apply are undo/redo-stable because `AddObjectCommand` re-adds the same instance
+- [ ] Display defaults at assignment: lines/circles get `labelVisible: false` (named but hidden — painter already requires `labelVisible && name.isNotEmpty`); points/angles keep `labelVisible: true`; existing saved constructions untouched
+- [ ] Inspector single-selection header shows *name + kind* (tree rows already show name-over-kind — no change needed)
+- [ ] Tests: allocator units (per-kind sequences, shared line/circle pool, gap reuse, >26 overflow, Greek angles); provider tests (A then B; macro names visible corners only; delete B then add ⇒ B reused; undo/redo stable; new line gets `labelVisible: false`); inspector header widget test
+
+## Phase 24 — Whole-object transforms (macro composition)
+- [ ] `TransformObjectTool` (`domain/tools/transform_object_tool.dart`), parameterized per transform, replacing the four Transform-flyout wirings: transformee is the **first** input; slot-1 curve hits consulted from `ToolInput.hit`/`extraHits` *before* the point ladder (else Phase 20 would glue a `PointOnObject` to the transformee); point-mode behavior preserved exactly incl. reflect's point + line either order; `G L`/`G P`/`G T`/`G V` unchanged, now accepting curves
+- [ ] Image = same kind rebuilt over transform-point images of the defining points, one `MacroCommand`, image points visible (auto-named per Phase 23) — **no new `GeoObject` kinds**, codec/painter/hit-tester untouched; supported v1: `Segment`, `Ray`, `LineThroughTwoPoints`, `CircleCenterPoint`, `CompassCircle`, `ThreePointCircle`, `Arc`, `VertexAngle`, `Sector` (except reflect-about-line); `PerpendicularLine`/`ParallelLine`/`AngleBisectorLine`/`LineAngle`/`PointOnObject` taps ignored (object-level recursion deferred, noted in PLAN)
+- [ ] Orientation handling: reflected `VertexAngle` swaps arm points (same wedge measured); `Arc` safe via the via-point; `Sector` + reflect-about-line ignored (documented limitation)
+- [ ] Tests: transform × kind matrix (endpoints mirror numerically; radii preserved under rotation/translation incl. `CompassCircle`; image tracks source free-point drags; arm-swap sweep equality; `Sector`+reflect and `PerpendicularLine` taps ignored; one undo unit); point-mode regressions ported from the Phase 15 tool tests; widget test: `G L`, tap circle then line, image appears
+
+## Phase 25 — Mobile ergonomics & inspector overflow fix
+- [ ] Compact gate `MediaQuery.sizeOf(context).shortestSide < 600` in the scaffold build; wide layout byte-identical (desktop web smoke must be zero-diff)
+- [ ] Status bar: `SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky)` in `main()` gated `!kIsWeb` + Android/iOS; `SafeArea` on the body (mobile only)
+- [ ] Compact chrome: app bar keeps File/undo/redo + one overflow popup (Fit, Reset, tree, cheat sheet, theme); `GeometryToolbar` moves to a 48-px strip under the app bar in a horizontal `SingleChildScrollView` — scrollable, never truncated; six `_ToolGroup` popups reused untouched
+- [ ] Compact panels: object tree → `Scaffold.drawer`, inspector → `endDrawer`, width `min(280, 0.85 × screen)`, widgets reused verbatim; "style" icon at the strip's right end (shown while selection non-empty) opens the inspector — no auto-open
+- [ ] Snap radius: `hitThresholdPx` becomes pointer-kind-based — 16 px `PointerDeviceKind.touch`, 8 px otherwise (kind-gated, not platform-gated); flows automatically to hit testing, `snapThreshold`, the Phase 20 ladder, stamp radius
+- [ ] Dash-selector overflow fix: labels `–`/`S`/`M`/`L` + tooltips + `bodySmall` text style on the segmented buttons (Solid/Fine/Medium/Coarse wrapped in the 280-px panel)
+- [ ] Tests: widget tests at phone `tester.view.physicalSize` (strip present + scrollable, app-bar action count, drawers open/close) + desktop-size regression; touch-vs-mouse threshold test (tap 12 px from a point selects on touch, misses with mouse); acceptance via Chrome device emulation — real Android/iOS smoke stays deferred behind the Phase 12 blockers (no AVD, Xcode incomplete)
+
+## Phase 26 — Select-by-kind via object-tree group headers
+- [ ] Group headers (Points/Lines/Circles/Angles) become `InkWell`s: tap → replace selection with the kind's ids (hidden included — the tree's raison d'être), shift-tap → additive union, **long-press → additive union** (mobile shift equivalent); tooltip "Select all points" etc.
+- [ ] No new provider API — reuse `selectMany(ids, additive:)` and the tree's existing per-kind groups; one display-only cheat-sheet `GestureRow` (Phase 13 precedent)
+- [ ] Tests: header tap replaces selection with exactly that kind (hidden included); shift-tap and long-press union with a cross-kind selection; row-tap regressions untouched
