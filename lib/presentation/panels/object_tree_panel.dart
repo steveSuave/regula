@@ -72,15 +72,9 @@ class ObjectTreePanel extends ConsumerWidget {
                       for (final MapEntry(key: label, value: objects)
                           in groups.entries)
                         if (objects.isNotEmpty) ...[
-                          Padding(
-                            padding:
-                                const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                            child: Text(
-                              label,
-                              style: theme.textTheme.labelLarge!.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
+                          _GroupHeader(
+                            label: label,
+                            ids: [for (final object in objects) object.id],
                           ),
                           for (final object in objects)
                             _ObjectRow(
@@ -93,6 +87,47 @@ class ObjectTreePanel extends ConsumerWidget {
           ),
           const VerticalDivider(width: 1, thickness: 1),
         ],
+      ),
+    );
+  }
+}
+
+/// A kind's group header doubling as select-by-kind: tap replaces the
+/// selection with every object of the kind — hidden ones included, this
+/// being the panel whose point is reaching them — shift-tap unions
+/// (band semantics), and long-press unions too, the touch stand-in for
+/// shift. Union rather than the canvas long-press's toggle: headers
+/// select groups, the canvas toggles individuals.
+class _GroupHeader extends ConsumerWidget {
+  const _GroupHeader({required this.label, required this.ids});
+
+  final String label;
+  final List<String> ids;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    void select({required bool additive}) => ref
+        .read(selectionProvider.notifier)
+        .selectMany(ids, additive: additive);
+    return Tooltip(
+      message: 'Select all ${label.toLowerCase()}',
+      child: InkWell(
+        onTap: () =>
+            select(additive: HardwareKeyboard.instance.isShiftPressed),
+        onLongPress: () {
+          HapticFeedback.selectionClick();
+          select(additive: true);
+        },
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+          child: Text(
+            label,
+            style: theme.textTheme.labelLarge!.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
       ),
     );
   }
