@@ -185,6 +185,42 @@ void main() {
           reason: 'angles have the lowest priority');
     });
 
+    test('with worldPerPx the angle is picked on its marker wedge', () {
+      const hidden = ObjectAttributes(visible: false);
+      final construction = Construction();
+      final a =
+          FreePoint(id: 'a', position: const Vec2(3, 0), attributes: hidden);
+      final v = FreePoint(id: 'v', position: Vec2.zero, attributes: hidden);
+      final b =
+          FreePoint(id: 'b', position: const Vec2(0, 3), attributes: hidden);
+      final angle = VertexAngle(id: 'g', arm1: a, vertex: v, arm2: b);
+      construction
+        ..add(a)
+        ..add(v)
+        ..add(b)
+        ..add(angle);
+
+      // Default marker radius 20 px at 0.1 world/px = 2 world units.
+      GeoObject? wedgeHit(Vec2 p) => tester
+          .hitTest(construction.objects, p, threshold, worldPerPx: 0.1);
+
+      expect(wedgeHit(const Vec2(1.4, 1.4))?.id, 'g',
+          reason: 'on the arc mid-sweep (|p| ≈ 1.98 vs radius 2)');
+      expect(wedgeHit(const Vec2(1, 0))?.id, 'g',
+          reason: 'on a straight wedge edge inside the marker');
+      expect(wedgeHit(const Vec2(0.2, 0.2))?.id, 'g',
+          reason: 'the vertex stays pickable — the edges start there');
+      expect(wedgeHit(const Vec2(1.4, -1.4)), isNull,
+          reason: 'same distance from the vertex but outside the sweep');
+      expect(wedgeHit(const Vec2(0.9, 0.9)), isNull,
+          reason: 'the wedge interior is not the outline');
+
+      angle.attributes =
+          angle.attributes.copyWith(angleMarkerRadius: 36);
+      expect(wedgeHit(const Vec2(2.5, 2.5))?.id, 'g',
+          reason: 'the wedge tracks the per-object marker radius (3.6)');
+    });
+
     test('invisible and undefined objects are never hit', () {
       final construction = Construction();
       final a = FreePoint(id: 'a', position: Vec2.zero);
