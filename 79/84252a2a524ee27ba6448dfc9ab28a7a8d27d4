@@ -1,0 +1,22 @@
+lib/domain/tools/random_shape_stamp_tool.dart
+  s_b22f0f947fb133::t_19360429a68030 103-142
+  s_b22f0f947fb133::t_ea6a1fd42c1dda 15-17,32-46,54-58,61-64,68-83,85-86,88
+test/domain/tools/random_shape_stamp_tool_test.dart
+  s_b22f0f947fb133::t_d6fd9ccce0d979 106-198
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "7984252a2a524ee27ba6448dfc9ab28a7a8d27d4",
+  "prompts": {},
+  "sessions": {
+    "s_b22f0f947fb133": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "62528e8c-ca12-4a1c-8aec-af757d6f1416",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
