@@ -163,10 +163,10 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] Docs + web smoke (glue/crossing/undo ladder), drive.js Points-flyout indices re-checked
 
 ## Phase 21 — Random stamps: convex quadrilateral + chords
-- [ ] `RandomShapeStampTool` convex mode (quadrilateral only): fixed count 4, no radial jitter — all vertices on one circle (sorted distinct angles ⇒ strictly convex), gap-method angles (min gap 0.25 rad, no rejection loop), one random anisotropic affine stretch about the tap (convexity-preserving) for variety; triangle stamp byte-identical
-- [ ] Toolbar: "Random polygon" row **replaced** by "Random quadrilateral" (min = max = 4, convex); both stamp rows get `AppAction`s (`randomTriangleStamp`/`randomQuadrilateralStamp`) so flyout shortcut hints render
-- [ ] Chords `X 3` / `X 4` (digit second strokes — `G 3` precedent): shortcut-table rows + `main.dart` `_handleShortcut` cases; cheat sheet auto-renders; no save-format change
-- [ ] Tests: convexity property over many seeds (consecutive edge cross products share sign, none zero), 4 points + 4 closing segments, one `MacroCommand` = one undo unit, stamp centered near the tap; `X 3`/`X 4` widget tests; triangle regression untouched
+- [x] `RandomShapeStampTool` convex mode (quadrilateral only): fixed count 4, no radial jitter — all vertices on one circle (sorted distinct angles ⇒ strictly convex), gap-method angles (min gap 0.25 rad, no rejection loop), one random anisotropic affine stretch about the tap (convexity-preserving) for variety; triangle stamp byte-identical (landed as a `convexQuadrilateral` named constructor + `convex` flag; the jittered path draws from the RNG in the exact old order)
+- [x] Toolbar: "Random polygon" row **replaced** by "Random quadrilateral" (min = max = 4, convex); both stamp rows get `AppAction`s (`randomTriangleStamp`/`randomQuadrilateralStamp`) so flyout shortcut hints render
+- [x] Chords `X 3` / `X 4` (digit second strokes — `G 3` precedent): shortcut-table rows + `main.dart` `_handleShortcut` cases; cheat sheet auto-renders; no save-format change (no numpad twins — `G 3` has none either)
+- [x] Tests: convexity property over many seeds (consecutive edge cross products share sign, none zero — 200 seeds), 4 points + 4 closing segments, one `MacroCommand` = one undo unit, stamp centered near the tap (distance bounded by the stretch factors); `X 3`/`X 4` widget tests; triangle regression untouched (707 tests green; web smoke re-run on a fresh release build: SMOKE PASS, drive.js untouched — its macro section only drives Square, row 1)
 
 ## Phase 22 — Angle-mark styling
 - [ ] `ObjectAttributes.angleMarkerRadius` (double, default 20 = today's painter constant, screen px) + freezed regen — additive field, **no codec change, no version bump** (`dashPeriod` precedent)
