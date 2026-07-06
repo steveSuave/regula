@@ -39,3 +39,6 @@ flutter test
 Architecture, conventions, and build history live in `docs/PLAN.md`, `docs/STATUS.md`,
 and `docs/TODO.md`. See `CLAUDE.md` for the working invariants (domain/application/
 presentation layering, command pattern, etc.).
+
+## Demo deployment
+You can use the app on: https://stevesuave.github.io/regula/
