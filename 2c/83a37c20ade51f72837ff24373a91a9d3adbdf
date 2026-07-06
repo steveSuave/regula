@@ -1,0 +1,16 @@
+.gitignore
+  h_7b6bd6d3048c34 48
+.github/workflows/deploy.yml
+  h_7b6bd6d3048c34 1-54
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "2c83a37c20ade51f72837ff24373a91a9d3adbdf",
+  "prompts": {},
+  "humans": {
+    "h_7b6bd6d3048c34": {
+      "author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
