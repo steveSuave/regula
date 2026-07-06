@@ -45,3 +45,4 @@ app.*.map.json
 /android/app/release
 tool/web_smoke/node_modules/
 devtools_options.yaml
+regula.code-workspace
