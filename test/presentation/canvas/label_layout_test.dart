@@ -44,6 +44,21 @@ void main() {
     expect(long.width, greaterThan(short.width));
   });
 
+  test('a non-default labelFontSize grows the rect', () {
+    final normal = labelScreenRect(
+      point(const ObjectAttributes(name: 'A')),
+      viewport,
+    )!;
+    final large = labelScreenRect(
+      point(const ObjectAttributes(name: 'A', labelFontSize: 22)),
+      viewport,
+    )!;
+    expect(large.width, greaterThan(normal.width));
+    expect(large.height, greaterThan(normal.height));
+    expect(large.topLeft, normal.topLeft,
+        reason: 'size changes the extent, not the anchor offset');
+  });
+
   test('unpainted labels have no rect', () {
     expect(
       labelScreenRect(point(const ObjectAttributes()), viewport),
