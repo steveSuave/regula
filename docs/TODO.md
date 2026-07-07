@@ -225,10 +225,10 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] Tests: codec kitchen-sink gains a non-default `labelFontSize`; inspector widget test (one command over the selection); label hit-rect test at a non-default size (789 tests green, goldens byte-identical — default 12 = the old constant; web smoke SMOKE PASS on a fresh release build)
 
 ## Phase 29 — Tool-input highlighting (halo existing objects, no fake point markers)
-- [ ] `ToolInputPreview.previewObjectIds` (default empty) beside `previewPositions`; consumed existing objects are haloed, position-only taps and not-yet-committed `IntersectionPoint`/`PointOnObject` snaps keep the dot+ring marker
-- [ ] Tools report ids: `TwoLineTool` (drop its projected-marker preview), `PointAndLineTool`, `TransformObjectTool`, `IntersectionTool`, `MultiPointTool` when the Phase 20 ladder reused an existing point
-- [ ] `geometry_canvas.dart` passes the ids to `GeometryPainter`; painter draws them with the existing selection-halo pass (union with `selectedIds`)
-- [ ] Tests: per-tool preview assertions (existing point → halo id, free tap → marker position); widget test — mid-construction tapped line is haloed with no marker on it
+- [x] `ToolInputPreview.previewObjectIds` (default empty) beside `previewPositions`; consumed existing objects are haloed, position-only taps and not-yet-committed `IntersectionPoint`/`PointOnObject` snaps keep the dot+ring marker (no default in code — the interface is `abstract interface`, so all five implementers declare it; "default empty" holds at the canvas: a non-preview tool yields `const {}`)
+- [x] Tools report ids: `TwoLineTool` (drop its projected-marker preview), `PointAndLineTool`, `TransformObjectTool`, `IntersectionTool`, `MultiPointTool` when the Phase 20 ladder reused an existing point (all four single-purpose tools also dropped their now-dead tap-projection state — `_firstTap`/`_lineTap`/`_sourceTap`/`_mirrorTap` and `TransformObjectTool._sourceMarker` are gone)
+- [x] `geometry_canvas.dart` passes the ids to `GeometryPainter`; painter draws them with the existing selection-halo pass (union with `selectedIds`) (one condition edit in the halo pass; `shouldRepaint` keys on the new set with `setEquals`)
+- [x] Tests: per-tool preview assertions (existing point → halo id, free tap → marker position); widget test — mid-construction tapped line is haloed with no marker on it (795 tests green, analyze clean, goldens byte-identical — no preview state in golden scenes; web smoke SMOKE PASS on a fresh release build)
 
 ## Phase 30 — Hide & Show/Hide tools (tap-driven visibility)
 - [ ] `VisibilityTool` (`domain/tools/visibility_tool.dart`) with Hide / Show-Hide named-constructor variants (`TransformObjectTool` precedent); every tap = one `ChangeAttributesCommand` = one undo step; empty-canvas taps do nothing
