@@ -1,0 +1,57 @@
+docs/PLAN.md
+  s_18f3ade09c0147::t_d788666f41d478 47,75,322
+docs/STATUS.md
+  s_18f3ade09c0147::t_d929882250bf34 9-25
+docs/TODO.md
+  s_18f3ade09c0147::t_c297cd433ce49c 233-239
+lib/application/persistence/construction_codec.dart
+  s_18f3ade09c0147::t_586978ef9628ea 29,139-142,317-323
+lib/domain/construction/objects/two_line_bisector_line.dart
+  s_18f3ade09c0147::t_0aaea0f4025b2f 1-93
+lib/domain/math/angle_bisector.dart
+  s_18f3ade09c0147::t_2a4fe1b2cbd6f4 1,27-48
+lib/domain/tools/angle_bisector_tool.dart
+  s_18f3ade09c0147::t_92e6e3fe9837d8 1-131
+lib/domain/tools/multi_point_tool.dart
+  s_18f3ade09c0147::t_b33b77dd0d8d6c 29,34-40,86-87,94-98
+lib/domain/tools/three_point_tool.dart
+  s_18f3ade09c0147::t_90b92b00062135 19-23
+lib/main.dart
+  s_18f3ade09c0147::t_ececaafa712118 30,532,535-539
+lib/presentation/panels/object_kind_label.dart
+  s_18f3ade09c0147::t_ae7eb2877833c7 19,44
+lib/presentation/panels/toolbar.dart
+  s_18f3ade09c0147::t_606316ce73bf98 27,132,251-252,292,436-443
+test/application/persistence/construction_codec_test.dart
+  s_18f3ade09c0147::t_416f6eef2425df 34,93
+test/domain/construction/objects/two_line_bisector_line_test.dart
+  s_18f3ade09c0147::t_11a260e7c78ac8 1-164
+test/domain/math/angle_bisector_test.dart
+  s_18f3ade09c0147::t_d4c65009771097 3,92-151
+test/domain/tools/angle_bisector_tool_test.dart
+  s_18f3ade09c0147::t_1bf19045feae80 1-182
+test/domain/tools/three_point_tool_test.dart
+  s_18f3ade09c0147::t_209cd4ad44df53 7-8,62-94
+test/presentation/canvas/geometry_canvas_test.dart
+  s_18f3ade09c0147::t_5b0b157f85c8ba 12,25,36,494,511-552
+test/presentation/panels/toolbar_test.dart
+  s_18f3ade09c0147::t_47a4bcda9ab7fc 344-347
+test/presentation/shortcuts/editor_shortcuts_test.dart
+  s_18f3ade09c0147::t_7da8a062cb1c74 19,98-104
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ec574b4c98d65a3bce8e121e0ae579ef987d104b",
+  "prompts": {},
+  "sessions": {
+    "s_18f3ade09c0147": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "17e7b547-2dad-4026-84f6-8a69eed99a94",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
