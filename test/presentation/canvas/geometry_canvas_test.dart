@@ -16,6 +16,7 @@ import 'package:regula/domain/construction/objects/compass_circle.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_angle.dart';
+import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
 import 'package:regula/domain/construction/objects/reflected_point.dart';
@@ -24,10 +25,12 @@ import 'package:regula/domain/construction/objects/segment_ratio_point.dart';
 import 'package:regula/domain/construction/objects/three_point_circle.dart';
 import 'package:regula/domain/construction/objects/vertex_angle.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/tools/intersection_tool.dart';
 import 'package:regula/domain/tools/point_tool.dart';
 import 'package:regula/main.dart';
 import 'package:regula/presentation/canvas/canvas_viewport.dart';
 import 'package:regula/presentation/canvas/geometry_canvas.dart';
+import 'package:regula/presentation/canvas/geometry_painter.dart';
 
 /// End-to-end tool flow: activate the point tool, tap the canvas, see
 /// free points appear in the construction, undo/redo them. This is the
@@ -84,6 +87,42 @@ void main() {
     await tester.tapAt(origin + const Offset(100, 100));
     await tester.pump();
     expect(container.read(selectionProvider), {'v'});
+  });
+
+  testWidgets('a tapped line mid-collection is haloed, with no marker on it',
+      (tester) async {
+    await pumpEditor(tester);
+    final construction = container.read(constructionProvider).construction;
+    final a = FreePoint(id: 'a', position: const Vec2(100, -200));
+    final b = FreePoint(id: 'b', position: const Vec2(300, -200));
+    construction
+      ..add(a)
+      ..add(b)
+      ..add(LineThroughTwoPoints(id: 'l', point1: a, point2: b));
+    await tester.pump();
+
+    container
+        .read(toolProvider.notifier)
+        .activate(IntersectionTool(newId: () => 'unused'));
+    await tester.pump();
+
+    // Mid-line, 100 px from either endpoint — only the line claims it.
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+    await tester.tapAt(origin + const Offset(200, 200));
+    await tester.pump();
+
+    final painter = tester
+        .widgetList<CustomPaint>(find.descendant(
+          of: find.byType(GeometryCanvas),
+          matching: find.byType(CustomPaint),
+        ))
+        .map((paint) => paint.painter)
+        .whereType<GeometryPainter>()
+        .single;
+    expect(painter.previewObjectIds, {'l'},
+        reason: 'the consumed line is haloed like a selection');
+    expect(painter.previewMarkers, isEmpty,
+        reason: 'no dot+ring marker on an existing object');
   });
 
   testWidgets('point tool: tap to add points, tap a point again is ignored, '
