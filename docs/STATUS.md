@@ -6,6 +6,23 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 36 — 2026-07-07
+
+**Done**
+- Housekeeping on `main` first: the working tree carried uncommitted edits from outside any session — a `flutter create --platforms=macos` run (untracked `macos/`, plus a `.metadata` rewrite that *dropped* the android/ios/web migration entries), newer-formatter churn in two files, and one deliberate change. Per the user: committed the deliberate bit (a **Gray** swatch in the inspector color palette, `3dd15e9`) and reverted everything else; the `macos/` scaffolding was moved aside to the session scratchpad rather than deleted.
+- **Phase 27 (rename clash resolution) complete** on `phase-27-rename-clash` (2 commits), merged to `main`. Approach tweak folded into PLAN/TODO first: the two renames ride one **multi-id `ChangeAttributesCommand`** (the `_setForAll` idiom — the command already batches ids), not the originally sketched `MacroCommand` of two.
+- `evictedName(usedNames, wanted)` beside `nextAutoName`: strip the wanted name's trailing digit run to get the base, return the first free `base1`, `base2`, … that also ≠ the wanted name; an all-digit name keeps itself as the base (`12` → `121`).
+- Inspector `_renameTo`: when another object holds the submitted name, the holder is evicted to `evictedName(...)` in the same command — one undo unit, the chosen name never rejected. Clearing a name to empty never evicts (unnamed objects may repeat); rename-to-own-name stays a no-op.
+- 787 tests green (5 `evictedName` units + 2 inspector widget tests: evict + single-undo-restores-both, own-name no-op), analyze clean. Web smoke on a fresh release build: **SMOKE PASS**, zero console errors (drive.js untouched — it never drives renames).
+
+**Next**
+- Phase 28 (label size styling) is the next unchecked phase; 29–39 queue behind it. Phase 19's SVG stretch stays optional; Phase 12's two environment-blocked boxes (iOS build, Android emulator) still stand.
+
+**Open questions / gotchas**
+- The STATUS log has no entry covering the Phase 27–39 planning commits (post-Session-35) — the phases exist only in PLAN/TODO; treat those as the spec of record.
+- If a saved file ever carries *duplicate* names, eviction renames only the first holder found in insertion order — subsequent duplicates keep the name until individually renamed.
+- The user's macOS scaffolding was parked in the session scratchpad (`macos-removed/`), which is temporary — if desktop-macOS support is ever wanted, re-run `flutter create --platforms=macos .` (and don't let it strip the other platforms from `.metadata`).
+
 ## Session 35 — 2026-07-05
 
 **Done**
