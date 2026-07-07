@@ -219,10 +219,10 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] Tests: inspector widget test (rename to a taken name renames both objects, a single undo restores both); auto-allocator regressions untouched (5 new `evictedName` units + 2 widget tests incl. rename-to-own-name no-op; 787 tests green, analyze clean, web smoke SMOKE PASS on a fresh release build)
 
 ## Phase 28 — Label size styling
-- [ ] `ObjectAttributes.labelFontSize` (double, default 12 = the `label_layout.dart` constant) + freezed regen — additive field, **no codec change, no version bump** (`dashPeriod`/`angleMarkerRadius` precedent)
-- [ ] Painter `_drawLabel` and shared `labelScreenRect` read the per-object size (same helper, so paint and label-drag hit rect can't drift)
-- [ ] Inspector: label-size preset row `S`/`M`/`L`/`XL` → 9/12/16/22 via `_PresetSelector`, shown for selections with labelable kinds, one `ChangeAttributesCommand` per tap
-- [ ] Tests: codec kitchen-sink gains a non-default `labelFontSize`; inspector widget test (one command over the selection); label hit-rect test at a non-default size
+- [x] `ObjectAttributes.labelFontSize` (double, default 12 = the `label_layout.dart` constant) + freezed regen — additive field, **no codec change, no version bump** (`dashPeriod`/`angleMarkerRadius` precedent) (the standalone `label_layout.dart` constant is removed — the default now lives on the attribute)
+- [x] Painter `_drawLabel` and shared `labelScreenRect` read the per-object size (same helper, so paint and label-drag hit rect can't drift)
+- [x] Inspector: label-size preset row `S`/`M`/`L`/`XL` → 9/12/16/22 via `_PresetSelector`, shown for selections with labelable kinds, one `ChangeAttributesCommand` per tap (every kind carries a label — `labelAnchor` is total — so the row targets the whole selection and always shows)
+- [x] Tests: codec kitchen-sink gains a non-default `labelFontSize`; inspector widget test (one command over the selection); label hit-rect test at a non-default size (789 tests green, goldens byte-identical — default 12 = the old constant; web smoke SMOKE PASS on a fresh release build)
 
 ## Phase 29 — Tool-input highlighting (halo existing objects, no fake point markers)
 - [ ] `ToolInputPreview.previewObjectIds` (default empty) beside `previewPositions`; consumed existing objects are haloed, position-only taps and not-yet-committed `IntersectionPoint`/`PointOnObject` snaps keep the dot+ring marker
