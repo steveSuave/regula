@@ -6,6 +6,22 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 38 — 2026-07-07
+
+**Done**
+- **Phase 29 (tool-input highlighting) complete** on `phase-29-input-highlight` (2 commits), merged to `main`.
+- `ToolInputPreview.previewObjectIds` beside `previewPositions`: existing objects consumed as tool inputs are haloed via the painter's selection-halo pass (union with `selectedIds`), instead of getting a projected dot+ring marker. Position-only taps and not-yet-committed `IntersectionPoint`/`PointOnObject` snaps keep the marker (they aren't in the construction yet), split on `resolvePoint`'s `isNew` flag.
+- All five implementers report ids: `TwoLineTool`, `IntersectionTool`, `PointAndLineTool`, `TransformObjectTool`, `MultiPointTool`. The four single-purpose tools shed their tap-projection preview state (`_firstTap`/`_lineTap`/`_sourceTap`/`_mirrorTap`, `_sourceMarker`) — the halo replaced the only thing it fed.
+- 795 tests green (per-tool halo/marker split incl. transform param taps and a kept marker on an uncommitted intersection snap; painter no-throw + `shouldRepaint` on the new set; widget test: mid-collection tapped line haloed, zero markers), analyze clean, goldens byte-identical (no preview state in golden scenes). Web smoke on a fresh release build: **SMOKE PASS**, zero console errors (drive.js untouched — it never asserts on previews).
+
+**Next**
+- Phase 30 (Hide & Show/Hide tools) is the next unchecked phase; 31–39 queue behind it.
+- `main` is now 13 commits ahead of `origin/main` — push when convenient.
+
+**Open questions / gotchas**
+- `ToolInputPreview` is an `abstract interface class`, so `previewObjectIds` has no code-level default — any future preview tool must declare both getters (the analyzer enforces it). The "default empty" from PLAN lives at the canvas call site.
+- The Phase 29 halo shares color and alpha with the selection halo. Deliberate for v1 (PLAN says "selection-style"); if tool-input feedback ever needs to read differently from selection, split the paint in `GeometryPainter`'s halo pass, not the id sets.
+
 ## Session 37 — 2026-07-07
 
 **Done**

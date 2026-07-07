@@ -87,13 +87,11 @@ class TransformObjectTool implements ToolInputPreview {
 
   /// Curve-mode transformee (a supported source, see class doc).
   GeoObject? _source;
-  Vec2? _sourceTap;
 
   /// Reflect's axis when a non-transformable line was tapped *first*
   /// (Phase 15's either-order); a supported line tapped first sits in
   /// [_source] instead and only becomes the mirror if a point follows.
   GeoLine? _mirror;
-  Vec2? _mirrorTap;
 
   /// Parameter points after the transformee: reflect-about-point's and
   /// rotate's center, translate's vector tail and tip.
@@ -118,33 +116,24 @@ class TransformObjectTool implements ToolInputPreview {
     return null;
   }
 
+  /// Only *new* points get markers (they aren't in the construction yet
+  /// — a free transformee, or a param tap's glued/crossing snap); every
+  /// consumed existing object is haloed via [previewObjectIds].
   @override
   List<Vec2> get previewPositions => [
-        ?_point?.position,
-        if (_sourceTap case final tap?) ?_sourceMarker(tap),
-        if (_mirrorTap case final tap?) ?_mirror?.line?.project(tap),
-        for (final p in _params) ?p.point.position,
+        if (_pointIsNew) ?_point?.position,
+        for (final p in _params)
+          if (p.isNew) ?p.point.position,
       ];
 
-  /// The in-progress marker for the collected curve: the tap projected
-  /// onto the curve's current carrier (an angle marks its vertex), so it
-  /// rides along if the curve moves before the collection completes.
-  Vec2? _sourceMarker(Vec2 tap) {
-    switch (_source) {
-      case final GeoLine line:
-        return line.line?.project(tap);
-      case final GeoCircle circle:
-        final eq = circle.circle;
-        if (eq == null) {
-          return null;
-        }
-        return eq.pointAt(eq.angleAt(tap));
-      case final GeoAngle angle:
-        return angle.angle?.vertex;
-      default:
-        return null;
-    }
-  }
+  @override
+  List<String> get previewObjectIds => [
+        if (!_pointIsNew) ?_point?.id,
+        ?_source?.id,
+        ?_mirror?.id,
+        for (final p in _params)
+          if (!p.isNew) p.point.id,
+      ];
 
   @override
   ToolResult onInput(ToolInput input) {
@@ -175,13 +164,11 @@ class TransformObjectTool implements ToolInputPreview {
       }
       if (_isSupportedSource(object)) {
         _source = object;
-        _sourceTap = input.position;
         return const ToolAccepted();
       }
       if (transform == ObjectTransform.reflectAboutLine &&
           object is GeoLine) {
         _mirror = object;
-        _mirrorTap = input.position;
         return const ToolAccepted();
       }
       return const ToolIgnored();
@@ -386,9 +373,7 @@ class TransformObjectTool implements ToolInputPreview {
     _point = null;
     _pointIsNew = false;
     _source = null;
-    _sourceTap = null;
     _mirror = null;
-    _mirrorTap = null;
     _params.clear();
   }
 }

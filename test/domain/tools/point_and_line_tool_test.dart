@@ -117,17 +117,30 @@ void main() {
       );
     });
 
-    test('previewPositions: live point, line marker at the tap projection',
-        () {
+    test('preview: existing point and line are haloed, no markers', () {
       final p = FreePoint(id: 'p', position: const Vec2(1, 5));
       final tool = toolFor(PerpendicularLine.new);
       expect(tool.previewPositions, isEmpty);
-
-      tool.onInput(ToolInput(const Vec2(2, 3), hit: refLine));
-      expect(tool.previewPositions, [const Vec2(2, 0)],
-          reason: 'the tap projected onto the reference (y = 0)');
+      expect(tool.previewObjectIds, isEmpty);
 
       tool.onInput(ToolInput(p.position, hit: p));
+      expect(tool.previewObjectIds, ['p']);
+      expect(tool.previewPositions, isEmpty,
+          reason: 'an existing point is haloed, never marked');
+
+      tool.onInput(ToolInput(const Vec2(2, 3), hit: refLine));
+      expect(tool.previewObjectIds, isEmpty, reason: 'commit clears state');
+    });
+
+    test('preview: a new free point keeps the dot+ring marker', () {
+      final tool = toolFor(PerpendicularLine.new);
+
+      tool.onInput(const ToolInput(Vec2(1, 5)));
+      expect(tool.previewPositions, [const Vec2(1, 5)],
+          reason: 'the point is not in the construction yet');
+      expect(tool.previewObjectIds, isEmpty);
+
+      tool.onInput(ToolInput(const Vec2(2, 3), hit: refLine));
       expect(tool.previewPositions, isEmpty, reason: 'commit clears state');
     });
 
@@ -137,7 +150,7 @@ void main() {
 
       tool.onInput(ToolInput(const Vec2(2, 0), hit: refLine));
       tool.reset();
-      expect(tool.previewPositions, isEmpty);
+      expect(tool.previewObjectIds, isEmpty);
 
       // A fresh point + line still commits from scratch.
       tool.onInput(ToolInput(p.position, hit: p));

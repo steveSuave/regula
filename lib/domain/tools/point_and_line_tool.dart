@@ -36,15 +36,17 @@ class PointAndLineTool implements ToolInputPreview {
   GeoPoint? _point;
   bool _pointIsNew = false;
   GeoLine? _line;
-  Vec2? _lineTap;
 
-  /// The point marker tracks the point live; the line marker sits at the
-  /// tap's projection onto the line's *current* carrier, so it rides
-  /// along if the line moves before the point lands.
+  /// Only a *new* free point gets a marker (it isn't in the construction
+  /// yet); a consumed existing point or line is haloed instead.
   @override
-  List<Vec2> get previewPositions => [
-        ?_point?.position,
-        if (_lineTap case final tap?) ?_line?.line?.project(tap),
+  List<Vec2> get previewPositions =>
+      [if (_pointIsNew) ?_point?.position];
+
+  @override
+  List<String> get previewObjectIds => [
+        if (!_pointIsNew) ?_point?.id,
+        ?_line?.id,
       ];
 
   @override
@@ -57,7 +59,6 @@ class PointAndLineTool implements ToolInputPreview {
       case final GeoLine hit:
         if (_line != null) return const ToolIgnored();
         _line = hit;
-        _lineTap = input.position;
       case GeoCircle() || GeoAngle():
         return const ToolIgnored();
       case null:
@@ -87,6 +88,5 @@ class PointAndLineTool implements ToolInputPreview {
     _point = null;
     _pointIsNew = false;
     _line = null;
-    _lineTap = null;
   }
 }
