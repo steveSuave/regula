@@ -214,9 +214,9 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] Tests: header tap replaces selection with exactly that kind (hidden included); shift-tap and long-press union with a cross-kind selection; row-tap regressions untouched (780 tests green, analyze clean, web smoke SMOKE PASS on a fresh release build)
 
 ## Phase 27 — Rename clash resolution
-- [ ] Pure evicted-name helper in `domain/construction/object_naming.dart`: strip the wanted name's trailing digit run to get the base, first-free `base1`, `base2`, … (also ≠ the wanted name); unit tests (plain, trailing-digit, collision-with-wanted)
-- [ ] Inspector `_renameTo`: when another object holds the submitted name, one multi-id `ChangeAttributesCommand` (the `_setForAll` idiom — the command already batches ids, so no `MacroCommand`) — old holder → numbered variant, target → wanted name; rename-to-own-name stays a no-op
-- [ ] Tests: inspector widget test (rename to a taken name renames both objects, a single undo restores both); auto-allocator regressions untouched
+- [x] Pure evicted-name helper in `domain/construction/object_naming.dart`: strip the wanted name's trailing digit run to get the base, first-free `base1`, `base2`, … (also ≠ the wanted name); unit tests (plain, trailing-digit, collision-with-wanted) (landed as `evictedName(usedNames, wanted)`; an all-digit name keeps itself as the base — `12` → `121` — rather than degenerating to bare counters)
+- [x] Inspector `_renameTo`: when another object holds the submitted name, one multi-id `ChangeAttributesCommand` (the `_setForAll` idiom — the command already batches ids, so no `MacroCommand`) — old holder → numbered variant, target → wanted name; rename-to-own-name stays a no-op (eviction scans `construction.objects` for the first other holder; clearing a name to empty never evicts — unnamed objects may repeat)
+- [x] Tests: inspector widget test (rename to a taken name renames both objects, a single undo restores both); auto-allocator regressions untouched (5 new `evictedName` units + 2 widget tests incl. rename-to-own-name no-op; 787 tests green, analyze clean, web smoke SMOKE PASS on a fresh release build)
 
 ## Phase 28 — Label size styling
 - [ ] `ObjectAttributes.labelFontSize` (double, default 12 = the `label_layout.dart` constant) + freezed regen — additive field, **no codec change, no version bump** (`dashPeriod`/`angleMarkerRadius` precedent)
