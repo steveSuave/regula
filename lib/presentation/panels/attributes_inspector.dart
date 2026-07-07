@@ -358,6 +358,7 @@ const _palette = <(String, int?)>[
   ('Green', 0xFF43A047),
   ('Blue', 0xFF1E88E5),
   ('Purple', 0xFF8E24AA),
+  ('Gray', 0xFF616161),
 ];
 
 /// The selection's color as a row of tappable swatches.
