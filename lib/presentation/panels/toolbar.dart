@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/object_ids.dart';
 import '../../application/providers/tool_provider.dart';
 import '../../domain/construction/geo_object.dart';
-import '../../domain/construction/objects/angle_bisector_line.dart';
 import '../../domain/construction/objects/arc.dart';
 import '../../domain/construction/objects/centroid.dart';
 import '../../domain/construction/objects/circle_center_point.dart';
@@ -25,6 +24,7 @@ import '../../domain/construction/objects/segment.dart';
 import '../../domain/construction/objects/segment_ratio_point.dart';
 import '../../domain/construction/objects/three_point_circle.dart';
 import '../../domain/construction/objects/vertex_angle.dart';
+import '../../domain/tools/angle_bisector_tool.dart';
 import '../../domain/tools/angle_by_size_tool.dart';
 import '../../domain/tools/equilateral_triangle_macro_tool.dart';
 import '../../domain/tools/intersection_tool.dart';
@@ -79,9 +79,6 @@ GeoObject buildCircle(String id, GeoPoint a, GeoPoint b) =>
 GeoObject buildMidpoint(String id, GeoPoint a, GeoPoint b) =>
     Midpoint(id: id, point1: a, point2: b);
 
-GeoObject buildAngleBisector(String id, GeoPoint a, GeoPoint b, GeoPoint c) =>
-    AngleBisectorLine(id: id, arm1: a, vertex: b, arm2: c);
-
 GeoObject buildThreePointCircle(String id, GeoPoint a, GeoPoint b, GeoPoint c) =>
     ThreePointCircle(id: id, point1: a, point2: b, point3: c);
 
@@ -132,7 +129,7 @@ class GeometryToolbar extends ConsumerWidget {
             tool.build != buildCircle);
     final linesActive =
         tool is PointAndLineTool ||
-        (tool is ThreePointTool && tool.build == buildAngleBisector) ||
+        tool is AngleBisectorTool ||
         (tool is TwoPointTool && _lineBuilders.contains(tool.build));
     final circlesActive =
         (tool is TwoPointTool && tool.build == buildCircle) ||
@@ -251,8 +248,8 @@ class GeometryToolbar extends ConsumerWidget {
               AppAction.parallelTool,
             ),
             (
-              'Angle bisector (arm, vertex, arm)',
-              _threePoint(buildAngleBisector),
+              'Angle bisector (two lines, or arm/vertex/arm)',
+              _pick(() => AngleBisectorTool(newId: newObjectId)),
               AppAction.angleBisectorTool,
             ),
           ],
@@ -292,7 +289,7 @@ class GeometryToolbar extends ConsumerWidget {
           items: [
             (
               'Angle at vertex (arm, vertex, arm)',
-              _threePoint(buildVertexAngle),
+              _threePoint(buildVertexAngle, allowCurveTaps: false),
               AppAction.vertexAngleTool,
             ),
             (
@@ -436,8 +433,14 @@ ToolPick _pick(Tool Function() create) => () async => create();
 ToolPick _twoPoint(TwoPointBuilder build) =>
     _pick(() => TwoPointTool(newId: newObjectId, build: build));
 
-ToolPick _threePoint(ThreePointBuilder build) =>
-    _pick(() => ThreePointTool(newId: newObjectId, build: build));
+ToolPick _threePoint(ThreePointBuilder build, {bool allowCurveTaps = true}) =>
+    _pick(
+      () => ThreePointTool(
+        newId: newObjectId,
+        build: build,
+        allowCurveTaps: allowCurveTaps,
+      ),
+    );
 
 ToolPick _center(TriangleCenterBuilder build) =>
     _pick(() => TriangleCenterTool(newId: newObjectId, buildCenter: build));

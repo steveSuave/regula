@@ -26,6 +26,7 @@ import '../../domain/construction/objects/segment.dart';
 import '../../domain/construction/objects/segment_ratio_point.dart';
 import '../../domain/construction/objects/three_point_circle.dart';
 import '../../domain/construction/objects/translated_point.dart';
+import '../../domain/construction/objects/two_line_bisector_line.dart';
 import '../../domain/construction/objects/vertex_angle.dart';
 import '../../domain/math/vec2.dart';
 import '../providers/viewport_provider.dart';
@@ -135,6 +136,10 @@ Map<String, dynamic> _encodeObject(GeoObject object) {
     PerpendicularLine() => ('PerpendicularLine', const {}),
     ParallelLine() => ('ParallelLine', const {}),
     AngleBisectorLine() => ('AngleBisectorLine', const {}),
+    TwoLineBisectorLine(:final branch) => (
+        'TwoLineBisectorLine',
+        {'branch': branch}
+      ),
     CircleCenterPoint() => ('CircleCenterPoint', const {}),
     ThreePointCircle() => ('ThreePointCircle', const {}),
     CompassCircle() => ('CompassCircle', const {}),
@@ -307,6 +312,13 @@ GeoObject _decodeObject(Map<String, dynamic> json, Construction construction) {
         arm1: point(0),
         vertex: point(1),
         arm2: point(2),
+        attributes: attributes,
+      ),
+    'TwoLineBisectorLine' => TwoLineBisectorLine(
+        id: id,
+        line1: line(0),
+        line2: line(1),
+        branch: _intParam(id, params, 'branch'),
         attributes: attributes,
       ),
     'CircleCenterPoint' => CircleCenterPoint(

@@ -4,6 +4,8 @@ import 'package:regula/domain/commands/macro_command.dart';
 import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/objects/angle_bisector_line.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/line_through_two_points.dart';
+import 'package:regula/domain/construction/objects/vertex_angle.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/tools/three_point_tool.dart';
 import 'package:regula/domain/tools/tool.dart';
@@ -56,6 +58,39 @@ void main() {
       result.command.undo(construction);
       expect(construction.isEmpty, isTrue,
           reason: 'the whole step is one undo unit');
+    });
+
+    test('allowCurveTaps: false refuses curve-flavored taps (Phase 29b)', () {
+      final a = FreePoint(id: 'a', position: const Vec2(5, 0));
+      final v = FreePoint(id: 'v', position: const Vec2(0, 0));
+      final b = FreePoint(id: 'b', position: const Vec2(0, 5));
+      final line = LineThroughTwoPoints(id: 'l', point1: a, point2: v);
+      final tool = ThreePointTool(
+        newId: () => 'n${nextId++}',
+        build: (id, p, q, r) =>
+            VertexAngle(id: id, arm1: p, vertex: q, arm2: r),
+        allowCurveTaps: false,
+      );
+
+      expect(
+        tool.onInput(ToolInput(const Vec2(2, 0.1), hit: line)),
+        isA<ToolIgnored>(),
+        reason: 'no PointOnObject glued to the tapped line',
+      );
+      expect(
+        tool.onInput(const ToolInput(Vec2(2, 0.1), hit: null, extraHits: [])),
+        isA<ToolAccepted>(),
+        reason: 'a truly empty tap still drops a free point',
+      );
+      tool.reset();
+
+      // A point on top of a line still collects — points outrank curves.
+      expect(
+        tool.onInput(ToolInput(a.position, hit: a, extraHits: [line])),
+        isA<ToolAccepted>(),
+      );
+      expect(tool.onInput(ToolInput(v.position, hit: v)), isA<ToolAccepted>());
+      expect(tool.onInput(ToolInput(b.position, hit: b)), isA<ToolCommitted>());
     });
   });
 }

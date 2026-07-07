@@ -1,3 +1,4 @@
+import 'intersections.dart';
 import 'line_eq.dart';
 import 'vec2.dart';
 
@@ -22,4 +23,26 @@ LineEq? angleBisector(Vec2 arm1, Vec2 vertex, Vec2 arm2) {
   final direction =
       sum.normSquared >= diff.normSquared ? sum : diff.perpendicular;
   return LineEq.pointDirection(vertex, direction);
+}
+
+/// One of the two bisectors of the angle between [line1] and [line2] —
+/// they form a perpendicular pair through the intersection. [branch] 0
+/// bisects along `d̂1 + d̂2` (the lines' unit directions), 1 along
+/// `d̂1 − d̂2`.
+///
+/// Null when the lines are parallel — no unique intersection, no wedge.
+/// That gate also keeps both direction sums well away from zero: `d̂1 ±
+/// d̂2` only vanishes when the directions (anti-)align, which *is*
+/// parallelism.
+LineEq? twoLineBisector(LineEq line1, LineEq line2, int branch) {
+  final crossing = intersectLineLine(line1, line2);
+  if (crossing.isEmpty) {
+    return null;
+  }
+  final d1 = line1.direction;
+  final d2 = line2.direction;
+  return LineEq.pointDirection(
+    crossing.single,
+    branch == 0 ? d1 + d2 : d1 - d2,
+  );
 }
