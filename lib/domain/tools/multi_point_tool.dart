@@ -26,10 +26,17 @@ import 'tool.dart';
 /// In-progress input is exposed for marker rendering via
 /// [ToolInputPreview] (and, typed, via [collectedVertices]).
 abstract class MultiPointTool implements ToolInputPreview {
-  MultiPointTool({required this.newId});
+  MultiPointTool({required this.newId, this.allowCurveTaps = true});
 
   /// Produces a fresh unique object id per call (see `PointTool.newId`).
   final String Function() newId;
+
+  /// Whether a tap on (or within threshold of) a curve may resolve
+  /// through the ladder's glue/crossing rungs. False for the angle tools
+  /// (Phase 29b): their by-product `PointOnObject`s outlive the gesture
+  /// and read as fake points, so such taps are refused outright — only
+  /// existing points and truly empty canvas collect.
+  final bool allowCurveTaps;
 
   /// How many point inputs [buildObjects] needs.
   int get pointCount;
@@ -76,13 +83,19 @@ abstract class MultiPointTool implements ToolInputPreview {
   /// Turns [input] into the next collected vertex via [resolvePoint] —
   /// the tapped existing point, or a new private point (free, glued, or
   /// intersection) — and records it. Returns null (recording nothing)
-  /// when the input is unusable: an already-collected point.
+  /// when the input is unusable: an already-collected point, or a
+  /// curve-flavored tap while [allowCurveTaps] is off.
   ///
   /// Subclass hook: [onInput] is collect + commit-when-full; a tool
   /// whose collection ends with a non-point input (the trapezium's
   /// position-only fourth tap) overrides [onInput] and calls this and
   /// [commitCollected] itself.
   GeoPoint? collectVertex(ToolInput input) {
+    if (!allowCurveTaps &&
+        input.hit is! GeoPoint &&
+        input.hits.any((o) => o is GeoLine || o is GeoCircle)) {
+      return null;
+    }
     final vertex = resolvePoint(input, newId);
     if (!vertex.isNew &&
         _collected.any((v) => identical(v.point, vertex.point))) {
