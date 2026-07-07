@@ -6,6 +6,22 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 37 — 2026-07-07
+
+**Done**
+- **Phase 28 (label size styling) complete** on `phase-28-label-size` (3 commits), merged to `main`.
+- `ObjectAttributes.labelFontSize` (default 12.0) — additive, no codec change, no version bump. The old `label_layout.dart` top-level constant is deleted; both `GeometryPainter._drawLabel` and the shared `labelScreenRect` now read the per-object attribute, so paint and label-drag hit rect stay in lockstep.
+- Inspector "Label size" `_PresetSelector` row `S`/`M`/`L`/`XL` → 9/12/16/22. Since `labelAnchor` is total over kinds, every object is labelable — the row targets the *whole* selection (no slice) and always shows.
+- 789 tests green (label hit-rect grows at size 22 with an unchanged top-left; inspector row = one command over a point + segment, single undo restores both; codec kitchen-sink segment carries `labelFontSize: 16`), analyze clean, goldens byte-identical (default = old constant). Web smoke on a fresh release build: **SMOKE PASS**, zero console errors (drive.js untouched — it styles no labels).
+
+**Next**
+- Phase 29 (tool-input highlighting — halo existing objects instead of fake point markers) is the next unchecked phase; 30–39 queue behind it.
+- `main` is now 9 commits ahead of `origin/main` — push when convenient.
+
+**Open questions / gotchas**
+- The pre-existing fill-checkbox inspector test needed `ensureVisible` after its `scrollUntilVisible`: the new label-size row pushed the Fill tile's center off-screen, and `scrollUntilVisible` stops as soon as the widget is *built*, not centered. Any future row insertion above Fill may bite the same way elsewhere.
+- The stale `python3 -m http.server 8321` (running since Session 32) was reused for the smoke — files are read per request, so the fresh build is what got tested.
+
 ## Session 36 — 2026-07-07
 
 **Done**
