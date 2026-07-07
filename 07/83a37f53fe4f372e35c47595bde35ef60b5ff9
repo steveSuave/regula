@@ -1,0 +1,26 @@
+lib/domain/construction/object_naming.dart
+  s_f3eff8d4078187::t_9db7130202e7c6 32-50
+test/domain/construction/object_naming_test.dart
+  s_f3eff8d4078187::t_3b167257b5e8c9 71-85,88-98
+  s_f3eff8d4078187::t_a8a46c1b9f4434 86-87
+docs/TODO.md
+  s_f3eff8d4078187::t_39c0432a061421 218
+docs/PLAN.md
+  s_f3eff8d4078187::t_7c906fd7924f8e 55,110
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "0783a37f53fe4f372e35c47595bde35ef60b5ff9",
+  "prompts": {},
+  "sessions": {
+    "s_f3eff8d4078187": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c5fc0bd6-15fb-41de-808f-c26926145f07",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
