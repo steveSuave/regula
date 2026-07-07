@@ -132,6 +132,9 @@ void main() {
           snapThreshold: 1,
         ),
       );
+      expect(tool.previewPositions, hasLength(1),
+          reason: 'a not-yet-committed intersection snap keeps its marker');
+      expect(tool.previewObjectIds, isEmpty);
       final result =
           tool.onInput(ToolInput(a.position, hit: a)) as ToolCommitted;
 
@@ -153,6 +156,21 @@ void main() {
 
       tool.onInput(const ToolInput(Vec2(4, 5)));
       expect(tool.previewPositions, isEmpty);
+    });
+
+    test('a reused existing point is haloed instead of marked', () {
+      final a = FreePoint(id: 'a', position: const Vec2(0, 0));
+      final tool = toolFor(
+        (id, p, q) => Midpoint(id: id, point1: p, point2: q),
+      );
+
+      tool.onInput(ToolInput(a.position, hit: a));
+      expect(tool.previewObjectIds, ['a']);
+      expect(tool.previewPositions, isEmpty,
+          reason: 'an existing point is haloed, never marked');
+
+      tool.onInput(const ToolInput(Vec2(4, 5)));
+      expect(tool.previewObjectIds, isEmpty, reason: 'commit clears state');
     });
   });
 }

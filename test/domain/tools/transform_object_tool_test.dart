@@ -486,6 +486,7 @@ void main() {
         isA<ToolIgnored>(),
       );
       expect(rotate.previewPositions, isEmpty);
+      expect(rotate.previewObjectIds, isEmpty);
 
       final reflect = TransformObjectTool.reflectAboutLine(newId: newId);
       expect(
@@ -563,20 +564,21 @@ void main() {
           reason: 'the shared arm point images once: 2 images + angle');
     });
 
-    test('previews: curve marker rides the carrier, reset clears all slots',
-        () {
+    test('previews: collected curve is haloed, reset clears all slots', () {
       final a = FreePoint(id: 'a', position: const Vec2(1, 1));
       final b = FreePoint(id: 'b', position: const Vec2(3, 1));
       final seg = Segment(id: 's', point1: a, point2: b);
       final tool = TransformObjectTool.rotate(newId: newId, angle: 1);
       expect(tool.previewPositions, isEmpty);
+      expect(tool.previewObjectIds, isEmpty);
 
       tool.onInput(ToolInput(const Vec2(2, 5), hit: seg));
-      expect(tool.previewPositions, [const Vec2(2, 1)],
-          reason: 'the tap projected onto the carrier (y = 1)');
+      expect(tool.previewObjectIds, ['s']);
+      expect(tool.previewPositions, isEmpty,
+          reason: 'an existing curve is haloed, never marked');
 
       tool.reset();
-      expect(tool.previewPositions, isEmpty);
+      expect(tool.previewObjectIds, isEmpty);
 
       // A fresh collection still commits from scratch.
       tool.onInput(ToolInput(const Vec2(2, 1), hit: seg));
@@ -584,6 +586,26 @@ void main() {
         tool.onInput(const ToolInput(Vec2(0, 0))),
         isA<ToolCommitted>(),
       );
+    });
+
+    test('previews: existing transformee and param points are haloed, '
+        'new ones marked', () {
+      final p = FreePoint(id: 'p', position: const Vec2(2, 1));
+      final c = FreePoint(id: 'c', position: const Vec2(0, 0));
+      final existing = TransformObjectTool.translate(newId: newId);
+
+      existing.onInput(ToolInput(p.position, hit: p));
+      existing.onInput(ToolInput(c.position, hit: c));
+      expect(existing.previewObjectIds, ['p', 'c']);
+      expect(existing.previewPositions, isEmpty);
+
+      final fresh = TransformObjectTool.translate(newId: newId);
+      fresh.onInput(const ToolInput(Vec2(2, 1)));
+      fresh.onInput(const ToolInput(Vec2(0, 0)));
+      expect(fresh.previewPositions,
+          [const Vec2(2, 1), const Vec2(0, 0)],
+          reason: 'new free points are not in the construction yet');
+      expect(fresh.previewObjectIds, isEmpty);
     });
   });
 }
