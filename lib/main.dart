@@ -27,6 +27,7 @@ import 'domain/construction/objects/orthocenter.dart';
 import 'domain/construction/objects/parallel_line.dart';
 import 'domain/construction/objects/perpendicular_line.dart';
 import 'domain/math/vec2.dart';
+import 'domain/tools/angle_bisector_tool.dart';
 import 'domain/tools/angle_by_size_tool.dart';
 import 'domain/tools/equilateral_triangle_macro_tool.dart';
 import 'domain/tools/intersection_tool.dart';
@@ -528,12 +529,14 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
       case AppAction.intersectionTool:
         tools.activate(IntersectionTool(newId: newObjectId));
       case AppAction.angleBisectorTool:
-        tools.activate(
-          ThreePointTool(newId: newObjectId, build: buildAngleBisector),
-        );
+        tools.activate(AngleBisectorTool(newId: newObjectId));
       case AppAction.vertexAngleTool:
         tools.activate(
-          ThreePointTool(newId: newObjectId, build: buildVertexAngle),
+          ThreePointTool(
+            newId: newObjectId,
+            build: buildVertexAngle,
+            allowCurveTaps: false,
+          ),
         );
       case AppAction.lineAngleTool:
         tools.activate(TwoLineTool(newId: newObjectId, build: buildLineAngle));

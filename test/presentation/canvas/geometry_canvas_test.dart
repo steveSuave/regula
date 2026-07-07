@@ -9,6 +9,7 @@ import 'package:regula/application/providers/construction_provider.dart';
 import 'package:regula/application/providers/selection_provider.dart';
 import 'package:regula/application/providers/tool_provider.dart';
 import 'package:regula/application/providers/viewport_provider.dart';
+import 'package:regula/domain/construction/geo_object.dart';
 import 'package:regula/domain/construction/object_attributes.dart';
 import 'package:regula/domain/construction/objects/arc.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
@@ -21,6 +22,7 @@ import 'package:regula/domain/construction/objects/midpoint.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
 import 'package:regula/domain/construction/objects/reflected_point.dart';
 import 'package:regula/domain/construction/objects/sector.dart';
+import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/construction/objects/segment_ratio_point.dart';
 import 'package:regula/domain/construction/objects/three_point_circle.dart';
 import 'package:regula/domain/construction/objects/vertex_angle.dart';
@@ -31,6 +33,7 @@ import 'package:regula/main.dart';
 import 'package:regula/presentation/canvas/canvas_viewport.dart';
 import 'package:regula/presentation/canvas/geometry_canvas.dart';
 import 'package:regula/presentation/canvas/geometry_painter.dart';
+import 'package:regula/presentation/panels/object_kind_label.dart';
 
 /// End-to-end tool flow: activate the point tool, tap the canvas, see
 /// free points appear in the construction, undo/redo them. This is the
@@ -488,7 +491,7 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.timeline));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Angle bisector (arm, vertex, arm)'));
+    await tester.tap(find.text('Angle bisector (two lines, or arm/vertex/arm)'));
     await tester.pumpAndSettle();
 
     await tester.tapAt(origin + const Offset(300, 100)); // arm
@@ -503,6 +506,48 @@ void main() {
     await tester.tap(find.byIcon(Icons.undo));
     await tester.pump();
     expect(objectCount(), 0);
+  });
+
+  testWidgets('angle bisector via two segment taps: one object, no points',
+      (tester) async {
+    await pumpEditor(tester);
+    final construction = container.read(constructionProvider).construction;
+    // Two segments meeting at (100, -100) (screen y 100), like an angle
+    // drawn earlier: one going right, one going up.
+    final v = FreePoint(id: 'v', position: const Vec2(100, -100));
+    final a = FreePoint(id: 'a', position: const Vec2(300, -100));
+    final b = FreePoint(id: 'b', position: const Vec2(100, -300));
+    construction
+      ..add(v)
+      ..add(a)
+      ..add(b)
+      ..add(Segment(id: 's1', point1: v, point2: a))
+      ..add(Segment(id: 's2', point1: v, point2: b));
+    await tester.pump();
+
+    await tester.tap(find.byIcon(Icons.timeline));
+    await tester.pumpAndSettle();
+    await tester
+        .tap(find.text('Angle bisector (two lines, or arm/vertex/arm)'));
+    await tester.pumpAndSettle();
+
+    // Mid-segment taps, away from every endpoint.
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+    await tester.tapAt(origin + const Offset(200, 100));
+    await tester.pump();
+    expect(objectCount(), 5, reason: 'the first line fills a slot only');
+    await tester.tapAt(origin + const Offset(100, 200));
+    await tester.pump();
+
+    expect(objectCount(), 6, reason: 'exactly the bisector — no points');
+    final bisector = construction.objects.last;
+    expect(objectKindLabel(bisector), 'Angle bisector');
+    expect(construction.objects.whereType<GeoPoint>().length, 3,
+        reason: 'no glued by-product points on the segments');
+
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(objectCount(), 5);
   });
 
   testWidgets(

@@ -341,7 +341,10 @@ void main() {
     expect(find.text('S'), findsOneWidget);
     expect(find.text('Perpendicular line'), findsOneWidget);
     expect(find.text('T'), findsOneWidget);
-    expect(find.text('Angle bisector (arm, vertex, arm)'), findsOneWidget);
+    expect(
+      find.text('Angle bisector (two lines, or arm/vertex/arm)'),
+      findsOneWidget,
+    );
     expect(find.text('B'), findsOneWidget);
   });
 }
