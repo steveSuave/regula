@@ -16,7 +16,11 @@ typedef ThreePointBuilder = GeoObject Function(
 /// the three-point circle and arc). All collection behaviour, preview
 /// markers and the single-undo-unit commit come from `MultiPointTool`.
 class ThreePointTool extends MultiPointTool {
-  ThreePointTool({required super.newId, required this.build});
+  ThreePointTool({
+    required super.newId,
+    required this.build,
+    super.allowCurveTaps,
+  });
 
   final ThreePointBuilder build;
 

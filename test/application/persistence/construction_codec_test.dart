@@ -31,6 +31,7 @@ import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/construction/objects/segment_ratio_point.dart';
 import 'package:regula/domain/construction/objects/three_point_circle.dart';
 import 'package:regula/domain/construction/objects/translated_point.dart';
+import 'package:regula/domain/construction/objects/two_line_bisector_line.dart';
 import 'package:regula/domain/construction/objects/vertex_angle.dart';
 import 'package:regula/domain/math/vec2.dart';
 
@@ -89,6 +90,7 @@ Construction buildKitchenSink() {
     ..add(ParallelLine(id: 'par', through: c, reference: lineAb))
     ..add(AngleBisectorLine(id: 'bis', arm1: a, vertex: b, arm2: c))
     ..add(circle)
+    ..add(TwoLineBisectorLine(id: 'llbis', line1: lineAb, line2: perp, branch: 1))
     ..add(ThreePointCircle(id: 'tpc', point1: a, point2: b, point3: c))
     ..add(
       CompassCircle(id: 'comp', radiusPoint1: a, radiusPoint2: b, center: c),
