@@ -1,0 +1,50 @@
+test/presentation/shortcuts/editor_shortcuts_test.dart
+  s_18f3ade09c0147::t_a81981830f9e93 19
+  s_18f3ade09c0147::t_04dafd60208afc 98-102
+  s_18f3ade09c0147::t_da334603f4f1e6 103-104
+test/application/persistence/construction_codec_test.dart
+  s_18f3ade09c0147::t_b6a918bd23a579 34
+  s_18f3ade09c0147::t_da54a6622ce39f 93
+lib/presentation/panels/object_kind_label.dart
+  s_18f3ade09c0147::t_22a9b945c23ddf 44
+  s_18f3ade09c0147::t_a19e79b2bb43e9 19
+test/presentation/panels/toolbar_test.dart
+  s_18f3ade09c0147::t_d7bdd591fac99d 344-347
+lib/presentation/panels/toolbar.dart
+  s_18f3ade09c0147::t_bc33553fee5e19 27
+  s_18f3ade09c0147::t_87e24b1d5c8c9a 436-443
+  s_18f3ade09c0147::t_55a89fbf6a8e2b 251-252
+  s_18f3ade09c0147::t_59d92f411cd3e4 292
+  s_18f3ade09c0147::t_8af1178e6e9a21 132
+test/presentation/canvas/geometry_canvas_test.dart
+  s_18f3ade09c0147::t_c97226757d5f98 36
+  s_18f3ade09c0147::t_0a61858de16c4c 511-550
+  s_18f3ade09c0147::t_bfb01b8381419f 25
+  s_18f3ade09c0147::t_b46d3e7e47aa10 12
+  s_18f3ade09c0147::t_ea16e06c17db6e 494
+  s_18f3ade09c0147::t_c982e5519f1541 551-552
+lib/main.dart
+  s_18f3ade09c0147::t_930c2bbbcd35e7 532,535-539
+  s_18f3ade09c0147::t_3a8591e3bcde38 30
+lib/application/persistence/construction_codec.dart
+  s_18f3ade09c0147::t_5a0c749d512d69 139-142,323
+  s_18f3ade09c0147::t_2d9f18697896f0 29
+  s_18f3ade09c0147::t_9527b3c0b3e5d5 317-321
+  s_18f3ade09c0147::t_71e99b79e90c81 322
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "80c36c0b92093385b3f8bdbebb9ba65250b1fcd5",
+  "prompts": {},
+  "sessions": {
+    "s_18f3ade09c0147": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "17e7b547-2dad-4026-84f6-8a69eed99a94",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
