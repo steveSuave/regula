@@ -6,6 +6,23 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 38 (later) — 2026-07-07
+
+**Done**
+- **Phase 29b (angle tools without by-product points) complete** on `phase-29b-bisector-two-line` (3 commits incl. the PLAN/TODO spec), merged to `main`. User feedback on Phase 29: taps on curves in the bisector / vertex-angle tools still ran the Phase 20 ladder and permanently glued `PointOnObject`s — "fake points that remain".
+- New kind `TwoLineBisectorLine` (two `GeoLine` parents + `branch` 0/1) with `twoLineBisector` math beside `angleBisector`; `.near` bakes the branch from the two tap positions so the created line bisects the tapped wedge; undefined while parallel. Codec entry (`branch` param, no version bump), kind label "Angle bisector".
+- New two-mode `AngleBisectorTool`: line-first → two-line mode, zero points created; point/empty-first → the old three-point flow with curve taps *ignored*. Vertex angle keeps `ThreePointTool` but with new `MultiPointTool.allowCurveTaps: false` — curve-flavored taps refused (Angle-between-lines is the two-line path there). Other point-collecting tools deliberately keep the gluing ladder (it's a feature for segments/circles/macros).
+- 817 tests green, analyze clean, web smoke on a fresh release build: **SMOKE PASS**, zero console errors.
+
+**Next**
+- Phase 30 (Hide & Show/Hide tools) is the next unchecked phase; 31–39 queue behind it.
+- `main` is 18 commits ahead of `origin/main` — push when convenient.
+
+**Open questions / gotchas**
+- `TwoLineBisectorLine.branch` is carrier-relative like `IntersectionPoint.branchIndex`: deterministic, not continuous — dragging a parent through parallel swaps which wedge the branch means. Same documented wart, same acceptance.
+- Only the *tapped wedge's* bisector is created (GeoGebra creates both). Tap the other wedge for the perpendicular partner.
+- Vertex-angle taps near-but-not-on a line are also refused while `allowCurveTaps` is false (the hit set contains the curve) — a tap must be clear of every curve to drop a free point. Honest, but could surprise.
+
 ## Session 38 — 2026-07-07
 
 **Done**
