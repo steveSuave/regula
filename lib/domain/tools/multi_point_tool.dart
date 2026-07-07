@@ -51,9 +51,16 @@ abstract class MultiPointTool implements ToolInputPreview {
   List<GeoPoint> get collectedVertices =>
       List.unmodifiable([for (final v in _collected) v.point]);
 
+  /// New points (free, glued, intersection) aren't in the construction
+  /// yet, so they keep the dot+ring marker; reused existing points are
+  /// haloed via [previewObjectIds] instead.
   @override
   List<Vec2> get previewPositions =>
-      [for (final v in _collected) ?v.point.position];
+      [for (final v in _collected) if (v.isNew) ?v.point.position];
+
+  @override
+  List<String> get previewObjectIds =>
+      [for (final v in _collected) if (!v.isNew) v.point.id];
 
   @override
   ToolResult onInput(ToolInput input) {

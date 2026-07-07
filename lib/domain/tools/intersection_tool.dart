@@ -16,8 +16,7 @@ import 'tool.dart';
 ///
 /// Like `TwoLineTool`, nothing is created on other taps: both inputs must
 /// be existing curves, so empty-canvas, point and angle taps are ignored.
-/// The first collected curve shows a preview marker at the tap's
-/// projection onto its live carrier.
+/// The first collected curve is haloed via [previewObjectIds].
 class IntersectionTool implements ToolInputPreview {
   IntersectionTool({required this.newId});
 
@@ -26,12 +25,12 @@ class IntersectionTool implements ToolInputPreview {
 
   /// A [GeoLine] or [GeoCircle] (enforced in [onInput]).
   GeoObject? _first;
-  Vec2? _firstTap;
 
   @override
-  List<Vec2> get previewPositions => [
-    if (_firstTap case final tap?) ?_projectedOnCarrier(_first, tap),
-  ];
+  List<Vec2> get previewPositions => const [];
+
+  @override
+  List<String> get previewObjectIds => [?_first?.id];
 
   @override
   ToolResult onInput(ToolInput input) {
@@ -44,14 +43,12 @@ class IntersectionTool implements ToolInputPreview {
     final first = _first;
     if (first == null) {
       _first = hit;
-      _firstTap = input.position;
       return const ToolAccepted();
     }
     if (identical(first, hit)) {
       return const ToolIgnored();
     }
     _first = null;
-    _firstTap = null;
     return ToolCommitted(
       AddObjectCommand(
         IntersectionPoint(
@@ -69,14 +66,5 @@ class IntersectionTool implements ToolInputPreview {
   @override
   void reset() {
     _first = null;
-    _firstTap = null;
   }
 }
-
-/// [tap] projected onto [curve]'s live carrier (orthogonally for lines,
-/// radially for circles); null while the curve is undefined.
-Vec2? _projectedOnCarrier(GeoObject? curve, Vec2 tap) => switch (curve) {
-  GeoLine(:final line?) => line.project(tap),
-  GeoCircle(:final circle?) => circle.pointAt(circle.angleAt(tap)),
-  _ => null,
-};

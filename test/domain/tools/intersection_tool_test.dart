@@ -126,6 +126,7 @@ void main() {
       expect(t.onInput(ToolInput(Vec2.zero, hit: o)), isA<ToolIgnored>());
       expect(t.onInput(ToolInput(Vec2.zero, hit: angle)), isA<ToolIgnored>());
       expect(t.previewPositions, isEmpty);
+      expect(t.previewObjectIds, isEmpty);
     });
 
     test('the same curve twice is ignored, a segment carrier works', () {
@@ -143,21 +144,22 @@ void main() {
       expect(point.position!.closeTo(const Vec2(0, 4)), isTrue);
     });
 
-    test('previews the first tap projected onto a line carrier', () {
+    test('the first curve is reported for haloing, with no marker', () {
       final horizontal = LineThroughTwoPoints(id: 'h', point1: o, point2: x);
       final t = tool()
         ..onInput(ToolInput(const Vec2(2, 0.4), hit: horizontal));
 
-      expect(t.previewPositions, hasLength(1));
-      expect(t.previewPositions.single.closeTo(const Vec2(2, 0)), isTrue);
+      expect(t.previewObjectIds, ['h']);
+      expect(t.previewPositions, isEmpty,
+          reason: 'an existing curve is haloed, never marked');
     });
 
-    test('previews the first tap projected radially onto a circle', () {
+    test('a first-tapped circle is haloed too', () {
       final t = tool()
         ..onInput(ToolInput(const Vec2(0, 3.5), hit: circleAtOrigin()));
 
-      expect(t.previewPositions, hasLength(1));
-      expect(t.previewPositions.single.closeTo(const Vec2(0, 4)), isTrue);
+      expect(t.previewObjectIds, hasLength(1));
+      expect(t.previewPositions, isEmpty);
     });
 
     test('after committing the tool is ready for the next pair', () {
@@ -167,7 +169,7 @@ void main() {
         ..onInput(ToolInput(const Vec2(2, 0), hit: horizontal))
         ..onInput(ToolInput(const Vec2(0, 2), hit: vertical));
 
-      expect(t.previewPositions, isEmpty);
+      expect(t.previewObjectIds, isEmpty);
       expect(
         t.onInput(ToolInput(const Vec2(3, 0), hit: horizontal)),
         isA<ToolAccepted>(),
@@ -182,7 +184,7 @@ void main() {
         ..onInput(ToolInput(const Vec2(2, 0), hit: horizontal))
         ..reset();
 
-      expect(t.previewPositions, isEmpty);
+      expect(t.previewObjectIds, isEmpty);
       expect(
         t.onInput(ToolInput(const Vec2(0, 2), hit: vertical)),
         isA<ToolAccepted>(),

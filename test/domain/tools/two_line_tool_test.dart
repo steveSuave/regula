@@ -62,6 +62,7 @@ void main() {
         isA<ToolIgnored>(),
       );
       expect(t.previewPositions, isEmpty);
+      expect(t.previewObjectIds, isEmpty);
     });
 
     test('the same line twice is ignored, a segment carrier works', () {
@@ -80,12 +81,13 @@ void main() {
       );
     });
 
-    test('the first line previews the tap projected onto its carrier', () {
+    test('the first line is reported for haloing, with no marker', () {
       final t = tool();
       t.onInput(ToolInput(const Vec2(2, 0.4), hit: horizontal));
 
-      expect(t.previewPositions, hasLength(1));
-      expect(t.previewPositions.single.closeTo(const Vec2(2, 0)), isTrue);
+      expect(t.previewObjectIds, ['h']);
+      expect(t.previewPositions, isEmpty,
+          reason: 'an existing line is haloed, never marked');
     });
 
     test('reset clears the collected line', () {
@@ -93,7 +95,7 @@ void main() {
         ..onInput(ToolInput(const Vec2(2, 0), hit: horizontal))
         ..reset();
 
-      expect(t.previewPositions, isEmpty);
+      expect(t.previewObjectIds, isEmpty);
       expect(
         t.onInput(ToolInput(const Vec2(0, 2), hit: vertical)),
         isA<ToolAccepted>(),
