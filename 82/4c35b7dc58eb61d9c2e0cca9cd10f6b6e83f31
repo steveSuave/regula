@@ -1,0 +1,44 @@
+test/domain/math/angle_bisector_test.dart
+  s_18f3ade09c0147::t_8899a62a3bc52b 92-136,139-151
+  s_18f3ade09c0147::t_192ac4228ae824 137-138
+  s_18f3ade09c0147::t_7c170f08d1abf6 3
+lib/domain/tools/angle_bisector_tool.dart
+  s_18f3ade09c0147::t_691df15f98b31b 1-52,54-131
+  s_18f3ade09c0147::t_9f6d737ef820f8 53
+test/domain/tools/angle_bisector_tool_test.dart
+  s_18f3ade09c0147::t_f39c61d9ea6801 1-182
+lib/domain/tools/multi_point_tool.dart
+  s_18f3ade09c0147::t_23e5fd45442f69 29,34-39
+  s_18f3ade09c0147::t_9a7df44fabd66a 94-98
+  s_18f3ade09c0147::t_1746af76da9a80 86-87
+  s_18f3ade09c0147::t_b8210971941aa7 40
+lib/domain/tools/three_point_tool.dart
+  s_18f3ade09c0147::t_d3ef01e7d0a2f9 19-23
+lib/domain/math/angle_bisector.dart
+  s_18f3ade09c0147::t_1840d9ae856fd7 27-48
+  s_18f3ade09c0147::t_9599ea0d70e901 1
+lib/domain/construction/objects/two_line_bisector_line.dart
+  s_18f3ade09c0147::t_54977e39141715 1-93
+test/domain/tools/three_point_tool_test.dart
+  s_18f3ade09c0147::t_4b6eaec0fdefee 62-94
+  s_18f3ade09c0147::t_082e61552469c0 7-8
+test/domain/construction/objects/two_line_bisector_line_test.dart
+  s_18f3ade09c0147::t_0073c740d3a879 147-149,157-161
+  s_18f3ade09c0147::t_856d9ba54b9980 1-146,150-156,162-164
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "824c35b7dc58eb61d9c2e0cca9cd10f6b6e83f31",
+  "prompts": {},
+  "sessions": {
+    "s_18f3ade09c0147": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "17e7b547-2dad-4026-84f6-8a69eed99a94",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
