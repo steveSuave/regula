@@ -16,6 +16,7 @@ import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/tools/angle_bisector_tool.dart';
 import 'package:regula/domain/tools/angle_by_size_tool.dart';
 import 'package:regula/domain/tools/equilateral_triangle_macro_tool.dart';
 import 'package:regula/domain/tools/intersection_tool.dart';
@@ -92,6 +93,13 @@ void main() {
 
     await tester.sendKeyEvent(LogicalKeyboardKey.keyV);
     expect(activeTool(), isNull);
+  });
+
+  testWidgets('B activates the two-mode angle bisector tool',
+      (tester) async {
+    await pumpEditor(tester);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyB);
+    expect(activeTool(), isA<AngleBisectorTool>());
   });
 
   testWidgets('S builds segments end to end', (tester) async {
