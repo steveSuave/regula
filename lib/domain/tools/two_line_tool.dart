@@ -16,8 +16,7 @@ typedef TwoLineBuilder = GeoObject Function(
 ///
 /// Unlike `MultiPointTool`, nothing is created on other taps: both inputs
 /// must be existing lines, so empty-canvas, point and circle taps are
-/// ignored. The first collected line shows a preview marker at the tap's
-/// projection onto its live carrier, matching `PointAndLineTool`.
+/// ignored. The first collected line is haloed via [previewObjectIds].
 class TwoLineTool implements ToolInputPreview {
   TwoLineTool({required this.newId, required this.build});
 
@@ -27,11 +26,12 @@ class TwoLineTool implements ToolInputPreview {
   final TwoLineBuilder build;
 
   GeoLine? _first;
-  Vec2? _firstTap;
 
   @override
-  List<Vec2> get previewPositions =>
-      [if (_firstTap case final tap?) ?_first?.line?.project(tap)];
+  List<Vec2> get previewPositions => const [];
+
+  @override
+  List<String> get previewObjectIds => [?_first?.id];
 
   @override
   ToolResult onInput(ToolInput input) {
@@ -42,20 +42,17 @@ class TwoLineTool implements ToolInputPreview {
     final first = _first;
     if (first == null) {
       _first = hit;
-      _firstTap = input.position;
       return const ToolAccepted();
     }
     if (identical(first, hit)) {
       return const ToolIgnored();
     }
     _first = null;
-    _firstTap = null;
     return ToolCommitted(AddObjectCommand(build(newId(), first, hit)));
   }
 
   @override
   void reset() {
     _first = null;
-    _firstTap = null;
   }
 }
