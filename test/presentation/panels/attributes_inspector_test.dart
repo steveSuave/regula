@@ -84,6 +84,59 @@ void main() {
         reason: 'the kind-only header appears only for unnamed objects');
   });
 
+  testWidgets('renaming to a taken name evicts the old holder, one undo '
+      'restores both', (tester) async {
+    await pumpEditor(tester);
+    final a = FreePoint(
+      id: 'a',
+      position: Vec2.zero,
+      attributes: const ObjectAttributes(name: 'A'),
+    );
+    final b = FreePoint(
+      id: 'b',
+      position: Vec2(1, 0),
+      attributes: const ObjectAttributes(name: 'B'),
+    );
+    final construction = container.read(constructionProvider).construction;
+    construction.add(a);
+    construction.add(b);
+    container.read(selectionProvider.notifier).select('b');
+    await tester.pump();
+
+    await tester.enterText(find.byType(TextField), 'A');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pump();
+    expect(b.attributes.name, 'A');
+    expect(a.attributes.name, 'A1', reason: 'the old holder is evicted');
+
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(b.attributes.name, 'B',
+        reason: 'both renames ride one command = one undo step');
+    expect(a.attributes.name, 'A');
+    expect(container.read(commandStackProvider).canUndo, isFalse);
+  });
+
+  testWidgets('renaming an object to its own name stays a no-op even when '
+      'clash resolution is live', (tester) async {
+    await pumpEditor(tester);
+    final a = FreePoint(
+      id: 'a',
+      position: Vec2.zero,
+      attributes: const ObjectAttributes(name: 'A'),
+    );
+    container.read(constructionProvider).construction.add(a);
+    container.read(selectionProvider.notifier).select('a');
+    await tester.pump();
+
+    await tester.enterText(find.byType(TextField), 'A');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pump();
+
+    expect(a.attributes.name, 'A');
+    expect(container.read(commandStackProvider).canUndo, isFalse);
+  });
+
   testWidgets('submitting an unchanged name adds nothing to the undo stack',
       (tester) async {
     await pumpEditor(tester);
