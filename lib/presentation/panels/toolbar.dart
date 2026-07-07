@@ -341,46 +341,6 @@ class GeometryToolbar extends ConsumerWidget {
           active: macrosActive,
           items: [
             (
-              'Square (two adjacent corners)',
-              _pick(() => SquareMacroTool(newId: newObjectId)),
-              AppAction.squareMacroTool,
-            ),
-            (
-              'Rectangle (two corners, then height)',
-              _pick(() => RectangleMacroTool(newId: newObjectId)),
-              AppAction.rectangleMacroTool,
-            ),
-            (
-              'Parallelogram (three corners)',
-              _pick(() => ParallelogramMacroTool(newId: newObjectId)),
-              AppAction.parallelogramMacroTool,
-            ),
-            (
-              'Rhombus (two corners, then direction)',
-              _pick(() => RhombusMacroTool(newId: newObjectId)),
-              AppAction.rhombusMacroTool,
-            ),
-            (
-              'Trapezium (three corners, then the 4th)',
-              _pick(() => TrapeziumMacroTool(newId: newObjectId)),
-              AppAction.trapeziumMacroTool,
-            ),
-            (
-              'Isosceles trapezium (base, then a top corner)',
-              _pick(() => IsoscelesTrapeziumMacroTool(newId: newObjectId)),
-              AppAction.isoscelesTrapeziumMacroTool,
-            ),
-            (
-              'Right trapezium (base, then the far corner)',
-              _pick(() => RightTrapeziumMacroTool(newId: newObjectId)),
-              AppAction.rightTrapeziumMacroTool,
-            ),
-            (
-              'Kite (apex, side corner, apex)',
-              _pick(() => KiteMacroTool(newId: newObjectId)),
-              AppAction.kiteMacroTool,
-            ),
-            (
               'Equilateral triangle (two corners)',
               _pick(() => EquilateralTriangleMacroTool(newId: newObjectId)),
               AppAction.equilateralTriangleMacroTool,
@@ -419,6 +379,46 @@ class GeometryToolbar extends ConsumerWidget {
                 ),
               ),
               AppAction.randomQuadrilateralStamp,
+            ),
+            (
+              'Square (two adjacent corners)',
+              _pick(() => SquareMacroTool(newId: newObjectId)),
+              AppAction.squareMacroTool,
+            ),
+            (
+              'Rectangle (two corners, then height)',
+              _pick(() => RectangleMacroTool(newId: newObjectId)),
+              AppAction.rectangleMacroTool,
+            ),
+            (
+              'Parallelogram (three corners)',
+              _pick(() => ParallelogramMacroTool(newId: newObjectId)),
+              AppAction.parallelogramMacroTool,
+            ),
+            (
+              'Rhombus (two corners, then direction)',
+              _pick(() => RhombusMacroTool(newId: newObjectId)),
+              AppAction.rhombusMacroTool,
+            ),
+            (
+              'Trapezium (three corners, then the 4th)',
+              _pick(() => TrapeziumMacroTool(newId: newObjectId)),
+              AppAction.trapeziumMacroTool,
+            ),
+            (
+              'Isosceles trapezium (base, then a top corner)',
+              _pick(() => IsoscelesTrapeziumMacroTool(newId: newObjectId)),
+              AppAction.isoscelesTrapeziumMacroTool,
+            ),
+            (
+              'Right trapezium (base, then the far corner)',
+              _pick(() => RightTrapeziumMacroTool(newId: newObjectId)),
+              AppAction.rightTrapeziumMacroTool,
+            ),
+            (
+              'Kite (apex, side corner, apex)',
+              _pick(() => KiteMacroTool(newId: newObjectId)),
+              AppAction.kiteMacroTool,
             ),
           ],
         ),

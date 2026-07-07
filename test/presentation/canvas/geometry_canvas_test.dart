@@ -334,7 +334,11 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.crop_square));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Trapezium (three corners, then the 4th)'));
+    final trapeziumItem =
+        find.text('Trapezium (three corners, then the 4th)');
+    await tester.ensureVisible(trapeziumItem);
+    await tester.pumpAndSettle();
+    await tester.tap(trapeziumItem);
     await tester.pumpAndSettle();
 
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
