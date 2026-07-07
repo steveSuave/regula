@@ -14,7 +14,6 @@ import '../../domain/math/vec2.dart';
 import 'canvas_viewport.dart';
 import 'dash_path.dart';
 import 'label_anchor.dart';
-import 'label_layout.dart';
 
 /// Paints the construction in insertion order (first added = bottom).
 ///
@@ -235,7 +234,10 @@ class GeometryPainter extends CustomPainter {
     final textPainter = TextPainter(
       text: TextSpan(
         text: object.attributes.name,
-        style: TextStyle(color: color, fontSize: labelFontSize),
+        style: TextStyle(
+          color: color,
+          fontSize: object.attributes.labelFontSize,
+        ),
       ),
       textDirection: TextDirection.ltr,
     )..layout();

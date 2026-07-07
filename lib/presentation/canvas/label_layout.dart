@@ -4,11 +4,6 @@ import '../../domain/construction/geo_object.dart';
 import 'canvas_viewport.dart';
 import 'label_anchor.dart';
 
-/// Label font size in logical pixels; like stroke widths, it does not
-/// scale with zoom. Shared with [GeometryPainter] so the hit rect below
-/// and the painted text can't drift apart.
-const double labelFontSize = 12;
-
 /// The screen rectangle [object]'s label occupies: the text laid out at
 /// `worldToScreen(labelAnchor) + (labelDx, labelDy)`. Null when the
 /// object paints no label (hidden, undefined, unnamed, or label-hidden)
@@ -22,10 +17,13 @@ Rect? labelScreenRect(GeoObject object, CanvasViewport viewport) {
       !object.isDefined) {
     return null;
   }
+  // Font size comes off the object (Phase 28); the painter's _drawLabel
+  // reads the same attribute so the hit rect and the painted text can't
+  // drift apart.
   final textPainter = TextPainter(
     text: TextSpan(
       text: attributes.name,
-      style: const TextStyle(fontSize: labelFontSize),
+      style: TextStyle(fontSize: attributes.labelFontSize),
     ),
     textDirection: TextDirection.ltr,
   )..layout();
