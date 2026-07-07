@@ -1,0 +1,32 @@
+lib/presentation/canvas/geometry_painter.dart
+  s_18f3ade09c0147::t_50f47f37354f24 413
+  s_18f3ade09c0147::t_2fa30011322a3c 95-96
+  s_18f3ade09c0147::t_3c9081a13b9c70 74-78
+  s_18f3ade09c0147::t_62cd381327b8eb 34
+test/presentation/canvas/geometry_canvas_test.dart
+  s_18f3ade09c0147::t_33b0b5c3c2d4b3 28,33
+  s_18f3ade09c0147::t_3b08e843498b7d 92-127
+  s_18f3ade09c0147::t_d2a58b66f8af4e 19
+test/presentation/canvas/geometry_painter_test.dart
+  s_18f3ade09c0147::t_5c511086586904 28,37
+  s_18f3ade09c0147::t_a1f190846db583 216-230
+  s_18f3ade09c0147::t_78593c36c196ca 154-165
+lib/presentation/canvas/geometry_canvas.dart
+  s_18f3ade09c0147::t_28ab462bfffd90 147-149
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "d5cd5e87b243dfb89d281ab5be011205138beae9",
+  "prompts": {},
+  "sessions": {
+    "s_18f3ade09c0147": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "17e7b547-2dad-4026-84f6-8a69eed99a94",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
