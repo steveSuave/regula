@@ -1,0 +1,21 @@
+lib/presentation/panels/attributes_inspector.dart
+  s_313b817e98f845::t_d2d840778b9e8c 538-545
+  s_313b817e98f845::t_49197fd2268c12 217-231
+  s_313b817e98f845::t_8e77e77a79d7a2 546-547
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "a5712062ab1a56ba29fff522b65a2026e3e9d791",
+  "prompts": {},
+  "sessions": {
+    "s_313b817e98f845": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "21109e56-bfe4-48f6-b64c-f57bce2f1f54",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
