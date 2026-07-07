@@ -214,6 +214,21 @@ class AttributesInspector extends ConsumerWidget {
                     ),
                   ),
                 ],
+                const SizedBox(height: 12),
+                _PresetSelector(
+                  key: const ValueKey('label-size'),
+                  label: 'Label size',
+                  presets: _labelSizePresets,
+                  values: [
+                    for (final object in objects)
+                      object.attributes.labelFontSize,
+                  ],
+                  onChanged: (size) => _setForAll(
+                    ref,
+                    objects,
+                    (attributes) => attributes.copyWith(labelFontSize: size),
+                  ),
+                ),
                 if (fillables.isNotEmpty) ...[
                   const SizedBox(height: 4),
                   _AttributeToggle(
@@ -518,6 +533,16 @@ const _radiusPresets = <(String, String, double)>[
   ('M', 'Medium', 20),
   ('L', 'Large', 28),
   ('XL', 'Extra large', 36),
+];
+
+/// The label font-size presets in logical pixels, same single-letter
+/// convention as [_dashPresets]. Every kind carries a label, so the row
+/// targets the whole selection.
+const _labelSizePresets = <(String, String, double)>[
+  ('S', 'Small', 9),
+  ('M', 'Medium', 12),
+  ('L', 'Large', 16),
+  ('XL', 'Extra large', 22),
 ];
 
 /// A labelled-segment preset row — the discrete-choice sibling of

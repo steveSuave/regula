@@ -397,6 +397,43 @@ void main() {
     expect(angle.attributes.angleMarkerRadius, 20.0);
   });
 
+  testWidgets('label-size selector: whole selection, one command, undo '
+      'restores the default', (tester) async {
+    await pumpEditor(tester);
+    final a = addPoint('a', Vec2.zero);
+    final b = addPoint('b', const Vec2(4, 0));
+    final s = Segment(id: 's', point1: a, point2: b);
+    container.read(constructionProvider).construction.add(s);
+
+    container.read(selectionProvider.notifier).selectMany(['a', 's']);
+    await tester.pump();
+    final labelSize = find.byKey(const ValueKey('label-size'));
+    await tester.scrollUntilVisible(
+      labelSize,
+      100,
+      scrollable: find.descendant(
+        of: find.byType(AttributesInspector),
+        matching: find.byType(Scrollable),
+      ),
+    );
+
+    // 'XL' is unique to this row today, but scope the tap anyway (the
+    // marker-radius row shares it when an angle is selected).
+    await tester
+        .tap(find.descendant(of: labelSize, matching: find.text('XL')));
+    await tester.pump();
+    expect(a.attributes.labelFontSize, 22.0);
+    expect(s.attributes.labelFontSize, 22.0,
+        reason: 'every kind carries a label — one command over all of it');
+
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(a.attributes.labelFontSize, 12.0);
+    expect(s.attributes.labelFontSize, 12.0);
+    expect(container.read(commandStackProvider).canUndo, isFalse,
+        reason: 'both updates rode a single command');
+  });
+
   testWidgets('fill checkbox: angles + sectors, tristate over a mixed '
       'selection, toggles fillAlpha null ↔ 0.25', (tester) async {
     await pumpEditor(tester);
@@ -431,6 +468,11 @@ void main() {
         matching: find.byType(Scrollable),
       ),
     );
+    // scrollUntilVisible stops once the tile is *built*, which can leave
+    // its center off-screen (the row list grew in Phase 28) — bring it
+    // fully in before tapping.
+    await tester.ensureVisible(fill);
+    await tester.pump();
     expect(tester.widget<CheckboxListTile>(fill).value, isNull,
         reason: 'one filled, one unfilled — the tristate dash');
 
