@@ -68,6 +68,34 @@ void main() {
     });
   });
 
+  group('evictedName', () {
+    test('plain name gets the first numbered variant', () {
+      expect(evictedName({'A'}, 'A'), 'A1');
+      expect(evictedName({'a', 'b'}, 'b'), 'b1');
+    });
+
+    test('trailing digits are stripped to find the base', () {
+      // The holder of A1 is being evicted: base is A, and A1 itself is
+      // skipped both as the wanted name and as a used one.
+      expect(evictedName({'A1'}, 'A1'), 'A2');
+      expect(evictedName({'B12'}, 'B12'), 'B1');
+    });
+
+    test('scans past used variants and the wanted name', () {
+      expect(evictedName({'A', 'A1', 'A2'}, 'A'), 'A3');
+      // A1 is used and A2 is the wanted name itself — both skipped.
+      expect(evictedName({'A1'}, 'A2'), 'A3');
+    });
+
+    test('an all-digit name keeps itself as the base', () {
+      expect(evictedName({'12'}, '12'), '121');
+    });
+
+    test('free-form manual names work like any base', () {
+      expect(evictedName({'center'}, 'center'), 'center1');
+    });
+  });
+
   group('angles', () {
     test('first angle is α, then β', () {
       expect(nextAutoName({}, angle), 'α');

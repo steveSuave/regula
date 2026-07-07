@@ -7,6 +7,7 @@ import '../../application/providers/selection_provider.dart';
 import '../../domain/commands/change_attributes_command.dart';
 import '../../domain/construction/geo_object.dart';
 import '../../domain/construction/object_attributes.dart';
+import '../../domain/construction/object_naming.dart';
 import '../../domain/construction/objects/sector.dart';
 import 'delete_selection.dart';
 import 'object_kind_label.dart';
@@ -269,17 +270,36 @@ class AttributesInspector extends ConsumerWidget {
   /// Commits a rename as one command; unchanged names (and objects that
   /// vanished between the field's build and its commit) do nothing, so
   /// tabbing through the field never pollutes the undo stack.
+  ///
+  /// Names stay unique (Phase 27): if another object already holds the
+  /// submitted name, it is evicted to the first free numbered variant
+  /// ([evictedName]) in the same command, so both renames are one undo
+  /// unit and the user's chosen name is never rejected.
   void _renameTo(WidgetRef ref, String id, String text) {
-    final object = ref.read(constructionProvider).construction.byId(id);
+    final construction = ref.read(constructionProvider).construction;
+    final object = construction.byId(id);
     final name = text.trim();
     if (object == null || object.attributes.name == name) {
       return;
     }
-    ref.read(commandStackProvider.notifier).execute(
-          ChangeAttributesCommand({
-            id: object.attributes.copyWith(name: name),
-          }),
-        );
+    final updates = {id: object.attributes.copyWith(name: name)};
+    if (name.isNotEmpty) {
+      final holder = construction.objects.cast<GeoObject?>().firstWhere(
+            (other) => other!.id != id && other.attributes.name == name,
+            orElse: () => null,
+          );
+      if (holder != null) {
+        final used = {
+          for (final other in construction.objects)
+            if (other.attributes.name.isNotEmpty) other.attributes.name,
+        };
+        updates[holder.id] =
+            holder.attributes.copyWith(name: evictedName(used, name));
+      }
+    }
+    ref
+        .read(commandStackProvider.notifier)
+        .execute(ChangeAttributesCommand(updates));
   }
 
   /// Applies [change] to every selected object in one command, so a
