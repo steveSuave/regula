@@ -144,6 +144,9 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
             selectedIds: ref.watch(selectionProvider),
             previewMarkers:
                 tool is ToolInputPreview ? tool.previewPositions : const [],
+            previewObjectIds: tool is ToolInputPreview
+                ? tool.previewObjectIds.toSet()
+                : const {},
             labelDragPreview: switch (_labelDrag) {
               null => null,
               final drag => (id: drag.id, offset: drag.offset),

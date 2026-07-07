@@ -31,6 +31,7 @@ class GeometryPainter extends CustomPainter {
     required this.selectionColor,
     this.selectedIds = const {},
     this.previewMarkers = const [],
+    this.previewObjectIds = const {},
     this.labelDragPreview,
   });
 
@@ -70,6 +71,11 @@ class GeometryPainter extends CustomPainter {
   /// `ToolInputPreview`), drawn as markers on top of the construction.
   final List<Vec2> previewMarkers;
 
+  /// Ids of existing objects the active tool has consumed as inputs
+  /// (see `ToolInputPreview.previewObjectIds`), haloed exactly like a
+  /// selection — the union with [selectedIds].
+  final Set<String> previewObjectIds;
+
   /// A label mid-drag: [offset] replaces the object's stored label
   /// offset for this frame only. The canvas holds the drag as widget
   /// state and commits one `ChangeAttributesCommand` at gesture end, so
@@ -86,7 +92,8 @@ class GeometryPainter extends CustomPainter {
       if (!object.attributes.visible || !object.isDefined) {
         continue;
       }
-      if (selectedIds.contains(object.id)) {
+      if (selectedIds.contains(object.id) ||
+          previewObjectIds.contains(object.id)) {
         final halo = Paint()
           ..color = selectionColor.withValues(alpha: _haloAlpha)
           ..strokeWidth = object.attributes.strokeWidth + _haloExtra
@@ -403,5 +410,6 @@ class GeometryPainter extends CustomPainter {
       oldDelegate.selectionColor != selectionColor ||
       !setEquals(oldDelegate.selectedIds, selectedIds) ||
       !listEquals(oldDelegate.previewMarkers, previewMarkers) ||
+      !setEquals(oldDelegate.previewObjectIds, previewObjectIds) ||
       oldDelegate.labelDragPreview != labelDragPreview;
 }

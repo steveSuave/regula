@@ -25,6 +25,7 @@ void main() {
     Construction construction, {
     int revision = 0,
     Set<String> selectedIds = const {},
+    Set<String> previewObjectIds = const {},
   }) =>
       GeometryPainter(
         construction: construction,
@@ -33,6 +34,7 @@ void main() {
         defaultColor: const Color(0xFF000000),
         selectionColor: const Color(0xFF0000FF),
         selectedIds: selectedIds,
+        previewObjectIds: previewObjectIds,
       );
 
   void paintOnce(GeometryPainter painter) {
@@ -149,6 +151,18 @@ void main() {
       paintOnce(painterFor(construction, selectedIds: everything));
     });
 
+    test('paints tool-input halos without throwing', () {
+      final construction = Construction();
+      final a = FreePoint(id: 'a', position: Vec2.zero);
+      final b = FreePoint(id: 'b', position: const Vec2(4, 0));
+      construction
+        ..add(a)
+        ..add(b)
+        ..add(Segment(id: 's', point1: a, point2: b));
+
+      paintOnce(painterFor(construction, previewObjectIds: const {'s', 'a'}));
+    });
+
     test('shouldRepaint keys on preview markers', () {
       final construction = Construction();
       GeometryPainter withMarkers(List<Vec2> markers) => GeometryPainter(
@@ -197,6 +211,21 @@ void main() {
         selectionColor: const Color(0xFF0000FF),
       );
       expect(panned.shouldRepaint(base), isTrue);
+    });
+
+    test('shouldRepaint keys on the preview-object-id set', () {
+      final construction = Construction()
+        ..add(FreePoint(id: 'a', position: Vec2.zero));
+
+      final base = painterFor(construction, previewObjectIds: const {'a'});
+      expect(
+        painterFor(construction, previewObjectIds: const {'a'})
+            .shouldRepaint(base),
+        isFalse,
+        reason: 'set equality, not identity — the canvas rebuilds sets',
+      );
+      expect(painterFor(construction).shouldRepaint(base), isTrue,
+          reason: 'the halo must clear on commit/reset');
     });
 
     test('shouldRepaint keys on the selected-id set', () {
