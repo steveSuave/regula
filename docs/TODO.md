@@ -215,7 +215,7 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 
 ## Phase 27 — Rename clash resolution
 - [ ] Pure evicted-name helper in `domain/construction/object_naming.dart`: strip the wanted name's trailing digit run to get the base, first-free `base1`, `base2`, … (also ≠ the wanted name); unit tests (plain, trailing-digit, collision-with-wanted)
-- [ ] Inspector `_renameTo`: when another object holds the submitted name, one `MacroCommand` of two `ChangeAttributesCommand`s — old holder → numbered variant, target → wanted name; rename-to-own-name stays a no-op
+- [ ] Inspector `_renameTo`: when another object holds the submitted name, one multi-id `ChangeAttributesCommand` (the `_setForAll` idiom — the command already batches ids, so no `MacroCommand`) — old holder → numbered variant, target → wanted name; rename-to-own-name stays a no-op
 - [ ] Tests: inspector widget test (rename to a taken name renames both objects, a single undo restores both); auto-allocator regressions untouched
 
 ## Phase 28 — Label size styling

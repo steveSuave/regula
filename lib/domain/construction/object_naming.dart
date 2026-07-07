@@ -29,6 +29,25 @@ String nextAutoName(Set<String> usedNames, GeoObject object) {
   }
 }
 
+/// The replacement name for an object evicted from [wanted] by a manual
+/// rename (Phase 27).
+///
+/// The wanted name's trailing digit run is stripped to get the base
+/// (`A1` → `A`, plain `A` → `A`), and the first of `base1`, `base2`, …
+/// that is neither in [usedNames] nor the wanted name itself is
+/// returned. An all-digit name keeps itself as the base (`12` → `121`)
+/// rather than degenerating to bare counters.
+String evictedName(Set<String> usedNames, String wanted) {
+  final stripped = wanted.replaceFirst(RegExp(r'\d+$'), '');
+  final base = stripped.isEmpty ? wanted : stripped;
+  for (var n = 1;; n++) {
+    final candidate = '$base$n';
+    if (candidate != wanted && !usedNames.contains(candidate)) {
+      return candidate;
+    }
+  }
+}
+
 const _upperLatin = [
   'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', //
   'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
