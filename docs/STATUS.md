@@ -6,6 +6,22 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 39 — 2026-07-08
+
+**Done**
+- **Phase 30 (Hide & Show/Hide tools) complete** on `phase-30-visibility-tool` (4 commits incl. a smoke-script repair), merged to `main`.
+- New stateless `VisibilityTool` with `hide` / `showHide` named constructors: every tap on a hit object = one single-id `ChangeAttributesCommand` = one undo step; empty-canvas taps ignored; Hide refuses hidden hits (unreachable via the canvas, guarded anyway). `H`/`Shift+H` rebound from the old hide-selection/reveal-all actions (`AppAction.hideTool`/`showHideTool`); no toolbar entry v1.
+- View plumbing: `CanvasHitTester` gained `includeHidden`, `GeometryPainter` gained `showHidden` (one 0.35 alpha factor dims halo, fill, stroke and label alike); the canvas keys both on `VisibilityTool.revealsHidden`. PNG export structurally unaffected — the exporter builds its own painter and the flag defaults false — plus a pixel test pinning it.
+- 834 tests green, analyze clean. Web smoke on a fresh release build: **SMOKE PASS**, zero console errors — after repairing `drive.js`: the out-of-session commit `ca81277` (macro flyout reorder, triangles promoted) had silently broken the smoke's square section, which clicked flyout row 1; Square is now activated by its `X S` chord, immune to future reorders.
+
+**Next**
+- Phase 31 (line-angle wedge picked by taps) is the next unchecked phase; 32–39 queue behind it.
+
+**Open questions / gotchas**
+- The old `Shift+H` reveal-*all* bulk action has no single-key replacement: revealing many objects is now per-tap in Show/Hide, or tree-group-header select (hidden included) + the inspector's Visible checkbox.
+- While Show/Hide is active, hidden objects hit-test at normal kind priority — a hidden point over a visible line wins the tap.
+- `ca81277` predates this session and has no STATUS entry of its own; its test-side row-index updates were fine, only the smoke script had been missed.
+
 ## Session 38 (later) — 2026-07-07
 
 **Done**
