@@ -1,0 +1,44 @@
+lib/domain/construction/objects/line_angle.dart
+  s_ffdf35028f19ce::t_a8dcd65495e581 3,5,9-25,31-32,35-44,48-82,86-91,109-116,120-124
+lib/domain/tools/two_line_tool.dart
+  s_ffdf35028f19ce::t_847e5a3b1dbb23 7-9,14-15
+  s_ffdf35028f19ce::t_d308f7c115e4ae 34,51,57,59-62,68
+test/domain/tools/two_line_tool_test.dart
+  s_ffdf35028f19ce::t_0e6994d2743c62 66-85
+  s_ffdf35028f19ce::t_09ff7b31c7f7c8 15-28
+lib/domain/math/angle_geometry.dart
+  s_ffdf35028f19ce::t_28dee265a5dbab 87-113
+lib/application/persistence/construction_codec.dart
+  s_ffdf35028f19ce::t_4b3d66a0daff8d 153
+  s_ffdf35028f19ce::t_127005263095a7 374-375
+  s_ffdf35028f19ce::t_2c3734f1e52989 435-439
+  s_ffdf35028f19ce::t_a136863755b5fe 149-152,154
+test/application/persistence/construction_codec_test.dart
+  s_ffdf35028f19ce::t_415dc703d42382 119-120,122-124
+  s_ffdf35028f19ce::t_32a28f2bd1f4b0 201-207,212-223
+  s_ffdf35028f19ce::t_fa147a18677dc9 208-211
+  s_ffdf35028f19ce::t_e7bd06d361ca6e 2
+lib/presentation/panels/toolbar.dart
+  s_ffdf35028f19ce::t_379c779f15b90d 27
+  s_ffdf35028f19ce::t_02d90829e0b8af 98-111
+test/domain/construction/objects/line_angle_test.dart
+  s_ffdf35028f19ce::t_180182898ed08c 82-106
+  s_ffdf35028f19ce::t_b54e9ec7d23095 118-130,132-236,238-248
+  s_ffdf35028f19ce::t_03317dacff8dc9 131,237
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f8b24fc0d3059c10a792bc8262750108f89ab5ca",
+  "prompts": {},
+  "sessions": {
+    "s_ffdf35028f19ce": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "83ff0efc-47f2-4473-bfb7-faff9719c942",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
