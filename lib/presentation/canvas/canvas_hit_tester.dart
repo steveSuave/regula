@@ -24,7 +24,9 @@ import '../../domain/math/vec2.dart';
 /// them (PLAN: points > arcs/circles > segments/rays/lines > angles).
 /// Ties go to the object added latest, i.e. the one drawn on top.
 ///
-/// Undefined and invisible objects are never hit.
+/// Undefined and invisible objects are never hit — unless the caller
+/// passes `includeHidden` (the Show/Hide tool, which renders hidden
+/// objects dimmed and must let taps reach them).
 ///
 /// Named `CanvasHitTester` because `flutter_test` exports a `HitTester`
 /// of its own, which every widget test would collide with.
@@ -40,9 +42,15 @@ class CanvasHitTester {
     Vec2 point,
     double threshold, {
     double worldPerPx = 0,
+    bool includeHidden = false,
   }) =>
-      hitTestAll(objects, point, threshold, worldPerPx: worldPerPx)
-          .firstOrNull;
+      hitTestAll(
+        objects,
+        point,
+        threshold,
+        worldPerPx: worldPerPx,
+        includeHidden: includeHidden,
+      ).firstOrNull;
 
   /// Every visible, defined object within [threshold] world units of
   /// [point], best first — the same (priority, distance) order as
@@ -58,12 +66,14 @@ class CanvasHitTester {
     Vec2 point,
     double threshold, {
     double worldPerPx = 0,
+    bool includeHidden = false,
   }) {
     final candidates = <(GeoObject, int, double, int)>[];
     var index = 0;
     for (final object in objects) {
       index++;
-      if (!object.attributes.visible || !object.isDefined) {
+      if ((!object.attributes.visible && !includeHidden) ||
+          !object.isDefined) {
         continue;
       }
       final distance = _distanceTo(object, point, worldPerPx);
