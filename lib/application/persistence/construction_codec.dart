@@ -146,7 +146,12 @@ Map<String, dynamic> _encodeObject(GeoObject object) {
     Arc() => ('Arc', const {}),
     Sector() => ('Sector', const {}),
     VertexAngle() => ('VertexAngle', const {}),
-    LineAngle() => ('LineAngle', const {}),
+    // Absent sign params = legacy always-acute mode, so pre-31 saves
+    // round-trip byte-identically.
+    LineAngle(:final sign1, :final sign2) => (
+        'LineAngle',
+        {'sign1': ?sign1, 'sign2': ?sign2}
+      ),
     // The round-trip codec test instantiates every concrete kind, so a new
     // object type missing here fails in CI, not in a user's save.
     _ => throw UnsupportedError(
@@ -366,6 +371,8 @@ GeoObject _decodeObject(Map<String, dynamic> json, Construction construction) {
         id: id,
         line1: line(0),
         line2: line(1),
+        sign1: _optionalIntParam(id, params, 'sign1'),
+        sign2: _optionalIntParam(id, params, 'sign2'),
         attributes: attributes,
       ),
     _ => throw FormatException('Object "$id": unknown type "$type"'),
@@ -424,6 +431,11 @@ int _intParam(String id, Map<String, dynamic> params, String key) {
   }
   return value;
 }
+
+/// An integer param that older files legitimately lack: null when absent,
+/// [FormatException] when present but not an integer.
+int? _optionalIntParam(String id, Map<String, dynamic> params, String key) =>
+    params.containsKey(key) ? _intParam(id, params, key) : null;
 
 ObjectAttributes _decodeAttributes(String id, Object? json) {
   if (json == null) {

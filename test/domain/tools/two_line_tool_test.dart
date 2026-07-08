@@ -12,8 +12,20 @@ import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/tools/tool.dart';
 import 'package:regula/domain/tools/two_line_tool.dart';
 
-GeoObject _buildLineAngle(String id, GeoLine first, GeoLine second) =>
-    LineAngle(id: id, line1: first, line2: second);
+GeoObject _buildLineAngle(
+  String id,
+  GeoLine first,
+  GeoLine second,
+  Vec2 firstTap,
+  Vec2 secondTap,
+) =>
+    LineAngle.near(
+      id: id,
+      line1: first,
+      line2: second,
+      tap1: firstTap,
+      tap2: secondTap,
+    );
 
 void main() {
   late int nextId;
@@ -49,6 +61,26 @@ void main() {
       final angle = (command as AddObjectCommand).object as LineAngle;
       expect(angle.parents, [horizontal, vertical]);
       expect(angle.angle!.measure, closeTo(math.pi / 2, 1e-9));
+    });
+
+    test('the two tap positions reach the builder: obtuse taps, obtuse '
+        'wedge', () {
+      final t = tool();
+      // Taps on −x and +y: the wedge between those halves is the obtuse
+      // 3π/4 one (the lines cross at 45°/135°).
+      final diagonal = LineThroughTwoPoints(
+        id: 'd',
+        point1: o,
+        point2: FreePoint(id: 'dd', position: const Vec2(1, 1)),
+      );
+      t.onInput(ToolInput(const Vec2(-3, 0.1), hit: horizontal));
+      final result = t.onInput(ToolInput(const Vec2(1.1, 1), hit: diagonal));
+
+      final command = (result as ToolCommitted).command;
+      final angle = (command as AddObjectCommand).object as LineAngle;
+      expect(angle.sign1, -1);
+      expect(angle.sign2, 1);
+      expect(angle.angle!.measure, closeTo(3 * math.pi / 4, 1e-9));
     });
 
     test('non-line taps are ignored: empty canvas, points, circles', () {

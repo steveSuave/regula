@@ -6,6 +6,23 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 40 — 2026-07-08
+
+**Done**
+- **Phase 31 (line-angle wedge picked by taps) complete** on `phase-31-line-angle-wedge`, merged to `main`. `LineAngle` now marks the wedge the user pointed at instead of always folding to the acute angle: each tap picks the half of its line nearer the tap, and the marker opens between those half-lines with sweep in (0, π) — obtuse pairs reachable, the right-angle square lands in the tapped quadrant.
+- New `AngleGeometry.betweenHalfLines` (directions read as given, not up to sign) beside `betweenLines` — deliberately *not* refactored into one to keep legacy rendering fp-byte-identical. `LineAngle` gains nullable `sign1`/`sign2` ∈ {−1, +1} (both-or-neither, constructor-validated) and a `.near` factory baking them from the taps (`TwoLineBisectorLine.near`'s sign convention). Null signs = legacy always-acute mode.
+- `TwoLineBuilder` grows the two tap world-positions (`TwoLineTool` remembers the first tap); `buildLineAngle` switches to `LineAngle.near`. Codec: `sign1`/`sign2` params encoded only when present, decoded via a new `_optionalIntParam` — additive, no version bump; a kitchen-sink test pins that a null-signs `LineAngle` encodes with *empty* params and decodes back to the acute fold.
+- 847 tests green (four tap-quadrant combos, obtuse sweep, right-angle quadrant arms, drag continuity over a 60°→90° sweep, parallel-creation fallback, sign validation, codec round-trip with signs + legacy), analyze clean, goldens untouched (golden scenes build `LineAngle` sign-less). Web smoke on a fresh release build: **SMOKE PASS**, zero console errors (drive.js untouched — it builds no angles).
+
+**Next**
+- Phase 32 (object tree: long-press multi-select + search) is the next unchecked phase; 33–39 queue behind it.
+- `main` is ahead of `origin/main` (now ~12 commits) — push when convenient.
+
+**Open questions / gotchas**
+- The signs share `TwoLineBisectorLine.branch`'s documented wart: deterministic, not continuous — a drag that reverses a carrier's canonical direction (its defining points swapping order) flips which half the sign means, so the marked wedge jumps to the complement. Same acceptance as the intersection branch index.
+- `LineAngle.near` on currently-parallel carriers falls back to signs +1/+1 (the angle is undefined then anyway); when the lines are later dragged to cross, the marked wedge is the +1/+1 one, not anything tap-derived.
+- The stale `python3 -m http.server 8321` (running since Session 32) was reused for the smoke again — files are read per request, so the fresh build is what got tested.
+
 ## Session 39 (later) — 2026-07-08
 
 **Done**
