@@ -67,6 +67,66 @@ void main() {
           reason: 'partially-collected input must not leak across a switch');
     });
 
+    group('drag vs. activation (Phase 30b)', () {
+      late FreePoint p;
+
+      setUp(() {
+        p = FreePoint(id: 'p', position: Vec2.zero);
+        container
+            .read(commandStackProvider.notifier)
+            .execute(AddObjectCommand(p));
+      });
+
+      test('activating a tool mid-drag commits the move as one undo step',
+          () {
+        final notifier = container.read(toolProvider.notifier);
+        expect(notifier.startDrag(p, Vec2.zero), isTrue);
+        notifier.updateDrag(const Vec2(5, 0));
+        expect(p.position, const Vec2(5, 0), reason: 'preview applied');
+
+        notifier.activate(_StubTool([]));
+
+        expect(p.position, const Vec2(5, 0),
+            reason: 'the switch must not discard the move');
+        container.read(commandStackProvider.notifier).undo();
+        expect(p.position, Vec2.zero,
+            reason: 'the drag-so-far became one command');
+      });
+
+      test('deactivating mid-drag still rolls the preview back (Esc abort)',
+          () {
+        final notifier = container.read(toolProvider.notifier);
+        notifier.startDrag(p, Vec2.zero);
+        notifier.updateDrag(const Vec2(5, 0));
+
+        notifier.deactivate();
+
+        expect(p.position, Vec2.zero, reason: 'Esc aborts the drag');
+        container.read(commandStackProvider.notifier).undo();
+        expect(
+          container.read(constructionProvider).construction.isEmpty,
+          isTrue,
+          reason: 'an aborted drag leaves nothing on the stack — the top '
+              'undo step is still the AddObjectCommand',
+        );
+      });
+
+      test('activating a tool over an unmoved drag commits nothing', () {
+        final notifier = container.read(toolProvider.notifier);
+        notifier.startDrag(p, Vec2.zero);
+
+        notifier.activate(_StubTool([]));
+
+        expect(p.position, Vec2.zero);
+        container.read(commandStackProvider.notifier).undo();
+        expect(
+          container.read(constructionProvider).construction.isEmpty,
+          isTrue,
+          reason: 'the only undo step is the AddObjectCommand',
+        );
+      });
+    });
+
     test('committed command executes on the command stack', () {
       var nextId = 0;
       container
