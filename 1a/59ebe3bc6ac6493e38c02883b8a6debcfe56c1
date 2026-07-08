@@ -1,0 +1,21 @@
+test/domain/tools/visibility_tool_test.dart
+  s_9127f25cf31000::t_6630185b9fbba9 1-125
+lib/domain/tools/visibility_tool.dart
+  s_9127f25cf31000::t_8675f045da590b 1-55
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "1a59ebe3bc6ac6493e38c02883b8a6debcfe56c1",
+  "prompts": {},
+  "sessions": {
+    "s_9127f25cf31000": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "471643b2-e7f6-433b-b491-ea26b211547f",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
