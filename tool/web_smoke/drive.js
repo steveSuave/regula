@@ -255,12 +255,12 @@ async function canvasSample(page, x, y) {
   // length up (y-up world): C(520,280), D(400,280). Side BC lies on the
   // hidden perpendicular's carrier, so pixels beyond the segment extent
   // (x=520 below B) tell "hidden line drawn" from "side drawn" apart.
-  const shapesX = icons[6];
-  await page.mouse.click(shapesX, 28);
-  await page.waitForTimeout(500);
-  // The menu would overflow the right window edge, so it opens shifted
-  // *left* of the button — click left of shapesX, unlike the file menu.
-  await page.mouse.click(shapesX - 60, 8 + 24); // first item: Square
+  // Activated by its X S chord: the Macros flyout row order is a UI
+  // choice that has already moved once (Square sat at row 1 until the
+  // triangles were promoted), and the chord survives reorders. Popup-row
+  // clicking stays covered by the File > Save… section above.
+  await page.keyboard.press('x');
+  await page.keyboard.press('s');
   await page.waitForTimeout(300);
   await page.mouse.click(400, 400);
   await page.waitForTimeout(200);
