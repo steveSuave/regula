@@ -62,10 +62,20 @@ class ToolNotifier extends _$ToolNotifier {
   }
 
   /// Makes [tool] the active tool (null returns to move/select). The
-  /// outgoing tool's partially-collected input is discarded, as is any
-  /// drag in progress.
+  /// outgoing tool's partially-collected input is discarded.
+  ///
+  /// A move/select drag still in progress is **committed** as its one
+  /// start → end command when a real tool activates (Phase 30b): a
+  /// keyboard tool switch a beat before the pointer lifts must not
+  /// silently discard the move — a committed half-drag is one undo away,
+  /// a rolled-back one is unrecoverable. Deactivating (null — `Esc`/`V`)
+  /// keeps the rollback: Esc mid-drag is the deliberate abort gesture.
   void activate(Tool? tool) {
-    _abandonDrag();
+    if (tool != null) {
+      endDrag();
+    } else {
+      _abandonDrag();
+    }
     state.tool?.reset();
     state = ActiveToolState(tool, 0);
   }
