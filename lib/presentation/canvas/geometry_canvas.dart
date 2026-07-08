@@ -13,6 +13,7 @@ import '../../application/providers/viewport_provider.dart';
 import '../../domain/commands/change_attributes_command.dart';
 import '../../domain/math/vec2.dart';
 import '../../domain/tools/tool.dart';
+import '../../domain/tools/visibility_tool.dart';
 import 'canvas_hit_tester.dart';
 import 'canvas_viewport.dart';
 import 'geometry_painter.dart';
@@ -67,6 +68,12 @@ class GeometryCanvas extends ConsumerStatefulWidget {
 }
 
 class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
+  /// Whether [tool] is the Show/Hide visibility variant, which turns on
+  /// the hidden-object view: the painter dims them in and the tap hit
+  /// test includes them. Tool-scoped state — it vanishes with the tool.
+  static bool _revealsHidden(Tool? tool) =>
+      tool is VisibilityTool && tool.revealsHidden;
+
   /// In-progress rubber band, in screen coordinates; null when no band
   /// is being dragged. Local widget state — nothing outside the canvas
   /// cares until the band commits to the selection on release.
@@ -151,6 +158,7 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
               null => null,
               final drag => (id: drag.id, offset: drag.offset),
             },
+            showHidden: _revealsHidden(tool),
           ),
           foregroundPainter: _MarqueePainter(
             band: _band,
@@ -453,6 +461,7 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
     // Read (not the build-time capture): the construction mutates between
     // rebuilds, and the hit test must see the tap-time state.
     final construction = ref.read(constructionProvider).construction;
+    final tool = ref.read(toolProvider).tool;
     final threshold =
         viewport.screenToWorldLength(GeometryCanvas.hitThresholdFor(kind));
     final hits = const CanvasHitTester().hitTestAll(
@@ -460,9 +469,10 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
       world,
       threshold,
       worldPerPx: viewport.screenToWorldLength(1),
+      includeHidden: _revealsHidden(tool),
     );
     final hit = hits.firstOrNull;
-    if (ref.read(toolProvider).tool != null) {
+    if (tool != null) {
       // An active tool owns every tap — including ones it ignores, so a
       // stray tap mid-collection can't silently retarget the selection.
       ref.read(toolProvider.notifier).handleInput(

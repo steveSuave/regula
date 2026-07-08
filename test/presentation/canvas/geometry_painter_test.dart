@@ -26,6 +26,7 @@ void main() {
     int revision = 0,
     Set<String> selectedIds = const {},
     Set<String> previewObjectIds = const {},
+    bool showHidden = false,
   }) =>
       GeometryPainter(
         construction: construction,
@@ -35,6 +36,7 @@ void main() {
         selectionColor: const Color(0xFF0000FF),
         selectedIds: selectedIds,
         previewObjectIds: previewObjectIds,
+        showHidden: showHidden,
       );
 
   void paintOnce(GeometryPainter painter) {
@@ -161,6 +163,44 @@ void main() {
         ..add(Segment(id: 's', point1: a, point2: b));
 
       paintOnce(painterFor(construction, previewObjectIds: const {'s', 'a'}));
+    });
+
+    test('showHidden paints dimmed hidden objects without throwing', () {
+      const hidden = ObjectAttributes(visible: false);
+      const hiddenNamed = ObjectAttributes(visible: false, name: 'S');
+      const hiddenFilled =
+          ObjectAttributes(visible: false, fillAlpha: 0.25, name: 'W');
+      final construction = Construction();
+      final a = FreePoint(id: 'a', position: Vec2.zero, attributes: hidden);
+      final b = FreePoint(id: 'b', position: const Vec2(4, 0));
+      final c = FreePoint(id: 'c', position: const Vec2(0, 3));
+      construction
+        ..add(a)
+        ..add(b)
+        ..add(c)
+        ..add(Segment(id: 's', point1: a, point2: b, attributes: hiddenNamed))
+        ..add(Sector(id: 'w', center: a, start: b, end: c,
+            attributes: hiddenFilled));
+
+      // Dimmed halo too: hiding keeps the selection.
+      paintOnce(painterFor(
+        construction,
+        showHidden: true,
+        selectedIds: const {'a', 's'},
+      ));
+    });
+
+    test('shouldRepaint keys on showHidden', () {
+      final construction = Construction()
+        ..add(FreePoint(id: 'a', position: Vec2.zero));
+
+      final base = painterFor(construction);
+      expect(
+        painterFor(construction, showHidden: true).shouldRepaint(base),
+        isTrue,
+        reason: 'activating Show/Hide must dim hidden objects in',
+      );
+      expect(painterFor(construction).shouldRepaint(base), isFalse);
     });
 
     test('shouldRepaint keys on preview markers', () {

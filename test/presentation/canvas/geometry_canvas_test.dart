@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/application/providers/command_stack_provider.dart';
 import 'package:regula/application/providers/construction_provider.dart';
 import 'package:regula/application/providers/selection_provider.dart';
 import 'package:regula/application/providers/tool_provider.dart';
@@ -29,6 +30,7 @@ import 'package:regula/domain/construction/objects/vertex_angle.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/tools/intersection_tool.dart';
 import 'package:regula/domain/tools/point_tool.dart';
+import 'package:regula/domain/tools/visibility_tool.dart';
 import 'package:regula/main.dart';
 import 'package:regula/presentation/canvas/canvas_viewport.dart';
 import 'package:regula/presentation/canvas/geometry_canvas.dart';
@@ -126,6 +128,84 @@ void main() {
         reason: 'the consumed line is haloed like a selection');
     expect(painter.previewMarkers, isEmpty,
         reason: 'no dot+ring marker on an existing object');
+  });
+
+  testWidgets(
+      'Show/Hide turns the hidden view on: painter dims hidden in, '
+      'taps toggle both directions, other modes never reach hidden',
+      (tester) async {
+    await pumpEditor(tester);
+    final construction = container.read(constructionProvider).construction;
+    final h = FreePoint(
+      id: 'h',
+      position: const Vec2(150, -150),
+      attributes: const ObjectAttributes(visible: false),
+    );
+    construction.add(h);
+    await tester.pump();
+
+    GeometryPainter painter() => tester
+        .widgetList<CustomPaint>(find.descendant(
+          of: find.byType(GeometryCanvas),
+          matching: find.byType(CustomPaint),
+        ))
+        .map((paint) => paint.painter)
+        .whereType<GeometryPainter>()
+        .single;
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+    final onHidden = origin + const Offset(150, 150);
+
+    // Move/select mode: the hidden point is unreachable.
+    expect(painter().showHidden, isFalse);
+    await tester.tapAt(onHidden);
+    await tester.pump();
+    expect(container.read(selectionProvider), isEmpty);
+
+    // Hide variant: hidden stays unreachable — taps can only ever hide.
+    container.read(toolProvider.notifier).activate(VisibilityTool.hide());
+    await tester.pump();
+    expect(painter().showHidden, isFalse);
+    await tester.tapAt(onHidden);
+    await tester.pump();
+    expect(h.attributes.visible, isFalse);
+
+    // Show/Hide: the painter dims hidden objects in and a tap re-shows…
+    container.read(toolProvider.notifier).activate(VisibilityTool.showHide());
+    await tester.pump();
+    expect(painter().showHidden, isTrue);
+    await tester.tapAt(onHidden);
+    await tester.pump();
+    expect(h.attributes.visible, isTrue);
+
+    // …and the next tap re-hides.
+    await tester.tapAt(onHidden);
+    await tester.pump();
+    expect(h.attributes.visible, isFalse);
+
+    // Deactivating the tool drops the hidden view with it.
+    container.read(toolProvider.notifier).deactivate();
+    await tester.pump();
+    expect(painter().showHidden, isFalse);
+  });
+
+  testWidgets('Hide-tool tap hides the hit object; one undo restores',
+      (tester) async {
+    await pumpEditor(tester);
+    final construction = container.read(constructionProvider).construction;
+    final p = FreePoint(id: 'p', position: const Vec2(100, -100));
+    construction.add(p);
+    await tester.pump();
+
+    container.read(toolProvider.notifier).activate(VisibilityTool.hide());
+    await tester.pump();
+
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+    await tester.tapAt(origin + const Offset(100, 100));
+    await tester.pump();
+    expect(p.attributes.visible, isFalse);
+
+    container.read(commandStackProvider.notifier).undo();
+    expect(p.attributes.visible, isTrue, reason: 'one tap = one undo step');
   });
 
   testWidgets('point tool: tap to add points, tap a point again is ignored, '
