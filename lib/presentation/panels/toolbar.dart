@@ -24,6 +24,7 @@ import '../../domain/construction/objects/segment.dart';
 import '../../domain/construction/objects/segment_ratio_point.dart';
 import '../../domain/construction/objects/three_point_circle.dart';
 import '../../domain/construction/objects/vertex_angle.dart';
+import '../../domain/math/vec2.dart';
 import '../../domain/tools/angle_bisector_tool.dart';
 import '../../domain/tools/angle_by_size_tool.dart';
 import '../../domain/tools/equilateral_triangle_macro_tool.dart';
@@ -94,8 +95,20 @@ GeoObject buildSector(String id, GeoPoint a, GeoPoint b, GeoPoint c) =>
 GeoObject buildVertexAngle(String id, GeoPoint a, GeoPoint b, GeoPoint c) =>
     VertexAngle(id: id, arm1: a, vertex: b, arm2: c);
 
-GeoObject buildLineAngle(String id, GeoLine first, GeoLine second) =>
-    LineAngle(id: id, line1: first, line2: second);
+GeoObject buildLineAngle(
+  String id,
+  GeoLine first,
+  GeoLine second,
+  Vec2 firstTap,
+  Vec2 secondTap,
+) =>
+    LineAngle.near(
+      id: id,
+      line1: first,
+      line2: second,
+      tap1: firstTap,
+      tap2: secondTap,
+    );
 
 const _lineBuilders = {buildLine, buildSegment, buildRay};
 const _circleBuilders = {

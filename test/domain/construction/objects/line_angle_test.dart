@@ -79,6 +79,31 @@ void main() {
       expect(angle.isDefined, isTrue);
     });
 
+    test('sign validation: partial or non-unit signs are rejected', () {
+      final o = FreePoint(id: 'o', position: Vec2.zero);
+      final x = FreePoint(id: 'x', position: const Vec2(4, 0));
+      final d = FreePoint(id: 'd', position: const Vec2(1, 1));
+      final l1 = LineThroughTwoPoints(id: 'l1', point1: o, point2: x);
+      final l2 = LineThroughTwoPoints(id: 'l2', point1: o, point2: d);
+
+      expect(
+        () => LineAngle(id: 'g', line1: l1, line2: l2, sign1: 1),
+        throwsArgumentError,
+      );
+      expect(
+        () => LineAngle(id: 'g', line1: l1, line2: l2, sign2: -1),
+        throwsArgumentError,
+      );
+      expect(
+        () => LineAngle(id: 'g', line1: l1, line2: l2, sign1: 2, sign2: 1),
+        throwsArgumentError,
+      );
+      expect(
+        () => LineAngle(id: 'g', line1: l1, line2: l2, sign1: 1, sign2: 0),
+        throwsArgumentError,
+      );
+    });
+
     test('undefined while a parent line is undefined', () {
       final o = FreePoint(id: 'o', position: Vec2.zero);
       final x = FreePoint(id: 'x', position: Vec2.zero); // coincident
@@ -88,6 +113,137 @@ void main() {
       final l2 = LineThroughTwoPoints(id: 'l2', point1: p, point2: q);
 
       expect(LineAngle(id: 'g', line1: broken, line2: l2).isDefined, isFalse);
+    });
+  });
+
+  group('LineAngle.near (tap-picked wedge)', () {
+    // The x-axis and a 60° line, crossing at the origin. Half-directions
+    // by angle: +x = 0°, −x = 180°, +d = 60°, −d = 240°.
+    late LineThroughTwoPoints xAxis;
+    late LineThroughTwoPoints sixty;
+    late FreePoint d;
+    late Construction construction;
+
+    setUp(() {
+      construction = Construction();
+      final o = FreePoint(id: 'o', position: Vec2.zero);
+      final x = FreePoint(id: 'x', position: const Vec2(4, 0));
+      d = FreePoint(id: 'd', position: Vec2(1, math.sqrt(3)));
+      xAxis = LineThroughTwoPoints(id: 'l1', point1: o, point2: x);
+      sixty = LineThroughTwoPoints(id: 'l2', point1: o, point2: d);
+      construction
+        ..add(o)
+        ..add(x)
+        ..add(d)
+        ..add(xAxis)
+        ..add(sixty);
+    });
+
+    LineAngle near(String id, Vec2 tap1, Vec2 tap2) => LineAngle.near(
+          id: id,
+          line1: xAxis,
+          line2: sixty,
+          tap1: tap1,
+          tap2: tap2,
+        );
+
+    void expectWedge(LineAngle angle, double sweep, double startAngle) {
+      expect(angle.angle!.measure, closeTo(sweep, 1e-9));
+      expect(
+        angle.angle!.startDirection
+            .closeTo(Vec2(math.cos(startAngle), math.sin(startAngle)), 1e-9),
+        isTrue,
+        reason: 'start arm should point at ${startAngle * 180 / math.pi}°, '
+            'got ${angle.angle!.startDirection}',
+      );
+    }
+
+    test('the four tap-half combinations mark their own wedge', () {
+      // Taps near +x / +d: the acute wedge from 0° to 60°.
+      expectWedge(
+        near('a', const Vec2(3, 0.1), const Vec2(1.1, 1.7)),
+        math.pi / 3,
+        0,
+      );
+      // Taps near +x / −d: the obtuse wedge from 240° around to 360°.
+      expectWedge(
+        near('b', const Vec2(3, 0.1), const Vec2(-1.1, -1.7)),
+        2 * math.pi / 3,
+        4 * math.pi / 3,
+      );
+      // Taps near −x / +d: the obtuse wedge from 60° to 180°.
+      expectWedge(
+        near('c', const Vec2(-3, 0.1), const Vec2(1.1, 1.7)),
+        2 * math.pi / 3,
+        math.pi / 3,
+      );
+      // Taps near −x / −d: the acute wedge from 180° to 240°.
+      expectWedge(
+        near('d', const Vec2(-3, 0.1), const Vec2(-1.1, -1.7)),
+        math.pi / 3,
+        math.pi,
+      );
+    });
+
+    test('right angle: the marked quadrant is the tapped one', () {
+      // Rotate the second line to vertical: taps in quadrant II must put
+      // both arms on quadrant II's boundary (+y start arm, −x end arm).
+      construction.moveFreePoint('d', const Vec2(0, 4));
+      final angle = LineAngle.near(
+        id: 'g',
+        line1: xAxis,
+        line2: sixty,
+        tap1: const Vec2(-3, 0.1),
+        tap2: const Vec2(-0.1, 3),
+      );
+
+      expect(angle.angle!.measure, closeTo(math.pi / 2, 1e-9));
+      expect(angle.angle!.startDirection.closeTo(const Vec2(0, 1)), isTrue);
+      expect(angle.angle!.endDirection.closeTo(const Vec2(-1, 0)), isTrue);
+    });
+
+    test('the wedge follows drags continuously — no flip mid-drag', () {
+      final angle = near('g', const Vec2(-3, 0.1), const Vec2(1.1, 1.7));
+      construction.add(angle);
+      expectWedge(angle, 2 * math.pi / 3, math.pi / 3);
+
+      // Sweep the 60° line towards 90° in small steps: the marked wedge
+      // must shrink smoothly from 120° to 90° with the start arm tracking
+      // the rotating carrier — never jumping to the complementary pair.
+      var previousStart = angle.angle!.startDirection;
+      for (var degrees = 60; degrees <= 90; degrees += 5) {
+        final radians = degrees * math.pi / 180;
+        construction.moveFreePoint(
+          'd',
+          Vec2(2 * math.cos(radians), 2 * math.sin(radians)),
+        );
+        final geometry = angle.angle!;
+        expect(geometry.measure, closeTo(math.pi - radians, 1e-9));
+        expect(geometry.startDirection.dot(previousStart), greaterThan(0.9),
+            reason: 'start arm flipped at $degrees°');
+        previousStart = geometry.startDirection;
+      }
+    });
+
+    test('falls back to +1/+1 while the carriers are parallel', () {
+      construction.moveFreePoint('d', const Vec2(4, 1e-12));
+      final angle = near('g', const Vec2(-3, 0.1), const Vec2(-1, -1));
+      construction.add(angle);
+
+      expect(angle.sign1, 1);
+      expect(angle.sign2, 1);
+      expect(angle.isDefined, isFalse);
+
+      construction.moveFreePoint('d', Vec2(1, math.sqrt(3)));
+      expect(angle.isDefined, isTrue);
+      expect(angle.angle!.measure, closeTo(math.pi / 3, 1e-9));
+    });
+
+    test('null signs keep the legacy acute fold under every tap side', () {
+      final legacy = LineAngle(id: 'g', line1: xAxis, line2: sixty);
+      expect(legacy.sign1, isNull);
+      expect(legacy.sign2, isNull);
+      expect(legacy.angle!.measure, closeTo(math.pi / 3, 1e-9));
     });
   });
 }

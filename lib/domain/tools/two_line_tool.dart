@@ -4,10 +4,15 @@ import '../math/vec2.dart';
 import 'tool.dart';
 
 /// Builds the derived object from two collected lines, in tap order.
+/// The tap world-positions come along so the builder can pick a branch
+/// or wedge near where the user pointed (`LineAngle.near`'s tap-picked
+/// wedge, the `TwoLineBisectorLine.near` precedent).
 typedef TwoLineBuilder = GeoObject Function(
   String id,
   GeoLine first,
   GeoLine second,
+  Vec2 firstTap,
+  Vec2 secondTap,
 );
 
 /// Collects two distinct lines, then builds one object on them (the
@@ -26,6 +31,7 @@ class TwoLineTool implements ToolInputPreview {
   final TwoLineBuilder build;
 
   GeoLine? _first;
+  Vec2? _firstTap;
 
   @override
   List<Vec2> get previewPositions => const [];
@@ -42,17 +48,23 @@ class TwoLineTool implements ToolInputPreview {
     final first = _first;
     if (first == null) {
       _first = hit;
+      _firstTap = input.position;
       return const ToolAccepted();
     }
     if (identical(first, hit)) {
       return const ToolIgnored();
     }
+    final firstTap = _firstTap!;
     _first = null;
-    return ToolCommitted(AddObjectCommand(build(newId(), first, hit)));
+    _firstTap = null;
+    return ToolCommitted(
+      AddObjectCommand(build(newId(), first, hit, firstTap, input.position)),
+    );
   }
 
   @override
   void reset() {
     _first = null;
+    _firstTap = null;
   }
 }
