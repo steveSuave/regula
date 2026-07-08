@@ -6,6 +6,21 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 39 (later) — 2026-07-08
+
+**Done**
+- **Phase 30b (commit in-progress drag on tool activation) complete** on `phase-30b-commit-drag-on-activate` (2 commits incl. the PLAN/TODO spec), merged to `main`. User feedback on Phase 30: "Pressing Shift-H after a V change of the drawing might undo the V change" — confirmed by repro test. `ToolNotifier.activate()` opened with `_abandonDrag()`, which rolls the drag preview back with **no command**; every tool shortcut always did this, but Phase 30 put tool activations on `H`/`Shift+H` — exactly the keys pressed right after arranging objects — where the old bindings ran plain commands and never touched the drag. A shortcut a beat before pointer-up (or within macOS three-finger drag's post-lift grace period) silently and *unrecoverably* discarded the move.
+- Fix: `activate(tool)` with a non-null tool now **ends** the drag — the one start → end command executes on the stack — before switching; a committed half-drag is one undo away, a cancelled one is gone, so the asymmetry decides. `deactivate()` (`Esc`/`V`) keeps the rollback (Esc mid-drag stays the deliberate abort), as do the pointer-cancel paths.
+- 839 tests green (3 provider: commit/abort/unmoved-drag; 2 widget: `Shift+H` mid-drag keeps the move + one undo restores, `Esc` mid-drag empty stack), analyze clean, web smoke on a fresh release build: **SMOKE PASS**, zero console errors (drive.js untouched).
+
+**Next**
+- Phase 31 (line-angle wedge picked by taps) is the next unchecked phase; 32–39 queue behind it.
+- `main` is ahead of `origin/main` — push when convenient.
+
+**Open questions / gotchas**
+- A tool switch mid-drag now commits the drag-so-far even if the user was about to fling the object back — they must undo rather than keep dragging. Deemed the right trade: reversible beats unrecoverable.
+- `V` deactivates, so `V` mid-drag *aborts* the drag like Esc. Defensible (V = "back to move/select" = the mode the drag is already in), but if users read V as harmless, this could surprise — watch for feedback.
+
 ## Session 39 — 2026-07-08
 
 **Done**
