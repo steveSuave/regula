@@ -84,6 +84,33 @@ class AngleGeometry {
     return AngleGeometry(vertex, start, ccwSweep(start.angle, end.angle));
   }
 
+  /// The wedge at [vertex] between the half-lines towards [direction1]
+  /// and [direction2], with sweep in (0, π): the start arm is whichever
+  /// direction makes the counter-clockwise sweep to the other less than
+  /// π. Unlike [betweenLines] the directions are read *as given*, not up
+  /// to sign, so the obtuse wedge pair is reachable — pass the opposite
+  /// half-direction to get the complementary marker. Null when the
+  /// directions are parallel or anti-parallel (no wedge between
+  /// coincident or opposite rays) or when either is zero.
+  static AngleGeometry? betweenHalfLines(
+    Vec2 vertex,
+    Vec2 direction1,
+    Vec2 direction2,
+  ) {
+    if (direction1.normSquared == 0 || direction2.normSquared == 0) {
+      return null;
+    }
+    final unit1 = direction1.normalized();
+    final unit2 = direction2.normalized();
+    final cross = unit1.cross(unit2);
+    if (cross == 0) {
+      return null;
+    }
+    final start = cross > 0 ? unit1 : unit2;
+    final end = cross > 0 ? unit2 : unit1;
+    return AngleGeometry(vertex, start, ccwSweep(start.angle, end.angle));
+  }
+
   final Vec2 vertex;
 
   /// Unit direction of the angle's first arm.

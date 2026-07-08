@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/application/persistence/construction_codec.dart';
@@ -115,7 +116,12 @@ Construction buildKitchenSink() {
             const ObjectAttributes(angleMarkerRadius: 28, fillAlpha: 0.25),
       ),
     )
+    // One legacy (null signs — must encode with no params and decode back
+    // to the acute fold) and one tap-picked wedge.
     ..add(LineAngle(id: 'lang', line1: lineAb, line2: perp))
+    ..add(
+      LineAngle(id: 'lang2', line1: lineAb, line2: perp, sign1: -1, sign2: 1),
+    )
     ..add(
       IntersectionPoint(
         id: 'int',
@@ -192,6 +198,29 @@ void main() {
       expect((decoded.byId('poo')! as PointOnObject).parameter, 1.25);
       expect((decoded.byId('int')! as IntersectionPoint).branchIndex, 1);
       expect((decoded.byId('rot')! as RotatedPoint).angle, 0.75);
+      final tapped = decoded.byId('lang2')! as LineAngle;
+      expect(tapped.sign1, -1);
+      expect(tapped.sign2, 1);
+    });
+
+    test('a LineAngle without signs stays legacy: no params encoded, '
+        'acute fold decoded', () {
+      final encoded = encodeDocument(
+        buildKitchenSink(),
+        viewport: const ViewportState(),
+      );
+      final objects = encoded['objects'] as List;
+      final lang = objects.cast<Map<String, dynamic>>().singleWhere(
+            (json) => json['id'] == 'lang',
+          );
+      expect(lang['params'], isEmpty,
+          reason: 'a pre-31 save must round-trip byte-identically');
+
+      final decoded = roundTrip(buildKitchenSink()).construction;
+      final legacy = decoded.byId('lang')! as LineAngle;
+      expect(legacy.sign1, isNull);
+      expect(legacy.sign2, isNull);
+      expect(legacy.angle!.measure, lessThanOrEqualTo(math.pi / 2));
     });
 
     test('preserves the viewport snapshot', () {
