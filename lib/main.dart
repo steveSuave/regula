@@ -16,10 +16,8 @@ import 'application/providers/selection_provider.dart';
 import 'application/providers/theme_provider.dart';
 import 'application/providers/tool_provider.dart';
 import 'application/providers/viewport_provider.dart';
-import 'domain/commands/change_attributes_command.dart';
 import 'domain/construction/construction.dart';
 import 'domain/construction/geo_object.dart';
-import 'domain/construction/object_attributes.dart';
 import 'domain/construction/objects/centroid.dart';
 import 'domain/construction/objects/circumcenter.dart';
 import 'domain/construction/objects/incenter.dart';
@@ -50,6 +48,7 @@ import 'domain/tools/trapezium_macro_tool.dart';
 import 'domain/tools/triangle_center_tool.dart';
 import 'domain/tools/two_line_tool.dart';
 import 'domain/tools/two_point_tool.dart';
+import 'domain/tools/visibility_tool.dart';
 import 'presentation/canvas/canvas_viewport.dart';
 import 'presentation/canvas/fit_viewport.dart';
 import 'presentation/canvas/geometry_canvas.dart';
@@ -357,39 +356,6 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     ref.read(viewportProvider.notifier).set(viewport.pannedByScreen(delta));
   }
 
-  /// Hides the selection, one command for the lot (mirrors the
-  /// inspector's Visible checkbox — hiding does not deselect).
-  void _hideSelection() {
-    final construction = ref.read(constructionProvider).construction;
-    final updates = <String, ObjectAttributes>{};
-    for (final id in ref.read(selectionProvider)) {
-      final object = construction.byId(id);
-      if (object != null && object.attributes.visible) {
-        updates[object.id] = object.attributes.copyWith(visible: false);
-      }
-    }
-    if (updates.isNotEmpty) {
-      ref
-          .read(commandStackProvider.notifier)
-          .execute(ChangeAttributesCommand(updates));
-    }
-  }
-
-  /// Reveals every hidden object — including macro scaffolding, which is
-  /// deliberately hidden; "all" means all, and the command undoes.
-  void _revealAll() {
-    final updates = <String, ObjectAttributes>{
-      for (final object in ref.read(constructionProvider).construction.objects)
-        if (!object.attributes.visible)
-          object.id: object.attributes.copyWith(visible: true),
-    };
-    if (updates.isNotEmpty) {
-      ref
-          .read(commandStackProvider.notifier)
-          .execute(ChangeAttributesCommand(updates));
-    }
-  }
-
   Future<void> _deleteSelectedObjects() {
     final construction = ref.read(constructionProvider).construction;
     final objects = [
@@ -492,10 +458,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         ref
             .read(themeModeProvider.notifier)
             .toggle(Theme.of(context).brightness);
-      case AppAction.hideSelection:
-        _hideSelection();
-      case AppAction.revealAll:
-        _revealAll();
+      case AppAction.hideTool:
+        tools.activate(VisibilityTool.hide());
+      case AppAction.showHideTool:
+        tools.activate(VisibilityTool.showHide());
       case AppAction.toggleCheatSheet:
         setState(() => _showCheatSheet = !_showCheatSheet);
       case AppAction.zoomIn:
