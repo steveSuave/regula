@@ -450,6 +450,64 @@ void main() {
     expect(activeTool(), isNull, reason: 'Esc deactivates like any tool');
   });
 
+  testWidgets(
+      'Shift+H mid-drag commits the move as one undo step (Phase 30b)', (
+    tester,
+  ) async {
+    await pumpEditor(tester);
+    final p = FreePoint(id: 'p', position: const Vec2(100, -100));
+    container.read(constructionProvider).construction.add(p);
+    await tester.pump();
+
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+    final gesture = await tester.startGesture(origin + const Offset(100, 100));
+    await tester.pump(const Duration(milliseconds: 50));
+    await gesture.moveBy(const Offset(60, 0));
+    await tester.pump();
+    expect(p.position.x, closeTo(160, 1), reason: 'drag preview applied');
+
+    // The tool switch arrives while the pointer is still down — the
+    // common "shortcut a beat before releasing" case.
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyH);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.pump();
+    await gesture.up();
+    await tester.pump();
+
+    expect(activeTool(), isA<VisibilityTool>());
+    expect(p.position.x, closeTo(160, 1),
+        reason: 'the move must survive the tool switch');
+    container.read(commandStackProvider.notifier).undo();
+    expect(p.position.x, closeTo(100, 1),
+        reason: 'the drag-so-far is one command');
+  });
+
+  testWidgets('Esc mid-drag still aborts: preview rolls back, no command', (
+    tester,
+  ) async {
+    await pumpEditor(tester);
+    final p = FreePoint(id: 'p', position: const Vec2(100, -100));
+    container.read(constructionProvider).construction.add(p);
+    await tester.pump();
+
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+    final gesture = await tester.startGesture(origin + const Offset(100, 100));
+    await tester.pump(const Duration(milliseconds: 50));
+    await gesture.moveBy(const Offset(60, 0));
+    await tester.pump();
+    expect(p.position.x, closeTo(160, 1));
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pump();
+    await gesture.up();
+    await tester.pump();
+
+    expect(p.position.x, closeTo(100, 1), reason: 'Esc aborts the drag');
+    expect(container.read(commandStackProvider).canUndo, isFalse,
+        reason: 'an aborted drag leaves nothing to undo');
+  });
+
   testWidgets('Del deletes a self-contained selection without asking', (
     tester,
   ) async {
