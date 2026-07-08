@@ -243,6 +243,35 @@ void main() {
       expect(hit(construction, const Vec2(0.2, 0)), isNot(hasId('l')));
     });
 
+    test('includeHidden hits hidden objects, but never undefined ones', () {
+      final construction = Construction();
+      final a = FreePoint(id: 'a', position: Vec2.zero);
+      final b = FreePoint(
+        id: 'b',
+        position: Vec2.zero, // coincides with a → line undefined
+      );
+      construction
+        ..add(a)
+        ..add(b)
+        ..add(LineThroughTwoPoints(id: 'l', point1: a, point2: b))
+        ..add(FreePoint(
+          id: 'h',
+          position: const Vec2(3, 3),
+          attributes: const ObjectAttributes(visible: false),
+        ));
+
+      GeoObject? hitIncludingHidden(Vec2 point) => tester.hitTest(
+            construction.objects,
+            point,
+            threshold,
+            includeHidden: true,
+          );
+      expect(hitIncludingHidden(const Vec2(3, 3))?.id, 'h',
+          reason: 'the Show/Hide tool must reach hidden objects');
+      expect(hitIncludingHidden(const Vec2(0.2, 0)), isNot(hasId('l')),
+          reason: 'undefined stays unhittable regardless');
+    });
+
     test('coincident points: the later (topmost) one wins', () {
       final construction = Construction()
         ..add(FreePoint(id: 'under', position: Vec2.zero))

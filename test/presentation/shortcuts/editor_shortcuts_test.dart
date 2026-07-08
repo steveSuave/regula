@@ -32,6 +32,7 @@ import 'package:regula/domain/tools/transform_object_tool.dart';
 import 'package:regula/domain/tools/triangle_center_tool.dart';
 import 'package:regula/domain/tools/two_line_tool.dart';
 import 'package:regula/domain/tools/two_point_tool.dart';
+import 'package:regula/domain/tools/visibility_tool.dart';
 import 'package:regula/main.dart';
 import 'package:regula/presentation/canvas/geometry_canvas.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -400,34 +401,53 @@ void main() {
     expect(construction.length, 3);
   });
 
-  testWidgets('select all, hide, reveal', (tester) async {
+  testWidgets('select all keeps working alongside the H rebinding', (
+    tester,
+  ) async {
     await pumpEditor(tester);
-    final (a, _, _) = buildSmallConstruction();
+    buildSmallConstruction();
 
     await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
     await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     expect(container.read(selectionProvider), hasLength(3));
+  });
 
-    container.read(selectionProvider.notifier).select(a.id);
-    await tester.pump();
+  testWidgets('H and Shift+H activate the visibility tool variants', (
+    tester,
+  ) async {
+    await pumpEditor(tester);
+    final (a, _, _) = buildSmallConstruction();
+
     await tester.sendKeyEvent(LogicalKeyboardKey.keyH);
-    expect(a.attributes.visible, isFalse);
+    final hide = activeTool();
+    expect(hide, isA<VisibilityTool>());
+    expect((hide as VisibilityTool).revealsHidden, isFalse);
+
+    container
+        .read(toolProvider.notifier)
+        .handleInput(ToolInput(Vec2.zero, hit: a));
+    expect(a.attributes.visible, isFalse, reason: 'a hide tap hides');
     expect(
-      container.read(selectionProvider),
-      contains(a.id),
-      reason: 'hiding keeps the selection',
+      container.read(commandStackProvider).canUndo,
+      isTrue,
+      reason: 'every visibility tap is a command',
     );
 
     await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
     await tester.sendKeyEvent(LogicalKeyboardKey.keyH);
     await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
-    expect(a.attributes.visible, isTrue);
-    expect(
-      container.read(commandStackProvider).canUndo,
-      isTrue,
-      reason: 'hide/reveal are commands',
-    );
+    final showHide = activeTool();
+    expect(showHide, isA<VisibilityTool>());
+    expect((showHide as VisibilityTool).revealsHidden, isTrue);
+
+    container
+        .read(toolProvider.notifier)
+        .handleInput(ToolInput(Vec2.zero, hit: a));
+    expect(a.attributes.visible, isTrue, reason: 'a Show/Hide tap toggles');
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    expect(activeTool(), isNull, reason: 'Esc deactivates like any tool');
   });
 
   testWidgets('Del deletes a self-contained selection without asking', (

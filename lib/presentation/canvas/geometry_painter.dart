@@ -33,6 +33,7 @@ class GeometryPainter extends CustomPainter {
     this.previewMarkers = const [],
     this.previewObjectIds = const {},
     this.labelDragPreview,
+    this.showHidden = false,
   });
 
   /// Radii (logical px) of an in-progress input marker: a filled dot
@@ -45,6 +46,9 @@ class GeometryPainter extends CustomPainter {
   static const double _haloExtra = 5;
 
   static const double _haloAlpha = 0.4;
+
+  /// Opacity factor for hidden objects while [showHidden] is on.
+  static const double _hiddenAlpha = 0.35;
 
   /// Read live at paint time, in insertion (drawing) order.
   final Construction construction;
@@ -82,6 +86,12 @@ class GeometryPainter extends CustomPainter {
   /// the construction is never mutated per frame.
   final ({String id, Offset offset})? labelDragPreview;
 
+  /// Renders hidden objects (and their labels) at [_hiddenAlpha] opacity
+  /// instead of skipping them — the Show/Hide tool's view state, never
+  /// persisted and never on in PNG export (which builds its own painter
+  /// and leaves the default false).
+  final bool showHidden;
+
   @override
   void paint(Canvas canvas, Size size) {
     // Infinite lines are drawn with far-away endpoints; the clip keeps
@@ -89,26 +99,33 @@ class GeometryPainter extends CustomPainter {
     canvas.clipRect(Offset.zero & size);
 
     for (final object in construction.objects) {
-      if (!object.attributes.visible || !object.isDefined) {
+      final hidden = !object.attributes.visible;
+      if ((hidden && !showHidden) || !object.isDefined) {
         continue;
       }
+      // A hidden object drawn through [showHidden] dims everything it
+      // paints — halo, fill, stroke and label — by the same factor.
+      final dim = hidden ? _hiddenAlpha : 1.0;
       if (selectedIds.contains(object.id) ||
           previewObjectIds.contains(object.id)) {
         final halo = Paint()
-          ..color = selectionColor.withValues(alpha: _haloAlpha)
+          ..color = selectionColor.withValues(alpha: _haloAlpha * dim)
           ..strokeWidth = object.attributes.strokeWidth + _haloExtra
           ..style = PaintingStyle.stroke;
         _drawObject(canvas, size, object, halo, pointRadiusExtra: _haloExtra);
       }
-      final color =
+      final baseColor =
           Color(object.attributes.colorArgb ?? defaultColor.toARGB32());
+      final color = hidden
+          ? baseColor.withValues(alpha: baseColor.a * dim)
+          : baseColor;
       final fillAlpha = object.attributes.fillAlpha;
       if (fillAlpha != null) {
         _drawFill(
           canvas,
           object,
           Paint()
-            ..color = color.withValues(alpha: fillAlpha)
+            ..color = baseColor.withValues(alpha: fillAlpha * dim)
             ..style = PaintingStyle.fill,
         );
       }
@@ -411,5 +428,6 @@ class GeometryPainter extends CustomPainter {
       !setEquals(oldDelegate.selectedIds, selectedIds) ||
       !listEquals(oldDelegate.previewMarkers, previewMarkers) ||
       !setEquals(oldDelegate.previewObjectIds, previewObjectIds) ||
-      oldDelegate.labelDragPreview != labelDragPreview;
+      oldDelegate.labelDragPreview != labelDragPreview ||
+      oldDelegate.showHidden != showHidden;
 }

@@ -83,6 +83,25 @@ void main() {
       image.dispose();
     });
 
+    test('hidden objects never render — not even dimmed (the Show/Hide '
+        'view is tool-scoped and the exporter builds its own painter)',
+        () async {
+      final construction = pointScene();
+      construction.setAttributes(
+        'p',
+        const ObjectAttributes(colorArgb: 0xFFFF0000, visible: false),
+      );
+      final image = await renderConstructionImage(
+        construction,
+        viewport: pointViewport,
+        logicalSize: const ui.Size(20, 16),
+        background: white,
+        defaultColor: blue,
+      );
+      expect(await pixelAt(image, 5, 5), white);
+      image.dispose();
+    });
+
     test('no background leaves everything off the geometry transparent',
         () async {
       final image = await renderConstructionImage(
