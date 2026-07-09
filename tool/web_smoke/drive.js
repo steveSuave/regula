@@ -141,18 +141,17 @@ async function canvasSample(page, x, y) {
   const icons = appBarIcons(PNG.sync.read(await page.screenshot()));
   console.log('app-bar icons at:', icons.map((x) => x.toFixed(0)).join(' '));
   check(icons.length >= 10, `found ${icons.length} app-bar icons (>= 10)`);
-  const [fileX, pointsX] = icons;
+  const [fileX] = icons;
   const themeX = icons[icons.length - 2]; // delete tool is last (Phase 41)
 
   // ---- Phase 8: place two points, zoom, blobs spread ----
-  // Phase 13: the point tool lives in the Points flyout now (first item);
-  // menu rows are 48 px below ~8 px padding. With only 9 icons the whole
-  // action cluster sits right of the window midline, so *every* popup
-  // menu opens left-aligned to its button (Flutter grows the menu toward
-  // the side with more room) — click left of the icon, not right.
-  await page.mouse.click(pointsX, 28);
-  await page.waitForTimeout(500);
-  await page.mouse.click(pointsX - 60, 8 + 24); // first item: Point
+  // Activated by its P shortcut, not the Points flyout: Phase 41's
+  // delete button pushed the action cluster left until Points sits at
+  // the 1000-px window's exact midline, where which side the popup
+  // opens on is anybody's guess (the Session 39 Square precedent —
+  // keys are immune to icon shifts). Flyout mechanics stay covered by
+  // the Phase 20 section's Lines menu, still safely right of midline.
+  await page.keyboard.press('p');
   await page.waitForTimeout(300);
   await page.mouse.click(400, 300);
   await page.waitForTimeout(200);
