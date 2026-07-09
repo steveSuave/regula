@@ -9,7 +9,6 @@ import '../../domain/construction/geo_object.dart';
 import '../../domain/construction/object_attributes.dart';
 import '../../domain/construction/object_naming.dart';
 import '../../domain/construction/objects/sector.dart';
-import 'delete_selection.dart';
 import 'object_kind_label.dart';
 
 /// Side panel showing the current selection's attributes; collapses to
@@ -29,10 +28,10 @@ import 'object_kind_label.dart';
 /// un-hiding until the object tree panel lands.
 ///
 /// Every edit is one [ChangeAttributesCommand] on the shared stack, so
-/// attribute changes undo exactly like geometry changes. The panel also
-/// carries the Delete button — deletion acts on the selection, and the
-/// panel exists exactly while there is one (see
-/// [deleteSelectionWithConfirmation] for the cascade confirmation).
+/// attribute changes undo exactly like geometry changes. Deletion is
+/// deliberately *not* here (Phase 41): it isn't styling, and compact
+/// mode hid the old button behind the palette icon — the app-bar
+/// delete button and the Del/Backspace shortcut are the delete paths.
 class AttributesInspector extends ConsumerWidget {
   const AttributesInspector({super.key});
 
@@ -262,18 +261,6 @@ class AttributesInspector extends ConsumerWidget {
                           : Text(objectKindLabel(object)),
                     ),
                 ],
-                const SizedBox(height: 16),
-                OutlinedButton.icon(
-                  key: const ValueKey('delete-button'),
-                  icon: const Icon(Icons.delete_outline),
-                  label: Text(
-                    single != null
-                        ? 'Delete'
-                        : 'Delete ${objects.length} objects',
-                  ),
-                  onPressed: () =>
-                      deleteSelectionWithConfirmation(context, ref, objects),
-                ),
               ],
             ),
           ),

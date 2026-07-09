@@ -83,13 +83,14 @@ function markers(rawBlobs, radius = 40) {
 // Centers of the app-bar action icons, left to right (x > 300 skips the
 // leading object-tree toggle and the title). Column runs separated by
 // less than 8 px merge into one icon (outlined glyphs have gaps).
-// Current action order (main.dart + panels/toolbar.dart, Phase 15):
+// Current action order (main.dart + panels/toolbar.dart, Phase 41):
 // 0 file, then the six tool flyout groups — 1 Points, 2 Lines,
 // 3 Circles, 4 Angles, 5 Transform, 6 Macros — then 7 fit, 8 reset,
-// 9 cheat sheet, 10 theme toggle, 11 undo, 12 redo (undo/redo start
-// disabled and greyed below the glyph threshold, so a fresh app detects
-// 11 icons and the theme toggle is the last — index it from the end,
-// not from the front).
+// 9 cheat sheet, 10 theme toggle, 11 delete tool, 12 undo, 13 redo
+// (undo/redo start disabled and greyed below the glyph threshold, so a
+// fresh app detects 12 icons; the always-enabled delete-tool button is
+// the last and the theme toggle sits second-from-last — index both from
+// the end, not from the front).
 function appBarIcons(png) {
   const isGlyphCol = (x) => {
     for (let y = 8; y < 48; y++) {
@@ -139,9 +140,9 @@ async function canvasSample(page, x, y) {
 
   const icons = appBarIcons(PNG.sync.read(await page.screenshot()));
   console.log('app-bar icons at:', icons.map((x) => x.toFixed(0)).join(' '));
-  check(icons.length >= 9, `found ${icons.length} app-bar icons (>= 9)`);
+  check(icons.length >= 10, `found ${icons.length} app-bar icons (>= 10)`);
   const [fileX, pointsX] = icons;
-  const themeX = icons[icons.length - 1];
+  const themeX = icons[icons.length - 2]; // delete tool is last (Phase 41)
 
   // ---- Phase 8: place two points, zoom, blobs spread ----
   // Phase 13: the point tool lives in the Points flyout now (first item);
