@@ -13,11 +13,15 @@ import 'package:regula/presentation/panels/object_tree_panel.dart';
 import 'package:regula/presentation/panels/toolbar.dart';
 import 'package:regula/presentation/shortcuts/cheat_sheet.dart';
 
-/// Phase 25 compact chrome (single-row revision): below the 600-px
-/// shortest-side breakpoint the app bar is one slim 48-px row — the
-/// toolbar scrolls in the title slot, File and the loose icon buttons
-/// collapse into one overflow menu; at desktop sizes the wide layout
-/// must be exactly as before.
+/// Phase 25 compact chrome (single-row revision) + Phase 42 responsive
+/// split: panel placement (drawers vs docked) follows the 600-px
+/// shortest-side breakpoint, app-bar density follows the window width —
+/// below ~980 px the bar is one slim 48-px row with the toolbar
+/// scrolling in the title slot and File + the loose icon buttons in one
+/// overflow menu. The tree toggle is an explicit leading icon in every
+/// layout (never Material's auto-hamburger); iPad portrait gets compact
+/// chrome over docked panels; at desktop sizes the wide layout must be
+/// exactly as before.
 void main() {
   late ProviderContainer container;
 
@@ -61,8 +65,9 @@ void main() {
       // strip below.
       expect(tester.getSize(find.byType(AppBar)).height, 48);
 
-      // App bar keeps undo/redo + overflow; File, the five loose icon
-      // buttons and the object-tree leading toggle are gone.
+      // App bar keeps undo/redo + overflow; File and the loose icon
+      // buttons are gone. The leading slot holds the explicit tree
+      // icon — not Material's auto-hamburger.
       expect(inAppBar(find.byIcon(Icons.undo)), findsOneWidget);
       expect(inAppBar(find.byIcon(Icons.redo)), findsOneWidget);
       expect(inAppBar(find.byIcon(Icons.more_vert)), findsOneWidget);
@@ -74,8 +79,10 @@ void main() {
       expect(inAppBar(find.byIcon(Icons.dark_mode_outlined)), findsNothing);
       expect(
         inAppBar(find.byIcon(Icons.account_tree_outlined)),
-        findsNothing,
+        findsOneWidget,
       );
+      expect(inAppBar(find.byType(DrawerButton)), findsNothing);
+      expect(inAppBar(find.byIcon(Icons.menu)), findsNothing);
 
       // The absorbed File actions live in the overflow menu.
       await tester.tap(find.byIcon(Icons.more_vert));
@@ -143,6 +150,22 @@ void main() {
       expect(find.byType(ShortcutCheatSheet), findsOneWidget);
     });
 
+    testWidgets('the leading tree icon opens the object-tree drawer',
+        (tester) async {
+      await pumpEditor(tester, screen: phone);
+      expect(find.byType(ObjectTreePanel), findsNothing);
+
+      await tester.tap(inAppBar(find.byIcon(Icons.account_tree_outlined)));
+      await tester.pumpAndSettle();
+      expect(
+        find.descendant(
+          of: find.byType(Drawer),
+          matching: find.byType(ObjectTreePanel),
+        ),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('style button appears with the selection and opens the '
         'inspector drawer — never auto-opens', (tester) async {
       await pumpEditor(tester, screen: phone);
@@ -169,6 +192,87 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Point'), findsOneWidget);
+    });
+  });
+
+  group('tablet portrait (compact chrome over docked panels)', () {
+    // iPad-portrait-ish: shortestSide ≥ 600 keeps the panels docked,
+    // but the width can't fit the wide action cluster — before the
+    // Phase 42 split, NavigationToolbar painted the trailing cluster
+    // over the leading tree icon here.
+    const tabletPortrait = Size(810, 1080);
+
+    testWidgets('app bar is the compact row, panels stay docked — '
+        'no drawers', (tester) async {
+      await pumpEditor(tester, screen: tabletPortrait);
+
+      // Compact chrome: slim row, toolbar scrolls in the title slot,
+      // loose icons collapsed into the overflow menu.
+      expect(tester.getSize(find.byType(AppBar)).height, 48);
+      expect(
+        find.ancestor(
+          of: find.byType(GeometryToolbar),
+          matching: find.byType(SingleChildScrollView),
+        ),
+        findsOneWidget,
+      );
+      expect(inAppBar(find.byIcon(Icons.more_vert)), findsOneWidget);
+      expect(inAppBar(find.byIcon(Icons.folder_outlined)), findsNothing);
+
+      // Docked panels: no drawers at this size.
+      final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
+      expect(scaffold.drawer, isNull);
+      expect(scaffold.endDrawer, isNull);
+    });
+
+    testWidgets('the leading tree icon is hit-testable and toggles the '
+        'docked panel — no overlap, no drawer', (tester) async {
+      await pumpEditor(tester, screen: tabletPortrait);
+      expect(find.byType(ObjectTreePanel), findsNothing);
+
+      // The tap proves nothing paints over the leading icon: a covered
+      // button would receive no hit.
+      await tester.tap(inAppBar(find.byIcon(Icons.account_tree_outlined)));
+      await tester.pumpAndSettle();
+      expect(find.byType(ObjectTreePanel), findsOneWidget);
+      expect(find.byType(Drawer), findsNothing);
+
+      await tester.tap(inAppBar(find.byIcon(Icons.account_tree_outlined)));
+      await tester.pumpAndSettle();
+      expect(find.byType(ObjectTreePanel), findsNothing);
+    });
+
+    testWidgets('overflow "Show object tree" toggles the docked panel '
+        'and relabels to Hide', (tester) async {
+      await pumpEditor(tester, screen: tabletPortrait);
+
+      await tester.tap(find.byIcon(Icons.more_vert));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Show object tree'));
+      await tester.pumpAndSettle();
+      expect(find.byType(ObjectTreePanel), findsOneWidget);
+      expect(find.byType(Drawer), findsNothing);
+
+      await tester.tap(find.byIcon(Icons.more_vert));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Hide object tree'));
+      await tester.pumpAndSettle();
+      expect(find.byType(ObjectTreePanel), findsNothing);
+    });
+
+    testWidgets('no style button with a selection — the docked inspector '
+        'is already visible', (tester) async {
+      await pumpEditor(tester, screen: tabletPortrait);
+
+      container
+          .read(constructionProvider)
+          .construction
+          .add(FreePoint(id: 'a', position: Vec2.zero));
+      container.read(selectionProvider.notifier).select('a');
+      await tester.pump();
+
+      expect(find.byIcon(Icons.palette_outlined), findsNothing);
+      expect(find.byType(AttributesInspector), findsOneWidget);
     });
   });
 

@@ -5,11 +5,15 @@ import 'package:regula/application/providers/preferences_provider.dart';
 import 'package:regula/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../wide_window.dart';
+
 void main() {
   Future<SharedPreferences> pumpApp(
     WidgetTester tester, {
     Map<String, Object> stored = const {},
   }) async {
+    // The theme-toggle icon button only sits in the wide app bar.
+    useWideTestWindow(tester);
     SharedPreferences.setMockInitialValues(stored);
     final preferences = await SharedPreferences.getInstance();
     await tester.pumpWidget(

@@ -633,6 +633,15 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   /// icon-button touch targets.
   static const double _compactBarHeight = 48;
 
+  /// Minimum window width for the wide app-bar chrome: the full wide
+  /// action cluster (tree toggle, File, six tool groups, four view
+  /// icons, delete, undo/redo ≈ 800 px today, plus headroom for the
+  /// planned Measure group). Narrower windows — iPad portrait most of
+  /// all — made `NavigationToolbar` paint the too-wide trailing cluster
+  /// over the leading tree icon, so below this the bar uses the compact
+  /// single-row chrome regardless of where the panels live.
+  static const double _wideChromeMinWidth = 980;
+
   /// Compact-only home of the [GeometryToolbar]: it scrolls horizontally
   /// in the app bar's flexible title slot, so the six flyout groups share
   /// one row with undo/redo and the overflow menu and are never truncated
@@ -646,11 +655,12 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         ),
       );
 
-  /// Compact-only overflow absorbing the File menu and the loose
+  /// Compact-chrome overflow absorbing the File menu and the loose
   /// wide-layout icon buttons (fit, reset, object tree, cheat sheet,
-  /// theme) — they don't fit a phone app bar that also hosts the
-  /// scrolling toolbar and undo/redo.
-  Widget _overflowMenu(BuildContext context) {
+  /// theme) — they don't fit an app bar that also hosts the scrolling
+  /// toolbar and undo/redo. The object-tree entry follows the panel
+  /// gate: drawer under [compactPanels], docked-panel toggle otherwise.
+  Widget _overflowMenu(BuildContext context, {required bool compactPanels}) {
     final dark = Theme.of(context).brightness == Brightness.dark;
     return PopupMenuButton<VoidCallback>(
       tooltip: 'More: file, view, panels, shortcuts, theme',
@@ -683,8 +693,14 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
           child: const Text('Reset view'),
         ),
         PopupMenuItem(
-          value: () => _scaffoldKey.currentState?.openDrawer(),
-          child: const Text('Show object tree'),
+          value: compactPanels
+              ? () => _scaffoldKey.currentState?.openDrawer()
+              : () => setState(() => _showObjectTree = !_showObjectTree),
+          child: Text(
+            !compactPanels && _showObjectTree
+                ? 'Hide object tree'
+                : 'Show object tree',
+          ),
         ),
         PopupMenuItem(
           value: () => setState(() => _showCheatSheet = !_showCheatSheet),
@@ -703,15 +719,19 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   @override
   Widget build(BuildContext context) {
     final undoRedo = ref.watch(commandStackProvider);
-    // Material compact breakpoint (PLAN "Mobile layout"): phones get the
-    // scrollable toolbar strip and the overflow menu; the wide layout is
-    // untouched.
-    final isCompact = MediaQuery.sizeOf(context).shortestSide < 600;
-    // Watched only in compact mode: the app bar's style button appears
-    // with the selection (it opens the inspector drawer, which never
-    // auto-opens); the wide layout doesn't depend on it.
+    // Two independent gates (PLAN "Responsive chrome split"): the
+    // Material compact breakpoint decides only where the panels live
+    // (drawers vs docked), while app-bar density follows the window
+    // width — an iPad-portrait window is wide enough for docked panels
+    // but not for the wide action cluster.
+    final screen = MediaQuery.sizeOf(context);
+    final compactPanels = screen.shortestSide < 600;
+    final compactChrome = screen.width < _wideChromeMinWidth;
+    // Watched only with drawer panels: the app bar's style button
+    // appears with the selection (it opens the inspector drawer, which
+    // never auto-opens); a docked inspector is already visible.
     final hasSelection =
-        isCompact && ref.watch(selectionProvider).isNotEmpty;
+        compactPanels && ref.watch(selectionProvider).isNotEmpty;
     // Narrow select: tool taps bump the provider's revision every input,
     // and the scaffold must not rebuild per tap.
     final isDeleteActive =
@@ -731,21 +751,29 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         // button only.
         drawerEnableOpenDragGesture: false,
         endDrawerEnableOpenDragGesture: false,
-        drawer: isCompact
+        drawer: compactPanels
             ? Drawer(width: drawerWidth, child: const ObjectTreePanel())
             : null,
-        endDrawer: isCompact
+        endDrawer: compactPanels
             ? Drawer(width: drawerWidth, child: const AttributesInspector())
             : null,
         appBar: AppBar(
-          // Compact: one slim row — auto hamburger (object-tree drawer),
-          // the toolbar scrolling in the title slot, then style (with a
-          // selection), delete, undo/redo and the overflow menu.
-          toolbarHeight: isCompact ? _compactBarHeight : null,
-          leadingWidth: isCompact ? _compactBarHeight : null,
-          titleSpacing: isCompact ? 0 : null,
-          leading: isCompact
-              ? null
+          // Compact chrome: one slim row — tree button, the toolbar
+          // scrolling in the title slot, then style (with a selection),
+          // delete, undo/redo and the overflow menu.
+          toolbarHeight: compactChrome ? _compactBarHeight : null,
+          leadingWidth: compactChrome ? _compactBarHeight : null,
+          titleSpacing: compactChrome ? 0 : null,
+          // Always an explicit tree button: with a drawer set, a null
+          // leading makes Material inject its auto-hamburger, hiding the
+          // tree affordance behind a generic burger. What it opens
+          // follows the panel gate, not the chrome gate.
+          leading: compactPanels
+              ? IconButton(
+                  tooltip: 'Show object tree',
+                  icon: const Icon(Icons.account_tree_outlined),
+                  onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+                )
               : IconButton(
                   tooltip: _showObjectTree
                       ? 'Hide object tree'
@@ -755,7 +783,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                   onPressed: () =>
                       setState(() => _showObjectTree = !_showObjectTree),
                 ),
-          title: isCompact ? _scrollableToolbar() : const Text('regula'),
+          title: compactChrome ? _scrollableToolbar() : const Text('regula'),
           actions: [
             if (hasSelection)
               IconButton(
@@ -763,7 +791,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                 icon: const Icon(Icons.palette_outlined),
                 onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
               ),
-            if (!isCompact) ...[
+            if (!compactChrome) ...[
               PopupMenuButton<Future<void> Function()>(
                 tooltip: 'File: new, open, save',
                 icon: const Icon(Icons.folder_outlined),
@@ -842,7 +870,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                   ? () => ref.read(commandStackProvider.notifier).redo()
                   : null,
             ),
-            if (isCompact) _overflowMenu(context),
+            if (compactChrome)
+              _overflowMenu(context, compactPanels: compactPanels),
           ],
         ),
         body: SafeArea(
@@ -858,7 +887,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  if (!isCompact && _showObjectTree) const ObjectTreePanel(),
+                  if (!compactPanels && _showObjectTree)
+                    const ObjectTreePanel(),
                   Expanded(
                     // Clicking the canvas pulls focus back to the shortcut
                     // layer: a focused name field commits (focus-loss
@@ -883,7 +913,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                       ),
                     ),
                   ),
-                  if (!isCompact) const AttributesInspector(),
+                  if (!compactPanels) const AttributesInspector(),
                 ],
               ),
               if (_showCheatSheet)
