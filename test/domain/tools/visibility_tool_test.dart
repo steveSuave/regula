@@ -102,6 +102,57 @@ void main() {
     });
   });
 
+  group('VisibilityTool.hideAll', () {
+    test('one command hides every visible object, undo restores all', () {
+      final command = VisibilityTool.hideAll([a, b, s])!;
+      command.apply(construction);
+
+      expect(a.attributes.visible, isFalse);
+      expect(b.attributes.visible, isFalse);
+      expect(s.attributes.visible, isFalse);
+
+      command.undo(construction);
+      expect(a.attributes.visible, isTrue);
+      expect(b.attributes.visible, isTrue);
+      expect(s.attributes.visible, isTrue);
+    });
+
+    test('already-hidden objects are skipped — undo must not reveal them',
+        () {
+      construction.setAttributes(
+        'b',
+        const ObjectAttributes(visible: false),
+      );
+      final command = VisibilityTool.hideAll([a, b])!;
+      expect(command.newAttributes.keys, ['a']);
+
+      command.apply(construction);
+      command.undo(construction);
+      expect(a.attributes.visible, isTrue);
+      expect(b.attributes.visible, isFalse,
+          reason: 'b was hidden before hideAll and must stay hidden');
+    });
+
+    test('returns null for an all-hidden or empty input', () {
+      construction.setAttributes(
+        'a',
+        const ObjectAttributes(visible: false),
+      );
+      expect(VisibilityTool.hideAll([a]), isNull);
+      expect(VisibilityTool.hideAll(const []), isNull);
+    });
+
+    test('preserves every other attribute', () {
+      construction.setAttributes(
+        'a',
+        const ObjectAttributes(name: 'A', colorArgb: 0xFF123456),
+      );
+      VisibilityTool.hideAll([a])!.apply(construction);
+      expect(a.attributes.name, 'A');
+      expect(a.attributes.colorArgb, 0xFF123456);
+    });
+  });
+
   test('toggling preserves every other attribute', () {
     construction.setAttributes(
       'a',
