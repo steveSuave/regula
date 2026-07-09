@@ -1,0 +1,20 @@
+tool/web_smoke/drive.js
+  s_63492b39d7e01b::t_ddc5abd3a52436 144
+  s_63492b39d7e01b::t_493b20554065df 148-154
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "5c71142d0eddadc653ddc2250b06447c2c0b4aff",
+  "prompts": {},
+  "sessions": {
+    "s_63492b39d7e01b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4ab44e71-5ab3-465a-a37d-1cdb71fc105d",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
