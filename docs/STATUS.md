@@ -6,6 +6,25 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 41 — 2026-07-09
+
+**Done**
+- **Planning-only session**: five user-reported bugs/features specced into PLAN.md + TODO.md as Phases 40–44 (no code touched). Root causes confirmed in source first.
+- **Phase 40** — transform duplicate names: `TransformObjectTool._commitSource`'s identity-keyed image map dedupes only *within* a gesture; segment-by-segment transforms re-image shared vertices. Fix: additive `ToolInput.objects` + equivalent-existing-object reuse (same kind, same parent instances, equal params).
+- **Phase 41** — Delete leaves the inspector (it hid behind the mobile palette icon; deletion isn't styling) → selection-gated app-bar delete button on both layouts, same `deleteSelectionWithConfirmation` path.
+- **Phase 42** — compact tree toggle "became a burger" because `leading: null` + a `drawer` makes Material inject `DrawerButton`; iPad-portrait overlap because the wide actions cluster (~800 px) exceeds the bar and `NavigationToolbar` paints trailing over leading. Fix: split `isCompact` into `compactPanels` (shortestSide < 600) and `compactChrome` (width < ~980), explicit `account_tree_outlined` leading.
+- **Phase 43** — two-finger viewport rotation as *pure view state* (decided: coordinates and world-aligned grid stay intact; rotating the world would rewrite saved geometry). Additive viewport `rotation` key, arming threshold + snap-back, band containment goes screen-space.
+- **Phase 44** — Cinderella-style line clipping: `lineClip` 0/1/2 — infinite / defining points / **incident-point span** (mode 2 counts on-carrier defining points, hosted `PointOnObject`s, parenting `IntersectionPoint`s — user-corrected from defining-points-only so bisectors/parallels and later-created farther points clip right; rays clamp their far end too). Display + hit only; carriers stay infinite.
+
+**Next**
+- Phases 40–42 are small user-facing fixes — worth scheduling ahead of the bigger 32–39 queue; 43–44 can slot anywhere (43 composes with 36's world-space grid in either order).
+- `main` still ahead of `origin/main` — push when convenient.
+
+**Open questions / gotchas**
+- Phase 40's reuse is keyed on parent *instances* and exact params — a numerically-identical image built from different parents deliberately doesn't match.
+- Phase 42's ~980 px chrome constant must be re-measured once the Measure group (Phase 38) lands; the widget test at iPad sizes is the guard.
+- Phase 43 golden scenes need a rotated variant; check the exporter's region framing math under rotation when implementing (screen-rect → viewport assumes axis alignment today).
+
 ## Session 40 — 2026-07-08
 
 **Done**
