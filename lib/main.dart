@@ -27,6 +27,7 @@ import 'domain/construction/objects/perpendicular_line.dart';
 import 'domain/math/vec2.dart';
 import 'domain/tools/angle_bisector_tool.dart';
 import 'domain/tools/angle_by_size_tool.dart';
+import 'domain/tools/delete_tool.dart';
 import 'domain/tools/equilateral_triangle_macro_tool.dart';
 import 'domain/tools/intersection_tool.dart';
 import 'domain/tools/isosceles_trapezium_macro_tool.dart';
@@ -368,6 +369,40 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     return deleteSelectionWithConfirmation(context, ref, objects);
   }
 
+  /// The app-bar delete button: toggles the tap-driven [DeleteTool].
+  /// Activating with a selection deletes it first (same confirmation
+  /// path as Del), then the tool stays active for tap-by-tap deleting —
+  /// a cancelled dialog keeps delete mode, since that's what the press
+  /// asked for. Activation goes first so a Phase 30b drag commit lands
+  /// on the undo stack before the selection's delete.
+  void _activateDeleteTool() {
+    final tools = ref.read(toolProvider.notifier);
+    if (ref.read(toolProvider).tool is DeleteTool) {
+      tools.deactivate();
+      return;
+    }
+    tools.activate(const DeleteTool());
+    _deleteSelectedObjects();
+  }
+
+  /// Hide (`H`): the current selection hides at once — one command,
+  /// nothing on the stack when no selected object is visible — then the
+  /// tool stays active for tap-by-tap hiding. The selection stays
+  /// selected (Phase 7 precedent: the inspector/tree is the way back).
+  /// Show/Hide (`Shift+H`) deliberately has no such on-activation
+  /// action: toggling a mixed selection is ambiguous.
+  void _activateHideTool() {
+    ref.read(toolProvider.notifier).activate(VisibilityTool.hide());
+    final construction = ref.read(constructionProvider).construction;
+    final command = VisibilityTool.hideAll([
+      for (final id in ref.read(selectionProvider))
+        if (construction.byId(id) case final GeoObject object) object,
+    ]);
+    if (command != null) {
+      ref.read(commandStackProvider.notifier).execute(command);
+    }
+  }
+
   Future<void> _activateSegmentRatioTool() async {
     final build = await askRatioBuilder(context);
     if (build == null) {
@@ -459,7 +494,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
             .read(themeModeProvider.notifier)
             .toggle(Theme.of(context).brightness);
       case AppAction.hideTool:
-        tools.activate(VisibilityTool.hide());
+        _activateHideTool();
       case AppAction.showHideTool:
         tools.activate(VisibilityTool.showHide());
       case AppAction.toggleCheatSheet:
@@ -677,6 +712,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     // auto-opens); the wide layout doesn't depend on it.
     final hasSelection =
         isCompact && ref.watch(selectionProvider).isNotEmpty;
+    // Narrow select: tool taps bump the provider's revision every input,
+    // and the scaffold must not rebuild per tap.
+    final isDeleteActive =
+        ref.watch(toolProvider.select((state) => state.tool is DeleteTool));
     final drawerWidth = math.min(
       AttributesInspector.panelWidth,
       MediaQuery.sizeOf(context).width * 0.85,
@@ -701,7 +740,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         appBar: AppBar(
           // Compact: one slim row — auto hamburger (object-tree drawer),
           // the toolbar scrolling in the title slot, then style (with a
-          // selection), undo/redo and the overflow menu.
+          // selection), delete, undo/redo and the overflow menu.
           toolbarHeight: isCompact ? _compactBarHeight : null,
           leadingWidth: isCompact ? _compactBarHeight : null,
           titleSpacing: isCompact ? 0 : null,
@@ -780,6 +819,15 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                     .toggle(Theme.of(context).brightness),
               ),
             ],
+            IconButton(
+              key: const ValueKey('delete-tool-button'),
+              tooltip: isDeleteActive
+                  ? 'Exit delete (Esc)'
+                  : 'Delete objects',
+              isSelected: isDeleteActive,
+              icon: const Icon(Icons.delete_outline),
+              onPressed: _activateDeleteTool,
+            ),
             IconButton(
               tooltip: 'Undo',
               icon: const Icon(Icons.undo),

@@ -524,97 +524,8 @@ void main() {
     expect(find.byType(TextField), findsNothing);
   });
 
-  testWidgets('delete without dependents: no dialog, one undoable command, '
-      'panel collapses', (tester) async {
-    await pumpEditor(tester);
-    addPoint('a', Vec2.zero);
-    container.read(selectionProvider.notifier).select('a');
-    await tester.pump();
-
-    await tester.tap(find.byKey(const ValueKey('delete-button')));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(AlertDialog), findsNothing,
-        reason: 'nothing beyond the selection is affected — no dialog');
-    expect(
-      container.read(constructionProvider).construction.contains('a'),
-      isFalse,
-    );
-    expect(find.text('Point'), findsNothing,
-        reason: 'the pruned selection collapses the panel');
-
-    await tester.tap(find.byIcon(Icons.undo));
-    await tester.pump();
-    expect(
-      container.read(constructionProvider).construction.contains('a'),
-      isTrue,
-    );
-  });
-
-  testWidgets('delete with unselected dependents asks first; Cancel leaves '
-      'everything in place', (tester) async {
-    await pumpEditor(tester);
-    final a = addPoint('a', Vec2.zero);
-    final b = addPoint('b', const Vec2(4, 0));
-    container.read(constructionProvider).construction.add(
-          Segment(
-            id: 's',
-            point1: a,
-            point2: b,
-            attributes: const ObjectAttributes(name: 'base'),
-          ),
-        );
-    container.read(selectionProvider.notifier).select('a');
-    await tester.pump();
-
-    await tester.tap(find.byKey(const ValueKey('delete-button')));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(AlertDialog), findsOneWidget);
-    expect(find.textContaining('base'), findsOneWidget,
-        reason: 'the dialog lists the casualties by name');
-
-    await tester.tap(find.text('Cancel'));
-    await tester.pumpAndSettle();
-    expect(
-      container.read(constructionProvider).construction.contains('s'),
-      isTrue,
-    );
-    expect(container.read(commandStackProvider).canUndo, isFalse,
-        reason: 'a cancelled delete must not touch the undo stack');
-  });
-
-  testWidgets('confirming a cascading delete removes the dependents in the '
-      'same undo step', (tester) async {
-    await pumpEditor(tester);
-    final a = addPoint('a', Vec2.zero);
-    final b = addPoint('b', const Vec2(4, 0));
-    container
-        .read(constructionProvider)
-        .construction
-        .add(Segment(id: 's', point1: a, point2: b));
-    container.read(selectionProvider.notifier).select('a');
-    await tester.pump();
-
-    await tester.tap(find.byKey(const ValueKey('delete-button')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('confirm-delete')));
-    await tester.pumpAndSettle();
-
-    final construction = container.read(constructionProvider).construction;
-    expect(construction.contains('a'), isFalse);
-    expect(construction.contains('s'), isFalse);
-    expect(construction.contains('b'), isTrue,
-        reason: 'the other endpoint does not depend on a');
-
-    await tester.tap(find.byIcon(Icons.undo));
-    await tester.pump();
-    expect(construction.contains('a'), isTrue);
-    expect(construction.contains('s'), isTrue);
-  });
-
-  testWidgets('a selection already containing all its dependents deletes '
-      'without asking', (tester) async {
+  testWidgets('the inspector carries no delete button — deletion lives in '
+      'the app bar (Phase 41)', (tester) async {
     await pumpEditor(tester);
     final a = addPoint('a', Vec2.zero);
     final b = addPoint('b', const Vec2(4, 0));
@@ -625,21 +536,14 @@ void main() {
     container.read(selectionProvider.notifier).selectMany(['a', 'b', 's']);
     await tester.pump();
 
-    // The multi-selection list pushes the button below the fold.
-    await tester.scrollUntilVisible(
-      find.byKey(const ValueKey('delete-button')),
-      100,
-      scrollable: find.descendant(
+    expect(
+      find.descendant(
         of: find.byType(AttributesInspector),
-        matching: find.byType(Scrollable),
+        matching: find.byIcon(Icons.delete_outline),
       ),
+      findsNothing,
     );
-    await tester.tap(find.byKey(const ValueKey('delete-button')));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(AlertDialog), findsNothing,
-        reason: 'the cascade reaches nothing beyond the selection');
-    expect(container.read(constructionProvider).construction.isEmpty, isTrue);
+    expect(find.byKey(const ValueKey('delete-button')), findsNothing);
   });
 
   testWidgets('clearing the selection collapses the panel again',
