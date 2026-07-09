@@ -6,6 +6,23 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 44 — 2026-07-10
+
+**Done**
+- **Phase 42 complete** on `phase-42-responsive-chrome`, merged to `main` — the Phase 25 `isCompact` gate split in two: `compactPanels` (shortestSide < 600) decides only drawers vs docked panels; new `compactChrome` (width < `_wideChromeMinWidth` = 980, sized to the wide action cluster with Measure-group headroom) decides app-bar density. iPad portrait now gets the compact bar over docked panels instead of `NavigationToolbar` painting the trailing cluster over the leading icon.
+- The leading tree `IconButton` is now explicit in every layout (a null `leading` beside a `drawer` made Material inject the auto-hamburger — the reported burger) and branches on the *panel* gate: drawer opener under `compactPanels`, docked toggle with `isSelected` otherwise. The overflow's object-tree entry branches the same way and relabels to "Hide object tree" while the docked panel is open; the style button keys on `compactPanels` (a docked inspector is already visible).
+- Test fallout embraced: 20 widget tests broke because flutter_test's default 800×600 window is now compact chrome — which is exactly the too-narrow-for-the-cluster window the gate exists for. New shared `test/wide_window.dart` (`useWideTestWindow`, 1280×800) called from every `EditorScreen`-pumping suite plus smoke/theme-toggle tests.
+- 885 tests green (5 new: phone leading-opens-drawer + a tablet-portrait group incl. the hit-testability tap that a pre-42 overlap would fail), analyze clean, web smoke on a fresh release build: **SMOKE PASS**, zero console errors (drive.js untouched). Ad-hoc Playwright at 810×1080: leading icon click shifts the canvas right 240 px (docked panel, not a drawer) and back exactly.
+
+**Next**
+- Phase 32 (object tree: long-press multi-select + search) heads the 32–39 queue; 43–45 can slot anywhere.
+- `main` now ~14 commits ahead of `origin/main` — push when convenient.
+
+**Open questions / gotchas**
+- drive.js's 1000-px viewport clears the 980-px wide-chrome gate by only 20 px. The constant carries Measure-group headroom, but if the *smoke viewport* ever narrows — or the gate widens — the whole suite silently flips into compact chrome. Re-check when Phase 38 lands.
+- Any new `EditorScreen` widget-test file must call `useWideTestWindow` (or set its own size) — the flutter_test default now renders compact chrome.
+- Landscape phones ≥ 980 px wide (e.g. 1000×500) get wide chrome over drawer panels: the wide cluster plus a drawer-opening leading icon. Intended by the gate split, but no test pins that combination.
+
 ## Session 43 — 2026-07-09
 
 **Done**
