@@ -18,6 +18,7 @@ import 'package:regula/domain/tools/right_triangle_macro_tool.dart';
 import 'package:regula/domain/tools/transform_object_tool.dart';
 import 'package:regula/domain/tools/two_point_tool.dart';
 import 'package:regula/main.dart';
+import '../../wide_window.dart';
 
 /// Tests for the toolbar's group flyouts: activation, the active-group
 /// highlight (including the segment-ratio closure that no canonicalized
@@ -27,6 +28,7 @@ void main() {
   late ProviderContainer container;
 
   Future<void> pumpEditor(WidgetTester tester) async {
+    useWideTestWindow(tester);
     container = ProviderContainer();
     addTearDown(container.dispose);
     await tester.pumpWidget(

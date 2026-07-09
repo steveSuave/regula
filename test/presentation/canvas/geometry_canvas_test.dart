@@ -37,6 +37,7 @@ import 'package:regula/presentation/canvas/canvas_viewport.dart';
 import 'package:regula/presentation/canvas/geometry_canvas.dart';
 import 'package:regula/presentation/canvas/geometry_painter.dart';
 import 'package:regula/presentation/panels/object_kind_label.dart';
+import '../../wide_window.dart';
 
 /// End-to-end tool flow: activate the point tool, tap the canvas, see
 /// free points appear in the construction, undo/redo them. This is the
@@ -45,6 +46,7 @@ void main() {
   late ProviderContainer container;
 
   Future<void> pumpEditor(WidgetTester tester) async {
+    useWideTestWindow(tester);
     container = ProviderContainer();
     addTearDown(container.dispose);
     await tester.pumpWidget(

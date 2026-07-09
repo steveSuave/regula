@@ -12,6 +12,7 @@ import 'package:regula/domain/construction/objects/vertex_angle.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/main.dart';
 import 'package:regula/presentation/panels/attributes_inspector.dart';
+import '../../wide_window.dart';
 
 void main() {
   late ProviderContainer container;
@@ -19,6 +20,7 @@ void main() {
   /// The full editor, so the inspector's undo interplay is tested through
   /// the same app bar the user has.
   Future<void> pumpEditor(WidgetTester tester) async {
+    useWideTestWindow(tester);
     container = ProviderContainer();
     addTearDown(container.dispose);
     await tester.pumpWidget(

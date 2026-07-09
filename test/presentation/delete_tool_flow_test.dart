@@ -13,6 +13,7 @@ import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/tools/delete_tool.dart';
 import 'package:regula/main.dart';
 import 'package:regula/presentation/canvas/geometry_canvas.dart';
+import '../wide_window.dart';
 
 /// The Phase 41 delete flows, all through the app-bar delete-tool
 /// button (the inspector's Delete button is gone): pressing it
@@ -24,6 +25,7 @@ void main() {
   final button = find.byKey(const ValueKey('delete-tool-button'));
 
   Future<void> pumpEditor(WidgetTester tester) async {
+    useWideTestWindow(tester);
     container = ProviderContainer();
     addTearDown(container.dispose);
     await tester.pumpWidget(
