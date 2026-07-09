@@ -28,6 +28,7 @@ import 'package:regula/domain/construction/objects/segment_ratio_point.dart';
 import 'package:regula/domain/construction/objects/three_point_circle.dart';
 import 'package:regula/domain/construction/objects/vertex_angle.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/tools/delete_tool.dart';
 import 'package:regula/domain/tools/intersection_tool.dart';
 import 'package:regula/domain/tools/point_tool.dart';
 import 'package:regula/domain/tools/visibility_tool.dart';
@@ -2003,5 +2004,101 @@ void main() {
     await tester.pump();
     expect(container.read(selectionProvider), {'a'},
         reason: '12 px is inside the 16-px touch radius');
+  });
+
+  group('DeleteTool taps (Phase 41)', () {
+    late Offset origin;
+
+    /// A segment over two free points; the endpoints sit 200 px apart so
+    /// taps can unambiguously reach a point, the segment middle, or
+    /// empty canvas.
+    Future<void> pumpSegmentScene(WidgetTester tester) async {
+      await pumpEditor(tester);
+      origin = tester.getTopLeft(find.byType(GeometryCanvas));
+      final construction = container.read(constructionProvider).construction;
+      final a = FreePoint(id: 'a', position: const Vec2(100, -200));
+      final b = FreePoint(id: 'b', position: const Vec2(300, -200));
+      construction
+        ..add(a)
+        ..add(b)
+        ..add(Segment(id: 's', point1: a, point2: b));
+      container.read(toolProvider.notifier).activate(const DeleteTool());
+      await tester.pump();
+    }
+
+    bool has(String id) =>
+        container.read(constructionProvider).construction.contains(id);
+
+    testWidgets('a self-contained object deletes instantly — no dialog, '
+        'one undo restores', (tester) async {
+      await pumpSegmentScene(tester);
+
+      // Mid-segment, 100 px from either endpoint — only the segment
+      // claims it, and nothing depends on a segment.
+      await tester.tapAt(origin + const Offset(200, 200));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Delete dependent objects too?'), findsNothing);
+      expect(has('s'), isFalse);
+      expect(has('a'), isTrue);
+      expect(has('b'), isTrue);
+
+      container.read(commandStackProvider.notifier).undo();
+      expect(has('s'), isTrue);
+      expect(container.read(commandStackProvider).canUndo, isFalse,
+          reason: 'one tap = one undo step');
+    });
+
+    testWidgets('a cascading tap asks first; Cancel leaves everything and '
+        'an empty undo stack', (tester) async {
+      await pumpSegmentScene(tester);
+
+      await tester.tapAt(origin + const Offset(100, 200));
+      await tester.pumpAndSettle();
+      expect(find.text('Delete dependent objects too?'), findsOneWidget);
+
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      expect(has('a'), isTrue);
+      expect(has('s'), isTrue);
+      expect(container.read(commandStackProvider).canUndo, isFalse);
+      expect(container.read(toolProvider).tool, isA<DeleteTool>(),
+          reason: 'a cancelled dialog keeps delete mode active');
+    });
+
+    testWidgets('confirming a cascading tap removes hit and dependents in '
+        'one undo step', (tester) async {
+      await pumpSegmentScene(tester);
+
+      await tester.tapAt(origin + const Offset(100, 200));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('confirm-delete')));
+      await tester.pumpAndSettle();
+
+      expect(has('a'), isFalse);
+      expect(has('s'), isFalse);
+      expect(has('b'), isTrue);
+
+      container.read(commandStackProvider.notifier).undo();
+      expect(has('a'), isTrue);
+      expect(has('s'), isTrue);
+      expect(container.read(commandStackProvider).canUndo, isFalse,
+          reason: 'the cascade rode one command');
+    });
+
+    testWidgets('an empty tap deletes nothing and never retargets the '
+        'selection', (tester) async {
+      await pumpSegmentScene(tester);
+      container.read(selectionProvider.notifier).select('b');
+
+      await tester.tapAt(origin + const Offset(500, 400));
+      await tester.pumpAndSettle();
+
+      expect(objectCount(), 3);
+      expect(container.read(selectionProvider), {'b'},
+          reason: 'the active tool owns the tap; no selection clear');
+      expect(container.read(commandStackProvider).canUndo, isFalse);
+    });
   });
 }

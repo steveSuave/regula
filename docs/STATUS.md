@@ -6,6 +6,24 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 43 — 2026-07-09
+
+**Done**
+- **Phase 41 complete** on `phase-41-delete-tool`, merged to `main` — respecced first (PLAN/TODO commit) per user request, widened from "selection-gated app-bar delete button" to a **tap-driven Delete tool** plus **Hide acting on the selection at activation**.
+- New `DeleteTool` (`domain/tools/delete_tool.dart`, stateless `VisibilityTool` sibling): tap = one `DeleteObjectsCommand` = one undo step. The cascade dialog stays presentation-layer as a *canvas pre-gate*: `confirmCascadeDelete` extracted from `deleteSelectionWithConfirmation` (both paths share one dialog), awaited in `_handleTap` before dispatching to `handleInput`, with mounted/still-present guards so a cancelled dialog or stale hit never puts an empty delete on the stack.
+- App-bar: always-visible delete button (both layouts, before undo/redo, `isSelected` while active via a narrow `toolProvider.select` watch) toggles the tool; activating with a selection deletes it first through the same confirmation. Inspector's Delete button removed. `Del`/`Backspace` one-shot behavior unchanged.
+- Hide (`H`): activation now executes `VisibilityTool.hideAll` over the selection — one command over the visible subset, nothing on the stack when none visible, selection stays selected (Phase 7 precedent). Activation goes first so a Phase 30b drag commit precedes the hide on the undo stack (test pins the order). `Shift+H` deliberately untouched.
+- 880 tests green (18 domain incl. `hideAll`, 4 canvas tap-delete widget tests, 8 flow tests in new `delete_tool_flow_test.dart` — the four inspector delete tests moved there and re-pointed — 4 new H/Shift+H shortcut tests), analyze clean. Web smoke on a fresh release build: **SMOKE PASS**, zero console errors, plus an ad-hoc Playwright check of the button flow itself (activate → selection deleted → tap-delete → Esc).
+
+**Next**
+- Phase 42 (responsive chrome split) is the next small user-facing fix; the 32–39 queue behind it.
+- `main` is ~12 commits ahead of `origin/main` — push when convenient.
+
+**Open questions / gotchas**
+- **drive.js broke and was repaired twice over**: (1) theme toggle re-indexed to `icons[length - 2]` — the always-enabled delete button is now the last detected glyph; (2) the cluster shift put the Points group at the 1000-px viewport's exact *midline*, flipping which side its flyout opens on — the first smoke section now activates the point tool with `P` (Session 39 Square precedent). Anything else added to the app bar will shift popup-side behavior again.
+- A tap-delete on an object whose cascade stays self-contained is instant — no dialog, matching Del. Watch for "I deleted more than I meant" feedback anyway: the dialog only lists *unselected/untapped* casualties.
+- The delete button is deliberately not selection-gated anymore (it must be reachable to *enter* tap-delete), so the compact actions row gained one permanent icon; Phase 42's ~980-px chrome constant must count it.
+
 ## Session 42 — 2026-07-09
 
 **Done**
