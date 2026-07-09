@@ -1,0 +1,28 @@
+lib/presentation/canvas/geometry_canvas.dart
+  s_63492b39d7e01b::t_331edcd8ac0c78 460-461
+  s_63492b39d7e01b::t_3ba9b6429192fa 497-513
+  s_63492b39d7e01b::t_47a6a4f7807f44 14
+  s_63492b39d7e01b::t_a714ce8afa96aa 16,19
+  s_63492b39d7e01b::t_5fb04626266534 457-459,462-472
+test/presentation/canvas/geometry_canvas_test.dart
+  s_63492b39d7e01b::t_5a7d3358eeb4bd 2008-2103
+  s_63492b39d7e01b::t_dac235685e1fba 31
+lib/presentation/panels/delete_selection.dart
+  s_63492b39d7e01b::t_7ffd965d90eaad 10-17,20,26-43,45-72,76
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "2d2288476307e2c450b361664527d36454d5f19e",
+  "prompts": {},
+  "sessions": {
+    "s_63492b39d7e01b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4ab44e71-5ab3-465a-a37d-1cdb71fc105d",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
