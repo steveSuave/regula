@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/application/providers/command_stack_provider.dart';
@@ -7,13 +9,16 @@ import 'package:regula/domain/commands/add_object_command.dart';
 import 'package:regula/domain/commands/delete_objects_command.dart';
 import 'package:regula/domain/commands/macro_command.dart';
 import 'package:regula/domain/construction/construction.dart';
+import 'package:regula/domain/construction/geo_object.dart';
 import 'package:regula/domain/construction/object_attributes.dart';
 import 'package:regula/domain/construction/objects/centroid.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/rotated_point.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/tools/point_tool.dart';
 import 'package:regula/domain/tools/tool.dart';
+import 'package:regula/domain/tools/transform_object_tool.dart';
 import 'package:regula/domain/tools/triangle_center_tool.dart';
 
 /// Scripted tool for exercising the notifier: replays [results] in order
@@ -327,6 +332,51 @@ void main() {
 
         expect(nameOf(container, 'p0'), 'A');
         expect(nameOf(container, 'p1'), 'B');
+      });
+
+      test(
+          'transforming AB then BC about one center names the shared '
+          'vertex image once (Phase 40)', () {
+        // The reported bug: segment-by-segment transforms re-imaged the
+        // shared vertex, so its image was added — and named — per gesture.
+        final construction =
+            container.read(constructionProvider).construction;
+        final a = FreePoint(id: 'a', position: const Vec2(0, 0));
+        final b = FreePoint(id: 'b', position: const Vec2(4, 0));
+        final c = FreePoint(id: 'c', position: const Vec2(4, 4));
+        final o = FreePoint(id: 'o', position: const Vec2(10, 10));
+        final ab = Segment(id: 'ab', point1: a, point2: b);
+        final bc = Segment(id: 'bc', point1: b, point2: c);
+        construction
+          ..add(a)
+          ..add(b)
+          ..add(c)
+          ..add(o)
+          ..add(ab)
+          ..add(bc);
+
+        final notifier = container.read(toolProvider.notifier);
+        var nextId = 0;
+        notifier.activate(TransformObjectTool.rotate(
+          newId: () => 'n${nextId++}',
+          angle: math.pi / 2,
+        ));
+        ToolInput tapOn(GeoObject hit, Vec2 position) =>
+            ToolInput(position, hit: hit, objects: construction.objects);
+        notifier.handleInput(tapOn(ab, const Vec2(2, 0)));
+        notifier.handleInput(tapOn(o, const Vec2(10, 10)));
+        notifier.handleInput(tapOn(bc, const Vec2(4, 2)));
+        final result = notifier.handleInput(tapOn(o, const Vec2(10, 10)));
+
+        expect(result, isA<ToolCommitted>());
+        final images =
+            construction.objects.whereType<RotatedPoint>().toList();
+        expect(images, hasLength(3),
+            reason: 'A, B, C images — the shared B imaged once');
+        final names = {for (final image in images) image.attributes.name};
+        expect(names, hasLength(3),
+            reason: 'three distinct auto-names, none duplicated');
+        expect(names, isNot(contains('')));
       });
     });
 

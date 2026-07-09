@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/domain/commands/add_object_command.dart';
 import 'package:regula/domain/commands/macro_command.dart';
 import 'package:regula/domain/construction/construction.dart';
+import 'package:regula/domain/construction/geo_object.dart';
 import 'package:regula/domain/construction/objects/arc.dart';
 import 'package:regula/domain/construction/objects/central_reflection_point.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
@@ -606,6 +607,153 @@ void main() {
           [const Vec2(2, 1), const Vec2(0, 0)],
           reason: 'new free points are not in the construction yet');
       expect(fresh.previewObjectIds, isEmpty);
+    });
+  });
+
+  group('image reuse across gestures (Phase 40)', () {
+    late FreePoint a;
+    late FreePoint b;
+    late FreePoint c;
+    late FreePoint o;
+    late Segment ab;
+    late Segment bc;
+    late Construction construction;
+
+    setUp(() {
+      a = FreePoint(id: 'a', position: const Vec2(0, 2));
+      b = FreePoint(id: 'b', position: const Vec2(4, 2));
+      c = FreePoint(id: 'c', position: const Vec2(4, 6));
+      o = FreePoint(id: 'o', position: const Vec2(10, 10));
+      ab = Segment(id: 'ab', point1: a, point2: b);
+      bc = Segment(id: 'bc', point1: b, point2: c);
+      construction = Construction()
+        ..add(m1)
+        ..add(m2)
+        ..add(xAxis)
+        ..add(a)
+        ..add(b)
+        ..add(c)
+        ..add(o)
+        ..add(ab)
+        ..add(bc);
+    });
+
+    ToolInput tapOn(GeoObject hit, Vec2 position) =>
+        ToolInput(position, hit: hit, objects: construction.objects);
+
+    test('rotating AB then BC about one center images the shared vertex once',
+        () {
+      final tool =
+          TransformObjectTool.rotate(newId: newId, angle: math.pi / 2);
+
+      tool.onInput(tapOn(ab, const Vec2(2, 2)));
+      final first = tool.onInput(tapOn(o, o.position)) as ToolCommitted;
+      first.command.apply(construction);
+      final firstImage = construction.objects.last as Segment;
+
+      tool.onInput(tapOn(bc, const Vec2(4, 4)));
+      final second = tool.onInput(tapOn(o, o.position)) as ToolCommitted;
+      final macro = second.command as MacroCommand;
+      expect(macro.commands, hasLength(2),
+          reason: "C's image + the rebuilt segment — B's image is reused");
+      second.command.apply(construction);
+
+      expect(construction.objects.whereType<RotatedPoint>(), hasLength(3),
+          reason: 'the shared vertex B is imaged once, not per gesture');
+      final secondImage = construction.objects.last as Segment;
+      expect(identical(secondImage.point1, firstImage.point2), isTrue,
+          reason: 'the rebuilt segments share the one image instance');
+    });
+
+    test('repeating the same transform of the same segment is refused, '
+        'the collected transformee survives', () {
+      final tool =
+          TransformObjectTool.rotate(newId: newId, angle: math.pi / 2);
+      tool.onInput(tapOn(ab, const Vec2(2, 2)));
+      final first = tool.onInput(tapOn(o, o.position)) as ToolCommitted;
+      first.command.apply(construction);
+
+      tool.onInput(tapOn(ab, const Vec2(2, 2)));
+      expect(tool.onInput(tapOn(o, o.position)), isA<ToolIgnored>(),
+          reason: 'the commit would add nothing');
+      expect(tool.previewObjectIds, ['ab'],
+          reason: 'the refused center tap unwinds; the transformee stays');
+
+      expect(tool.onInput(tapOn(c, c.position)), isA<ToolCommitted>(),
+          reason: 'a different center is not a duplicate');
+    });
+
+    test('a different angle or a different mirror is never falsely reused',
+        () {
+      final quarter =
+          TransformObjectTool.rotate(newId: newId, angle: math.pi / 2);
+      quarter.onInput(tapOn(o, o.position));
+      final first = quarter.onInput(tapOn(a, a.position)) as ToolCommitted;
+      first.command.apply(construction);
+
+      final third =
+          TransformObjectTool.rotate(newId: newId, angle: math.pi / 3);
+      third.onInput(tapOn(o, o.position));
+      expect(third.onInput(tapOn(a, a.position)), isA<ToolCommitted>(),
+          reason: 'same point and center, different angle');
+
+      final otherAxis =
+          LineThroughTwoPoints(id: 'y', point1: m1, point2: a);
+      construction.add(otherAxis);
+      final reflect = TransformObjectTool.reflectAboutLine(newId: newId);
+      reflect.onInput(tapOn(o, o.position));
+      final across = reflect.onInput(tapOn(xAxis, const Vec2(2, 0)));
+      (across as ToolCommitted).command.apply(construction);
+      reflect.onInput(tapOn(o, o.position));
+      expect(
+        reflect.onInput(tapOn(otherAxis, const Vec2(0, 1))),
+        isA<ToolCommitted>(),
+        reason: 'same point, different mirror',
+      );
+    });
+
+    test('point mode: the same reflection twice is refused in either order',
+        () {
+      final tool = TransformObjectTool.reflectAboutLine(newId: newId);
+      tool.onInput(tapOn(o, o.position));
+      final first =
+          tool.onInput(tapOn(xAxis, const Vec2(2, 0))) as ToolCommitted;
+      first.command.apply(construction);
+
+      // Point first: the committing mirror tap is refused, the point stays.
+      tool.onInput(tapOn(o, o.position));
+      expect(tool.onInput(tapOn(xAxis, const Vec2(2, 0))), isA<ToolIgnored>());
+      expect(tool.previewObjectIds, ['o']);
+      tool.reset();
+
+      // Line first: the committing point tap is refused and unwound.
+      tool.onInput(tapOn(xAxis, const Vec2(2, 0)));
+      expect(tool.onInput(tapOn(o, o.position)), isA<ToolIgnored>());
+      expect(tool.previewObjectIds, ['x'],
+          reason: 'the point tap unwound, the pending mirror stays');
+      expect(tool.onInput(tapOn(c, c.position)), isA<ToolCommitted>(),
+          reason: 'a different point still commits');
+    });
+
+    test('a hidden equivalent image is reused untouched, not revealed', () {
+      final hidden =
+          RotatedPoint(id: 'h', point: a, center: o, angle: math.pi / 2);
+      hidden.attributes = hidden.attributes.copyWith(visible: false);
+      construction.add(hidden);
+
+      final tool =
+          TransformObjectTool.rotate(newId: newId, angle: math.pi / 2);
+      tool.onInput(tapOn(ab, const Vec2(2, 2)));
+      final result = tool.onInput(tapOn(o, o.position)) as ToolCommitted;
+      final macro = result.command as MacroCommand;
+      expect(macro.commands, hasLength(2),
+          reason: "A's image is reused; only B's image + segment are added");
+      result.command.apply(construction);
+
+      final image = construction.objects.last as Segment;
+      expect(identical(image.point1, hidden), isTrue);
+      expect(hidden.attributes.visible, isFalse,
+          reason: 'a reused equivalent keeps its attributes');
     });
   });
 }

@@ -15,21 +15,26 @@ import '../math/vec2.dart';
 /// the same (priority, distance) rank order, [hit] excluded — so point
 /// resolution can notice a tap near the crossing of two curves even
 /// though only one of them is topmost. [snapThreshold] is the hit
-/// threshold in world units; intersection snapping never fires beyond it,
-/// and the defaults (`const []`, `0`) make a bare `ToolInput(pos, hit: x)`
-/// behave exactly as before the fields existed.
+/// threshold in world units; intersection snapping never fires beyond it.
+/// [objects] is the whole construction in insertion order, for tools that
+/// must look beyond the tap — e.g. the transform tool reusing an
+/// equivalent existing image instead of adding a duplicate. The defaults
+/// (`const []`, `0`) make a bare `ToolInput(pos, hit: x)` behave exactly
+/// as before the fields existed.
 class ToolInput {
   const ToolInput(
     this.position, {
     this.hit,
     this.extraHits = const [],
     this.snapThreshold = 0,
+    this.objects = const [],
   });
 
   final Vec2 position;
   final GeoObject? hit;
   final List<GeoObject> extraHits;
   final double snapThreshold;
+  final Iterable<GeoObject> objects;
 
   /// Every in-threshold candidate, best first: [hit] (when non-null)
   /// followed by [extraHits].
