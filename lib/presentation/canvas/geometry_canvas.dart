@@ -11,9 +11,12 @@ import '../../application/providers/selection_provider.dart';
 import '../../application/providers/tool_provider.dart';
 import '../../application/providers/viewport_provider.dart';
 import '../../domain/commands/change_attributes_command.dart';
+import '../../domain/construction/geo_object.dart';
 import '../../domain/math/vec2.dart';
+import '../../domain/tools/delete_tool.dart';
 import '../../domain/tools/tool.dart';
 import '../../domain/tools/visibility_tool.dart';
+import '../panels/delete_selection.dart';
 import 'canvas_hit_tester.dart';
 import 'canvas_viewport.dart';
 import 'geometry_painter.dart';
@@ -451,6 +454,22 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
     ref.read(selectionProvider.notifier).toggle(hit.id);
   }
 
+  /// One Delete-tool tap: ask about the cascade first, then dispatch
+  /// [input] through the normal tool funnel. The guards after the
+  /// async gap keep a cancelled dialog — or a construction that lost
+  /// the hit while the dialog was up — from putting an empty delete
+  /// on the undo stack.
+  Future<void> _tapDelete(WidgetRef ref, GeoObject hit, ToolInput input) async {
+    if (!await confirmCascadeDelete(context, ref, [hit.id])) {
+      return;
+    }
+    if (!mounted ||
+        !ref.read(constructionProvider).construction.contains(hit.id)) {
+      return;
+    }
+    ref.read(toolProvider.notifier).handleInput(input);
+  }
+
   void _handleTap(
     WidgetRef ref,
     CanvasViewport viewport,
@@ -475,15 +494,23 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
     if (tool != null) {
       // An active tool owns every tap — including ones it ignores, so a
       // stray tap mid-collection can't silently retarget the selection.
-      ref.read(toolProvider.notifier).handleInput(
-            ToolInput(
-              world,
-              hit: hit,
-              extraHits: hits.length > 1 ? hits.sublist(1) : const [],
-              snapThreshold: threshold,
-              objects: construction.objects,
-            ),
-          );
+      final input = ToolInput(
+        world,
+        hit: hit,
+        extraHits: hits.length > 1 ? hits.sublist(1) : const [],
+        snapThreshold: threshold,
+        objects: construction.objects,
+      );
+      if (tool is DeleteTool) {
+        // Deleting cascades, and the cascade warning is a dialog — a
+        // presentation concern the tool pipeline can't await. Pre-gate
+        // here; the tool itself only ever emits the command.
+        if (hit != null) {
+          _tapDelete(ref, hit, input);
+        }
+        return;
+      }
+      ref.read(toolProvider.notifier).handleInput(input);
       return;
     }
     final selection = ref.read(selectionProvider.notifier);
