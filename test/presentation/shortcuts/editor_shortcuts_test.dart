@@ -37,6 +37,7 @@ import 'package:regula/domain/tools/visibility_tool.dart';
 import 'package:regula/main.dart';
 import 'package:regula/presentation/canvas/geometry_canvas.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../wide_window.dart';
 
 /// Widget tests for the keyboard shortcut wiring: key events go in, the
 /// providers (tool, selection, viewport, command stack) change as the
@@ -45,6 +46,7 @@ void main() {
   late ProviderContainer container;
 
   Future<void> pumpEditor(WidgetTester tester) async {
+    useWideTestWindow(tester);
     SharedPreferences.setMockInitialValues(const {});
     final preferences = await SharedPreferences.getInstance();
     container = ProviderContainer(

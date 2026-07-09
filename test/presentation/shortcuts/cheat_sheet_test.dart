@@ -7,11 +7,13 @@ import 'package:regula/domain/tools/point_tool.dart';
 import 'package:regula/main.dart';
 import 'package:regula/presentation/shortcuts/cheat_sheet.dart';
 import 'package:regula/presentation/shortcuts/shortcut_table.dart';
+import '../../wide_window.dart';
 
 void main() {
   late ProviderContainer container;
 
   Future<void> pumpEditor(WidgetTester tester) async {
+    useWideTestWindow(tester);
     container = ProviderContainer();
     addTearDown(container.dispose);
     await tester.pumpWidget(
