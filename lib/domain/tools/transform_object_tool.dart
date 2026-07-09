@@ -19,6 +19,7 @@ import '../construction/objects/vertex_angle.dart';
 import '../math/vec2.dart';
 import 'point_resolution.dart';
 import 'tool.dart';
+import 'transform_equivalence.dart';
 
 /// Which isometry a [TransformObjectTool] applies.
 enum ObjectTransform { reflectAboutLine, reflectAboutPoint, rotate, translate }
@@ -54,6 +55,14 @@ enum ObjectTransform { reflectAboutLine, reflectAboutPoint, rotate, translate }
 /// swaps its arm points and the marker measures the same wedge; the three
 /// orientation-preserving transforms rebuild arms as-is. `Arc` needs no
 /// care — the via-point image picks the branch.
+///
+/// Images are reused across gestures (Phase 40): before adding an image
+/// point or rebuilt curve, the commit looks for an equivalent existing
+/// object ([equivalentExisting] — same kind, same parent instances, equal
+/// params) in `ToolInput.objects` and reuses it, so transforming a
+/// polygon side by side images each shared vertex once. A commit that
+/// would add nothing refuses the tap instead ([ToolIgnored]), keeping the
+/// collected state.
 class TransformObjectTool implements ToolInputPreview {
   TransformObjectTool.reflectAboutLine({required this.newId})
       : transform = ObjectTransform.reflectAboutLine,
@@ -207,16 +216,21 @@ class TransformObjectTool implements ToolInputPreview {
         }
         _point = hit;
         _pointIsNew = false;
-        return _commitPoint(mirror: mirror);
+        final result = _commitPoint(input.objects, mirror: mirror);
+        if (result is! ToolCommitted) {
+          // Duplicate image refused: unwind the tap, keep the mirror.
+          _point = null;
+        }
+        return result;
       case final GeoLine hit:
         if (_point != null) {
-          return _commitPoint(mirror: hit);
+          return _commitPoint(input.objects, mirror: hit);
         }
         if (_source != null) {
           if (identical(hit, _source)) {
             return const ToolIgnored();
           }
-          return _commitSource(mirror: hit);
+          return _commitSource(input.objects, mirror: hit);
         }
         return const ToolIgnored();
       case GeoCircle() || GeoAngle():
@@ -228,7 +242,7 @@ class TransformObjectTool implements ToolInputPreview {
         }
         _point = FreePoint(id: newId(), position: input.position);
         _pointIsNew = true;
-        return _commitPoint(mirror: mirror);
+        return _commitPoint(input.objects, mirror: mirror);
     }
   }
 
@@ -248,7 +262,14 @@ class TransformObjectTool implements ToolInputPreview {
     if (_params.length < _paramCount) {
       return const ToolAccepted();
     }
-    return _point != null ? _commitPoint() : _commitSource();
+    final result = _point != null
+        ? _commitPoint(input.objects)
+        : _commitSource(input.objects);
+    if (result is! ToolCommitted) {
+      // Duplicate image refused: unwind the tap, keep the earlier slots.
+      _params.removeLast();
+    }
+    return result;
   }
 
   /// The transform-point image of [point]; reads [_params] (and reflect's
@@ -278,11 +299,19 @@ class TransformObjectTool implements ToolInputPreview {
   /// Point-mode commit: new points in tap order, then the image — a bare
   /// `AddObjectCommand` when every input was an existing object, matching
   /// the Phase 15 tools.
-  ToolResult _commitPoint({GeoLine? mirror}) {
+  ///
+  /// An image that already exists (same transformee instance, same mirror
+  /// / center / vector, equal angle — see [equivalentExisting]) would make
+  /// the whole commit a no-op, so the tap is refused instead: the caller
+  /// unwinds its tentative slot and the collected state stays (Phase 40).
+  ToolResult _commitPoint(Iterable<GeoObject> objects, {GeoLine? mirror}) {
     final point = _point!;
     final pointIsNew = _pointIsNew;
-    final params = List.of(_params);
     final image = _imageOf(point, mirror: mirror);
+    if (equivalentExisting(objects, image) != null) {
+      return const ToolIgnored();
+    }
+    final params = List.of(_params);
     reset();
     final commands = <Command>[
       if (pointIsNew) AddObjectCommand(point),
@@ -297,22 +326,43 @@ class TransformObjectTool implements ToolInputPreview {
 
   /// Curve-mode commit: new parameter points, then one image per distinct
   /// defining point, then the rebuilt curve — dependency order, one
-  /// `MacroCommand`, everything visible.
-  ToolResult _commitSource({GeoLine? mirror}) {
+  /// command, everything visible.
+  ///
+  /// Phase 40: a defining point whose image already exists reuses the
+  /// existing image as the rebuilt curve's parent — attributes untouched,
+  /// a hidden equivalent stays hidden — so transforming a polygon side by
+  /// side images each shared vertex once. A rebuilt curve that already
+  /// exists means every image was reused too (its parents are those
+  /// images), the commit would add nothing, and the tap is refused like
+  /// [_commitPoint]'s duplicate.
+  ToolResult _commitSource(Iterable<GeoObject> objects, {GeoLine? mirror}) {
     final source = _source!;
-    final params = List.of(_params);
     final images = <GeoPoint, GeoPoint>{};
-    GeoPoint img(GeoPoint parent) =>
-        images.putIfAbsent(parent, () => _imageOf(parent, mirror: mirror));
+    final newImages = <GeoPoint>[];
+    GeoPoint img(GeoPoint parent) => images.putIfAbsent(parent, () {
+          final candidate = _imageOf(parent, mirror: mirror);
+          if (equivalentExisting(objects, candidate)
+              case final GeoPoint existing) {
+            return existing;
+          }
+          newImages.add(candidate);
+          return candidate;
+        });
     final rebuilt = _rebuild(source, img);
+    if (equivalentExisting(objects, rebuilt) != null) {
+      return const ToolIgnored();
+    }
+    final params = List.of(_params);
     reset();
     final commands = <Command>[
       for (final p in params)
         if (p.isNew) AddObjectCommand(p.point),
-      for (final image in images.values) AddObjectCommand(image),
+      for (final image in newImages) AddObjectCommand(image),
       AddObjectCommand(rebuilt),
     ];
-    return ToolCommitted(MacroCommand(commands));
+    return ToolCommitted(
+      commands.length == 1 ? commands.single : MacroCommand(commands),
+    );
   }
 
   /// The same kind rebuilt over the images of [source]'s defining points.

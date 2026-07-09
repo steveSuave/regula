@@ -481,6 +481,7 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
               hit: hit,
               extraHits: hits.length > 1 ? hits.sublist(1) : const [],
               snapThreshold: threshold,
+              objects: construction.objects,
             ),
           );
       return;
