@@ -10,6 +10,7 @@ import 'package:regula/application/providers/theme_provider.dart';
 import 'package:regula/application/providers/tool_provider.dart';
 import 'package:regula/application/providers/viewport_provider.dart';
 import 'package:regula/domain/commands/add_object_command.dart';
+import 'package:regula/domain/construction/object_attributes.dart';
 import 'package:regula/domain/construction/objects/centroid.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
@@ -448,6 +449,117 @@ void main() {
 
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     expect(activeTool(), isNull, reason: 'Esc deactivates like any tool');
+  });
+
+  testWidgets('H with a mixed selection hides the visible objects in one '
+      'undo step and keeps the selection (Phase 41)', (tester) async {
+    await pumpEditor(tester);
+    final construction = container.read(constructionProvider).construction;
+    final a = FreePoint(id: 'a', position: Vec2.zero);
+    final b = FreePoint(id: 'b', position: const Vec2(4, 2));
+    construction
+      ..add(a)
+      ..add(b);
+    construction.setAttributes(
+      'b',
+      const ObjectAttributes(visible: false),
+    );
+    container.read(selectionProvider.notifier).selectMany(['a', 'b']);
+    await tester.pump();
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyH);
+    await tester.pump();
+
+    expect(activeTool(), isA<VisibilityTool>());
+    expect(a.attributes.visible, isFalse);
+    expect(container.read(selectionProvider), {'a', 'b'},
+        reason: 'hiding keeps the selection — the tree/inspector is the '
+            'way back (Phase 7 precedent)');
+
+    container.read(commandStackProvider.notifier).undo();
+    expect(a.attributes.visible, isTrue);
+    expect(b.attributes.visible, isFalse,
+        reason: 'b was hidden before H and the undo must not reveal it');
+    expect(container.read(commandStackProvider).canUndo, isFalse,
+        reason: 'the whole selection hid in one command');
+  });
+
+  testWidgets('H with an empty or all-hidden selection puts nothing on the '
+      'undo stack', (tester) async {
+    await pumpEditor(tester);
+    final construction = container.read(constructionProvider).construction;
+    construction.add(FreePoint(id: 'a', position: Vec2.zero));
+    construction.setAttributes(
+      'a',
+      const ObjectAttributes(visible: false),
+    );
+    await tester.pump();
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyH);
+    expect(activeTool(), isA<VisibilityTool>());
+    expect(container.read(commandStackProvider).canUndo, isFalse,
+        reason: 'no selection, nothing to hide');
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    container.read(selectionProvider.notifier).select('a');
+    await tester.pump();
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyH);
+    expect(container.read(commandStackProvider).canUndo, isFalse,
+        reason: 'an all-hidden selection has nothing to hide');
+  });
+
+  testWidgets('Shift+H with a selection performs no on-activation action', (
+    tester,
+  ) async {
+    await pumpEditor(tester);
+    final construction = container.read(constructionProvider).construction;
+    final a = FreePoint(id: 'a', position: Vec2.zero);
+    construction.add(a);
+    container.read(selectionProvider.notifier).select('a');
+    await tester.pump();
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyH);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+
+    expect(activeTool(), isA<VisibilityTool>());
+    expect(a.attributes.visible, isTrue,
+        reason: 'toggling a mixed selection is ambiguous — Show/Hide '
+            'only ever acts per tap');
+    expect(container.read(commandStackProvider).canUndo, isFalse);
+  });
+
+  testWidgets('H mid-drag with a selection: the drag commit precedes the '
+      'hide on the undo stack', (tester) async {
+    await pumpEditor(tester);
+    final p = FreePoint(id: 'p', position: const Vec2(100, -100));
+    container.read(constructionProvider).construction.add(p);
+    container.read(selectionProvider.notifier).select('p');
+    await tester.pump();
+
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+    final gesture = await tester.startGesture(origin + const Offset(100, 100));
+    await tester.pump(const Duration(milliseconds: 50));
+    await gesture.moveBy(const Offset(60, 0));
+    await tester.pump();
+    expect(p.position.x, closeTo(160, 1), reason: 'drag preview applied');
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyH);
+    await tester.pump();
+    await gesture.up();
+    await tester.pump();
+
+    expect(p.attributes.visible, isFalse, reason: 'the selection hid');
+    expect(p.position.x, closeTo(160, 1),
+        reason: 'the move survived the tool switch (Phase 30b)');
+
+    container.read(commandStackProvider.notifier).undo();
+    expect(p.attributes.visible, isTrue, reason: 'first undo = the hide');
+    expect(p.position.x, closeTo(160, 1));
+
+    container.read(commandStackProvider.notifier).undo();
+    expect(p.position.x, closeTo(100, 1), reason: 'second undo = the drag');
   });
 
   testWidgets(
