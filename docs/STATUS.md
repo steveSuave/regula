@@ -6,6 +6,24 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 42 — 2026-07-09
+
+**Done**
+- **Phase 40 (transform images reused across gestures) complete** on `phase-40-transform-image-reuse`, merged to `main`. The reported duplicate-name bug: transforming polygon sides one by one re-imaged each shared vertex per gesture. Now `TransformObjectTool` consults a new `equivalentExisting` helper (`domain/tools/transform_equivalence.dart` — same concrete kind, identical parent *instances* slot-by-slot, equal params, `RotatedPoint.angle` exact) before adding any image point or rebuilt curve; equivalent image points are reused as parents (attributes untouched — hidden equivalents stay hidden).
+- Additive `ToolInput.objects` (whole construction in insertion order, default `const []`) supplied at the canvas's single `ToolInput` site; the tool consults it at commit time.
+- Design decision: a commit that would add nothing (the final image/rebuilt curve already exists) returns `ToolIgnored` **without resetting** — `handleInput` doesn't bump the preview revision on `ToolIgnored`, so resetting would leave stale halos. Instead the committing tap's tentative slot is unwound (`_point` / `_params.removeLast()`), the collection stays live, and a different center/mirror still commits.
+- Also committed on `main` before starting: a stray uncommitted Phase 45 (snap to grid) spec in PLAN/TODO — written after Session 41's commit, apparently from a planning follow-up that ended without committing.
+- 860 tests green (5 tool tests incl. unwind-in-either-order, 7 helper units, provider end-to-end through the naming interceptor pinning "shared vertex named once"), analyze clean, web smoke on a fresh release build: **SMOKE PASS**, zero console errors (drive.js untouched).
+
+**Next**
+- Phase 41 (delete out of the inspector, into the app bar) is the next small user-facing fix, then 42; the 32–39 queue behind them.
+- `main` now ~4 commits ahead of `origin/main` — push when convenient.
+
+**Open questions / gotchas**
+- A refused duplicate commit is silent — the tap does nothing and the tool keeps waiting. Defensible (nothing to add), but watch for "the tool feels stuck" feedback.
+- Cross-gesture reuse makes later commits depend on earlier gestures' image instances; safe under the strictly LIFO undo stack (gesture 2 always undoes before gesture 1) and cascade-delete already handles the rest.
+- `equivalentExisting` scans the whole construction per image consult — O(objects), fine at realistic sizes.
+
 ## Session 41 — 2026-07-09
 
 **Done**
