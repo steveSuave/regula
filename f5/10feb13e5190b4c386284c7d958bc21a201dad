@@ -1,0 +1,26 @@
+lib/domain/tools/delete_tool.dart
+  s_63492b39d7e01b::t_30e723a6b2d217 1-35
+test/domain/tools/visibility_tool_test.dart
+  s_63492b39d7e01b::t_bd47c64993d871 105-155
+test/domain/tools/delete_tool_test.dart
+  s_63492b39d7e01b::t_e2a3adb738e991 1-64
+lib/domain/tools/visibility_tool.dart
+  s_63492b39d7e01b::t_6bc06985a19c7d 28-42
+  s_63492b39d7e01b::t_3d3ca725b293a6 2
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f510feb13e5190b4c386284c7d958bc21a201dad",
+  "prompts": {},
+  "sessions": {
+    "s_63492b39d7e01b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4ab44e71-5ab3-465a-a37d-1cdb71fc105d",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
