@@ -1,0 +1,24 @@
+test/presentation/delete_tool_flow_test.dart
+  s_63492b39d7e01b::t_68707aec747529 1-205
+test/presentation/panels/attributes_inspector_test.dart
+  s_63492b39d7e01b::t_2a939554a4707a 527-528,539-540,542,544,546
+test/presentation/shortcuts/editor_shortcuts_test.dart
+  s_63492b39d7e01b::t_308ae3fe3861c0 13
+  s_63492b39d7e01b::t_9dd187f97c484c 454-564
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "a06de3e5802cf7e133f873527c1714fcc0aaaa18",
+  "prompts": {},
+  "sessions": {
+    "s_63492b39d7e01b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4ab44e71-5ab3-465a-a37d-1cdb71fc105d",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
