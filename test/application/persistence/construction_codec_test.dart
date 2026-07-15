@@ -31,6 +31,7 @@ import 'package:regula/domain/construction/objects/rotated_point.dart';
 import 'package:regula/domain/construction/objects/sector.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/construction/objects/segment_ratio_point.dart';
+import 'package:regula/domain/construction/objects/tangent_line.dart';
 import 'package:regula/domain/construction/objects/three_point_circle.dart';
 import 'package:regula/domain/construction/objects/translated_point.dart';
 import 'package:regula/domain/construction/objects/two_line_bisector_line.dart';
@@ -62,9 +63,10 @@ Construction buildKitchenSink() {
     ..add(c);
 
   final lineAb = LineThroughTwoPoints(id: 'lab', point1: a, point2: b);
+  final ratio = SegmentRatioPoint(id: 'ratio', point1: a, point2: b, ratio: 2.25);
   construction
     ..add(Midpoint(id: 'mid', point1: a, point2: b))
-    ..add(SegmentRatioPoint(id: 'ratio', point1: a, point2: b, ratio: 2.25))
+    ..add(ratio)
     ..add(lineAb)
     ..add(
       Segment(
@@ -94,6 +96,9 @@ Construction buildKitchenSink() {
     ..add(PerpendicularBisectorLine(id: 'pbis', point1: a, point2: c))
     ..add(circle)
     ..add(TwoLineBisectorLine(id: 'llbis', line1: lineAb, line2: perp, branch: 1))
+    // The ratio point sits at (9, 0), outside the radius-4 circle, so the
+    // tangent is defined and its geometry participates in the round-trip.
+    ..add(TangentLine(id: 'tan', point: ratio, circle: circle, branch: 1))
     ..add(ThreePointCircle(id: 'tpc', point1: a, point2: b, point3: c))
     ..add(
       CompassCircle(id: 'comp', radiusPoint1: a, radiusPoint2: b, center: c),
@@ -200,6 +205,7 @@ void main() {
       expect((decoded.byId('poo')! as PointOnObject).parameter, 1.25);
       expect((decoded.byId('int')! as IntersectionPoint).branchIndex, 1);
       expect((decoded.byId('rot')! as RotatedPoint).angle, 0.75);
+      expect((decoded.byId('tan')! as TangentLine).branch, 1);
       final tapped = decoded.byId('lang2')! as LineAngle;
       expect(tapped.sign1, -1);
       expect(tapped.sign2, 1);

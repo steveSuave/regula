@@ -17,6 +17,7 @@ import '../../domain/construction/objects/ray.dart';
 import '../../domain/construction/objects/sector.dart';
 import '../../domain/construction/objects/segment.dart';
 import '../../domain/construction/objects/segment_ratio_point.dart';
+import '../../domain/construction/objects/tangent_line.dart';
 import '../../domain/construction/objects/two_line_bisector_line.dart';
 
 /// The user-facing name of an object's construction kind, for the
@@ -44,6 +45,7 @@ String objectKindLabel(GeoObject object) => switch (object) {
       AngleBisectorLine() => 'Angle bisector',
       TwoLineBisectorLine() => 'Angle bisector',
       PerpendicularBisectorLine() => 'Perpendicular bisector',
+      TangentLine() => 'Tangent line',
       GeoLine() => 'Line',
       Arc() => 'Arc',
       Sector() => 'Sector',
