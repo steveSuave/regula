@@ -16,7 +16,7 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 **Next**
 - Phase 33 (Lines group: perpendicular bisector + tangents from a point) heads the 33–39 queue; 43–45 can slot anywhere.
-- `main` now ~17 commits ahead of `origin/main` — push when convenient.
+- `main` is 3 commits ahead of `origin/main` (the Session 44 backlog was pushed in the meantime) — push when convenient.
 
 **Open questions / gotchas**
 - The tree panel now always renders a `TextField`; any `EditorScreen` test asserting on `find.byType(TextField)` with the tree open must scope its finder (the hidden-object inspector test now looks inside `AttributesInspector`).
