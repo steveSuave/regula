@@ -1,0 +1,21 @@
+lib/domain/tools/angle_tool.dart
+  s_bc3bed5d9ba008::t_cb17e15d0dff84 1-42
+test/domain/tools/angle_tool_test.dart
+  s_bc3bed5d9ba008::t_bb86efe2d2e486 1-183
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "35e4cc2c2dca77fd0f7ccdd02801385c049cf49a",
+  "prompts": {},
+  "sessions": {
+    "s_bc3bed5d9ba008": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3b6e797e-d4d7-49c7-a538-47c42656e185",
+        "model": "unknown"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
