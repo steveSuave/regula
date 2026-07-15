@@ -29,6 +29,8 @@ import 'domain/tools/angle_bisector_tool.dart';
 import 'domain/tools/angle_by_size_tool.dart';
 import 'domain/tools/delete_tool.dart';
 import 'domain/tools/equilateral_triangle_macro_tool.dart';
+import 'domain/tools/fixed_length_segment_tool.dart';
+import 'domain/tools/fixed_radius_circle_tool.dart';
 import 'domain/tools/intersection_tool.dart';
 import 'domain/tools/isosceles_trapezium_macro_tool.dart';
 import 'domain/tools/isosceles_triangle_macro_tool.dart';
@@ -434,6 +436,26 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         .activate(AngleBySizeTool(newId: newObjectId, angle: angle));
   }
 
+  Future<void> _activateFixedRadiusCircleTool() async {
+    final radius = await askCircleRadius(context);
+    if (radius == null) {
+      return;
+    }
+    ref
+        .read(toolProvider.notifier)
+        .activate(FixedRadiusCircleTool(newId: newObjectId, radius: radius));
+  }
+
+  Future<void> _activateFixedLengthSegmentTool() async {
+    final length = await askSegmentLength(context);
+    if (length == null) {
+      return;
+    }
+    ref
+        .read(toolProvider.notifier)
+        .activate(FixedLengthSegmentTool(newId: newObjectId, length: length));
+  }
+
   Future<void> _activateRegularPolygonTool() async {
     final sides = await askPolygonSideCount(context);
     if (sides == null) {
@@ -556,6 +578,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         );
       case AppAction.tangentTool:
         tools.activate(TangentTool(newId: newObjectId));
+      case AppAction.fixedRadiusCircleTool:
+        _activateFixedRadiusCircleTool();
+      case AppAction.fixedLengthSegmentTool:
+        _activateFixedLengthSegmentTool();
       case AppAction.compassTool:
         tools.activate(
           ThreePointTool(newId: newObjectId, build: buildCompassCircle),
