@@ -11,6 +11,7 @@ import 'application/object_ids.dart';
 import 'application/persistence/file_io.dart';
 import 'application/providers/command_stack_provider.dart';
 import 'application/providers/construction_provider.dart';
+import 'application/providers/document_settings_provider.dart';
 import 'application/providers/preferences_provider.dart';
 import 'application/providers/selection_provider.dart';
 import 'application/providers/theme_provider.dart';
@@ -196,6 +197,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     }
     ref.read(constructionProvider.notifier).replace(Construction());
     ref.read(viewportProvider.notifier).set(_centeredViewport());
+    ref.read(documentSettingsProvider.notifier).reset();
   }
 
   Future<void> _openConstruction() async {
@@ -206,6 +208,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
       }
       ref.read(constructionProvider.notifier).replace(decoded.construction);
       ref.read(viewportProvider.notifier).set(decoded.viewport);
+      ref.read(documentSettingsProvider.notifier).set(decoded.settings);
     } on FormatException catch (error) {
       if (!mounted) {
         return;
@@ -229,6 +232,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   Future<void> _saveConstruction() => saveConstructionFile(
     ref.read(constructionProvider).construction,
     viewport: ref.read(viewportProvider),
+    settings: ref.read(documentSettingsProvider),
   );
 
   /// Export flow: options dialog → (optionally a region-pick round trip

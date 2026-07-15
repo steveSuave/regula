@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/application/persistence/construction_codec.dart';
+import 'package:regula/application/providers/document_settings_provider.dart';
 import 'package:regula/application/providers/viewport_provider.dart';
 import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/geo_object.dart';
@@ -160,8 +161,11 @@ Object? geometryOf(GeoObject object) => switch (object) {
 DecodedDocument roundTrip(
   Construction construction, {
   ViewportState viewport = const ViewportState(),
+  DocumentSettings settings = const DocumentSettings(),
 }) {
-  final encoded = jsonEncode(encodeDocument(construction, viewport: viewport));
+  final encoded = jsonEncode(
+    encodeDocument(construction, viewport: viewport, settings: settings),
+  );
   return decodeDocument(jsonDecode(encoded) as Map<String, dynamic>);
 }
 
@@ -239,6 +243,25 @@ void main() {
       const viewport = ViewportState(pan: Vec2(-3.5, 7.25), scale: 2.5);
       final decoded = roundTrip(buildKitchenSink(), viewport: viewport);
       expect(decoded.viewport, viewport);
+    });
+
+    test('preserves the document settings snapshot', () {
+      const settings = DocumentSettings(showAxes: true, showGrid: true);
+      final decoded = roundTrip(buildKitchenSink(), settings: settings);
+      expect(decoded.settings, settings);
+      // …and each flag independently.
+      expect(
+        roundTrip(Construction(),
+                settings: const DocumentSettings(showAxes: true))
+            .settings,
+        const DocumentSettings(showAxes: true),
+      );
+      expect(
+        roundTrip(Construction(),
+                settings: const DocumentSettings(showGrid: true))
+            .settings,
+        const DocumentSettings(showGrid: true),
+      );
     });
 
     test('undefined objects survive: collinear three-point circle', () {
@@ -443,6 +466,23 @@ void main() {
     test('a document without a viewport gets the default', () {
       final decoded = decodeDocument(document([freePoint('a')]));
       expect(decoded.viewport, const ViewportState());
+    });
+
+    test('a pre-36 document without settings keys gets axes and grid off', () {
+      final decoded = decodeDocument(document([freePoint('a')]));
+      expect(decoded.settings, const DocumentSettings());
+    });
+
+    test('rejects a non-boolean settings flag', () {
+      final json = document([freePoint('a')]);
+      expect(
+        () => decodeDocument(<String, dynamic>{...json, 'showAxes': 1}),
+        throwsFormatException,
+      );
+      expect(
+        () => decodeDocument(<String, dynamic>{...json, 'showGrid': 'yes'}),
+        throwsFormatException,
+      );
     });
 
     test('rejects malformed attributes', () {

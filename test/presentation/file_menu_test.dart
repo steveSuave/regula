@@ -12,6 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/application/persistence/construction_codec.dart';
 import 'package:regula/application/providers/command_stack_provider.dart';
 import 'package:regula/application/providers/construction_provider.dart';
+import 'package:regula/application/providers/document_settings_provider.dart';
 import 'package:regula/application/providers/viewport_provider.dart';
 import 'package:regula/domain/commands/add_object_command.dart';
 import 'package:regula/domain/construction/construction.dart';
@@ -121,6 +122,8 @@ void main() {
     buildSmallConstruction();
     const viewport = ViewportState(pan: Vec2(-3, 4), scale: 2);
     container.read(viewportProvider.notifier).set(viewport);
+    const settings = DocumentSettings(showAxes: true, showGrid: true);
+    container.read(documentSettingsProvider.notifier).set(settings);
 
     await tapFileMenu(tester, 'Save…');
 
@@ -133,6 +136,7 @@ void main() {
       ['a', 'b', 'm'],
     );
     expect(saved.viewport, viewport);
+    expect(saved.settings, settings);
   });
 
   testWidgets('Open replaces the construction and viewport, drops undo',
@@ -143,9 +147,14 @@ void main() {
     final incoming = Construction()
       ..add(FreePoint(id: 'x', position: const Vec2(1, 1)));
     const incomingViewport = ViewportState(pan: Vec2(5, 5), scale: 0.5);
+    const incomingSettings = DocumentSettings(showGrid: true);
     picker.openResult = _fileWithBytes(
       utf8.encode(
-        jsonEncode(encodeDocument(incoming, viewport: incomingViewport)),
+        jsonEncode(encodeDocument(
+          incoming,
+          viewport: incomingViewport,
+          settings: incomingSettings,
+        )),
       ),
     );
 
@@ -154,6 +163,7 @@ void main() {
     final construction = container.read(constructionProvider).construction;
     expect([for (final object in construction.objects) object.id], ['x']);
     expect(container.read(viewportProvider), incomingViewport);
+    expect(container.read(documentSettingsProvider), incomingSettings);
     expect(container.read(commandStackProvider).canUndo, isFalse);
   });
 
@@ -224,6 +234,9 @@ void main() {
       (tester) async {
     await pumpEditor(tester);
     buildSmallConstruction();
+    container
+        .read(documentSettingsProvider.notifier)
+        .set(const DocumentSettings(showAxes: true, showGrid: true));
 
     await tapFileMenu(tester, 'New');
     await tester.tap(find.text('Discard'));
@@ -231,6 +244,7 @@ void main() {
 
     expect(container.read(constructionProvider).construction.isEmpty, isTrue);
     expect(container.read(commandStackProvider).canUndo, isFalse);
+    expect(container.read(documentSettingsProvider), const DocumentSettings());
 
     final canvasSize = tester.getSize(find.byType(GeometryCanvas));
     final viewport = CanvasViewport(container.read(viewportProvider));

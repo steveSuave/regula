@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 
 import '../../domain/construction/construction.dart';
+import '../providers/document_settings_provider.dart';
 import '../providers/viewport_provider.dart';
 import 'construction_codec.dart';
 
@@ -14,14 +15,19 @@ const String defaultConstructionFileName = 'construction.json';
 
 const List<String> _allowedExtensions = ['json'];
 
-/// Serializes [construction] + [viewport] and hands the bytes to the
-/// platform's save dialog (a download on the web). Completes when the
-/// dialog does; a cancelled dialog is not an error.
+/// Serializes [construction] + [viewport] + [settings] and hands the bytes
+/// to the platform's save dialog (a download on the web). Completes when
+/// the dialog does; a cancelled dialog is not an error.
 Future<void> saveConstructionFile(
   Construction construction, {
   required ViewportState viewport,
+  DocumentSettings settings = const DocumentSettings(),
 }) async {
-  final json = encodeDocument(construction, viewport: viewport);
+  final json = encodeDocument(
+    construction,
+    viewport: viewport,
+    settings: settings,
+  );
   final bytes = Uint8List.fromList(
     utf8.encode(const JsonEncoder.withIndent('  ').convert(json)),
   );
