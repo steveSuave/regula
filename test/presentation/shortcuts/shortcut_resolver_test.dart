@@ -28,9 +28,15 @@ void main() {
   test('single letters resolve to their tools', () {
     expect(actionOf(stroke(LogicalKeyboardKey.keyP)), AppAction.pointTool);
     expect(actionOf(stroke(LogicalKeyboardKey.keyS)), AppAction.segmentTool);
+    expect(actionOf(stroke(LogicalKeyboardKey.keyA)), AppAction.angleTool);
     expect(
-      actionOf(stroke(LogicalKeyboardKey.keyA, shift: true)),
-      AppAction.lineAngleTool,
+      actionOf(stroke(LogicalKeyboardKey.keyT, shift: true)),
+      AppAction.parallelTool,
+    );
+    expect(
+      stroke(LogicalKeyboardKey.keyA, shift: true),
+      isA<ShortcutUnmatched>(),
+      reason: '⇧A was freed by the Phase 46 angle-tool merge',
     );
   });
 

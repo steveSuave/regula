@@ -17,12 +17,14 @@ import 'package:regula/domain/construction/objects/fixed_radius_circle.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
+import 'package:regula/domain/construction/objects/parallel_line.dart';
 import 'package:regula/domain/construction/objects/perpendicular_bisector_line.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/construction/objects/tangent_line.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/tools/angle_bisector_tool.dart';
 import 'package:regula/domain/tools/angle_by_size_tool.dart';
+import 'package:regula/domain/tools/angle_tool.dart';
 import 'package:regula/domain/tools/equilateral_triangle_macro_tool.dart';
 import 'package:regula/domain/tools/fixed_length_segment_tool.dart';
 import 'package:regula/domain/tools/fixed_radius_circle_tool.dart';
@@ -38,7 +40,6 @@ import 'package:regula/domain/tools/tangent_tool.dart';
 import 'package:regula/domain/tools/tool.dart';
 import 'package:regula/domain/tools/transform_object_tool.dart';
 import 'package:regula/domain/tools/triangle_center_tool.dart';
-import 'package:regula/domain/tools/two_line_tool.dart';
 import 'package:regula/domain/tools/two_point_tool.dart';
 import 'package:regula/domain/tools/visibility_tool.dart';
 import 'package:regula/main.dart';
@@ -111,6 +112,12 @@ void main() {
     await pumpEditor(tester);
     await tester.sendKeyEvent(LogicalKeyboardKey.keyB);
     expect(activeTool(), isA<AngleBisectorTool>());
+  });
+
+  testWidgets('A activates the two-mode angle tool', (tester) async {
+    await pumpEditor(tester);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
+    expect(activeTool(), isA<AngleTool>());
   });
 
   testWidgets('⇧B builds a perpendicular bisector end to end',
@@ -283,9 +290,12 @@ void main() {
   testWidgets('shifted letters pick the shifted variant', (tester) async {
     await pumpEditor(tester);
     await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
-    await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyT);
     await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
-    expect(activeTool(), isA<TwoLineTool>());
+    final tool = activeTool();
+    expect(tool, isA<PointAndLineTool>());
+    expect((tool as PointAndLineTool).build, ParallelLine.new,
+        reason: 'plain T is the perpendicular variant');
   });
 
   testWidgets('G leader chords reach constructions', (tester) async {
