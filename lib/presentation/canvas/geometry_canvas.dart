@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/command_stack_provider.dart';
 import '../../application/providers/construction_provider.dart';
+import '../../application/providers/document_settings_provider.dart';
 import '../../application/providers/selection_provider.dart';
 import '../../application/providers/tool_provider.dart';
 import '../../application/providers/viewport_provider.dart';
@@ -17,6 +18,7 @@ import '../../domain/tools/delete_tool.dart';
 import '../../domain/tools/tool.dart';
 import '../../domain/tools/visibility_tool.dart';
 import '../panels/delete_selection.dart';
+import '../theme/app_theme.dart';
 import 'canvas_hit_tester.dart';
 import 'canvas_viewport.dart';
 import 'geometry_painter.dart';
@@ -162,6 +164,14 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
               final drag => (id: drag.id, offset: drag.offset),
             },
             showHidden: _revealsHidden(tool),
+            showAxes: ref.watch(documentSettingsProvider).showAxes,
+            showGrid: ref.watch(documentSettingsProvider).showGrid,
+            // Theme-less hosts (bare-widget tests) keep the painter's
+            // built-in light colors.
+            axisColor: Theme.of(context).extension<CanvasColors>()?.axis ??
+                const Color(0xFF757575),
+            gridColor: Theme.of(context).extension<CanvasColors>()?.grid ??
+                const Color(0xFFE3E6EA),
           ),
           foregroundPainter: _MarqueePainter(
             band: _band,

@@ -54,9 +54,14 @@ void main() {
     required String golden,
     Set<String> selectedIds = const {},
     List<Vec2> previewMarkers = const [],
+    bool showAxes = false,
+    bool showGrid = false,
+    ViewportState? viewport,
   }) async {
-    final viewportState = fittedViewport(construction.objects, canvasSize) ??
+    final viewportState = viewport ??
+        fittedViewport(construction.objects, canvasSize) ??
         const ViewportState();
+    final canvasColors = theme.extension<CanvasColors>()!;
     final painter = GeometryPainter(
       construction: construction,
       viewport: CanvasViewport(viewportState),
@@ -65,6 +70,10 @@ void main() {
       selectionColor: theme.colorScheme.tertiary,
       selectedIds: selectedIds,
       previewMarkers: previewMarkers,
+      showAxes: showAxes,
+      showGrid: showGrid,
+      axisColor: canvasColors.axis,
+      gridColor: canvasColors.grid,
     );
     await tester.pumpWidget(
       MaterialApp(
@@ -434,6 +443,29 @@ void main() {
         golden: 'decorations_$themeName',
         selectedIds: const {'k', 'circ'},
         previewMarkers: const [Vec2(0, 4), Vec2(2, 5)],
+      );
+    });
+
+    // Phase 36: axes + grid behind a small construction. A fixed viewport
+    // (origin centered, 40 px per unit → step 2 grid, tick labels at even
+    // integers) keeps the background layer deterministic instead of
+    // depending on fit framing.
+    testWidgets('grid scene — $themeName', (tester) async {
+      final construction = Construction();
+      final a = FreePoint(id: 'a', position: const Vec2(-3, -2));
+      final b = FreePoint(id: 'b', position: const Vec2(4, 3));
+      construction
+        ..add(a)
+        ..add(b)
+        ..add(Segment(id: 's', point1: a, point2: b));
+      await expectSceneGolden(
+        tester,
+        construction: construction,
+        theme: theme,
+        golden: 'grid_$themeName',
+        showAxes: true,
+        showGrid: true,
+        viewport: const ViewportState(pan: Vec2(-8, 6), scale: 40),
       );
     });
   }

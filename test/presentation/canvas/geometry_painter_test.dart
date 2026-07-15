@@ -27,16 +27,21 @@ void main() {
     Set<String> selectedIds = const {},
     Set<String> previewObjectIds = const {},
     bool showHidden = false,
+    bool showAxes = false,
+    bool showGrid = false,
+    CanvasViewport viewport = const CanvasViewport(ViewportState()),
   }) =>
       GeometryPainter(
         construction: construction,
-        viewport: const CanvasViewport(ViewportState()),
+        viewport: viewport,
         revision: revision,
         defaultColor: const Color(0xFF000000),
         selectionColor: const Color(0xFF0000FF),
         selectedIds: selectedIds,
         previewObjectIds: previewObjectIds,
         showHidden: showHidden,
+        showAxes: showAxes,
+        showGrid: showGrid,
       );
 
   void paintOnce(GeometryPainter painter) {
@@ -188,6 +193,45 @@ void main() {
         showHidden: true,
         selectedIds: const {'a', 's'},
       ));
+    });
+
+    test('paints axes and grid at any viewport without throwing', () {
+      final construction = Construction()
+        ..add(FreePoint(id: 'a', position: Vec2.zero));
+
+      // Origin on-screen, off-screen (labels ride the axes), zoomed to
+      // both clamp ends, and each toggle alone.
+      for (final state in const [
+        ViewportState(pan: Vec2(-5, 5), scale: 40),
+        ViewportState(pan: Vec2(1000, 1000), scale: 1),
+        ViewportState(scale: 0.05),
+        ViewportState(scale: 50),
+      ]) {
+        paintOnce(painterFor(
+          construction,
+          showAxes: true,
+          showGrid: true,
+          viewport: CanvasViewport(state),
+        ));
+      }
+      paintOnce(painterFor(construction, showAxes: true));
+      paintOnce(painterFor(construction, showGrid: true));
+    });
+
+    test('shouldRepaint keys on showAxes and showGrid', () {
+      final construction = Construction()
+        ..add(FreePoint(id: 'a', position: Vec2.zero));
+
+      final base = painterFor(construction);
+      expect(
+        painterFor(construction, showAxes: true).shouldRepaint(base),
+        isTrue,
+      );
+      expect(
+        painterFor(construction, showGrid: true).shouldRepaint(base),
+        isTrue,
+      );
+      expect(painterFor(construction).shouldRepaint(base), isFalse);
     });
 
     test('shouldRepaint keys on showHidden', () {
