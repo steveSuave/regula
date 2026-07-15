@@ -534,6 +534,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _zoomTo100();
       case AppAction.fitView:
         _fitConstruction();
+      case AppAction.toggleAxes:
+        ref.read(documentSettingsProvider.notifier).toggleAxes();
+      case AppAction.toggleGrid:
+        ref.read(documentSettingsProvider.notifier).toggleGrid();
       case AppAction.nudgeLeft:
         _nudgeView(const Offset(-_nudgeStep, 0));
       case AppAction.nudgeRight:
@@ -684,6 +688,32 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         ),
       );
 
+  /// The Phase 36 axes/grid popup: two checked items flipping the
+  /// per-document `DocumentSettings` toggles — view chrome like the
+  /// viewport buttons around it, not undoable, persisted per document.
+  Widget _gridMenu() {
+    final settings = ref.watch(documentSettingsProvider);
+    return PopupMenuButton<VoidCallback>(
+      tooltip: 'Axes & grid',
+      icon: const Icon(Icons.grid_4x4),
+      onSelected: (action) => action(),
+      itemBuilder: (context) => [
+        CheckedPopupMenuItem(
+          checked: settings.showAxes,
+          value: () =>
+              ref.read(documentSettingsProvider.notifier).toggleAxes(),
+          child: const Text('Show axes'),
+        ),
+        CheckedPopupMenuItem(
+          checked: settings.showGrid,
+          value: () =>
+              ref.read(documentSettingsProvider.notifier).toggleGrid(),
+          child: const Text('Show grid'),
+        ),
+      ],
+    );
+  }
+
   /// Compact-chrome overflow absorbing the File menu and the loose
   /// wide-layout icon buttons (fit, reset, object tree, cheat sheet,
   /// theme) — they don't fit an app bar that also hosts the scrolling
@@ -691,6 +721,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   /// gate: drawer under [compactPanels], docked-panel toggle otherwise.
   Widget _overflowMenu(BuildContext context, {required bool compactPanels}) {
     final dark = Theme.of(context).brightness == Brightness.dark;
+    final settings = ref.watch(documentSettingsProvider);
     return PopupMenuButton<VoidCallback>(
       tooltip: 'More: file, view, panels, shortcuts, theme',
       icon: const Icon(Icons.more_vert),
@@ -720,6 +751,18 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         PopupMenuItem(
           value: () => ref.read(viewportProvider.notifier).reset(),
           child: const Text('Reset view'),
+        ),
+        CheckedPopupMenuItem(
+          checked: settings.showAxes,
+          value: () =>
+              ref.read(documentSettingsProvider.notifier).toggleAxes(),
+          child: const Text('Show axes'),
+        ),
+        CheckedPopupMenuItem(
+          checked: settings.showGrid,
+          value: () =>
+              ref.read(documentSettingsProvider.notifier).toggleGrid(),
+          child: const Text('Show grid'),
         ),
         PopupMenuItem(
           value: compactPanels
@@ -855,6 +898,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                 icon: const Icon(Icons.filter_center_focus),
                 onPressed: () => ref.read(viewportProvider.notifier).reset(),
               ),
+              _gridMenu(),
               IconButton(
                 tooltip: 'Keyboard shortcuts (?)',
                 isSelected: _showCheatSheet,
