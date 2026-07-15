@@ -720,6 +720,12 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
               ref.read(documentSettingsProvider.notifier).toggleGrid(),
           child: const Text('Show grid'),
         ),
+        CheckedPopupMenuItem(
+          checked: settings.snapToGrid,
+          value: () =>
+              ref.read(documentSettingsProvider.notifier).toggleSnapToGrid(),
+          child: const Text('Snap to grid'),
+        ),
       ],
     );
   }
@@ -773,6 +779,12 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
           value: () =>
               ref.read(documentSettingsProvider.notifier).toggleGrid(),
           child: const Text('Show grid'),
+        ),
+        CheckedPopupMenuItem(
+          checked: settings.snapToGrid,
+          value: () =>
+              ref.read(documentSettingsProvider.notifier).toggleSnapToGrid(),
+          child: const Text('Snap to grid'),
         ),
         PopupMenuItem(
           value: compactPanels

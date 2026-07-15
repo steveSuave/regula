@@ -33,6 +33,13 @@ void main() {
 
   DocumentSettings settings() => container.read(documentSettingsProvider);
 
+  /// Taps a popup entry by its label, targeting the whole item — the
+  /// bare Text inside a popup item never appears in the hit path (a
+  /// ListTile-title quirk), which makes text taps warn on every run.
+  Future<void> tapItem(WidgetTester tester, String label) => tester.tap(
+        find.widgetWithText(CheckedPopupMenuItem<VoidCallback>, label),
+      );
+
   testWidgets('wide chrome: the grid popup toggles axes and grid', (
     tester,
   ) async {
@@ -41,17 +48,18 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.grid_4x4));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Show grid'));
+    await tapItem(tester, 'Show grid');
     await tester.pumpAndSettle();
     expect(settings(), const DocumentSettings(showGrid: true));
 
     await tester.tap(find.byIcon(Icons.grid_4x4));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Show axes'));
+    await tapItem(tester, 'Show axes');
     await tester.pumpAndSettle();
     expect(settings(), const DocumentSettings(showAxes: true, showGrid: true));
 
-    // The menu re-opens with both items checked, and tapping unchecks.
+    // The menu re-opens with the toggled items checked (snap still off),
+    // and tapping unchecks.
     await tester.tap(find.byIcon(Icons.grid_4x4));
     await tester.pumpAndSettle();
     expect(
@@ -60,11 +68,29 @@ void main() {
             find.byType(CheckedPopupMenuItem<VoidCallback>),
           )
           .map((item) => item.checked),
-      [true, true],
+      [true, true, false],
     );
-    await tester.tap(find.text('Show grid'));
+    await tapItem(tester, 'Show grid');
     await tester.pumpAndSettle();
     expect(settings(), const DocumentSettings(showAxes: true));
+  });
+
+  testWidgets('wide chrome: Snap to grid toggles from the popup', (
+    tester,
+  ) async {
+    await pumpEditor(tester);
+
+    await tester.tap(find.byIcon(Icons.grid_4x4));
+    await tester.pumpAndSettle();
+    await tapItem(tester, 'Snap to grid');
+    await tester.pumpAndSettle();
+    expect(settings(), const DocumentSettings(snapToGrid: true));
+
+    await tester.tap(find.byIcon(Icons.grid_4x4));
+    await tester.pumpAndSettle();
+    await tapItem(tester, 'Snap to grid');
+    await tester.pumpAndSettle();
+    expect(settings(), const DocumentSettings());
   });
 
   testWidgets('compact chrome: the overflow menu carries both toggles', (
@@ -76,14 +102,23 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.more_vert));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Show axes'));
+    await tapItem(tester, 'Show axes');
     await tester.pumpAndSettle();
     expect(settings(), const DocumentSettings(showAxes: true));
 
     await tester.tap(find.byIcon(Icons.more_vert));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Show grid'));
+    await tapItem(tester, 'Show grid');
     await tester.pumpAndSettle();
     expect(settings(), const DocumentSettings(showAxes: true, showGrid: true));
+
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+    await tapItem(tester, 'Snap to grid');
+    await tester.pumpAndSettle();
+    expect(
+      settings(),
+      const DocumentSettings(showAxes: true, showGrid: true, snapToGrid: true),
+    );
   });
 }

@@ -18,9 +18,13 @@ import '../math/vec2.dart';
 /// threshold in world units; intersection snapping never fires beyond it.
 /// [objects] is the whole construction in insertion order, for tools that
 /// must look beyond the tap — e.g. the transform tool reusing an
-/// equivalent existing image instead of adding a duplicate. The defaults
-/// (`const []`, `0`) make a bare `ToolInput(pos, hit: x)` behave exactly
-/// as before the fields existed.
+/// equivalent existing image instead of adding a duplicate.
+/// [gridSnapStep] is the snap-to-grid spacing in world units (Phase 45),
+/// 0 while snapping is off — the canvas supplies the same adaptive step
+/// the grid draws at, and grid rounding is the resolution ladder's *last*
+/// rung, so snapping to an existing point / curve / crossing always wins.
+/// The defaults (`const []`, `0`) make a bare `ToolInput(pos, hit: x)`
+/// behave exactly as before the fields existed.
 class ToolInput {
   const ToolInput(
     this.position, {
@@ -28,6 +32,7 @@ class ToolInput {
     this.extraHits = const [],
     this.snapThreshold = 0,
     this.objects = const [],
+    this.gridSnapStep = 0,
   });
 
   final Vec2 position;
@@ -35,6 +40,7 @@ class ToolInput {
   final List<GeoObject> extraHits;
   final double snapThreshold;
   final Iterable<GeoObject> objects;
+  final double gridSnapStep;
 
   /// Every in-threshold candidate, best first: [hit] (when non-null)
   /// followed by [extraHits].

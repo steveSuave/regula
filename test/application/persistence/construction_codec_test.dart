@@ -246,7 +246,11 @@ void main() {
     });
 
     test('preserves the document settings snapshot', () {
-      const settings = DocumentSettings(showAxes: true, showGrid: true);
+      const settings = DocumentSettings(
+        showAxes: true,
+        showGrid: true,
+        snapToGrid: true,
+      );
       final decoded = roundTrip(buildKitchenSink(), settings: settings);
       expect(decoded.settings, settings);
       // …and each flag independently.
@@ -261,6 +265,12 @@ void main() {
                 settings: const DocumentSettings(showGrid: true))
             .settings,
         const DocumentSettings(showGrid: true),
+      );
+      expect(
+        roundTrip(Construction(),
+                settings: const DocumentSettings(snapToGrid: true))
+            .settings,
+        const DocumentSettings(snapToGrid: true),
       );
     });
 
@@ -468,7 +478,8 @@ void main() {
       expect(decoded.viewport, const ViewportState());
     });
 
-    test('a pre-36 document without settings keys gets axes and grid off', () {
+    test('a pre-36/45 document without settings keys gets every flag off',
+        () {
       final decoded = decodeDocument(document([freePoint('a')]));
       expect(decoded.settings, const DocumentSettings());
     });
@@ -481,6 +492,10 @@ void main() {
       );
       expect(
         () => decodeDocument(<String, dynamic>{...json, 'showGrid': 'yes'}),
+        throwsFormatException,
+      );
+      expect(
+        () => decodeDocument(<String, dynamic>{...json, 'snapToGrid': 0}),
         throwsFormatException,
       );
     });
