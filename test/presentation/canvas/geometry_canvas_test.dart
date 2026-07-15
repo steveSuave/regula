@@ -36,6 +36,7 @@ import 'package:regula/main.dart';
 import 'package:regula/presentation/canvas/canvas_viewport.dart';
 import 'package:regula/presentation/canvas/geometry_canvas.dart';
 import 'package:regula/presentation/canvas/geometry_painter.dart';
+import 'package:regula/presentation/canvas/label_layout.dart';
 import 'package:regula/presentation/panels/object_kind_label.dart';
 import '../../wide_window.dart';
 
@@ -1920,6 +1921,72 @@ void main() {
 
     expect(point.attributes.labelDx, 6);
     expect(point.attributes.labelDy, -18);
+  });
+
+  // ── Show-value labels (Phase 35) ─────────────────────────────────
+
+  /// A horizontal 100-unit segment with `showValue` on, between free
+  /// points at world (100, −100) and (200, −100); its value label
+  /// ('100.00', anchored at the midpoint) sits around local (156…, 82…).
+  Segment addMeasuredSegment() {
+    final construction = container.read(constructionProvider).construction;
+    final a = FreePoint(id: 'a', position: const Vec2(100, -100));
+    final b = FreePoint(id: 'b', position: const Vec2(200, -100));
+    final segment = Segment(
+      id: 's',
+      point1: a,
+      point2: b,
+      attributes: const ObjectAttributes(showValue: true),
+    );
+    construction
+      ..add(a)
+      ..add(b)
+      ..add(segment);
+    return segment;
+  }
+
+  testWidgets('dragging an endpoint live-updates the painted value',
+      (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+    final segment = addMeasuredSegment();
+    await tester.pump();
+    expect(labelText(segment), '100.00');
+
+    final drag = await tester.startGesture(origin + const Offset(200, 100));
+    await drag.moveTo(origin + const Offset(250, 100));
+    await tester.pump();
+    expect(labelText(segment), '150.00',
+        reason: 'the value follows the drag preview frame by frame');
+    await drag.up();
+    await tester.pump();
+    expect(labelText(segment), '150.00');
+
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(labelText(segment), '100.00');
+  });
+
+  testWidgets('a value-only label is draggable like a name label',
+      (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+    final segment = addMeasuredSegment();
+    await tester.pump();
+
+    // Grab inside the value text's rect — 12 px above the segment
+    // itself, outside its 8 px hit threshold, so only the label rect
+    // can claim this pan.
+    final drag = await tester.startGesture(origin + const Offset(170, 88));
+    await drag.moveTo(origin + const Offset(200, 118));
+    await tester.pump();
+    await drag.up();
+    await tester.pump();
+
+    expect(segment.attributes.labelDx, 36);
+    expect(segment.attributes.labelDy, 12);
+    expect(segment.start, const Vec2(100, -100),
+        reason: 'a label drag never moves the object');
   });
 
   testWidgets('G L then tap a circle, then a line: the whole circle '
