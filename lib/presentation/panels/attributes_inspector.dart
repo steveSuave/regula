@@ -9,6 +9,7 @@ import '../../domain/construction/geo_object.dart';
 import '../../domain/construction/object_attributes.dart';
 import '../../domain/construction/object_naming.dart';
 import '../../domain/construction/objects/sector.dart';
+import '../../domain/construction/objects/segment.dart';
 import 'object_kind_label.dart';
 
 /// Side panel showing the current selection's attributes; collapses to
@@ -81,6 +82,12 @@ class AttributesInspector extends ConsumerWidget {
       for (final object in objects)
         if (object is GeoAngle || object is Sector) object,
     ];
+    // The kinds with a measurable value (Phase 35): segment lengths and
+    // angle degrees.
+    final measurables = [
+      for (final object in objects)
+        if (object is Segment || object is GeoAngle) object,
+    ];
     return SizedBox(
       width: panelWidth,
       child: Row(
@@ -134,6 +141,19 @@ class AttributesInspector extends ConsumerWidget {
                     (attributes) => attributes.copyWith(labelVisible: value),
                   ),
                 ),
+                if (measurables.isNotEmpty)
+                  _AttributeToggle(
+                    label: 'Show value',
+                    values: [
+                      for (final object in measurables)
+                        object.attributes.showValue,
+                    ],
+                    onChanged: (value) => _setForAll(
+                      ref,
+                      measurables,
+                      (attributes) => attributes.copyWith(showValue: value),
+                    ),
+                  ),
                 const SizedBox(height: 8),
                 _ColorRow(
                   values: [
