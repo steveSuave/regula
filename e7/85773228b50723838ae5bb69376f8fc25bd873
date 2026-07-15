@@ -1,0 +1,27 @@
+test/presentation/canvas/label_layout_test.dart
+  s_8e8b6c6409c617::t_ed1d93957615e2 5-6,17-86
+  s_8e8b6c6409c617::t_1585502ce7e0b8 135-153
+  s_8e8b6c6409c617::t_4a706e81cccac4 87
+lib/presentation/canvas/label_layout.dart
+  s_8e8b6c6409c617::t_91ff93db4c6ca1 4,7-34,38,43-47,55
+lib/presentation/canvas/geometry_painter.dart
+  s_8e8b6c6409c617::t_2bcf672f70b0c6 250-254,261
+  s_8e8b6c6409c617::t_029fdf4529a738 144-146
+  s_8e8b6c6409c617::t_7ab5060a299ec7 17
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "e785773228b50723838ae5bb69376f8fc25bd873",
+  "prompts": {},
+  "sessions": {
+    "s_8e8b6c6409c617": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "521b57ae-f9d3-4a17-8b5f-ddd681bf90c8",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
