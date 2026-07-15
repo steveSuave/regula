@@ -43,6 +43,7 @@ import 'domain/tools/rhombus_macro_tool.dart';
 import 'domain/tools/right_trapezium_macro_tool.dart';
 import 'domain/tools/right_triangle_macro_tool.dart';
 import 'domain/tools/square_macro_tool.dart';
+import 'domain/tools/tangent_tool.dart';
 import 'domain/tools/three_point_tool.dart';
 import 'domain/tools/transform_object_tool.dart';
 import 'domain/tools/trapezium_macro_tool.dart';
@@ -549,6 +550,12 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         tools.activate(
           PointAndLineTool(newId: newObjectId, build: ParallelLine.new),
         );
+      case AppAction.perpendicularBisectorTool:
+        tools.activate(
+          TwoPointTool(newId: newObjectId, build: buildPerpendicularBisector),
+        );
+      case AppAction.tangentTool:
+        tools.activate(TangentTool(newId: newObjectId));
       case AppAction.compassTool:
         tools.activate(
           ThreePointTool(newId: newObjectId, build: buildCompassCircle),

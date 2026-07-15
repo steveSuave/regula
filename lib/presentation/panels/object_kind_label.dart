@@ -10,12 +10,14 @@ import '../../domain/construction/objects/line_angle.dart';
 import '../../domain/construction/objects/midpoint.dart';
 import '../../domain/construction/objects/orthocenter.dart';
 import '../../domain/construction/objects/parallel_line.dart';
+import '../../domain/construction/objects/perpendicular_bisector_line.dart';
 import '../../domain/construction/objects/perpendicular_line.dart';
 import '../../domain/construction/objects/point_on_object.dart';
 import '../../domain/construction/objects/ray.dart';
 import '../../domain/construction/objects/sector.dart';
 import '../../domain/construction/objects/segment.dart';
 import '../../domain/construction/objects/segment_ratio_point.dart';
+import '../../domain/construction/objects/tangent_line.dart';
 import '../../domain/construction/objects/two_line_bisector_line.dart';
 
 /// The user-facing name of an object's construction kind, for the
@@ -42,6 +44,8 @@ String objectKindLabel(GeoObject object) => switch (object) {
       ParallelLine() => 'Parallel line',
       AngleBisectorLine() => 'Angle bisector',
       TwoLineBisectorLine() => 'Angle bisector',
+      PerpendicularBisectorLine() => 'Perpendicular bisector',
+      TangentLine() => 'Tangent line',
       GeoLine() => 'Line',
       Arc() => 'Arc',
       Sector() => 'Sector',

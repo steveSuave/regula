@@ -17,6 +17,7 @@ import '../../domain/construction/objects/line_through_two_points.dart';
 import '../../domain/construction/objects/midpoint.dart';
 import '../../domain/construction/objects/orthocenter.dart';
 import '../../domain/construction/objects/parallel_line.dart';
+import '../../domain/construction/objects/perpendicular_bisector_line.dart';
 import '../../domain/construction/objects/perpendicular_line.dart';
 import '../../domain/construction/objects/ray.dart';
 import '../../domain/construction/objects/sector.dart';
@@ -42,6 +43,7 @@ import '../../domain/tools/rhombus_macro_tool.dart';
 import '../../domain/tools/right_trapezium_macro_tool.dart';
 import '../../domain/tools/right_triangle_macro_tool.dart';
 import '../../domain/tools/square_macro_tool.dart';
+import '../../domain/tools/tangent_tool.dart';
 import '../../domain/tools/three_point_tool.dart';
 import '../../domain/tools/tool.dart';
 import '../../domain/tools/transform_object_tool.dart';
@@ -77,6 +79,9 @@ GeoObject buildRay(String id, GeoPoint a, GeoPoint b) =>
 GeoObject buildCircle(String id, GeoPoint a, GeoPoint b) =>
     CircleCenterPoint(id: id, center: a, onCircle: b);
 
+GeoObject buildPerpendicularBisector(String id, GeoPoint a, GeoPoint b) =>
+    PerpendicularBisectorLine(id: id, point1: a, point2: b);
+
 GeoObject buildMidpoint(String id, GeoPoint a, GeoPoint b) =>
     Midpoint(id: id, point1: a, point2: b);
 
@@ -110,7 +115,12 @@ GeoObject buildLineAngle(
       tap2: secondTap,
     );
 
-const _lineBuilders = {buildLine, buildSegment, buildRay};
+const _lineBuilders = {
+  buildLine,
+  buildSegment,
+  buildRay,
+  buildPerpendicularBisector,
+};
 const _circleBuilders = {
   buildThreePointCircle,
   buildCompassCircle,
@@ -143,6 +153,7 @@ class GeometryToolbar extends ConsumerWidget {
     final linesActive =
         tool is PointAndLineTool ||
         tool is AngleBisectorTool ||
+        tool is TangentTool ||
         (tool is TwoPointTool && _lineBuilders.contains(tool.build));
     final circlesActive =
         (tool is TwoPointTool && tool.build == buildCircle) ||
@@ -232,7 +243,7 @@ class GeometryToolbar extends ConsumerWidget {
         _ToolGroup(
           icon: Icons.timeline,
           tooltip: 'Lines: line, segment, ray, perpendicular, parallel, '
-              'bisector',
+              'bisectors, tangents',
           active: linesActive,
           items: [
             ('Line', _twoPoint(buildLine), AppAction.lineTool),
@@ -264,6 +275,16 @@ class GeometryToolbar extends ConsumerWidget {
               'Angle bisector (two lines, or arm/vertex/arm)',
               _pick(() => AngleBisectorTool(newId: newObjectId)),
               AppAction.angleBisectorTool,
+            ),
+            (
+              'Perpendicular bisector',
+              _twoPoint(buildPerpendicularBisector),
+              AppAction.perpendicularBisectorTool,
+            ),
+            (
+              'Tangents from point (point and circle)',
+              _pick(() => TangentTool(newId: newObjectId)),
+              AppAction.tangentTool,
             ),
           ],
         ),
