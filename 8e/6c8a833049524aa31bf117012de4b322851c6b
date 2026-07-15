@@ -1,0 +1,47 @@
+lib/application/persistence/file_io.dart
+  s_f1bed3db29107d::t_04632cd76fd182 7
+  s_f1bed3db29107d::t_10f845dcb33348 18-20,24,26-30
+test/application/providers/document_settings_provider_test.dart
+  s_f1bed3db29107d::t_cb6f52c6afe080 1-67
+lib/main.dart
+  s_f1bed3db29107d::t_7b8b319cc43500 14
+  s_f1bed3db29107d::t_efd932d630cb97 200
+  s_f1bed3db29107d::t_d4ac6f568972aa 211
+  s_f1bed3db29107d::t_d6abcb66a84c8b 235
+lib/application/persistence/construction_codec.dart
+  s_f1bed3db29107d::t_65ff8e78419d65 103-106
+  s_f1bed3db29107d::t_3b60a632e5667a 66,74-77
+  s_f1bed3db29107d::t_a1dd8ab02e4fa5 35
+  s_f1bed3db29107d::t_dcb2370c3dfcf8 43-44,46-50,54
+  s_f1bed3db29107d::t_40357087bf7fa1 124-141
+test/presentation/file_menu_test.dart
+  s_f1bed3db29107d::t_7bc62337af3acc 15
+  s_f1bed3db29107d::t_4ff7ea37940847 150,153-157,166
+  s_f1bed3db29107d::t_d1fcb478c1bff0 237-239,247
+  s_f1bed3db29107d::t_d656658761c6cd 125-126,139
+test/application/persistence/construction_codec_test.dart
+  s_f1bed3db29107d::t_8a7fe6d3c20373 471-487
+  s_f1bed3db29107d::t_a3dd111cdac7f9 6
+  s_f1bed3db29107d::t_e0c874ec6ad66d 164,166-168
+  s_f1bed3db29107d::t_1af15b8adbd292 248-266
+lib/application/providers/document_settings_provider.g.dart
+  s_f1bed3db29107d::t_f8c74c225b0e50 1-72
+lib/application/providers/document_settings_provider.dart
+  s_f1bed3db29107d::t_13cc9d20f4c172 1-53
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "8e6c8a833049524aa31bf117012de4b322851c6b",
+  "prompts": {},
+  "sessions": {
+    "s_f1bed3db29107d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3f50c5e3-fd79-446b-b78e-af0d158c53a5",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
