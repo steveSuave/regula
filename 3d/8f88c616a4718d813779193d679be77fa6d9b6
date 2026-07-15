@@ -1,0 +1,44 @@
+test/presentation/canvas/grid_layout_test.dart
+  s_f1bed3db29107d::t_cec81ea80e0315 1-30,38-90
+  s_f1bed3db29107d::t_d5c6353bb6eae7 31-37
+lib/presentation/canvas/geometry_canvas.dart
+  s_f1bed3db29107d::t_55a72dd09fe3d0 21
+  s_f1bed3db29107d::t_26ac32b369b685 167-174
+  s_f1bed3db29107d::t_6a43be63cebf7b 10
+lib/presentation/theme/app_theme.dart
+  s_f1bed3db29107d::t_72e31bec8a5598 49-51,63-65,68-96
+  s_f1bed3db29107d::t_56276cc95a20e3 15-25
+  s_f1bed3db29107d::t_0a3aa0c59c4277 97
+lib/presentation/canvas/geometry_painter.dart
+  s_f1bed3db29107d::t_91e779da112438 16
+  s_f1bed3db29107d::t_e456625b6bef41 110-120
+  s_f1bed3db29107d::t_0524ae2ac9951b 127-130
+  s_f1bed3db29107d::t_8d056f7cb1757f 596-600
+  s_f1bed3db29107d::t_cead296981fba9 191-324
+  s_f1bed3db29107d::t_47d92cdb8af6f4 39-42,45-52
+  s_f1bed3db29107d::t_1ecfb666468c42 53
+lib/presentation/canvas/grid_layout.dart
+  s_f1bed3db29107d::t_29344d2af6a93c 1-45
+test/presentation/canvas/geometry_painter_test.dart
+  s_f1bed3db29107d::t_b0fe16988d3ea0 30-32,36,43-44
+  s_f1bed3db29107d::t_bfb111af5ff433 198-236
+test/presentation/goldens/object_kinds_golden_test.dart
+  s_f1bed3db29107d::t_2626d8b5a865a9 57-59,61-62,64,73-76
+  s_f1bed3db29107d::t_383792d181110b 448-470
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "3d8f88c616a4718d813779193d679be77fa6d9b6",
+  "prompts": {},
+  "sessions": {
+    "s_f1bed3db29107d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3f50c5e3-fd79-446b-b78e-af0d158c53a5",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
