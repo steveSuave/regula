@@ -498,6 +498,60 @@ void main() {
     expect(sector.attributes.fillAlpha, 0.25);
   });
 
+  testWidgets('show-value checkbox: segments + angles only, one command '
+      'over a mixed selection', (tester) async {
+    await pumpEditor(tester);
+    final a = addPoint('a', Vec2.zero);
+    final b = addPoint('b', const Vec2(4, 0));
+    final c = addPoint('c', const Vec2(1, 3));
+    final s = Segment(id: 's', point1: a, point2: b);
+    final angle = VertexAngle(
+      id: 'ang',
+      arm1: b,
+      vertex: a,
+      arm2: c,
+      attributes: const ObjectAttributes(showValue: true),
+    );
+    container.read(constructionProvider).construction
+      ..add(s)
+      ..add(angle);
+
+    container.read(selectionProvider.notifier).select('a');
+    await tester.pump();
+    expect(find.widgetWithText(CheckboxListTile, 'Show value'), findsNothing,
+        reason: 'points have no measurable value');
+
+    // Point + segment + angle: the row shows and targets the measurables.
+    container.read(selectionProvider.notifier).selectMany(['a', 's', 'ang']);
+    await tester.pump();
+    final showValue = find.widgetWithText(CheckboxListTile, 'Show value');
+    expect(showValue, findsOneWidget);
+    expect(tester.widget<CheckboxListTile>(showValue).value, isNull,
+        reason: 'segment off, angle on — the tristate dash');
+
+    // Anything but all-on turns everything on…
+    await tester.tap(showValue);
+    await tester.pump();
+    expect(s.attributes.showValue, isTrue);
+    expect(angle.attributes.showValue, isTrue);
+    expect(a.attributes.showValue, isFalse,
+        reason: 'the point is outside the measurable slice');
+
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(s.attributes.showValue, isFalse,
+        reason: 'the toggle was one command over both measurables');
+    expect(angle.attributes.showValue, isTrue);
+
+    // …and all-on turns everything off.
+    await tester.tap(find.byIcon(Icons.redo));
+    await tester.pump();
+    await tester.tap(showValue);
+    await tester.pump();
+    expect(s.attributes.showValue, isFalse);
+    expect(angle.attributes.showValue, isFalse);
+  });
+
   testWidgets('multi-selection: count header and a read-only list',
       (tester) async {
     await pumpEditor(tester);
