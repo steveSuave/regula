@@ -8,6 +8,7 @@ import '../../domain/construction/objects/centroid.dart';
 import '../../domain/construction/objects/circle_center_point.dart';
 import '../../domain/construction/objects/circumcenter.dart';
 import '../../domain/construction/objects/compass_circle.dart';
+import '../../domain/construction/objects/fixed_radius_circle.dart';
 import '../../domain/construction/objects/free_point.dart';
 import '../../domain/construction/objects/incenter.dart';
 import '../../domain/construction/objects/intersection_point.dart';
@@ -147,6 +148,10 @@ Map<String, dynamic> _encodeObject(GeoObject object) {
     CircleCenterPoint() => ('CircleCenterPoint', const {}),
     ThreePointCircle() => ('ThreePointCircle', const {}),
     CompassCircle() => ('CompassCircle', const {}),
+    FixedRadiusCircle(:final radius) => (
+        'FixedRadiusCircle',
+        {'radius': radius}
+      ),
     Arc() => ('Arc', const {}),
     Sector() => ('Sector', const {}),
     VertexAngle() => ('VertexAngle', const {}),
@@ -362,6 +367,12 @@ GeoObject _decodeObject(Map<String, dynamic> json, Construction construction) {
         radiusPoint1: point(0),
         radiusPoint2: point(1),
         center: point(2),
+        attributes: attributes,
+      ),
+    'FixedRadiusCircle' => FixedRadiusCircle(
+        id: id,
+        center: point(0),
+        radius: _doubleParam(id, params, 'radius'),
         attributes: attributes,
       ),
     'Arc' => Arc(
