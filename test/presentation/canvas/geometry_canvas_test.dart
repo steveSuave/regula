@@ -868,10 +868,10 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.square_foot));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Angle at vertex (arm, vertex, arm)'));
+    await tester.tap(find.text('Angle (two lines, or arm/vertex/arm)'));
     await tester.pumpAndSettle();
 
-    // A ThreePointTool again — the angles icon must light up, not the
+    // The merged AngleTool — the angles icon must light up, not the
     // lines or circles ones.
     final theme = Theme.of(tester.element(find.byType(AppBar)));
     Color? iconColor(IconData icon) =>
@@ -927,7 +927,7 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.square_foot));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Angle between two lines'));
+    await tester.tap(find.text('Angle (two lines, or arm/vertex/arm)'));
     await tester.pumpAndSettle();
 
     await tester.tapAt(origin + const Offset(200, 100)); // horizontal line

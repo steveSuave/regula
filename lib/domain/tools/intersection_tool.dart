@@ -14,7 +14,8 @@ import 'tool.dart';
 /// point starts undefined and appears when the curves are dragged
 /// together, like every other derived object.
 ///
-/// Like `TwoLineTool`, nothing is created on other taps: both inputs must
+/// Like `AngleTool`'s two-line mode, nothing is created on other taps:
+/// both inputs must
 /// be existing curves, so empty-canvas, point and angle taps are ignored.
 /// The first collected curve is haloed via [previewObjectIds].
 class IntersectionTool implements ToolInputPreview {
