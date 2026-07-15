@@ -1,0 +1,42 @@
+lib/application/persistence/construction_codec.dart
+  s_f1bed3db29107d::t_c3a8dfde31b6bd 107
+  s_f1bed3db29107d::t_720eb1bcd4db67 133-134
+  s_f1bed3db29107d::t_90990bb9f90944 74-75,78
+test/application/providers/document_settings_provider_test.dart
+  s_f1bed3db29107d::t_b39936a6ad871e 41-57
+test/domain/math/grid_snap_test.dart
+  s_f1bed3db29107d::t_2cb7a88d7b0c22 1-50
+test/presentation/grid_menu_test.dart
+  s_f1bed3db29107d::t_2c68d9d9895a63 36-42,51,57,73,85,91,105,111,117
+  s_f1bed3db29107d::t_a52f0b30a0f77c 114-116,118-122
+  s_f1bed3db29107d::t_ac935ffe5a0d9b 61-62,71,78-84,86-90,92-93
+  s_f1bed3db29107d::t_138600b11b35a4 94-95
+test/application/persistence/construction_codec_test.dart
+  s_f1bed3db29107d::t_03d6243893655b 481-482,497-498
+  s_f1bed3db29107d::t_9edf75c7110fc2 249-253,269-274,500
+  s_f1bed3db29107d::t_9171fde51dd5e4 499
+lib/domain/math/grid_snap.dart
+  s_f1bed3db29107d::t_47c05655276f90 1-18
+lib/main.dart
+  s_f1bed3db29107d::t_44a712aed034c3 723-728
+  s_f1bed3db29107d::t_5d1c5163fa7c53 783-788
+lib/application/providers/document_settings_provider.dart
+  s_f1bed3db29107d::t_836b005c7bd87a 54,60-66
+  s_f1bed3db29107d::t_0c44df194af5ac 6-7,11,13-17,19-23,27,33-34,37,40-41
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "51272737302a5cb6694dbb61be439149b98c8337",
+  "prompts": {},
+  "sessions": {
+    "s_f1bed3db29107d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3f50c5e3-fd79-446b-b78e-af0d158c53a5",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
