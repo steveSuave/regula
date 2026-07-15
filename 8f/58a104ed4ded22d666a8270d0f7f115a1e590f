@@ -1,0 +1,21 @@
+lib/domain/math/tangents.dart
+  s_7b547d10f0302d::t_d9e9360b73c408 1-37
+test/domain/math/tangents_test.dart
+  s_7b547d10f0302d::t_67f0189b21ec1b 1-93
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "8f58a104ed4ded22d666a8270d0f7f115a1e590f",
+  "prompts": {},
+  "sessions": {
+    "s_7b547d10f0302d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3b0b48de-1201-44e7-b177-2be225dc4359",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
