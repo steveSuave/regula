@@ -22,6 +22,7 @@ import 'package:regula/domain/construction/objects/line_through_two_points.dart'
 import 'package:regula/domain/construction/objects/midpoint.dart';
 import 'package:regula/domain/construction/objects/orthocenter.dart';
 import 'package:regula/domain/construction/objects/parallel_line.dart';
+import 'package:regula/domain/construction/objects/perpendicular_bisector_line.dart';
 import 'package:regula/domain/construction/objects/perpendicular_line.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
 import 'package:regula/domain/construction/objects/ray.dart';
@@ -90,6 +91,7 @@ Construction buildKitchenSink() {
     ..add(perp)
     ..add(ParallelLine(id: 'par', through: c, reference: lineAb))
     ..add(AngleBisectorLine(id: 'bis', arm1: a, vertex: b, arm2: c))
+    ..add(PerpendicularBisectorLine(id: 'pbis', point1: a, point2: c))
     ..add(circle)
     ..add(TwoLineBisectorLine(id: 'llbis', line1: lineAb, line2: perp, branch: 1))
     ..add(ThreePointCircle(id: 'tpc', point1: a, point2: b, point3: c))
