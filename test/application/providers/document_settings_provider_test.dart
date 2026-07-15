@@ -38,6 +38,23 @@ void main() {
       );
     });
 
+    test('toggleSnapToGrid flips alone — independent of showGrid', () {
+      final notifier = container.read(documentSettingsProvider.notifier);
+      notifier.toggleSnapToGrid();
+      expect(
+        container.read(documentSettingsProvider),
+        const DocumentSettings(snapToGrid: true),
+        reason: 'snapping with the grid hidden is a valid choice',
+      );
+
+      notifier.toggleGrid();
+      notifier.toggleSnapToGrid();
+      expect(
+        container.read(documentSettingsProvider),
+        const DocumentSettings(showGrid: true),
+      );
+    });
+
     test('set replaces wholesale; reset restores defaults', () {
       final notifier = container.read(documentSettingsProvider.notifier);
       notifier.set(const DocumentSettings(showAxes: true, showGrid: true));
