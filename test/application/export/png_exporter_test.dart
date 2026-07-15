@@ -166,6 +166,57 @@ void main() {
       expect(await pixelAt(image, 5, 5), blue);
       image.dispose();
     });
+
+    // Phase 36: with [pointViewport] the world origin sits at screen
+    // (5, 5). At scale 1 the grid step is 50, so the only on-screen grid
+    // lines are the two through the origin — the same positions the axes
+    // take. Strokes land between pixel centers (antialiased), so the
+    // probes check "no longer pure background" rather than exact colors.
+    group('axes & grid layer', () {
+      const probeSize = ui.Size(20, 16);
+
+      test('off by default: the export is untouched by document toggles',
+          () async {
+        final image = await renderConstructionImage(
+          pointScene(),
+          viewport: pointViewport,
+          logicalSize: probeSize,
+          background: white,
+          defaultColor: blue,
+        );
+        expect(await pixelAt(image, 5, 0), white,
+            reason: 'no vertical grid line/axis without the flags');
+        expect(await pixelAt(image, 0, 5), white);
+        image.dispose();
+      });
+
+      test('showGrid paints grid lines, showAxes paints the axes',
+          () async {
+        for (final flags in const [
+          (showAxes: false, showGrid: true),
+          (showAxes: true, showGrid: false),
+        ]) {
+          final image = await renderConstructionImage(
+            pointScene(),
+            viewport: pointViewport,
+            logicalSize: probeSize,
+            background: white,
+            defaultColor: blue,
+            showAxes: flags.showAxes,
+            showGrid: flags.showGrid,
+          );
+          expect((await pixelAt(image, 5, 0)) == white, isFalse,
+              reason: 'the vertical line through the origin must paint '
+                  'under $flags');
+          expect((await pixelAt(image, 0, 5)) == white, isFalse,
+              reason: 'the horizontal line through the origin must paint '
+                  'under $flags');
+          expect(await pixelAt(image, 0, 0), white,
+              reason: 'pixels off both lines stay background under $flags');
+          image.dispose();
+        }
+      });
+    });
   });
 
   group('encodePng', () {

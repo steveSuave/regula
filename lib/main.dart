@@ -244,12 +244,14 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
       return;
     }
     final objects = ref.read(constructionProvider).construction.objects;
+    final settings = ref.read(documentSettingsProvider);
     final outcome = await showExportDialog(
       context,
       canvasSize: size,
       canFit: visibleWorldBounds(objects) != null,
       region: _exportRegion,
       initial: _exportOptions,
+      hasBackgroundLayer: settings.showAxes || settings.showGrid,
     );
     if (outcome == null || !mounted) {
       return;
@@ -288,6 +290,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         regionFraming(viewportState, _exportRegion!),
     };
     final theme = Theme.of(context);
+    // "As shown": the export renders the document's own toggles, gated
+    // by the dialog's include checkbox.
+    final settings = ref.read(documentSettingsProvider);
+    final canvasColors = theme.extension<CanvasColors>();
     final bytes = await exportConstructionPng(
       construction,
       viewport: framing.viewport,
@@ -296,6 +302,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
       background:
           options.transparent ? null : theme.scaffoldBackgroundColor,
       defaultColor: theme.colorScheme.primary,
+      showAxes: settings.showAxes && options.includeAxesGrid,
+      showGrid: settings.showGrid && options.includeAxesGrid,
+      axisColor: canvasColors?.axis ?? const Color(0xFF757575),
+      gridColor: canvasColors?.grid ?? const Color(0xFFE3E6EA),
     );
     await savePngBytes(bytes);
   }

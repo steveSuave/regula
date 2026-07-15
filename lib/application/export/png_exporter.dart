@@ -70,6 +70,10 @@ Future<ui.Image> renderConstructionImage(
   double pixelRatio = 1,
   ui.Color? background,
   required ui.Color defaultColor,
+  bool showAxes = false,
+  bool showGrid = false,
+  ui.Color axisColor = const ui.Color(0xFF757575),
+  ui.Color gridColor = const ui.Color(0xFFE3E6EA),
 }) async {
   final width = (logicalSize.width * pixelRatio).round();
   final height = (logicalSize.height * pixelRatio).round();
@@ -101,6 +105,10 @@ Future<ui.Image> renderConstructionImage(
     defaultColor: defaultColor,
     // Unused with an empty selection, but the painter requires it.
     selectionColor: defaultColor,
+    showAxes: showAxes,
+    showGrid: showGrid,
+    axisColor: axisColor,
+    gridColor: gridColor,
   ).paint(canvas, logicalSize);
   final picture = recorder.endRecording();
   try {
@@ -129,6 +137,10 @@ Future<Uint8List> exportConstructionPng(
   double pixelRatio = 1,
   ui.Color? background,
   required ui.Color defaultColor,
+  bool showAxes = false,
+  bool showGrid = false,
+  ui.Color axisColor = const ui.Color(0xFF757575),
+  ui.Color gridColor = const ui.Color(0xFFE3E6EA),
 }) async {
   final image = await renderConstructionImage(
     construction,
@@ -137,6 +149,10 @@ Future<Uint8List> exportConstructionPng(
     pixelRatio: pixelRatio,
     background: background,
     defaultColor: defaultColor,
+    showAxes: showAxes,
+    showGrid: showGrid,
+    axisColor: axisColor,
+    gridColor: gridColor,
   );
   try {
     return await encodePng(image);
