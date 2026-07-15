@@ -5,11 +5,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/application/providers/command_stack_provider.dart';
 import 'package:regula/application/providers/construction_provider.dart';
 import 'package:regula/application/providers/selection_provider.dart';
+import 'package:regula/application/providers/tool_provider.dart';
 import 'package:regula/domain/construction/object_attributes.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/main.dart';
+import 'package:regula/presentation/panels/attributes_inspector.dart';
 import 'package:regula/presentation/panels/object_tree_panel.dart';
 import '../../wide_window.dart';
 
@@ -214,7 +216,143 @@ void main() {
 
     expect(container.read(selectionProvider), {'h'});
     // The inspector's name field only exists while something is selected.
-    expect(find.byType(TextField), findsOneWidget);
+    // (Scoped to the inspector — the tree's own search field is always
+    // there.)
+    expect(
+      find.descendant(
+        of: find.byType(AttributesInspector),
+        matching: find.byType(TextField),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('row long-press toggles the object in and out of the selection',
+      (tester) async {
+    await pumpEditor(tester);
+    final a = FreePoint(
+      id: 'a',
+      position: Vec2.zero,
+      attributes: const ObjectAttributes(name: 'A'),
+    );
+    container.read(constructionProvider).construction.add(a);
+    addPoint('b', const Vec2(2, 0));
+    container.read(selectionProvider.notifier).select('b');
+    await openTree(tester);
+
+    // Long-press is the touch shift-tap: it toggles, never replaces.
+    final tree = find.byType(ObjectTreePanel);
+    final rowA = find.descendant(of: tree, matching: find.text('A'));
+    await tester.longPress(rowA);
+    await tester.pump();
+    expect(container.read(selectionProvider), {'b', 'a'});
+
+    await tester.longPress(rowA);
+    await tester.pump();
+    expect(container.read(selectionProvider), {'b'});
+  });
+
+  testWidgets('search filters rows by display label and hides empty groups',
+      (tester) async {
+    await pumpEditor(tester);
+    final a = FreePoint(
+      id: 'a',
+      position: Vec2.zero,
+      attributes: const ObjectAttributes(name: 'A1'),
+    );
+    container.read(constructionProvider).construction.add(a);
+    final b = FreePoint(
+      id: 'b',
+      position: const Vec2(2, 0),
+      attributes: const ObjectAttributes(name: 'B2'),
+    );
+    container.read(constructionProvider).construction.add(b);
+    container
+        .read(constructionProvider)
+        .construction
+        .add(Segment(id: 's', point1: a, point2: b));
+    await openTree(tester);
+
+    final tree = find.byType(ObjectTreePanel);
+    final searchField = find.byKey(const ValueKey('tree-search-field'));
+    // Case-insensitive substring over the display label (name, or kind
+    // label when unnamed — the unnamed segment shows as 'Segment').
+    await tester.enterText(searchField, 'a1');
+    await tester.pump();
+    expect(find.descendant(of: tree, matching: find.text('A1')),
+        findsOneWidget);
+    expect(find.descendant(of: tree, matching: find.text('B2')),
+        findsNothing);
+    expect(find.descendant(of: tree, matching: find.text('Points')),
+        findsOneWidget);
+    expect(find.descendant(of: tree, matching: find.text('Lines')),
+        findsNothing, reason: 'a group with no matching rows is hidden');
+
+    // The unnamed segment matches on its kind label.
+    await tester.enterText(searchField, 'segm');
+    await tester.pump();
+    expect(find.descendant(of: tree, matching: find.text('Segment')),
+        findsOneWidget);
+    expect(find.descendant(of: tree, matching: find.text('Points')),
+        findsNothing);
+
+    await tester.enterText(searchField, 'zzz');
+    await tester.pump();
+    expect(find.descendant(of: tree, matching: find.text('No matches')),
+        findsOneWidget);
+
+    // The × clears the query and every row comes back.
+    await tester.tap(find.byTooltip('Clear search'));
+    await tester.pump();
+    expect(find.descendant(of: tree, matching: find.text('A1')),
+        findsOneWidget);
+    expect(find.descendant(of: tree, matching: find.text('B2')),
+        findsOneWidget);
+    expect(find.descendant(of: tree, matching: find.text('Segment')),
+        findsOneWidget);
+  });
+
+  testWidgets('header tap under an active filter selects the matches only',
+      (tester) async {
+    await pumpEditor(tester);
+    final a = FreePoint(
+      id: 'a',
+      position: Vec2.zero,
+      attributes: const ObjectAttributes(name: 'A1'),
+    );
+    container.read(constructionProvider).construction.add(a);
+    final b = FreePoint(
+      id: 'b',
+      position: const Vec2(2, 0),
+      attributes: const ObjectAttributes(name: 'B2'),
+    );
+    container.read(constructionProvider).construction.add(b);
+    await openTree(tester);
+
+    final tree = find.byType(ObjectTreePanel);
+    await tester.enterText(
+        find.byKey(const ValueKey('tree-search-field')), 'a1');
+    await tester.pump();
+    await tester
+        .tap(find.descendant(of: tree, matching: find.text('Points')));
+    await tester.pump();
+    expect(container.read(selectionProvider), {'a'},
+        reason: 'the header acts on the rows it is heading — the filtered '
+            'matches, not the whole kind');
+  });
+
+  testWidgets('typing in the search field fires no tool shortcut',
+      (tester) async {
+    await pumpEditor(tester);
+    addPoint('a', Vec2.zero);
+    await openTree(tester);
+
+    await tester.tap(find.byKey(const ValueKey('tree-search-field')));
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyP);
+    await tester.pump();
+    expect(container.read(toolProvider).tool, isNull,
+        reason: 'the EditableText focus guard must cover the search field');
   });
 
   testWidgets('rows track construction changes: delete via undo removes the '
