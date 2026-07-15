@@ -22,6 +22,7 @@ import '../theme/app_theme.dart';
 import 'canvas_hit_tester.dart';
 import 'canvas_viewport.dart';
 import 'geometry_painter.dart';
+import 'grid_layout.dart';
 import 'label_layout.dart';
 
 /// The drawing surface: hosts the [GeometryPainter] and turns taps into
@@ -78,6 +79,16 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
   /// test includes them. Tool-scoped state — it vanishes with the tool.
   static bool _revealsHidden(Tool? tool) =>
       tool is VisibilityTool && tool.revealsHidden;
+
+  /// The snap-to-grid step in world units — the same adaptive step the
+  /// Phase 36 grid draws at, so snapped points land on drawn crossings —
+  /// or 0 while the document's snap toggle is off. `gridStep` lives in
+  /// presentation; passing the resolved number keeps `domain/` clean of
+  /// this layer (the `snapThreshold` precedent).
+  double _gridSnapStep(CanvasViewport viewport) =>
+      ref.read(documentSettingsProvider).snapToGrid
+          ? gridStep(viewport.state.scale)
+          : 0;
 
   /// In-progress rubber band, in screen coordinates; null when no band
   /// is being dragged. Local widget state — nothing outside the canvas
@@ -362,7 +373,9 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
     if (hit != null) {
       // May refuse (derived point): then the pan does nothing — starting
       // a band under an object the user visibly grabbed would surprise.
-      ref.read(toolProvider.notifier).startDrag(hit, world);
+      ref
+          .read(toolProvider.notifier)
+          .startDrag(hit, world, gridSnapStep: _gridSnapStep(viewport));
       return;
     }
     setState(() {
@@ -510,6 +523,7 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
         extraHits: hits.length > 1 ? hits.sublist(1) : const [],
         snapThreshold: threshold,
         objects: construction.objects,
+        gridSnapStep: _gridSnapStep(viewport),
       );
       if (tool is DeleteTool) {
         // Deleting cascades, and the cascade warning is a dialog — a

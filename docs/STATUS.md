@@ -6,6 +6,25 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 51 — 2026-07-16
+
+**Done**
+- **Phase 45 complete** on `phase-45-snap-to-grid` (3 commits incl. docs), merged to `main` — snap to grid, riding Phase 36's adaptive step.
+- `DocumentSettings.snapToGrid` (default false, `toggleSnapToGrid`) — same contract as the other flags: not undoable, persisted via an additive `"snapToGrid"` codec key (absent → false, no version bump), File > New resets; deliberately independent of `showGrid`. Third checked item in the grid popup + compact overflow; menu-only, no shortcut.
+- Pure `snapToGrid(Vec2, step)` in new `domain/math/grid_snap.dart` (componentwise round-to-nearest; step ≤ 0 / non-finite passes through — 0 is the wire format for "off"; glados idempotence + half-step bound).
+- Additive `ToolInput.gridSnapStep`: the canvas passes `gridStep(scale)` while the toggle is on (`gridStep` stays presentation-side; domain only sees the resolved number). Grid rounding is the resolution ladder's **last** rung — only rung 4's `FreePoint` quantizes; point reuse, curve gluing and crossing snaps always win and glued positions are never rounded.
+- Single free-point drags quantize the preview per frame and commit the snapped end through the usual one `MoveFreePointCommand` (`DragSession.start`/`startDrag` gained a `gridSnapStep` param; one `_freePointPosition` getter feeds preview and command; a drag that quantizes back onto its start commits nothing). Rigid `TranslateObjectsCommand` drags and `PointOnObject` slides deliberately never snap.
+- 999 tests green (20 new), analyze clean, web smoke on a fresh release build: **SMOKE PASS**, zero console errors (drive.js untouched). Ad-hoc Playwright: popup toggle on → P-taps at odd coordinates land on step-50 crossings, a drag commits snapped, the saved document carries `snapToGrid: true`.
+
+**Next**
+- Phase 37 (Polygon kind + circle/polygon fill) heads the 37–39 queue; 43–44 can slot anywhere.
+- `main` is ahead of `origin/main` (Phases 36 + 45) — push when convenient.
+
+**Open questions / gotchas**
+- Snapping is a hard quantize while on: a free point *cannot* be placed off-grid until the toggle goes off (deliberate — "fixed to grid", not a proximity gate). Pre-existing off-grid points stay put until dragged, then jump to the grid on the first preview frame.
+- The macro/dialog tools' *position-only* taps (trapezium 4th tap, rectangle height, segment-by-length direction) do **not** snap — they project onto hidden curves (`PointOnObject` parameters), where quantizing the tap would not quantize the result anyway. Only ladder rung-4 free points and single free-point drags snap; watch for "the shape corner ignores the grid" feedback.
+- In widget tests, popup-item text taps warn ("would not hit test") because a `CheckedPopupMenuItem`'s title paragraph never appears in the hit path — `grid_menu_test.dart` now taps `widgetWithText(CheckedPopupMenuItem, …)` instead; use that pattern for future popup tests.
+
 ## Session 50 — 2026-07-16
 
 **Done**

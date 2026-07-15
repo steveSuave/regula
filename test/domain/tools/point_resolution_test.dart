@@ -49,6 +49,49 @@ void main() {
       expect(point.id, 'n0');
     });
 
+    test('a free-canvas tap with gridSnapStep quantizes to the grid', () {
+      final resolved = resolvePoint(
+        const ToolInput(Vec2(3.2, -1.7), gridSnapStep: 1),
+        newId,
+      );
+
+      expect(resolved.isNew, isTrue);
+      expect((resolved.point as FreePoint).position, const Vec2(3, -2));
+    });
+
+    test('grid rounding is the last rung: an existing point wins', () {
+      final existing = FreePoint(id: 'x', position: const Vec2(3.2, -1.7));
+
+      final resolved = resolvePoint(
+        ToolInput(const Vec2(3.2, -1.7), hit: existing, gridSnapStep: 1),
+        newId,
+      );
+
+      expect(resolved.isNew, isFalse);
+      expect(identical(resolved.point, existing), isTrue,
+          reason: 'reuse must beat the grid crossing');
+    });
+
+    test('grid rounding is the last rung: a curve glue wins', () {
+      final host = line('h', const Vec2(0, 0.3), const Vec2(4, 0.3));
+
+      final resolved = resolvePoint(
+        ToolInput(
+          const Vec2(2.2, 0.4),
+          hit: host,
+          snapThreshold: 0.5,
+          gridSnapStep: 1,
+        ),
+        newId,
+      );
+
+      final glued = resolved.point as PointOnObject;
+      expect(identical(glued.curve, host), isTrue,
+          reason: 'the glue must beat the grid crossing');
+      expect(glued.position!.y, closeTo(0.3, 1e-12),
+          reason: 'the glued position is the projection, never snapped');
+    });
+
     test('a single line glues a PointOnObject at the projection', () {
       final l = line('h', Vec2.zero, const Vec2(4, 0));
 

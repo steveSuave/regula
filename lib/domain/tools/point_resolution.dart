@@ -2,6 +2,7 @@ import '../construction/geo_object.dart';
 import '../construction/objects/free_point.dart';
 import '../construction/objects/intersection_point.dart';
 import '../construction/objects/point_on_object.dart';
+import '../math/grid_snap.dart';
 import '../math/vec2.dart';
 import 'tool.dart';
 
@@ -24,7 +25,10 @@ typedef ResolvedPoint = ({GeoPoint point, bool isNew});
 /// 3. At least one curve is in threshold → a new [PointOnObject] glued
 ///    to the ranked-best one ([ToolInput.hits] order) — this also
 ///    catches parallel/coincident curves and crossings out of reach.
-/// 4. Otherwise → a new [FreePoint] at the tap position.
+/// 4. Otherwise → a new [FreePoint] at the tap position, quantized to
+///    the grid while [ToolInput.gridSnapStep] > 0 (Phase 45) — grid
+///    rounding is deliberately the *last* rung, so reusing an existing
+///    point or snapping to a curve/crossing always wins over the grid.
 ///
 /// A `snapThreshold` of 0 (the `ToolInput` default) disables rung 2, so
 /// inputs built without the extra hit data degrade to the old behavior.
@@ -39,7 +43,10 @@ ResolvedPoint resolvePoint(ToolInput input, String Function() newId) {
   ];
   if (curves.isEmpty) {
     return (
-      point: FreePoint(id: newId(), position: input.position),
+      point: FreePoint(
+        id: newId(),
+        position: snapToGrid(input.position, input.gridSnapStep),
+      ),
       isNew: true,
     );
   }

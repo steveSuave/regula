@@ -71,10 +71,11 @@ Map<String, dynamic> encodeDocument(
       'pan': [viewport.pan.x, viewport.pan.y],
       'scale': viewport.scale,
     },
-    // Additive keys (absent → false on decode), so pre-36 apps ignore them
-    // and pre-36 files need no version bump.
+    // Additive keys (absent → false on decode), so pre-36/45 apps ignore
+    // them and pre-36/45 files need no version bump.
     'showAxes': settings.showAxes,
     'showGrid': settings.showGrid,
+    'snapToGrid': settings.snapToGrid,
     'objects': [
       for (final object in construction.objects) _encodeObject(object),
     ],
@@ -103,6 +104,7 @@ DecodedDocument decodeDocument(Map<String, dynamic> json) {
   final settings = DocumentSettings(
     showAxes: _decodeSettingFlag(json, 'showAxes'),
     showGrid: _decodeSettingFlag(json, 'showGrid'),
+    snapToGrid: _decodeSettingFlag(json, 'snapToGrid'),
   );
   final objectsJson = json['objects'];
   if (objectsJson is! List) {
@@ -128,8 +130,8 @@ DecodedDocument decodeDocument(Map<String, dynamic> json) {
   );
 }
 
-/// A document-settings flag that pre-36 files legitimately lack: false when
-/// absent, [FormatException] when present but not a boolean.
+/// A document-settings flag that pre-36/45 files legitimately lack: false
+/// when absent, [FormatException] when present but not a boolean.
 bool _decodeSettingFlag(Map<String, dynamic> json, String key) {
   final value = json[key];
   if (value == null) {

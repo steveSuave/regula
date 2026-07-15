@@ -94,6 +94,79 @@ void main() {
     });
   });
 
+  group('free-point drag with gridSnapStep (Phase 45)', () {
+    test('preview quantizes per frame, the one command commits snapped',
+        () {
+      final session =
+          DragSession.start(construction, a, Vec2.zero, gridSnapStep: 2)!;
+
+      session.update(const Vec2(2.7, 1.2));
+      expect(a.position, const Vec2(2, 2),
+          reason: 'the preview frame lands on a grid crossing');
+      expect(midpoint.position, const Vec2(3, 1),
+          reason: 'dependents recompute from the snapped preview');
+
+      session.update(const Vec2(5.1, 0.8));
+      final command = session.end()!;
+      expect(a.position, Vec2.zero, reason: 'end rolls the preview back');
+      expect(command, isA<MoveFreePointCommand>());
+      command.apply(construction);
+      expect(a.position, const Vec2(6, 0),
+          reason: 'the command carries the snapped end position');
+    });
+
+    test('a drag that quantizes back onto its start commits nothing', () {
+      final session =
+          DragSession.start(construction, a, Vec2.zero, gridSnapStep: 2)!;
+      session.update(const Vec2(0.6, -0.9)); // rounds to (0, 0) — a's start
+      expect(a.position, Vec2.zero);
+      expect(session.end(), isNull);
+    });
+
+    test('an off-grid point snaps onto the grid from the first frame', () {
+      final offGrid = FreePoint(id: 'og', position: const Vec2(0.3, 0.4));
+      construction.add(offGrid);
+
+      final session = DragSession.start(
+          construction, offGrid, const Vec2(0.3, 0.4),
+          gridSnapStep: 1)!;
+      session.update(const Vec2(0.5, 0.4)); // delta (0.2, 0) → (0.5, 0.4)
+      expect(offGrid.position, const Vec2(1, 0));
+      session.cancel();
+      expect(offGrid.position, const Vec2(0.3, 0.4),
+          reason: 'cancel restores the off-grid start verbatim');
+    });
+
+    test('rigid translations ignore the step — shapes never distort', () {
+      final session = DragSession.start(
+          construction, segment, const Vec2(2, 0),
+          gridSnapStep: 2)!;
+
+      session.update(const Vec2(3, 1.2));
+      expect(a.position, const Vec2(1, 1.2),
+          reason: 'ancestors move by the raw delta, never quantized');
+      expect(b.position, const Vec2(5, 1.2));
+
+      final command = session.end()!;
+      expect(command, isA<TranslateObjectsCommand>());
+      command.apply(construction);
+      expect(a.position, const Vec2(1, 1.2));
+      expect(b.position, const Vec2(5, 1.2));
+      command.undo(construction);
+    });
+
+    test('a step of 0 is byte-identical to the unsnapped drag', () {
+      final session =
+          DragSession.start(construction, a, Vec2.zero, gridSnapStep: 0)!;
+      session.update(const Vec2(2.7, 1.2));
+      expect(a.position, const Vec2(2.7, 1.2));
+      final command = session.end()! as MoveFreePointCommand;
+      command.apply(construction);
+      expect(a.position, const Vec2(2.7, 1.2));
+      command.undo(construction);
+    });
+  });
+
   group('derived-object drag', () {
     test('rigidly translates the free ancestors, one command', () {
       final session =
