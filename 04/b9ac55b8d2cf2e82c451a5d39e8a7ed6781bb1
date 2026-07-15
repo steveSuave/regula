@@ -1,0 +1,31 @@
+lib/presentation/panels/toolbar.dart
+  s_bc3bed5d9ba008::t_4081c4535e6f19 28,144,330-332,470-471
+lib/domain/tools/intersection_tool.dart
+  s_bc3bed5d9ba008::t_b1b6fe7f9f53c8 17-18
+lib/main.dart
+  s_bc3bed5d9ba008::t_309a82caacd5fc 30,557-558
+lib/presentation/shortcuts/shortcut_table.dart
+  s_bc3bed5d9ba008::t_90ccc718a988ac 40,484-485
+test/presentation/canvas/geometry_canvas_test.dart
+  s_bc3bed5d9ba008::t_360d5cbc447038 871,874,930
+test/presentation/shortcuts/editor_shortcuts_test.dart
+  s_bc3bed5d9ba008::t_98b21419dae9fd 20,27,117-122,293,295-298
+test/presentation/shortcuts/shortcut_resolver_test.dart
+  s_bc3bed5d9ba008::t_066e968d3a6555 31,33-39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "04b9ac55b8d2cf2e82c451a5d39e8a7ed6781bb1",
+  "prompts": {},
+  "sessions": {
+    "s_bc3bed5d9ba008": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3b6e797e-d4d7-49c7-a538-47c42656e185",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
