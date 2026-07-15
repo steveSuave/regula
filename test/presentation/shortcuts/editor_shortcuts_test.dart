@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/application/providers/command_stack_provider.dart';
 import 'package:regula/application/providers/construction_provider.dart';
+import 'package:regula/application/providers/document_settings_provider.dart';
 import 'package:regula/application/providers/preferences_provider.dart';
 import 'package:regula/application/providers/selection_provider.dart';
 import 'package:regula/application/providers/theme_provider.dart';
@@ -296,6 +297,36 @@ void main() {
     expect(tool, isA<PointAndLineTool>());
     expect((tool as PointAndLineTool).build, ParallelLine.new,
         reason: 'plain T is the perpendicular variant');
+  });
+
+  testWidgets('⇧G/⇧X toggle grid and axes; the leaders stay chord-only', (
+    tester,
+  ) async {
+    await pumpEditor(tester);
+    DocumentSettings settings() => container.read(documentSettingsProvider);
+    expect(settings(), const DocumentSettings());
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    expect(settings().showGrid, isTrue);
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyX);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    expect(settings().showAxes, isTrue);
+
+    // Neither shifted stroke armed its leader: the next letter is the
+    // segment tool, not a chord second — and toggling again turns off.
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyS);
+    expect(activeTool(), isA<TwoPointTool>());
+    expect(settings(), const DocumentSettings(showAxes: true, showGrid: true));
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyX);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    expect(settings(), const DocumentSettings());
   });
 
   testWidgets('G leader chords reach constructions', (tester) async {
