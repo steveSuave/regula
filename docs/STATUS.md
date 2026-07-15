@@ -6,6 +6,23 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 45 — 2026-07-15
+
+**Done**
+- **Phase 32 complete** on `phase-32-tree-multiselect-search`, merged to `main` — object tree gets row long-press multi-select and a search filter.
+- Row long-press toggles the object in/out of the selection with `HapticFeedback.selectionClick` (`ListTile.onLongPress`, the touch shift-tap — canvas Phase 25b / header Phase 26 convention); new app-level cheat-sheet `GestureRow` "Long-press tree row". Header long-press stays a *union* (selects groups), row long-press is a *toggle* (targets individuals) — deliberate asymmetry carried over from Phase 26.
+- Search field pinned at the top of the panel: case-insensitive substring over each row's display label (name, or kind label when unnamed), non-matching rows and empty groups hidden, `×` clears. The panel became a `ConsumerStatefulWidget`; the query is widget state and resets when the panel closes/the drawer dismisses. Filtering runs *before* grouping, so group-header select-by-kind acts on exactly the filtered matches with no extra plumbing. The existing `EditableText` focus guard covers the field — pinned by a widget test sending a raw `P` key.
+- 889 tests green (4 new), analyze clean, web smoke on a fresh release build: **SMOKE PASS**, zero console errors (drive.js untouched — it never opens the tree).
+
+**Next**
+- Phase 33 (Lines group: perpendicular bisector + tangents from a point) heads the 33–39 queue; 43–45 can slot anywhere.
+- `main` now ~17 commits ahead of `origin/main` — push when convenient.
+
+**Open questions / gotchas**
+- The tree panel now always renders a `TextField`; any `EditorScreen` test asserting on `find.byType(TextField)` with the tree open must scope its finder (the hidden-object inspector test now looks inside `AttributesInspector`).
+- Port 8321 had a stale `http.server` from Jul 5 still listening, so the fresh serve attempt died with "Address already in use" — harmless (the old server reads `build/web` from disk per request; served `main.dart.js` hash was verified identical to the fresh build), but kill it if a smoke ever looks stale.
+- Search matches the *display* label only: a named object does not match its kind label ("Segment" finds unnamed segments, not named ones). Per spec, but watch for "search doesn't find my segment" feedback.
+
 ## Session 44 — 2026-07-10
 
 **Done**
