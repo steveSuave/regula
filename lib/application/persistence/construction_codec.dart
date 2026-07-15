@@ -16,6 +16,7 @@ import '../../domain/construction/objects/line_through_two_points.dart';
 import '../../domain/construction/objects/midpoint.dart';
 import '../../domain/construction/objects/orthocenter.dart';
 import '../../domain/construction/objects/parallel_line.dart';
+import '../../domain/construction/objects/perpendicular_bisector_line.dart';
 import '../../domain/construction/objects/perpendicular_line.dart';
 import '../../domain/construction/objects/point_on_object.dart';
 import '../../domain/construction/objects/ray.dart';
@@ -136,6 +137,7 @@ Map<String, dynamic> _encodeObject(GeoObject object) {
     PerpendicularLine() => ('PerpendicularLine', const {}),
     ParallelLine() => ('ParallelLine', const {}),
     AngleBisectorLine() => ('AngleBisectorLine', const {}),
+    PerpendicularBisectorLine() => ('PerpendicularBisectorLine', const {}),
     TwoLineBisectorLine(:final branch) => (
         'TwoLineBisectorLine',
         {'branch': branch}
@@ -317,6 +319,12 @@ GeoObject _decodeObject(Map<String, dynamic> json, Construction construction) {
         arm1: point(0),
         vertex: point(1),
         arm2: point(2),
+        attributes: attributes,
+      ),
+    'PerpendicularBisectorLine' => PerpendicularBisectorLine(
+        id: id,
+        point1: point(0),
+        point2: point(1),
         attributes: attributes,
       ),
     'TwoLineBisectorLine' => TwoLineBisectorLine(

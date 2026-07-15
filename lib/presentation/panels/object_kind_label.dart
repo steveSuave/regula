@@ -10,6 +10,7 @@ import '../../domain/construction/objects/line_angle.dart';
 import '../../domain/construction/objects/midpoint.dart';
 import '../../domain/construction/objects/orthocenter.dart';
 import '../../domain/construction/objects/parallel_line.dart';
+import '../../domain/construction/objects/perpendicular_bisector_line.dart';
 import '../../domain/construction/objects/perpendicular_line.dart';
 import '../../domain/construction/objects/point_on_object.dart';
 import '../../domain/construction/objects/ray.dart';
@@ -42,6 +43,7 @@ String objectKindLabel(GeoObject object) => switch (object) {
       ParallelLine() => 'Parallel line',
       AngleBisectorLine() => 'Angle bisector',
       TwoLineBisectorLine() => 'Angle bisector',
+      PerpendicularBisectorLine() => 'Perpendicular bisector',
       GeoLine() => 'Line',
       Arc() => 'Arc',
       Sector() => 'Sector',
