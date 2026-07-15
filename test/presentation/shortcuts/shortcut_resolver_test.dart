@@ -80,6 +80,23 @@ void main() {
     );
   });
 
+  test('⇧G/⇧X toggle grid and axes without arming the leaders', () {
+    expect(
+      actionOf(stroke(LogicalKeyboardKey.keyG, shift: true)),
+      AppAction.toggleGrid,
+    );
+    expect(resolver.hasPendingLeader, isFalse,
+        reason: '⇧G must not leave the G leader pending');
+    expect(
+      actionOf(stroke(LogicalKeyboardKey.keyX, shift: true)),
+      AppAction.toggleAxes,
+    );
+    expect(resolver.hasPendingLeader, isFalse,
+        reason: '⇧X must not leave the X leader pending');
+    // The very next stroke resolves standalone, not as a chord second.
+    expect(actionOf(stroke(LogicalKeyboardKey.keyS)), AppAction.segmentTool);
+  });
+
   test('G leader chords: pending, then the second stroke picks', () {
     expect(stroke(LogicalKeyboardKey.keyG), isA<ShortcutPending>());
     expect(resolver.hasPendingLeader, isTrue);

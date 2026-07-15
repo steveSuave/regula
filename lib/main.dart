@@ -11,6 +11,7 @@ import 'application/object_ids.dart';
 import 'application/persistence/file_io.dart';
 import 'application/providers/command_stack_provider.dart';
 import 'application/providers/construction_provider.dart';
+import 'application/providers/document_settings_provider.dart';
 import 'application/providers/preferences_provider.dart';
 import 'application/providers/selection_provider.dart';
 import 'application/providers/theme_provider.dart';
@@ -196,6 +197,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     }
     ref.read(constructionProvider.notifier).replace(Construction());
     ref.read(viewportProvider.notifier).set(_centeredViewport());
+    ref.read(documentSettingsProvider.notifier).reset();
   }
 
   Future<void> _openConstruction() async {
@@ -206,6 +208,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
       }
       ref.read(constructionProvider.notifier).replace(decoded.construction);
       ref.read(viewportProvider.notifier).set(decoded.viewport);
+      ref.read(documentSettingsProvider.notifier).set(decoded.settings);
     } on FormatException catch (error) {
       if (!mounted) {
         return;
@@ -229,6 +232,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   Future<void> _saveConstruction() => saveConstructionFile(
     ref.read(constructionProvider).construction,
     viewport: ref.read(viewportProvider),
+    settings: ref.read(documentSettingsProvider),
   );
 
   /// Export flow: options dialog → (optionally a region-pick round trip
@@ -240,12 +244,14 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
       return;
     }
     final objects = ref.read(constructionProvider).construction.objects;
+    final settings = ref.read(documentSettingsProvider);
     final outcome = await showExportDialog(
       context,
       canvasSize: size,
       canFit: visibleWorldBounds(objects) != null,
       region: _exportRegion,
       initial: _exportOptions,
+      hasBackgroundLayer: settings.showAxes || settings.showGrid,
     );
     if (outcome == null || !mounted) {
       return;
@@ -284,6 +290,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         regionFraming(viewportState, _exportRegion!),
     };
     final theme = Theme.of(context);
+    // "As shown": the export renders the document's own toggles, gated
+    // by the dialog's include checkbox.
+    final settings = ref.read(documentSettingsProvider);
+    final canvasColors = theme.extension<CanvasColors>();
     final bytes = await exportConstructionPng(
       construction,
       viewport: framing.viewport,
@@ -292,6 +302,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
       background:
           options.transparent ? null : theme.scaffoldBackgroundColor,
       defaultColor: theme.colorScheme.primary,
+      showAxes: settings.showAxes && options.includeAxesGrid,
+      showGrid: settings.showGrid && options.includeAxesGrid,
+      axisColor: canvasColors?.axis ?? const Color(0xFF757575),
+      gridColor: canvasColors?.grid ?? const Color(0xFFE3E6EA),
     );
     await savePngBytes(bytes);
   }
@@ -530,6 +544,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _zoomTo100();
       case AppAction.fitView:
         _fitConstruction();
+      case AppAction.toggleAxes:
+        ref.read(documentSettingsProvider.notifier).toggleAxes();
+      case AppAction.toggleGrid:
+        ref.read(documentSettingsProvider.notifier).toggleGrid();
       case AppAction.nudgeLeft:
         _nudgeView(const Offset(-_nudgeStep, 0));
       case AppAction.nudgeRight:
@@ -680,6 +698,32 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         ),
       );
 
+  /// The Phase 36 axes/grid popup: two checked items flipping the
+  /// per-document `DocumentSettings` toggles — view chrome like the
+  /// viewport buttons around it, not undoable, persisted per document.
+  Widget _gridMenu() {
+    final settings = ref.watch(documentSettingsProvider);
+    return PopupMenuButton<VoidCallback>(
+      tooltip: 'Axes & grid',
+      icon: const Icon(Icons.grid_4x4),
+      onSelected: (action) => action(),
+      itemBuilder: (context) => [
+        CheckedPopupMenuItem(
+          checked: settings.showAxes,
+          value: () =>
+              ref.read(documentSettingsProvider.notifier).toggleAxes(),
+          child: const Text('Show axes'),
+        ),
+        CheckedPopupMenuItem(
+          checked: settings.showGrid,
+          value: () =>
+              ref.read(documentSettingsProvider.notifier).toggleGrid(),
+          child: const Text('Show grid'),
+        ),
+      ],
+    );
+  }
+
   /// Compact-chrome overflow absorbing the File menu and the loose
   /// wide-layout icon buttons (fit, reset, object tree, cheat sheet,
   /// theme) — they don't fit an app bar that also hosts the scrolling
@@ -687,6 +731,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   /// gate: drawer under [compactPanels], docked-panel toggle otherwise.
   Widget _overflowMenu(BuildContext context, {required bool compactPanels}) {
     final dark = Theme.of(context).brightness == Brightness.dark;
+    final settings = ref.watch(documentSettingsProvider);
     return PopupMenuButton<VoidCallback>(
       tooltip: 'More: file, view, panels, shortcuts, theme',
       icon: const Icon(Icons.more_vert),
@@ -716,6 +761,18 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         PopupMenuItem(
           value: () => ref.read(viewportProvider.notifier).reset(),
           child: const Text('Reset view'),
+        ),
+        CheckedPopupMenuItem(
+          checked: settings.showAxes,
+          value: () =>
+              ref.read(documentSettingsProvider.notifier).toggleAxes(),
+          child: const Text('Show axes'),
+        ),
+        CheckedPopupMenuItem(
+          checked: settings.showGrid,
+          value: () =>
+              ref.read(documentSettingsProvider.notifier).toggleGrid(),
+          child: const Text('Show grid'),
         ),
         PopupMenuItem(
           value: compactPanels
@@ -851,6 +908,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                 icon: const Icon(Icons.filter_center_focus),
                 onPressed: () => ref.read(viewportProvider.notifier).reset(),
               ),
+              _gridMenu(),
               IconButton(
                 tooltip: 'Keyboard shortcuts (?)',
                 isSelected: _showCheatSheet,

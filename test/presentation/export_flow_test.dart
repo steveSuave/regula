@@ -3,6 +3,7 @@ import 'package:file_picker/file_picker.dart';
 // `instance` with a fake is the plugin's own documented test seam.
 // ignore: implementation_imports
 import 'package:file_picker/src/platform/file_picker_platform_interface.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/application/providers/command_stack_provider.dart';
 import 'package:regula/application/providers/construction_provider.dart';
+import 'package:regula/application/providers/document_settings_provider.dart';
 import 'package:regula/domain/commands/add_object_command.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/math/vec2.dart';
@@ -143,6 +145,55 @@ void main() {
     final dimensions = pngDimensions(picker.savedBytes!);
     expect(dimensions.width, base.width * 2);
     expect(dimensions.height, base.height * 2);
+  });
+
+  testWidgets(
+      'the axes & grid checkbox appears with the document toggles and '
+      'unticking excludes the layer from the export', (tester) async {
+    await pumpEditor(tester);
+    addPoint();
+
+    /// Runs one export through the open dialog and returns its bytes.
+    Future<Uint8List> export(WidgetTester tester) async {
+      picker.savedBytes = null;
+      await tester.runAsync(() async {
+        await tester.tap(find.text('Export'));
+        await tester.pump();
+        while (picker.savedBytes == null) {
+          await Future<void>.delayed(const Duration(milliseconds: 10));
+        }
+      });
+      await tester.pumpAndSettle();
+      return picker.savedBytes!;
+    }
+
+    const checkbox = 'Include axes & grid (as shown)';
+
+    // Baseline: toggles off — no checkbox, no layer.
+    await openExportDialog(tester);
+    expect(find.text(checkbox), findsNothing,
+        reason: 'the checkbox is meaningless while both toggles are off');
+    final withoutLayer = await export(tester);
+
+    // Toggles on: the checkbox shows, defaults ticked, and the export
+    // changes — the layer rendered.
+    container
+        .read(documentSettingsProvider.notifier)
+        .set(const DocumentSettings(showAxes: true, showGrid: true));
+    await tester.pumpAndSettle();
+    await openExportDialog(tester);
+    expect(find.text(checkbox), findsOneWidget);
+    final withLayer = await export(tester);
+    expect(listEquals(withLayer, withoutLayer), isFalse,
+        reason: 'axes + grid must render into the export by default');
+
+    // Unticked: byte-identical to the toggles-off baseline.
+    await openExportDialog(tester);
+    await tester.tap(find.text(checkbox));
+    await tester.pumpAndSettle();
+    final excluded = await export(tester);
+    expect(listEquals(excluded, withoutLayer), isTrue,
+        reason: 'unticking must exclude the layer entirely');
   });
 
   testWidgets('fit framing is disabled with nothing to frame',

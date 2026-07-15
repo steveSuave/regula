@@ -382,11 +382,15 @@ async function canvasSample(page, x, y) {
   check(cleared.length === 0,
         `Ctrl+Z twice empties the canvas for Phase 20 (${cleared.length} blobs left)`);
 
-  const linesX = icons[2];
+  // Activated by its S shortcut, not the Lines flyout: Phase 36's grid
+  // button widened the action cluster until Lines sits at the 1000-px
+  // window's exact midline, where which side its flyout opens on is
+  // anybody's guess (the same drift that already moved Square to `X S`
+  // in Session 39 and Points to `P` in Session 43 — keys are immune to
+  // icon shifts). Real-browser popup mechanics stay covered by the File
+  // menu clicks in the save sections.
   const segmentRow = async () => {
-    await page.mouse.click(linesX, 28);
-    await page.waitForTimeout(500);
-    await page.mouse.click(linesX - 60, 8 + 48 + 24); // second item: Segment
+    await page.keyboard.press('s');
     await page.waitForTimeout(300);
   };
   await segmentRow();

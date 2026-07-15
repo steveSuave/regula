@@ -24,6 +24,8 @@ enum AppAction {
   zoomOut,
   zoomTo100,
   fitView,
+  toggleAxes,
+  toggleGrid,
   nudgeLeft,
   nudgeRight,
   nudgeUp,
@@ -386,6 +388,23 @@ final List<ShortcutBinding> shortcutTable = [
     label: 'Fit construction to view',
     section: ShortcutSection.viewport,
     display: 'F',
+  ),
+  // Shifted single strokes, so the bare G/X leaders stay chord-only:
+  // single-stroke bindings resolve before leaders, and the leaders'
+  // first strokes forbid Shift anyway (pinned by a resolver test).
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.keyX, shift: true)],
+    action: AppAction.toggleAxes,
+    label: 'Show/hide axes',
+    section: ShortcutSection.viewport,
+    display: '⇧ X',
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.keyG, shift: true)],
+    action: AppAction.toggleGrid,
+    label: 'Show/hide grid',
+    section: ShortcutSection.viewport,
+    display: '⇧ G',
   ),
   const ShortcutBinding(
     sequence: [KeyStroke(LogicalKeyboardKey.arrowLeft)],
