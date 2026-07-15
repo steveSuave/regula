@@ -12,6 +12,7 @@ class ExportOptions {
     this.framing = ExportFramingChoice.fitConstruction,
     this.scale = 1,
     this.transparent = false,
+    this.includeAxesGrid = true,
   });
 
   final ExportFramingChoice framing;
@@ -22,14 +23,22 @@ class ExportOptions {
   /// No background fill — the PNG keeps alpha 0 outside the geometry.
   final bool transparent;
 
+  /// Renders the document's axes/grid toggles into the export exactly as
+  /// shown on the canvas. Moot (and hidden in the dialog) while both
+  /// toggles are off — the default `true` makes the layer export by
+  /// default the moment either is on.
+  final bool includeAxesGrid;
+
   ExportOptions copyWith({
     ExportFramingChoice? framing,
     int? scale,
     bool? transparent,
+    bool? includeAxesGrid,
   }) => ExportOptions(
     framing: framing ?? this.framing,
     scale: scale ?? this.scale,
     transparent: transparent ?? this.transparent,
+    includeAxesGrid: includeAxesGrid ?? this.includeAxesGrid,
   );
 }
 
@@ -59,13 +68,16 @@ class ExportRegionPickRequested extends ExportDialogOutcome {
 /// [canvasSize] is the canvas's laid-out logical size (the output size of
 /// the fit and current-view framings); [region] is the previously picked
 /// region, if any; [canFit] is false when nothing visible can be framed
-/// (empty construction), disabling the fit option.
+/// (empty construction), disabling the fit option; [hasBackgroundLayer]
+/// is true while the document shows axes or a grid — it gates the
+/// "Include axes & grid" checkbox (meaningless when both are off).
 Future<ExportDialogOutcome?> showExportDialog(
   BuildContext context, {
   required Size canvasSize,
   required bool canFit,
   Rect? region,
   ExportOptions initial = const ExportOptions(),
+  bool hasBackgroundLayer = false,
 }) => showDialog<ExportDialogOutcome>(
   context: context,
   builder: (context) => _ExportDialog(
@@ -73,6 +85,7 @@ Future<ExportDialogOutcome?> showExportDialog(
     canFit: canFit,
     region: region,
     initial: initial,
+    hasBackgroundLayer: hasBackgroundLayer,
   ),
 );
 
@@ -82,12 +95,14 @@ class _ExportDialog extends StatefulWidget {
     required this.canFit,
     required this.region,
     required this.initial,
+    required this.hasBackgroundLayer,
   });
 
   final Size canvasSize;
   final bool canFit;
   final Rect? region;
   final ExportOptions initial;
+  final bool hasBackgroundLayer;
 
   @override
   State<_ExportDialog> createState() => _ExportDialogState();
@@ -220,6 +235,17 @@ class _ExportDialogState extends State<_ExportDialog> {
                   () => _options = _options.copyWith(transparent: value),
                 ),
               ),
+              if (widget.hasBackgroundLayer)
+                CheckboxListTile(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  controlAffinity: ListTileControlAffinity.leading,
+                  title: const Text('Include axes & grid (as shown)'),
+                  value: _options.includeAxesGrid,
+                  onChanged: (value) => setState(
+                    () => _options = _options.copyWith(includeAxesGrid: value),
+                  ),
+                ),
               const SizedBox(height: 8),
               Text(
                 'Output: $outWidth × $outHeight px',
