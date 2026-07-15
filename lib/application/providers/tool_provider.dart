@@ -103,7 +103,11 @@ class ToolNotifier extends _$ToolNotifier {
   /// (world). Returns whether a drag began — false with a tool active or
   /// for targets that don't drag — so the canvas knows whether to route
   /// the pan's remaining frames here or to its rubber band.
-  bool startDrag(GeoObject target, Vec2 grabStart) {
+  ///
+  /// [gridSnapStep] > 0 quantizes a single free point's drag to the grid
+  /// (Phase 45); the canvas supplies the drawn grid's adaptive step while
+  /// the document's snap toggle is on.
+  bool startDrag(GeoObject target, Vec2 grabStart, {double gridSnapStep = 0}) {
     if (state.tool != null) {
       return false;
     }
@@ -111,6 +115,7 @@ class ToolNotifier extends _$ToolNotifier {
       ref.read(constructionProvider).construction,
       target,
       grabStart,
+      gridSnapStep: gridSnapStep,
     );
     return _drag != null;
   }

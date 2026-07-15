@@ -10,6 +10,7 @@ import '../construction/geo_object.dart';
 import '../construction/objects/compass_circle.dart';
 import '../construction/objects/free_point.dart';
 import '../construction/objects/point_on_object.dart';
+import '../math/grid_snap.dart';
 import '../math/vec2.dart';
 
 /// One in-progress drag gesture in move/select mode.
@@ -41,11 +42,19 @@ abstract class DragSession {
   /// Null when the target cannot drag (a derived point other than a
   /// [PointOnObject], nothing free upstream, or a constrained point whose
   /// curve is undefined).
+  ///
+  /// [gridSnapStep] > 0 quantizes a *single free point's* drag to the
+  /// grid (Phase 45): the preview lands on crossings every frame and the
+  /// one command commits the snapped end position. Rigid translations
+  /// deliberately ignore it — quantizing every free ancestor
+  /// independently would distort shapes — and constrained slides can't
+  /// use it (the point lives on its curve, not on the grid).
   static DragSession? start(
     Construction construction,
     GeoObject target,
-    Vec2 grabStart,
-  ) {
+    Vec2 grabStart, {
+    double gridSnapStep = 0,
+  }) {
     if (target is PointOnObject) {
       return _SlideDragSession.start(construction, target, grabStart);
     }
@@ -63,6 +72,7 @@ abstract class DragSession {
       target is FreePoint,
       grabStart,
       [...points],
+      gridSnapStep: target is FreePoint ? gridSnapStep : 0,
     );
   }
 
@@ -84,8 +94,10 @@ class _TranslateDragSession implements DragSession {
     this._construction,
     this._isFreePoint,
     this._grabStart,
-    List<FreePoint> points,
-  )   : _pointIds = [for (final point in points) point.id],
+    List<FreePoint> points, {
+    double gridSnapStep = 0,
+  })  : _gridSnapStep = gridSnapStep,
+        _pointIds = [for (final point in points) point.id],
         _startPositions = {
           for (final point in points) point.id: point.position,
         };
@@ -96,13 +108,29 @@ class _TranslateDragSession implements DragSession {
   final List<String> _pointIds;
   final Map<String, Vec2> _startPositions;
 
+  /// Non-zero only for a single free point (see [DragSession.start]).
+  final double _gridSnapStep;
+
   Vec2 _delta = Vec2.zero;
+
+  /// Where the free point sits for the current [_delta] — the one place
+  /// deciding both the per-frame preview and the committed end position,
+  /// so they can't drift. [snapToGrid] passes positions through untouched
+  /// while the step is 0.
+  Vec2 get _freePointPosition {
+    final id = _pointIds.single;
+    return snapToGrid(_startPositions[id]! + _delta, _gridSnapStep);
+  }
 
   /// Every dragged point sits at its start position plus the pointer's
   /// total delta, so a rigid shape stays rigid regardless of frame timing.
   @override
   void update(Vec2 pointer) {
     _delta = pointer - _grabStart;
+    if (_isFreePoint) {
+      _construction.moveFreePoint(_pointIds.single, _freePointPosition);
+      return;
+    }
     for (final id in _pointIds) {
       _construction.moveFreePoint(id, _startPositions[id]! + _delta);
     }
@@ -111,14 +139,20 @@ class _TranslateDragSession implements DragSession {
   @override
   Command? end() {
     final delta = _delta;
-    _rollback();
-    if (delta == Vec2.zero) {
-      return null;
-    }
     if (_isFreePoint) {
       final id = _pointIds.single;
       final from = _startPositions[id]!;
-      return MoveFreePointCommand(pointId: id, from: from, to: from + delta);
+      final to = _freePointPosition;
+      _rollback();
+      // A snapped drag can quantize back onto its start — nothing to undo.
+      if (delta == Vec2.zero || to == from) {
+        return null;
+      }
+      return MoveFreePointCommand(pointId: id, from: from, to: to);
+    }
+    _rollback();
+    if (delta == Vec2.zero) {
+      return null;
     }
     return TranslateObjectsCommand(pointIds: _pointIds, delta: delta);
   }
