@@ -13,6 +13,7 @@ import '../../domain/math/circle_eq.dart';
 import '../../domain/math/vec2.dart';
 import 'canvas_viewport.dart';
 import 'dash_path.dart';
+import 'grid_layout.dart';
 import 'label_anchor.dart';
 import 'label_layout.dart';
 
@@ -35,7 +36,20 @@ class GeometryPainter extends CustomPainter {
     this.previewObjectIds = const {},
     this.labelDragPreview,
     this.showHidden = false,
+    this.showAxes = false,
+    this.showGrid = false,
+    this.axisColor = const Color(0xFF757575),
+    this.gridColor = const Color(0xFFE3E6EA),
   });
+
+  /// Stroke widths of the background layer (logical px) and the font size
+  /// of its tick labels.
+  static const double _gridStrokeWidth = 1;
+  static const double _axisStrokeWidth = 1.5;
+  static const double _tickFontSize = 10;
+
+  /// Screen-px gap between an axis and its tick labels.
+  static const double _tickLabelGap = 3;
 
   /// Radii (logical px) of an in-progress input marker: a filled dot
   /// inside a hollow ring, visually distinct from a plain point.
@@ -93,11 +107,26 @@ class GeometryPainter extends CustomPainter {
   /// and leaves the default false).
   final bool showHidden;
 
+  /// Draws the coordinate axes / the background grid behind every object
+  /// (the Phase 36 `DocumentSettings` toggles). Both default off, so
+  /// existing callers — exporter included — render byte-identically.
+  final bool showAxes;
+  final bool showGrid;
+
+  /// Colors for the background layer, from the theme's `CanvasColors`
+  /// extension (defaults match the light palette for theme-less callers).
+  final Color axisColor;
+  final Color gridColor;
+
   @override
   void paint(Canvas canvas, Size size) {
     // Infinite lines are drawn with far-away endpoints; the clip keeps
     // that overdraw inside the canvas.
     canvas.clipRect(Offset.zero & size);
+
+    if (showGrid || showAxes) {
+      _drawBackground(canvas, size);
+    }
 
     for (final object in construction.objects) {
       final hidden = !object.attributes.visible;
@@ -156,6 +185,140 @@ class GeometryPainter extends CustomPainter {
       final center = viewport.worldToScreen(marker);
       canvas.drawCircle(center, _markerDotRadius, dot);
       canvas.drawCircle(center, _markerRingRadius, ring);
+    }
+  }
+
+  /// The Phase 36 background layer: grid hairlines at every multiple of
+  /// the adaptive [gridStep], then 1.5-px axes through the world origin
+  /// with tick labels — drawn first, so every object paints over it.
+  /// Grid and axes are view chrome, not objects: hit testing, selection
+  /// and fit never see them.
+  void _drawBackground(Canvas canvas, Size size) {
+    final step = gridStep(viewport.state.scale);
+    // Visible world range; the viewport flips y, so the y extremes swap.
+    final topLeft = viewport.screenToWorld(Offset.zero);
+    final bottomRight = viewport.screenToWorld(
+      Offset(size.width, size.height),
+    );
+
+    if (showGrid) {
+      final grid = Paint()
+        ..color = gridColor
+        ..strokeWidth = _gridStrokeWidth;
+      for (var i = (topLeft.x / step).ceil();
+          i * step <= bottomRight.x;
+          i++) {
+        final x = viewport.worldToScreen(Vec2(i * step, 0)).dx;
+        canvas.drawLine(Offset(x, 0), Offset(x, size.height), grid);
+      }
+      for (var i = (bottomRight.y / step).ceil();
+          i * step <= topLeft.y;
+          i++) {
+        final y = viewport.worldToScreen(Vec2(0, i * step)).dy;
+        canvas.drawLine(Offset(0, y), Offset(size.width, y), grid);
+      }
+    }
+
+    if (showAxes) {
+      final axis = Paint()
+        ..color = axisColor
+        ..strokeWidth = _axisStrokeWidth;
+      final origin = viewport.worldToScreen(Vec2.zero);
+      final xAxisVisible = origin.dy >= 0 && origin.dy <= size.height;
+      final yAxisVisible = origin.dx >= 0 && origin.dx <= size.width;
+      if (xAxisVisible) {
+        canvas.drawLine(
+          Offset(0, origin.dy),
+          Offset(size.width, origin.dy),
+          axis,
+        );
+      }
+      if (yAxisVisible) {
+        canvas.drawLine(
+          Offset(origin.dx, 0),
+          Offset(origin.dx, size.height),
+          axis,
+        );
+      }
+      _drawTickLabels(
+        canvas,
+        size,
+        step,
+        origin,
+        topLeft: topLeft,
+        bottomRight: bottomRight,
+        xAxisVisible: xAxisVisible,
+        yAxisVisible: yAxisVisible,
+      );
+    }
+  }
+
+  /// Tick labels at every grid multiple along the visible axes: x labels
+  /// below the x-axis, y labels left of the y-axis, and a single `0` in
+  /// the origin's lower-left quadrant instead of one per axis. Labels
+  /// ride their axis — an off-screen axis shows none.
+  void _drawTickLabels(
+    Canvas canvas,
+    Size size,
+    double step,
+    Offset origin, {
+    required Vec2 topLeft,
+    required Vec2 bottomRight,
+    required bool xAxisVisible,
+    required bool yAxisVisible,
+  }) {
+    void paintLabel(String text, Offset Function(Size textSize) place) {
+      final textPainter = TextPainter(
+        text: TextSpan(
+          text: text,
+          style: TextStyle(color: axisColor, fontSize: _tickFontSize),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      textPainter.paint(canvas, place(textPainter.size));
+      textPainter.dispose();
+    }
+
+    if (xAxisVisible) {
+      for (var i = (topLeft.x / step).ceil();
+          i * step <= bottomRight.x;
+          i++) {
+        if (i == 0) {
+          continue;
+        }
+        final x = viewport.worldToScreen(Vec2(i * step, 0)).dx;
+        paintLabel(
+          formatTick(i * step),
+          (textSize) =>
+              Offset(x - textSize.width / 2, origin.dy + _tickLabelGap),
+        );
+      }
+    }
+    if (yAxisVisible) {
+      for (var i = (bottomRight.y / step).ceil();
+          i * step <= topLeft.y;
+          i++) {
+        if (i == 0) {
+          continue;
+        }
+        final y = viewport.worldToScreen(Vec2(0, i * step)).dy;
+        paintLabel(
+          formatTick(i * step),
+          (textSize) => Offset(
+            origin.dx - textSize.width - _tickLabelGap,
+            y - textSize.height / 2,
+          ),
+        );
+      }
+    }
+    if (xAxisVisible && yAxisVisible) {
+      paintLabel(
+        '0',
+        (textSize) => Offset(
+          origin.dx - textSize.width - _tickLabelGap,
+          origin.dy + _tickLabelGap,
+        ),
+      );
     }
   }
 
@@ -430,5 +593,9 @@ class GeometryPainter extends CustomPainter {
       !listEquals(oldDelegate.previewMarkers, previewMarkers) ||
       !setEquals(oldDelegate.previewObjectIds, previewObjectIds) ||
       oldDelegate.labelDragPreview != labelDragPreview ||
-      oldDelegate.showHidden != showHidden;
+      oldDelegate.showHidden != showHidden ||
+      oldDelegate.showAxes != showAxes ||
+      oldDelegate.showGrid != showGrid ||
+      oldDelegate.axisColor != axisColor ||
+      oldDelegate.gridColor != gridColor;
 }

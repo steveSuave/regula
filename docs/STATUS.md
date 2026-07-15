@@ -6,6 +6,25 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 50 — 2026-07-16
+
+**Done**
+- **Phase 36 complete** on `phase-36-axes-grid` (5 commits incl. docs), merged to `main` — XY axes + background grid.
+- `DocumentSettings` (`showAxes`/`showGrid`, defaults false) + `documentSettingsProvider` — the `ViewportState` pattern: not undoable, File > New resets, File > Open applies, Save snapshots. Codec: two additive top-level keys beside `viewport` (absent → false, non-boolean → `FormatException`, no version bump).
+- Painter background layer (drawn first, objects paint over): `gridStep(scale, {minPx: 48})` in `presentation/canvas/grid_layout.dart` (smallest `{1,2,5}×10^k` ≥ 48 px, fp-robust decade walk) + `formatTick` (trailing zeros trimmed, single `0`); hairline grid at every step multiple, 1.5-px axes through the world origin, tick labels riding the *visible* axes (off-screen axis → no labels; one `0` in the origin's lower-left quadrant). Colors via a new `CanvasColors` `ThemeExtension` — deliberately not `outline`/`outlineVariant`, which Material widgets read for their own chrome.
+- UI: grid-icon popup (two checked items) after Reset in wide chrome, both entries absorbed into the compact overflow; `⇧G`/`⇧X` toggle grid/axes — single strokes resolve before the `G`/`X` leaders and the leaders' first strokes forbid Shift (resolver + editor tests pin no leader arming). Export dialog gains "Include axes & grid (as shown)" (`ExportOptions.includeAxesGrid`, shown only while either toggle is on); an unticked export is byte-identical to a toggles-off one (flow test).
+- 978 tests green (23 new), analyze clean, new `grid` golden ×2 themes with the 14 existing goldens byte-identical. Web smoke on a fresh release build: **SMOKE PASS**, zero console errors — after repairing drive.js (below). Ad-hoc Playwright check: `⇧G` inks the grid patch, `⇧X` adds axes after nudging the origin into view, saved document carries both flags, toggling off restores a pure-white canvas.
+
+**Next**
+- Phase 37 (Polygon kind + circle/polygon fill) heads the 37–39 queue; 43–45 can slot anywhere (45 now has its Phase 36 prerequisite).
+- `main` is ahead of `origin/main` by this phase — push when convenient.
+
+**Open questions / gotchas**
+- **drive.js repaired again**: the grid button pushed the Lines group to the 1000-px viewport's exact midline, flipping its flyout side — Segment now activates via its `S` key (the Session 39 `X S` / Session 43 `P` precedent). No toolbar *group* flyout is exercised by the smoke anymore (File popup still covers real-browser popup mechanics); the next app-bar icon will shift popup sides again.
+- The wide action cluster is now ~13 detected icons; `_wideChromeMinWidth = 980` still clears it (smoke ran wide at 1000 px), but Phase 38's Measure group re-measure note from Session 44 stands.
+- Tick labels ride their axes, so with axes on but the origin panned far off-screen no coordinates are visible anywhere — GeoGebra clamps labels to the screen edge instead; revisit if it grates.
+- The `0.05×–50×` zoom clamp keeps `gridStep` in {1, 2, 5} × 10⁰…10³ at the default 48-px minimum; `formatTick`'s fixed-6-decimals trim covers far beyond that but would print garbage past ~1e15 (unreachable).
+
 ## Session 49 — 2026-07-15
 
 **Done**
