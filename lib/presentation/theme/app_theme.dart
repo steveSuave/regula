@@ -12,6 +12,17 @@ import 'package:flutter/material.dart';
 abstract final class AppTheme {
   static const Color _seed = Color(0xFF1565C0);
 
+  /// Axes on the light canvas: a mid grey — visible but clearly chrome,
+  /// never competing with object colors.
+  static const Color _lightAxis = Color(0xFF757575);
+
+  /// Grid hairlines on the light canvas: a whisper over white.
+  static const Color _lightGrid = Color(0xFFE3E6EA);
+
+  /// Dark-canvas counterparts, tuned against the near-black canvas.
+  static const Color _darkAxis = Color(0xFF8F969E);
+  static const Color _darkGrid = Color(0xFF262C33);
+
   /// Default object color on the light canvas: a deep blue.
   static const Color _lightPrimary = Color(0xFF1565C0);
 
@@ -35,6 +46,9 @@ abstract final class AppTheme {
           tertiary: _lightTertiary,
         ),
         scaffoldBackgroundColor: _lightCanvas,
+        extensions: const [
+          CanvasColors(axis: _lightAxis, grid: _lightGrid),
+        ],
       );
 
   static ThemeData dark() => ThemeData(
@@ -46,5 +60,38 @@ abstract final class AppTheme {
           tertiary: _darkTertiary,
         ),
         scaffoldBackgroundColor: _darkCanvas,
+        extensions: const [
+          CanvasColors(axis: _darkAxis, grid: _darkGrid),
+        ],
       );
+}
+
+/// Canvas chrome colors the [ColorScheme] has no honest slot for — the
+/// Phase 36 axes and grid. A [ThemeExtension] rather than hijacking
+/// `outline`/`outlineVariant`, which Material widgets (text-field borders,
+/// segmented buttons) already read for their own chrome.
+@immutable
+class CanvasColors extends ThemeExtension<CanvasColors> {
+  const CanvasColors({required this.axis, required this.grid});
+
+  /// Axis strokes and tick labels.
+  final Color axis;
+
+  /// Grid hairlines.
+  final Color grid;
+
+  @override
+  CanvasColors copyWith({Color? axis, Color? grid}) =>
+      CanvasColors(axis: axis ?? this.axis, grid: grid ?? this.grid);
+
+  @override
+  CanvasColors lerp(CanvasColors? other, double t) {
+    if (other == null) {
+      return this;
+    }
+    return CanvasColors(
+      axis: Color.lerp(axis, other.axis, t)!,
+      grid: Color.lerp(grid, other.grid, t)!,
+    );
+  }
 }
