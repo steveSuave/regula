@@ -1,0 +1,35 @@
+lib/main.dart
+  s_f1bed3db29107d::t_a2e7a07673740b 293-296,305-308
+  s_f1bed3db29107d::t_327ab214215a80 247,254
+test/presentation/export_flow_test.dart
+  s_f1bed3db29107d::t_ef2b6496ae81af 150-198
+  s_f1bed3db29107d::t_8de1e4bf3e830f 14
+  s_f1bed3db29107d::t_28215c6d15160c 6
+lib/application/export/png_exporter.dart
+  s_f1bed3db29107d::t_9bcae62b5a43a6 140-143,152-155
+  s_f1bed3db29107d::t_57a2be559053c6 73-76
+  s_f1bed3db29107d::t_4bca394abb042e 108-111
+lib/presentation/panels/export_dialog.dart
+  s_f1bed3db29107d::t_030092377dbbe7 71-73,80,88
+  s_f1bed3db29107d::t_73af224701eed3 98,105
+  s_f1bed3db29107d::t_698f9311537cff 15,26-31,36,41
+  s_f1bed3db29107d::t_2c79632857efee 238-248
+test/application/export/png_exporter_test.dart
+  s_f1bed3db29107d::t_d8eb80916c2b31 169-219
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "1a2194d90918ad713c86d19cb4967fd95c4b0d41",
+  "prompts": {},
+  "sessions": {
+    "s_f1bed3db29107d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3f50c5e3-fd79-446b-b78e-af0d158c53a5",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
