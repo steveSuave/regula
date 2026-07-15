@@ -15,6 +15,7 @@ import 'package:regula/domain/tools/regular_polygon_macro_tool.dart';
 import 'package:regula/domain/tools/rhombus_macro_tool.dart';
 import 'package:regula/domain/tools/right_trapezium_macro_tool.dart';
 import 'package:regula/domain/tools/right_triangle_macro_tool.dart';
+import 'package:regula/domain/tools/tangent_tool.dart';
 import 'package:regula/domain/tools/transform_object_tool.dart';
 import 'package:regula/domain/tools/two_point_tool.dart';
 import 'package:regula/main.dart';
@@ -329,6 +330,43 @@ void main() {
       isNot(theme.colorScheme.primary),
       reason: 'it must not fall into the Points catch-all',
     );
+  });
+
+  testWidgets('perpendicular bisector and tangent rows activate from the '
+      'Lines flyout and highlight Lines, not Points', (tester) async {
+    await pumpEditor(tester);
+    final theme = Theme.of(tester.element(find.byType(AppBar)));
+
+    Future<void> pickLinesRow(String label) async {
+      container.read(toolProvider.notifier).deactivate();
+      await tester.pump();
+      await tester.tap(find.byIcon(Icons.timeline));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(find.text(label), 50);
+      await tester.tap(find.text(label));
+      await tester.pumpAndSettle();
+    }
+
+    void expectLinesHighlight(String label) {
+      expect(
+        iconColor(tester, Icons.timeline),
+        theme.colorScheme.primary,
+        reason: '$label must highlight the Lines group',
+      );
+      expect(
+        iconColor(tester, Icons.control_point),
+        isNot(theme.colorScheme.primary),
+        reason: '$label must not fall into the Points catch-all',
+      );
+    }
+
+    await pickLinesRow('Perpendicular bisector');
+    expect(container.read(toolProvider).tool, isA<TwoPointTool>());
+    expectLinesHighlight('Perpendicular bisector');
+
+    await pickLinesRow('Tangents from point (point and circle)');
+    expect(container.read(toolProvider).tool, isA<TangentTool>());
+    expectLinesHighlight('Tangents from point');
   });
 
   testWidgets('flyout rows show their shortcut as trailing text',

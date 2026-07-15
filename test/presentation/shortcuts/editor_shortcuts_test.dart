@@ -12,10 +12,13 @@ import 'package:regula/application/providers/viewport_provider.dart';
 import 'package:regula/domain/commands/add_object_command.dart';
 import 'package:regula/domain/construction/object_attributes.dart';
 import 'package:regula/domain/construction/objects/centroid.dart';
+import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
+import 'package:regula/domain/construction/objects/perpendicular_bisector_line.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
+import 'package:regula/domain/construction/objects/tangent_line.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/tools/angle_bisector_tool.dart';
 import 'package:regula/domain/tools/angle_by_size_tool.dart';
@@ -28,6 +31,7 @@ import 'package:regula/domain/tools/rectangle_macro_tool.dart';
 import 'package:regula/domain/tools/regular_polygon_macro_tool.dart';
 import 'package:regula/domain/tools/right_triangle_macro_tool.dart';
 import 'package:regula/domain/tools/square_macro_tool.dart';
+import 'package:regula/domain/tools/tangent_tool.dart';
 import 'package:regula/domain/tools/tool.dart';
 import 'package:regula/domain/tools/transform_object_tool.dart';
 import 'package:regula/domain/tools/triangle_center_tool.dart';
@@ -104,6 +108,64 @@ void main() {
     await pumpEditor(tester);
     await tester.sendKeyEvent(LogicalKeyboardKey.keyB);
     expect(activeTool(), isA<AngleBisectorTool>());
+  });
+
+  testWidgets('⇧B builds a perpendicular bisector end to end',
+      (tester) async {
+    await pumpEditor(tester);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyB);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    expect(activeTool(), isA<TwoPointTool>());
+
+    tapWorld(0, 0);
+    tapWorld(4, 0);
+    final objects = container
+        .read(constructionProvider)
+        .construction
+        .objects
+        .toList();
+    expect(objects.last, isA<PerpendicularBisectorLine>());
+    final bisector = objects.last as PerpendicularBisectorLine;
+    expect(bisector.line!.contains(const Vec2(2, 7)), isTrue,
+        reason: 'vertical bisector of the horizontal pair at x = 2');
+  });
+
+  testWidgets('G N chords to the tangent tool, one pair = both tangents',
+      (tester) async {
+    await pumpEditor(tester);
+    final stack = container.read(commandStackProvider.notifier);
+    final c = FreePoint(id: 'c', position: const Vec2(0, 0));
+    final r = FreePoint(id: 'r', position: const Vec2(1, 0));
+    final circle = CircleCenterPoint(id: 'circ', center: c, onCircle: r);
+    for (final object in [c, r, circle]) {
+      stack.execute(AddObjectCommand(object));
+    }
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyN);
+    expect(activeTool(), isA<TangentTool>());
+
+    container
+        .read(toolProvider.notifier)
+        .handleInput(ToolInput(const Vec2(1, 0.01), hit: circle));
+    tapWorld(5, 0);
+    final objects = container
+        .read(constructionProvider)
+        .construction
+        .objects
+        .toList();
+    expect(objects.whereType<TangentLine>(), hasLength(2));
+    container.read(commandStackProvider.notifier).undo();
+    expect(
+      container
+          .read(constructionProvider)
+          .construction
+          .objects
+          .whereType<TangentLine>(),
+      isEmpty,
+      reason: 'the pair plus the new point is one undo unit',
+    );
   });
 
   testWidgets('S builds segments end to end', (tester) async {
