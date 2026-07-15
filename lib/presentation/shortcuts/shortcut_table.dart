@@ -43,6 +43,8 @@ enum AppAction {
   parallelTool,
   perpendicularBisectorTool,
   compassTool,
+  fixedRadiusCircleTool,
+  fixedLengthSegmentTool,
   // Constructions behind the G leader.
   centroidTool,
   orthocenterTool,
@@ -512,6 +514,20 @@ final List<ShortcutBinding> shortcutTable = [
     label: 'Perpendicular bisector',
     section: ShortcutSection.tools,
     display: '⇧ B',
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.keyC, shift: true)],
+    action: AppAction.fixedRadiusCircleTool,
+    label: 'Circle by radius…',
+    section: ShortcutSection.tools,
+    display: '⇧ C',
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.keyS, shift: true)],
+    action: AppAction.fixedLengthSegmentTool,
+    label: 'Segment with given length…',
+    section: ShortcutSection.tools,
+    display: '⇧ S',
   ),
   const ShortcutBinding(
     sequence: [KeyStroke(LogicalKeyboardKey.keyO)],

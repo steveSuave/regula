@@ -29,6 +29,8 @@ import '../../domain/math/vec2.dart';
 import '../../domain/tools/angle_bisector_tool.dart';
 import '../../domain/tools/angle_by_size_tool.dart';
 import '../../domain/tools/equilateral_triangle_macro_tool.dart';
+import '../../domain/tools/fixed_length_segment_tool.dart';
+import '../../domain/tools/fixed_radius_circle_tool.dart';
 import '../../domain/tools/intersection_tool.dart';
 import '../../domain/tools/isosceles_trapezium_macro_tool.dart';
 import '../../domain/tools/isosceles_triangle_macro_tool.dart';
@@ -154,8 +156,10 @@ class GeometryToolbar extends ConsumerWidget {
         tool is PointAndLineTool ||
         tool is AngleBisectorTool ||
         tool is TangentTool ||
+        tool is FixedLengthSegmentTool ||
         (tool is TwoPointTool && _lineBuilders.contains(tool.build));
     final circlesActive =
+        tool is FixedRadiusCircleTool ||
         (tool is TwoPointTool && tool.build == buildCircle) ||
         (tool is ThreePointTool && _circleBuilders.contains(tool.build));
     final anglesActive =
@@ -206,6 +210,20 @@ class GeometryToolbar extends ConsumerWidget {
           : RegularPolygonMacroTool(newId: newObjectId, sideCount: sides);
     }
 
+    Future<Tool?> circleRadiusPick() async {
+      final radius = await askCircleRadius(context);
+      return radius == null
+          ? null
+          : FixedRadiusCircleTool(newId: newObjectId, radius: radius);
+    }
+
+    Future<Tool?> segmentLengthPick() async {
+      final length = await askSegmentLength(context);
+      return length == null
+          ? null
+          : FixedLengthSegmentTool(newId: newObjectId, length: length);
+    }
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -254,6 +272,11 @@ class GeometryToolbar extends ConsumerWidget {
               AppAction.rayTool,
             ),
             (
+              'Segment with given length (endpoint, then direction)…',
+              segmentLengthPick,
+              AppAction.fixedLengthSegmentTool,
+            ),
+            (
               'Perpendicular line',
               _pick(
                 () => PointAndLineTool(
@@ -290,13 +313,19 @@ class GeometryToolbar extends ConsumerWidget {
         ),
         _ToolGroup(
           icon: Icons.circle_outlined,
-          tooltip: 'Circles: center + rim, three-point, compass, arc, sector',
+          tooltip: 'Circles: center + rim, by radius, three-point, compass, '
+              'arc, sector',
           active: circlesActive,
           items: [
             (
               'Circle (center, then rim)',
               _twoPoint(buildCircle),
               AppAction.circleTool,
+            ),
+            (
+              'Circle by radius (tap the center)…',
+              circleRadiusPick,
+              AppAction.fixedRadiusCircleTool,
             ),
             (
               'Circle through three points',
@@ -607,6 +636,24 @@ Future<double?> _askDegrees(BuildContext context, String title) async {
   return degrees == null ? null : degrees * math.pi / 180;
 }
 
+/// Asks for a circle radius in world units — the shared path behind the
+/// Circles flyout item and the `⇧C` shortcut. Null when cancelled;
+/// unparseable, non-positive or non-finite input reads as cancel too,
+/// mirroring [askRatioBuilder].
+Future<double?> askCircleRadius(BuildContext context) =>
+    _askLength(context, 'Circle radius');
+
+/// The segment twin of [askCircleRadius], behind the Lines flyout item
+/// and the `⇧S` shortcut. Same convention: world units, positive only.
+Future<double?> askSegmentLength(BuildContext context) =>
+    _askLength(context, 'Segment length');
+
+Future<double?> _askLength(BuildContext context, String title) =>
+    showDialog<double>(
+      context: context,
+      builder: (context) => _LengthDialog(title: title),
+    );
+
 /// Asks for a regular polygon's side count — the shared path behind the
 /// Macros flyout item and the `X G` shortcut. Integer 3–100; anything
 /// else (cancel, garbage, out of range) reads as cancel, matching the
@@ -709,6 +756,53 @@ class _AngleDialogState extends State<_AngleDialog> {
   }
 }
 
+/// Positive-length sibling of [_AngleDialog] (same controller-lifetime
+/// reasoning), shared by the circle-radius and segment-length asks.
+class _LengthDialog extends StatefulWidget {
+  const _LengthDialog({required this.title});
+
+  final String title;
+
+  @override
+  State<_LengthDialog> createState() => _LengthDialogState();
+}
+
+class _LengthDialogState extends State<_LengthDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(widget.title),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        decoration: const InputDecoration(
+          hintText: 'world units — e.g. 2.5 or 5/2',
+        ),
+        onSubmitted: (text) => Navigator.pop(context, _parseLength(text)),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () =>
+              Navigator.pop(context, _parseLength(_controller.text)),
+          child: const Text('OK'),
+        ),
+      ],
+    );
+  }
+}
+
 /// Integer sibling of [_AngleDialog] (same controller-lifetime
 /// reasoning).
 class _SideCountDialog extends StatefulWidget {
@@ -759,6 +853,14 @@ int? _parseSideCount(String text) {
 }
 
 /// Parses "0.25", "-1", or a fraction "1/4". Null when unparseable.
+/// [_parseRatio] restricted to finite positive values — a length. Null
+/// (= cancel) for anything else, so OK on garbage or a non-positive
+/// number quietly does nothing.
+double? _parseLength(String text) {
+  final value = _parseRatio(text);
+  return value != null && value.isFinite && value > 0 ? value : null;
+}
+
 double? _parseRatio(String text) {
   final parts = text.split('/');
   if (parts.length == 2) {

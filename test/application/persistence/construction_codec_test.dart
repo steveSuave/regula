@@ -14,6 +14,7 @@ import 'package:regula/domain/construction/objects/centroid.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/circumcenter.dart';
 import 'package:regula/domain/construction/objects/compass_circle.dart';
+import 'package:regula/domain/construction/objects/fixed_radius_circle.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/incenter.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
@@ -100,6 +101,7 @@ Construction buildKitchenSink() {
     // tangent is defined and its geometry participates in the round-trip.
     ..add(TangentLine(id: 'tan', point: ratio, circle: circle, branch: 1))
     ..add(ThreePointCircle(id: 'tpc', point1: a, point2: b, point3: c))
+    ..add(FixedRadiusCircle(id: 'frc', center: c, radius: 2.5))
     ..add(
       CompassCircle(id: 'comp', radiusPoint1: a, radiusPoint2: b, center: c),
     )
@@ -206,6 +208,7 @@ void main() {
       expect((decoded.byId('int')! as IntersectionPoint).branchIndex, 1);
       expect((decoded.byId('rot')! as RotatedPoint).angle, 0.75);
       expect((decoded.byId('tan')! as TangentLine).branch, 1);
+      expect((decoded.byId('frc')! as FixedRadiusCircle).radius, 2.5);
       final tapped = decoded.byId('lang2')! as LineAngle;
       expect(tapped.sign1, -1);
       expect(tapped.sign2, 1);

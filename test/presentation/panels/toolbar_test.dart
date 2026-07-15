@@ -5,6 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/application/providers/tool_provider.dart';
 import 'package:regula/domain/tools/angle_by_size_tool.dart';
 import 'package:regula/domain/tools/equilateral_triangle_macro_tool.dart';
+import 'package:regula/domain/tools/fixed_length_segment_tool.dart';
+import 'package:regula/domain/tools/fixed_radius_circle_tool.dart';
 import 'package:regula/domain/tools/intersection_tool.dart';
 import 'package:regula/domain/tools/isosceles_trapezium_macro_tool.dart';
 import 'package:regula/domain/tools/isosceles_triangle_macro_tool.dart';
@@ -324,6 +326,84 @@ void main() {
       iconColor(tester, Icons.square_foot),
       theme.colorScheme.primary,
       reason: 'AngleBySizeTool must highlight the Angles group',
+    );
+    expect(
+      iconColor(tester, Icons.control_point),
+      isNot(theme.colorScheme.primary),
+      reason: 'it must not fall into the Points catch-all',
+    );
+  });
+
+  testWidgets('the circle-by-radius item asks for a radius; cancel and '
+      'garbage activate nothing', (tester) async {
+    await pumpEditor(tester);
+
+    Future<void> pickCircleByRadius() async {
+      await tester.tap(find.byIcon(Icons.circle_outlined));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Circle by radius (tap the center)…'));
+      await tester.pumpAndSettle();
+    }
+
+    await pickCircleByRadius();
+    expect(find.text('Circle radius'), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(container.read(toolProvider).tool, isNull);
+
+    await pickCircleByRadius();
+    await tester.enterText(find.byType(TextField), '-2');
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    expect(
+      container.read(toolProvider).tool,
+      isNull,
+      reason: 'a non-positive radius reads as cancel',
+    );
+
+    await pickCircleByRadius();
+    await tester.enterText(find.byType(TextField), '2.5');
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    final tool = container.read(toolProvider).tool;
+    expect(tool, isA<FixedRadiusCircleTool>());
+    expect((tool! as FixedRadiusCircleTool).radius, 2.5);
+    final theme = Theme.of(tester.element(find.byType(AppBar)));
+    expect(
+      iconColor(tester, Icons.circle_outlined),
+      theme.colorScheme.primary,
+      reason: 'FixedRadiusCircleTool must highlight the Circles group',
+    );
+    expect(
+      iconColor(tester, Icons.control_point),
+      isNot(theme.colorScheme.primary),
+      reason: 'it must not fall into the Points catch-all',
+    );
+  });
+
+  testWidgets('the segment-by-length item asks for a length and '
+      'highlights Lines', (tester) async {
+    await pumpEditor(tester);
+
+    await tester.tap(find.byIcon(Icons.timeline));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.text('Segment with given length (endpoint, then direction)…'),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Segment length'), findsOneWidget);
+    await tester.enterText(find.byType(TextField), '3');
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+
+    final tool = container.read(toolProvider).tool;
+    expect(tool, isA<FixedLengthSegmentTool>());
+    expect((tool! as FixedLengthSegmentTool).length, 3);
+    final theme = Theme.of(tester.element(find.byType(AppBar)));
+    expect(
+      iconColor(tester, Icons.timeline),
+      theme.colorScheme.primary,
+      reason: 'FixedLengthSegmentTool must highlight the Lines group',
     );
     expect(
       iconColor(tester, Icons.control_point),

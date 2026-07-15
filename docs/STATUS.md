@@ -6,6 +6,26 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 47 — 2026-07-15
+
+**Done**
+- **Phase 34 complete** on `phase-34-given-lengths` (4 commits incl. docs), merged to `main` — circles and segments with dialog-given lengths.
+- `FixedRadiusCircle` (center parent + fixed `radius` param, constructor rejects ≤ 0/non-finite; undefined iff the center is; codec entry with `radius` via `_doubleParam`, kitchen-sink `frc`). Kind label deliberately rides the `GeoCircle` → "Circle" fallback, same as `CircleCenterPoint`.
+- `FixedRadiusCircleTool` (`MultiPointTool`, `pointCount` 1, dedicated class for the tear-off highlight): dialog radius, one ladder-resolved tap = center. Circles flyout row 2 "Circle by radius (tap the center)…", `⇧C`, `circlesActive`.
+- `FixedLengthSegmentTool`: ladder tap for endpoint A + position-only direction tap (trapezium 4th-tap precedent) → one `MacroCommand` of hidden `FixedRadiusCircle(A, L)` + visible `PointOnObject.near` B + visible `Segment(A, B)`; |AB| pinned under dragging A and sliding B. Lines flyout after Ray, `⇧S`, `linesActive`.
+- Dialogs: shared `_LengthDialog` behind `askCircleRadius`/`askSegmentLength`; `_parseLength` reuses `_parseRatio` restricted to finite positive — fractions (`5/2`) work, garbage/non-positive reads as cancel.
+- 930 tests green (14 new), analyze clean, web smoke on a fresh release build: **SMOKE PASS**, zero console errors (drive.js untouched — Segment stays Lines row 2; the Circles flyout is never clicked by index). Served-vs-disk `main.dart.js` hash verified identical (the stale 8321 server again).
+
+**Next**
+- Phase 35 (show-value labels) heads the 35–39 queue; 43–45 can slot anywhere.
+- `main` is ahead of `origin/main` (~15 commits) — push when convenient.
+
+**Open questions / gotchas**
+- The Lines flyout is 9 rows now ("Segment with given length…" sits 4th, after Ray); anything clicking Lines rows by index past row 3 must account for it (drive.js only uses row 2).
+- `⇧C`/`⇧S` join `⇧B`/`⇧A`/`⇧T` — the shifted-letter tool namespace is filling up like the G leader.
+- A `FixedLengthSegmentTool` direction tap on an existing point projects its position but never consumes it (trapezium rule) — the segment will *look* attached to that point without being tied to it; watch for confusion.
+- The segment-by-length macro's B slides on a hidden circle: selecting B and dragging moves it around A (direction change), not along the segment — deliberate (Phase 14 slide-drag), but worth remembering when it reads as "the endpoint won't move freely".
+
 ## Session 46 — 2026-07-15
 
 **Done**
