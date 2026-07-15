@@ -1,0 +1,29 @@
+test/domain/construction/objects/fixed_radius_circle_test.dart
+  s_d42745f015f42e::t_5b908af6f4e4cc 1-73
+test/application/persistence/construction_codec_test.dart
+  s_d42745f015f42e::t_e8ad4f854a62d1 211
+  s_d42745f015f42e::t_8f443d8d6a01f3 17
+  s_d42745f015f42e::t_c051deec94b3fe 104
+lib/domain/construction/objects/fixed_radius_circle.dart
+  s_d42745f015f42e::t_74a09e1bb6157c 1-45
+lib/application/persistence/construction_codec.dart
+  s_d42745f015f42e::t_35d18272171350 151-154
+  s_d42745f015f42e::t_042da03dca675e 372-377
+  s_d42745f015f42e::t_cb7b1caed8ec18 11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "c3d308d24919024c3026fda972509822f89503c2",
+  "prompts": {},
+  "sessions": {
+    "s_d42745f015f42e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9039d01a-6017-4423-8688-e305efe853f3",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
