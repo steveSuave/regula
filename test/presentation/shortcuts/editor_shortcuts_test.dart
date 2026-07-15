@@ -13,6 +13,7 @@ import 'package:regula/domain/commands/add_object_command.dart';
 import 'package:regula/domain/construction/object_attributes.dart';
 import 'package:regula/domain/construction/objects/centroid.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
+import 'package:regula/domain/construction/objects/fixed_radius_circle.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
@@ -23,6 +24,8 @@ import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/tools/angle_bisector_tool.dart';
 import 'package:regula/domain/tools/angle_by_size_tool.dart';
 import 'package:regula/domain/tools/equilateral_triangle_macro_tool.dart';
+import 'package:regula/domain/tools/fixed_length_segment_tool.dart';
+import 'package:regula/domain/tools/fixed_radius_circle_tool.dart';
 import 'package:regula/domain/tools/intersection_tool.dart';
 import 'package:regula/domain/tools/point_and_line_tool.dart';
 import 'package:regula/domain/tools/point_tool.dart';
@@ -129,6 +132,69 @@ void main() {
     final bisector = objects.last as PerpendicularBisectorLine;
     expect(bisector.line!.contains(const Vec2(2, 7)), isTrue,
         reason: 'vertical bisector of the horizontal pair at x = 2');
+  });
+
+  testWidgets('⇧C asks for the radius; OK builds a circle by radius end '
+      'to end, cancel activates nothing', (tester) async {
+    await pumpEditor(tester);
+
+    Future<void> pressShiftC() async {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyC);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.pumpAndSettle();
+    }
+
+    await pressShiftC();
+    expect(find.text('Circle radius'), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(activeTool(), isNull);
+
+    await pressShiftC();
+    await tester.enterText(find.byType(TextField), '2.5');
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    final tool = activeTool();
+    expect(tool, isA<FixedRadiusCircleTool>());
+    expect((tool! as FixedRadiusCircleTool).radius, 2.5);
+
+    tapWorld(1, 1);
+    final objects =
+        container.read(constructionProvider).construction.objects.toList();
+    expect(objects.last, isA<FixedRadiusCircle>());
+    expect((objects.last as FixedRadiusCircle).circle!.radius, 2.5);
+  });
+
+  testWidgets('⇧S asks for the length; OK builds a fixed-length segment '
+      'end to end', (tester) async {
+    await pumpEditor(tester);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyS);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.pumpAndSettle();
+    expect(find.text('Segment length'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField), '3');
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    final tool = activeTool();
+    expect(tool, isA<FixedLengthSegmentTool>());
+    expect((tool! as FixedLengthSegmentTool).length, 3);
+
+    tapWorld(1, 1);
+    tapWorld(9, 1);
+    final segment = container
+        .read(constructionProvider)
+        .construction
+        .objects
+        .whereType<Segment>()
+        .single;
+    expect(
+      segment.point1.position!.distanceTo(segment.point2.position!),
+      closeTo(3, 1e-12),
+      reason: 'the length is pinned regardless of where the direction tap is',
+    );
   });
 
   testWidgets('G N chords to the tangent tool, one pair = both tangents',
