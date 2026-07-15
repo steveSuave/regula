@@ -12,7 +12,6 @@ import '../../domain/construction/objects/circle_center_point.dart';
 import '../../domain/construction/objects/circumcenter.dart';
 import '../../domain/construction/objects/compass_circle.dart';
 import '../../domain/construction/objects/incenter.dart';
-import '../../domain/construction/objects/line_angle.dart';
 import '../../domain/construction/objects/line_through_two_points.dart';
 import '../../domain/construction/objects/midpoint.dart';
 import '../../domain/construction/objects/orthocenter.dart';
@@ -24,10 +23,9 @@ import '../../domain/construction/objects/sector.dart';
 import '../../domain/construction/objects/segment.dart';
 import '../../domain/construction/objects/segment_ratio_point.dart';
 import '../../domain/construction/objects/three_point_circle.dart';
-import '../../domain/construction/objects/vertex_angle.dart';
-import '../../domain/math/vec2.dart';
 import '../../domain/tools/angle_bisector_tool.dart';
 import '../../domain/tools/angle_by_size_tool.dart';
+import '../../domain/tools/angle_tool.dart';
 import '../../domain/tools/equilateral_triangle_macro_tool.dart';
 import '../../domain/tools/fixed_length_segment_tool.dart';
 import '../../domain/tools/fixed_radius_circle_tool.dart';
@@ -51,7 +49,6 @@ import '../../domain/tools/tool.dart';
 import '../../domain/tools/transform_object_tool.dart';
 import '../../domain/tools/trapezium_macro_tool.dart';
 import '../../domain/tools/triangle_center_tool.dart';
-import '../../domain/tools/two_line_tool.dart';
 import '../../domain/tools/two_point_tool.dart';
 import '../shortcuts/shortcut_table.dart';
 
@@ -99,24 +96,6 @@ GeoObject buildArc(String id, GeoPoint a, GeoPoint b, GeoPoint c) =>
 GeoObject buildSector(String id, GeoPoint a, GeoPoint b, GeoPoint c) =>
     Sector(id: id, center: a, start: b, end: c);
 
-GeoObject buildVertexAngle(String id, GeoPoint a, GeoPoint b, GeoPoint c) =>
-    VertexAngle(id: id, arm1: a, vertex: b, arm2: c);
-
-GeoObject buildLineAngle(
-  String id,
-  GeoLine first,
-  GeoLine second,
-  Vec2 firstTap,
-  Vec2 secondTap,
-) =>
-    LineAngle.near(
-      id: id,
-      line1: first,
-      line2: second,
-      tap1: firstTap,
-      tap2: secondTap,
-    );
-
 const _lineBuilders = {
   buildLine,
   buildSegment,
@@ -162,10 +141,7 @@ class GeometryToolbar extends ConsumerWidget {
         tool is FixedRadiusCircleTool ||
         (tool is TwoPointTool && tool.build == buildCircle) ||
         (tool is ThreePointTool && _circleBuilders.contains(tool.build));
-    final anglesActive =
-        tool is TwoLineTool ||
-        tool is AngleBySizeTool ||
-        (tool is ThreePointTool && tool.build == buildVertexAngle);
+    final anglesActive = tool is AngleTool || tool is AngleBySizeTool;
     final transformActive = tool is TransformObjectTool;
     final macrosActive =
         tool is SquareMacroTool ||
@@ -351,14 +327,9 @@ class GeometryToolbar extends ConsumerWidget {
           active: anglesActive,
           items: [
             (
-              'Angle at vertex (arm, vertex, arm)',
-              _threePoint(buildVertexAngle, allowCurveTaps: false),
-              AppAction.vertexAngleTool,
-            ),
-            (
-              'Angle between two lines',
-              _pick(() => TwoLineTool(newId: newObjectId, build: buildLineAngle)),
-              AppAction.lineAngleTool,
+              'Angle (two lines, or arm/vertex/arm)',
+              _pick(() => AngleTool(newId: newObjectId)),
+              AppAction.angleTool,
             ),
             (
               'Angle by given size (arm, then vertex)…',
@@ -496,14 +467,8 @@ ToolPick _pick(Tool Function() create) => () async => create();
 ToolPick _twoPoint(TwoPointBuilder build) =>
     _pick(() => TwoPointTool(newId: newObjectId, build: build));
 
-ToolPick _threePoint(ThreePointBuilder build, {bool allowCurveTaps = true}) =>
-    _pick(
-      () => ThreePointTool(
-        newId: newObjectId,
-        build: build,
-        allowCurveTaps: allowCurveTaps,
-      ),
-    );
+ToolPick _threePoint(ThreePointBuilder build) =>
+    _pick(() => ThreePointTool(newId: newObjectId, build: build));
 
 ToolPick _center(TriangleCenterBuilder build) =>
     _pick(() => TriangleCenterTool(newId: newObjectId, buildCenter: build));

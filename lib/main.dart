@@ -27,6 +27,7 @@ import 'domain/construction/objects/perpendicular_line.dart';
 import 'domain/math/vec2.dart';
 import 'domain/tools/angle_bisector_tool.dart';
 import 'domain/tools/angle_by_size_tool.dart';
+import 'domain/tools/angle_tool.dart';
 import 'domain/tools/delete_tool.dart';
 import 'domain/tools/equilateral_triangle_macro_tool.dart';
 import 'domain/tools/fixed_length_segment_tool.dart';
@@ -50,7 +51,6 @@ import 'domain/tools/three_point_tool.dart';
 import 'domain/tools/transform_object_tool.dart';
 import 'domain/tools/trapezium_macro_tool.dart';
 import 'domain/tools/triangle_center_tool.dart';
-import 'domain/tools/two_line_tool.dart';
 import 'domain/tools/two_point_tool.dart';
 import 'domain/tools/visibility_tool.dart';
 import 'presentation/canvas/canvas_viewport.dart';
@@ -554,16 +554,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         tools.activate(IntersectionTool(newId: newObjectId));
       case AppAction.angleBisectorTool:
         tools.activate(AngleBisectorTool(newId: newObjectId));
-      case AppAction.vertexAngleTool:
-        tools.activate(
-          ThreePointTool(
-            newId: newObjectId,
-            build: buildVertexAngle,
-            allowCurveTaps: false,
-          ),
-        );
-      case AppAction.lineAngleTool:
-        tools.activate(TwoLineTool(newId: newObjectId, build: buildLineAngle));
+      case AppAction.angleTool:
+        tools.activate(AngleTool(newId: newObjectId));
       case AppAction.perpendicularTool:
         tools.activate(
           PointAndLineTool(newId: newObjectId, build: PerpendicularLine.new),
