@@ -32,6 +32,7 @@ import '../../domain/construction/objects/translated_point.dart';
 import '../../domain/construction/objects/two_line_bisector_line.dart';
 import '../../domain/construction/objects/vertex_angle.dart';
 import '../../domain/math/vec2.dart';
+import '../providers/document_settings_provider.dart';
 import '../providers/viewport_provider.dart';
 
 /// Version stamped into every saved document. Bump on any breaking schema
@@ -39,13 +40,18 @@ import '../providers/viewport_provider.dart';
 const int constructionFormatVersion = 1;
 
 /// The result of decoding a saved document: a freshly built [Construction]
-/// (no listeners, geometry recomputed) plus the viewport snapshot the file
-/// carried (the default viewport when the file had none).
+/// (no listeners, geometry recomputed) plus the viewport and document
+/// settings snapshots the file carried (defaults when the file had none).
 class DecodedDocument {
-  const DecodedDocument({required this.construction, required this.viewport});
+  const DecodedDocument({
+    required this.construction,
+    required this.viewport,
+    this.settings = const DocumentSettings(),
+  });
 
   final Construction construction;
   final ViewportState viewport;
+  final DocumentSettings settings;
 }
 
 /// Encodes [construction] and the current [viewport] into a JSON-encodable
@@ -57,6 +63,7 @@ class DecodedDocument {
 Map<String, dynamic> encodeDocument(
   Construction construction, {
   required ViewportState viewport,
+  DocumentSettings settings = const DocumentSettings(),
 }) {
   return <String, dynamic>{
     'version': constructionFormatVersion,
@@ -64,6 +71,10 @@ Map<String, dynamic> encodeDocument(
       'pan': [viewport.pan.x, viewport.pan.y],
       'scale': viewport.scale,
     },
+    // Additive keys (absent → false on decode), so pre-36 apps ignore them
+    // and pre-36 files need no version bump.
+    'showAxes': settings.showAxes,
+    'showGrid': settings.showGrid,
     'objects': [
       for (final object in construction.objects) _encodeObject(object),
     ],
@@ -89,6 +100,10 @@ DecodedDocument decodeDocument(Map<String, dynamic> json) {
   }
   // Version 1 is the only schema so far; migrations slot in here.
   final viewport = _decodeViewport(json['viewport']);
+  final settings = DocumentSettings(
+    showAxes: _decodeSettingFlag(json, 'showAxes'),
+    showGrid: _decodeSettingFlag(json, 'showGrid'),
+  );
   final objectsJson = json['objects'];
   if (objectsJson is! List) {
     throw const FormatException('Missing or invalid "objects" list');
@@ -106,7 +121,24 @@ DecodedDocument decodeDocument(Map<String, dynamic> json) {
       throw FormatException('Object "${entry['id']}": ${error.message}');
     }
   }
-  return DecodedDocument(construction: construction, viewport: viewport);
+  return DecodedDocument(
+    construction: construction,
+    viewport: viewport,
+    settings: settings,
+  );
+}
+
+/// A document-settings flag that pre-36 files legitimately lack: false when
+/// absent, [FormatException] when present but not a boolean.
+bool _decodeSettingFlag(Map<String, dynamic> json, String key) {
+  final value = json[key];
+  if (value == null) {
+    return false;
+  }
+  if (value is! bool) {
+    throw FormatException('Invalid "$key" (expected a boolean)');
+  }
+  return value;
 }
 
 Map<String, dynamic> _encodeObject(GeoObject object) {
