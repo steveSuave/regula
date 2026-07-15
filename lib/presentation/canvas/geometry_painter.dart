@@ -14,6 +14,7 @@ import '../../domain/math/vec2.dart';
 import 'canvas_viewport.dart';
 import 'dash_path.dart';
 import 'label_anchor.dart';
+import 'label_layout.dart';
 
 /// Paints the construction in insertion order (first added = bottom).
 ///
@@ -140,9 +141,9 @@ class GeometryPainter extends CustomPainter {
         paint,
         dashPeriod: object.attributes.dashPeriod,
       );
-      if (object.attributes.labelVisible &&
-          object.attributes.name.isNotEmpty) {
-        _drawLabel(canvas, object, color);
+      final text = labelText(object);
+      if (text != null) {
+        _drawLabel(canvas, object, text, color);
       }
     }
 
@@ -246,18 +247,18 @@ class GeometryPainter extends CustomPainter {
     }
   }
 
-  /// Paints the object's name beside its [labelAnchor], shifted by the
-  /// stored label offset (or the in-progress [labelDragPreview]). Like
-  /// stroke widths, the font size and offset are in logical pixels and
-  /// do not scale with zoom.
-  void _drawLabel(Canvas canvas, GeoObject object, Color color) {
+  /// Paints the object's [labelText] beside its [labelAnchor], shifted
+  /// by the stored label offset (or the in-progress [labelDragPreview]).
+  /// Like stroke widths, the font size and offset are in logical pixels
+  /// and do not scale with zoom.
+  void _drawLabel(Canvas canvas, GeoObject object, String text, Color color) {
     final preview = labelDragPreview;
     final offset = preview != null && preview.id == object.id
         ? preview.offset
         : Offset(object.attributes.labelDx, object.attributes.labelDy);
     final textPainter = TextPainter(
       text: TextSpan(
-        text: object.attributes.name,
+        text: text,
         style: TextStyle(
           color: color,
           fontSize: object.attributes.labelFontSize,
