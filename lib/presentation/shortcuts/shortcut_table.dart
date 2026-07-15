@@ -41,6 +41,7 @@ enum AppAction {
   lineAngleTool,
   perpendicularTool,
   parallelTool,
+  perpendicularBisectorTool,
   compassTool,
   // Constructions behind the G leader.
   centroidTool,
@@ -51,6 +52,7 @@ enum AppAction {
   segmentRatioTool,
   arcTool,
   sectorTool,
+  tangentTool,
   reflectAboutLineTool,
   reflectAboutPointTool,
   rotateAroundPointTool,
@@ -505,6 +507,13 @@ final List<ShortcutBinding> shortcutTable = [
     display: '⇧ T',
   ),
   const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.keyB, shift: true)],
+    action: AppAction.perpendicularBisectorTool,
+    label: 'Perpendicular bisector',
+    section: ShortcutSection.tools,
+    display: '⇧ B',
+  ),
+  const ShortcutBinding(
     sequence: [KeyStroke(LogicalKeyboardKey.keyO)],
     action: AppAction.compassTool,
     label: 'Compass circle',
@@ -564,6 +573,12 @@ final List<ShortcutBinding> shortcutTable = [
     AppAction.angleBySizeTool,
     'Angle by given size…',
     'G D',
+  ),
+  _g(
+    LogicalKeyboardKey.keyN,
+    AppAction.tangentTool,
+    'Tangents from point to circle',
+    'G N',
   ),
   // ── X leader: shape macros ───────────────────────────────────────
   _x(LogicalKeyboardKey.keyS, AppAction.squareMacroTool, 'Square', 'X S'),
