@@ -25,6 +25,7 @@ import '../../domain/construction/objects/rotated_point.dart';
 import '../../domain/construction/objects/sector.dart';
 import '../../domain/construction/objects/segment.dart';
 import '../../domain/construction/objects/segment_ratio_point.dart';
+import '../../domain/construction/objects/tangent_line.dart';
 import '../../domain/construction/objects/three_point_circle.dart';
 import '../../domain/construction/objects/translated_point.dart';
 import '../../domain/construction/objects/two_line_bisector_line.dart';
@@ -142,6 +143,7 @@ Map<String, dynamic> _encodeObject(GeoObject object) {
         'TwoLineBisectorLine',
         {'branch': branch}
       ),
+    TangentLine(:final branch) => ('TangentLine', {'branch': branch}),
     CircleCenterPoint() => ('CircleCenterPoint', const {}),
     ThreePointCircle() => ('ThreePointCircle', const {}),
     CompassCircle() => ('CompassCircle', const {}),
@@ -193,6 +195,7 @@ GeoObject _decodeObject(Map<String, dynamic> json, Construction construction) {
 
   GeoPoint point(int index) => _typedParent<GeoPoint>(id, parents, index);
   GeoLine line(int index) => _typedParent<GeoLine>(id, parents, index);
+  GeoCircle circle(int index) => _typedParent<GeoCircle>(id, parents, index);
   GeoObject any(int index) => _typedParent<GeoObject>(id, parents, index);
 
   return switch (type) {
@@ -331,6 +334,13 @@ GeoObject _decodeObject(Map<String, dynamic> json, Construction construction) {
         id: id,
         line1: line(0),
         line2: line(1),
+        branch: _intParam(id, params, 'branch'),
+        attributes: attributes,
+      ),
+    'TangentLine' => TangentLine(
+        id: id,
+        point: point(0),
+        circle: circle(1),
         branch: _intParam(id, params, 'branch'),
         attributes: attributes,
       ),
