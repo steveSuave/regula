@@ -2,6 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/application/providers/viewport_provider.dart';
 import 'package:regula/domain/construction/object_attributes.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/segment.dart';
+import 'package:regula/domain/construction/objects/vertex_angle.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/presentation/canvas/canvas_viewport.dart';
 import 'package:regula/presentation/canvas/label_layout.dart';
@@ -11,6 +13,77 @@ void main() {
 
   FreePoint point(ObjectAttributes attributes) =>
       FreePoint(id: 'p', position: const Vec2(10, -20), attributes: attributes);
+
+  // A 3–4–5 hypotenuse, so the value part is a clean '5.00'.
+  Segment segment(ObjectAttributes attributes) => Segment(
+        id: 's',
+        point1: FreePoint(id: 'a', position: const Vec2(0, 0)),
+        point2: FreePoint(id: 'b', position: const Vec2(3, 4)),
+        attributes: attributes,
+      );
+
+  // A right angle at the origin: (5,0) → (0,0) → (0,7), CCW 90°.
+  VertexAngle angle(ObjectAttributes attributes) => VertexAngle(
+        id: 'v',
+        arm1: FreePoint(id: 'a1', position: const Vec2(5, 0)),
+        vertex: FreePoint(id: 'vx', position: const Vec2(0, 0)),
+        arm2: FreePoint(id: 'a2', position: const Vec2(0, 7)),
+        attributes: attributes,
+      );
+
+  group('labelText', () {
+    test('named + labelVisible without showValue: bare name', () {
+      expect(labelText(segment(const ObjectAttributes(name: 'c'))), 'c');
+    });
+
+    test('named + showValue: name = value', () {
+      expect(
+        labelText(segment(const ObjectAttributes(name: 'c', showValue: true))),
+        'c = 5.00',
+      );
+      expect(
+        labelText(angle(const ObjectAttributes(name: 'α', showValue: true))),
+        'α = 90.0°',
+      );
+    });
+
+    test('showValue with the name part hidden: bare value', () {
+      expect(
+        labelText(segment(const ObjectAttributes(showValue: true))),
+        '5.00',
+        reason: 'unnamed',
+      );
+      expect(
+        labelText(
+          segment(const ObjectAttributes(
+            name: 'c',
+            labelVisible: false,
+            showValue: true,
+          )),
+        ),
+        '5.00',
+        reason: 'labelVisible off hides only the name part',
+      );
+    });
+
+    test('no part at all: null', () {
+      expect(labelText(segment(const ObjectAttributes())), isNull);
+      expect(
+        labelText(
+          segment(const ObjectAttributes(name: 'c', labelVisible: false)),
+        ),
+        isNull,
+      );
+    });
+
+    test('showValue on a kind without a value never adds a part', () {
+      expect(
+        labelText(point(const ObjectAttributes(name: 'A', showValue: true))),
+        'A',
+      );
+      expect(labelText(point(const ObjectAttributes(showValue: true))), isNull);
+    });
+  });
 
   test('the rect sits at worldToScreen(anchor) + the stored offset', () {
     final named = point(
@@ -57,6 +130,25 @@ void main() {
     expect(large.height, greaterThan(normal.height));
     expect(large.topLeft, normal.topLeft,
         reason: 'size changes the extent, not the anchor offset');
+  });
+
+  test('a value-only label has a rect (unnamed segment, showValue on)', () {
+    final rect = labelScreenRect(
+      segment(const ObjectAttributes(showValue: true)),
+      viewport,
+    );
+    expect(rect, isNotNull,
+        reason: 'the value text must be grabbable for label dragging');
+  });
+
+  test('an undefined segment paints no value rect', () {
+    final degenerate = Segment(
+      id: 's0',
+      point1: FreePoint(id: 'a', position: const Vec2(1, 1)),
+      point2: FreePoint(id: 'b', position: const Vec2(1, 1)),
+      attributes: const ObjectAttributes(showValue: true),
+    );
+    expect(labelScreenRect(degenerate, viewport), isNull);
   });
 
   test('unpainted labels have no rect', () {

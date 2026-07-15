@@ -1,0 +1,37 @@
+import 'dart:math' as math;
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/presentation/canvas/measure_format.dart';
+
+void main() {
+  group('formatLength', () {
+    test('two fixed decimals', () {
+      expect(formatLength(3), '3.00');
+      expect(formatLength(3.14159), '3.14');
+      expect(formatLength(0.005), '0.01');
+      expect(formatLength(12345.678), '12345.68');
+    });
+  });
+
+  group('formatAngle', () {
+    test('degrees with one decimal and the ° suffix', () {
+      expect(formatAngle(math.pi), '180.0°');
+      expect(formatAngle(math.pi / 3), '60.0°');
+      expect(formatAngle(1), '57.3°');
+    });
+
+    test('the right angle reads exactly 90.0°', () {
+      expect(formatAngle(math.pi / 2), '90.0°');
+    });
+
+    test('a reflex angle keeps its full measure', () {
+      expect(formatAngle(3 * math.pi / 2), '270.0°');
+    });
+  });
+
+  group('formatArea', () {
+    test('same shape as lengths', () {
+      expect(formatArea(2.5), formatLength(2.5));
+    });
+  });
+}

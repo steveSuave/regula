@@ -56,7 +56,7 @@ final class ToolNotifierProvider
   }
 }
 
-String _$toolNotifierHash() => r'59cd9d04e73d5b342dd2405d37f0e54aad40cf98';
+String _$toolNotifierHash() => r'400188e6a4d6fa11f754b9943985fb757d6b60ce';
 
 /// The active construction tool and the funnel for canvas input.
 ///

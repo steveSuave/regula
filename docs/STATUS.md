@@ -6,6 +6,24 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 48 — 2026-07-15
+
+**Done**
+- **Phase 35 complete** on `phase-35-show-value` (4 commits incl. docs), merged to `main` — segments and angles can show their measured value in the label.
+- `ObjectAttributes.showValue` (`@Default(false)`, additive — no codec change/version bump) + `measure_format.dart` (`formatLength` 2 decimals, `formatAngle` degrees 1 decimal + `°`, `formatArea` forwards to length for Phase 38).
+- Shared `labelText(GeoObject)` in `label_layout.dart`: name part (`labelVisible` && named) and value part (`showValue` on a `Segment`/`GeoAngle`) compose as `c = 5.00` / bare part / null. Both `_drawLabel` (now takes the text) and `labelScreenRect` consume it, so painted text and drag rect can't drift; a value-only label is grabbable. `labelText` skips the visible/isDefined gates — callers own them.
+- Inspector "Show value" tristate checkbox under "Show label" (Fill pattern): shown while the selection has a segment/angle, targets exactly that slice, one command per tap.
+- New `measures` golden scene ×2 themes; the 12 existing goldens stayed byte-identical under the label refactor. 947 tests green (17 new), analyze clean, web smoke on a fresh release build: **SMOKE PASS**, zero console errors (drive.js untouched — no toolbar/flyout changes at all this phase). Served-vs-disk hash verified again (the stale Jul 5 server on 8321 still running).
+
+**Next**
+- Phase 36 (XY axes + grid) heads the 36–39 queue; 43–45 can slot anywhere.
+- `main` is ahead of `origin/main` (~20 commits) — push when convenient.
+
+**Open questions / gotchas**
+- `labelText` composes the *value* for any defined segment even when undefined-adjacent (coincident endpoints kill `isDefined` first, so nothing paints) — if a future kind gains a value whose definedness diverges from `isDefined`, revisit the gate split.
+- Value labels use fixed decimals by design; long lengths (e.g. `12345.68`) widen the label rect — the 40-px label-drag clamp is on the *offset*, not the rect, so nothing breaks, but huge values can visually collide with nearby objects.
+- `showValue` is independent of `labelVisible`: unticking "Show label" on a measured segment leaves the bare value painted. Deliberate (the name part is what it hides), but may read as "the label won't hide".
+
 ## Session 47 — 2026-07-15
 
 **Done**

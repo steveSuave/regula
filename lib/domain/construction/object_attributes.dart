@@ -23,6 +23,12 @@ abstract class ObjectAttributes with _$ObjectAttributes {
     @Default(true) bool visible,
     @Default(true) bool labelVisible,
 
+    /// Whether the label shows the object's measured value (a segment's
+    /// length, an angle's degrees). Independent of [labelVisible], which
+    /// governs only the *name* part: a value-showing label paints even
+    /// while the name is hidden. Meaningless for kinds without a value.
+    @Default(false) bool showValue,
+
     /// Label offset from the object's anchor to the text's top-left, in
     /// *screen* logical pixels (so zoom never flings a label away from
     /// its object). The defaults match the pre-Phase-17 fixed offset;

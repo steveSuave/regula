@@ -348,6 +348,62 @@ void main() {
     return construction;
   }
 
+  /// Phase 35 show-value labels: a named measured segment ('c = 5.00'),
+  /// a value-only segment ('4.00' — no name part), a name-only segment
+  /// beside them for contrast, and a measured right angle ('90.0°').
+  Construction measuresScene() {
+    final construction = Construction();
+    final a = FreePoint(id: 'a', position: Vec2.zero);
+    final b = FreePoint(id: 'b', position: const Vec2(3, 4));
+    final c = FreePoint(id: 'c', position: const Vec2(7, 0));
+    final d = FreePoint(id: 'd', position: const Vec2(11, 0));
+    final e = FreePoint(id: 'e', position: const Vec2(7, -3));
+    final f = FreePoint(id: 'f', position: const Vec2(11, -3));
+    final arm1 = FreePoint(id: 'm1', position: const Vec2(9, 5));
+    final vertex = FreePoint(id: 'vx', position: const Vec2(6, 5));
+    final arm2 = FreePoint(id: 'm2', position: const Vec2(6, 8));
+    construction
+      ..add(a)
+      ..add(b)
+      ..add(c)
+      ..add(d)
+      ..add(e)
+      ..add(f)
+      ..add(arm1)
+      ..add(vertex)
+      ..add(arm2)
+      // A 3–4–5 hypotenuse: 'c = 5.00'.
+      ..add(Segment(
+        id: 'named',
+        point1: a,
+        point2: b,
+        attributes: const ObjectAttributes(name: 'c', showValue: true),
+      ))
+      // Unnamed: the bare value '4.00'.
+      ..add(Segment(
+        id: 'bare',
+        point1: c,
+        point2: d,
+        attributes: const ObjectAttributes(showValue: true),
+      ))
+      // Name only — pre-35 rendering for contrast.
+      ..add(Segment(
+        id: 'plain',
+        point1: e,
+        point2: f,
+        attributes: const ObjectAttributes(name: 'g'),
+      ))
+      // Perpendicular arms: the right-angle square plus '90.0°'.
+      ..add(VertexAngle(
+        id: 'ang',
+        arm1: arm1,
+        vertex: vertex,
+        arm2: arm2,
+        attributes: const ObjectAttributes(showValue: true),
+      ));
+    return construction;
+  }
+
   final themes = {'light': AppTheme.light(), 'dark': AppTheme.dark()};
   final scenes = {
     'points': pointsScene,
@@ -355,6 +411,7 @@ void main() {
     'circles': circlesScene,
     'angles': anglesScene,
     'markers': markerStylesScene,
+    'measures': measuresScene,
   };
 
   for (final MapEntry(key: themeName, value: theme) in themes.entries) {

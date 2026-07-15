@@ -79,6 +79,7 @@ Construction buildKitchenSink() {
           visible: false,
           dashPeriod: 8,
           labelFontSize: 16,
+          showValue: true,
         ),
       ),
     )
