@@ -6,6 +6,22 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 49 — 2026-07-15
+
+**Done**
+- **Phase 46 complete** on `phase-46-merged-angle-tool`, merged to `main` — the vertex-angle and line-angle tools merged into one two-mode `AngleTool` on `A` (user request): first tap on a line → angle between two lines (`LineAngle.near`, tap-picked wedge), first tap on a point/empty canvas → arm–vertex–arm `VertexAngle`.
+- The Phase 29b two-mode machine was extracted from `AngleBisectorTool` into abstract `TwoLineOrThreePointTool` (`buildFromLines`/`buildFromPoints` hooks); `AngleBisectorTool` and `AngleTool` are thin subclasses. `angle_bisector_tool_test.dart` passed **unchanged**, pinning the refactor as behavior-preserving.
+- `TwoLineTool` deleted (fully unused after the merge); `AppAction.vertexAngleTool`+`lineAngleTool` collapsed into `angleTool`; **`⇧A` is now a free shortcut** (deliberately not rebound). Angles flyout is two rows ('Angle (two lines, or arm/vertex/arm)' + by-size); `_threePoint` helper lost its `allowCurveTaps` param (the domain flag stays — tested Phase 29b API, no production `false` user).
+- 952 tests green (20 in new `angle_tool_test.dart` mirroring the bisector suite), analyze clean, web smoke on a fresh release build: **SMOKE PASS**, zero console errors (drive.js untouched — it never clicked the Angles flyout). Ad-hoc Playwright check of both modes end to end: `A`+3 empty taps → save parses `3×FreePoint + VertexAngle`, one Ctrl+Z empties; `A`+two line taps → `LineAngle`, marker pixels in the tapped wedge, zero `PointOnObject` glued; a mid-flow line tap in point mode glues nothing; `⇧A` activates nothing.
+
+**Next**
+- Phase 36 (XY axes + grid) still heads the 36–39 queue; 43–45 can slot anywhere. `⇧A` is available if a new tool wants it.
+- `main` remains ahead of `origin/main` — push when convenient.
+
+**Open questions / gotchas**
+- Point mode now *ignores* curve taps outright (the bisector's rule) instead of `ThreePointTool(allowCurveTaps: false)`'s hit-set refusal — user-visible behavior is equivalent (no glue, no half-snapped free point), but the exact refusal condition differs at the margins: the old flag refused only when an in-threshold curve had no point hit; the new rule ignores any tap whose top hit is a line.
+- The shortcut-cheat-sheet and flyout rows share the 'Angle (…)' wording but not a single constant — if the label is reworded, both `shortcut_table.dart` and `toolbar.dart` need the edit (same as every other tool row).
+
 ## Session 48 — 2026-07-15
 
 **Done**
