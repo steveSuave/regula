@@ -6,6 +6,26 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 46 — 2026-07-15
+
+**Done**
+- **Phase 33 complete** on `phase-33-lines-group` (4 commits), merged to `main` — the Lines group gains a perpendicular bisector and tangents from a point.
+- `PerpendicularBisectorLine` (dedicated kind, `AngleBisectorLine` precedent): carrier `LineEq.pointDirection(midpoint, join.perpendicular)`; coincident parents (the `carrierLineThrough` `closeTo` convention) → undefined, recovers. Codec entry, empty params, kind label "Perpendicular bisector".
+- `tangentPointsToCircle` (`domain/math/tangents.dart`): Thales circle over center–external ∩ the given circle via `intersectCircleCircle`, so the first-point-left-of-center→point branch order is continuous under drags; on-circle → the point itself, strictly inside naturally empty (the Thales circle lies wholly inside — documented, no guard needed), radius ≤ ε guarded empty.
+- `TangentLine` (point + circle parents, `branch` 0/1): carrier point-direction through the touch point ⟂ the radius; both branches undefined together while inside, recover with sides preserved; on-circle both collapse to the tangent at the point. Codec entry (`branch` via `_intParam`, new `GeoCircle` typed-parent helper); the kitchen-sink tangent rides the ratio point at (9, 0) so it round-trips defined.
+- Tools: perpendicular bisector = `TwoPointTool` + `buildPerpendicularBisector` tear-off (Lines flyout after Angle bisector, `⇧B`); new `TangentTool` (`PointAndLineTool` pattern with a circle slot consulted from `hit`/`extraHits` *before* the point ladder — a tap on the target circle never glues) emits **both** tangents in one `MacroCommand` (Lines flyout last, `G N`). `linesActive` covers both; Lines tooltip reworded.
+- 916 tests green (27 new), analyze clean, web smoke on a fresh release build: **SMOKE PASS**, zero console errors (drive.js untouched — it clicks Lines row 2, Segment, which kept its position; the flyout is 8 rows now).
+
+**Next**
+- Phase 34 (FixedRadiusCircle + circle-by-radius / segment-by-length dialog tools) heads the 34–39 queue; 43–45 can slot anywhere.
+- `main` is ahead of `origin/main` (the 4 pre-session commits plus this phase) — push when convenient.
+
+**Open questions / gotchas**
+- `TangentTool` ignores *any* circle-flavored tap while the circle slot is full — the target circle (deliberate, no gluing) but also a different circle (`PointAndLineTool` second-line parity). Silent refusals again — watch for "the tool feels stuck" feedback (the Phase 40 gotcha's sibling).
+- The tangent pair is one `MacroCommand`: undo removes both lines, but each is individually deletable afterwards (per PLAN, deliberate).
+- The G-leader now carries C/O/I/U/3/R/A/S/L/P/T/V/D/N — nothing conflicts yet, but the namespace is filling up.
+- Anything clicking Lines flyout rows by index beyond row 2 must account for the two appended rows (drive.js only uses row 2 and is unaffected).
+
 ## Session 45 — 2026-07-15
 
 **Done**
