@@ -40,6 +40,7 @@ import 'domain/tools/kite_macro_tool.dart';
 import 'domain/tools/parallelogram_macro_tool.dart';
 import 'domain/tools/point_and_line_tool.dart';
 import 'domain/tools/point_tool.dart';
+import 'domain/tools/polygon_tool.dart';
 import 'domain/tools/random_shape_stamp_tool.dart';
 import 'domain/tools/rectangle_macro_tool.dart';
 import 'domain/tools/regular_polygon_macro_tool.dart';
@@ -632,6 +633,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         tools.activate(TransformObjectTool.translate(newId: newObjectId));
       case AppAction.angleBySizeTool:
         _activateAngleBySizeTool();
+      case AppAction.polygonTool:
+        tools.activate(PolygonTool(newId: newObjectId));
       case AppAction.squareMacroTool:
         tools.activate(SquareMacroTool(newId: newObjectId));
       case AppAction.parallelogramMacroTool:

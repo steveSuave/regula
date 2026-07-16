@@ -62,6 +62,7 @@ enum AppAction {
   translateByVectorTool,
   angleBySizeTool,
   // Shape macros behind the X leader.
+  polygonTool,
   squareMacroTool,
   parallelogramMacroTool,
   trapeziumMacroTool,
@@ -608,6 +609,12 @@ final List<ShortcutBinding> shortcutTable = [
     'G N',
   ),
   // ── X leader: shape macros ───────────────────────────────────────
+  _x(
+    LogicalKeyboardKey.keyV,
+    AppAction.polygonTool,
+    'Polygon (tap the first vertex to close)',
+    'X V',
+  ),
   _x(LogicalKeyboardKey.keyS, AppAction.squareMacroTool, 'Square', 'X S'),
   _x(
     LogicalKeyboardKey.keyP,
