@@ -1,0 +1,26 @@
+tool/locus_render.dart
+  s_578ec1ff5a0d2a::t_a6919a6adccdff 1-60
+test/application/persistence/locus_fixture_regression_test.dart
+  s_578ec1ff5a0d2a::t_a623036b7d4aa0 48-49
+  s_578ec1ff5a0d2a::t_8e8e92ca59b220 1-47,50-106
+test/fixtures/locus-miss-2.json
+  s_578ec1ff5a0d2a::t_721cbb21e7afe4 1-241
+test/fixtures/locus-miss.json
+  s_578ec1ff5a0d2a::t_eb7433a89e20a0 1-389
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "ab17ef8873f9c8dde73f04f254bd24e21302aa4f",
+  "prompts": {},
+  "sessions": {
+    "s_578ec1ff5a0d2a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "616e4c5e-a68b-42a5-a1f5-af686de60e6f",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
