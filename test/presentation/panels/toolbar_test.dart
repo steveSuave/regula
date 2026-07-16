@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/application/providers/tool_provider.dart';
 import 'package:regula/domain/tools/angle_by_size_tool.dart';
+import 'package:regula/domain/tools/area_tool.dart';
 import 'package:regula/domain/tools/equilateral_triangle_macro_tool.dart';
 import 'package:regula/domain/tools/fixed_length_segment_tool.dart';
 import 'package:regula/domain/tools/fixed_radius_circle_tool.dart';
@@ -87,6 +88,33 @@ void main() {
       iconColor(tester, Icons.timeline),
       isNot(theme.colorScheme.primary),
     );
+  });
+
+  testWidgets('the Measure rows activate their tools and highlight the '
+      'Measure group — distance is a TwoPointTool the Points catch-all '
+      'must not claim', (tester) async {
+    await pumpEditor(tester);
+    final theme = Theme.of(tester.element(find.byType(AppBar)));
+
+    await tester.tap(find.byIcon(Icons.straighten));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Distance (two points)'));
+    await tester.pumpAndSettle();
+    expect(container.read(toolProvider).tool, isA<TwoPointTool>());
+    expect(iconColor(tester, Icons.straighten), theme.colorScheme.primary);
+    expect(
+      iconColor(tester, Icons.control_point),
+      isNot(theme.colorScheme.primary),
+      reason: 'buildDistance is claimed by Measure, not the Points catch-all',
+    );
+
+    await tester.tap(find.byIcon(Icons.straighten));
+    await tester.pump(kDoubleTapTimeout);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Area (tap a polygon or circle)'));
+    await tester.pumpAndSettle();
+    expect(container.read(toolProvider).tool, isA<AreaTool>());
+    expect(iconColor(tester, Icons.straighten), theme.colorScheme.primary);
   });
 
   testWidgets('a single tap on the active group icon still opens its menu',

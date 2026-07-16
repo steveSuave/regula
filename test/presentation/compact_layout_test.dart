@@ -105,7 +105,7 @@ void main() {
 
     testWidgets('the strip scrolls when the groups overflow the screen',
         (tester) async {
-      // Narrow enough that six 48-px groups (288 px) cannot fit.
+      // Narrow enough that seven 48-px groups (336 px) cannot fit.
       await pumpEditor(tester, screen: const Size(250, 600));
 
       final scrollable = find.descendant(
@@ -115,11 +115,11 @@ void main() {
       final position = tester.state<ScrollableState>(scrollable).position;
       expect(position.maxScrollExtent, greaterThan(0));
 
-      // All six groups stay reachable by scrolling to the end.
-      await tester.drag(scrollable, const Offset(-300, 0));
+      // All seven groups stay reachable by scrolling to the end.
+      await tester.drag(scrollable, const Offset(-400, 0));
       await tester.pumpAndSettle();
       expect(position.pixels, position.maxScrollExtent);
-      expect(find.byIcon(Icons.crop_square), findsOneWidget);
+      expect(find.byIcon(Icons.straighten), findsOneWidget);
     });
 
     testWidgets('overflow menu drives the absorbed actions — the object '
@@ -277,6 +277,22 @@ void main() {
   });
 
   group('wide (desktop-sized screen)', () {
+    testWidgets('the cluster fits at the wide-chrome floor — the leading '
+        'icon stays hit-testable with the Measure group aboard (Phase 38 '
+        're-measure of the 980 px constant)', (tester) async {
+      // Exactly the gate: any narrower flips to compact chrome. If the
+      // wide action cluster ever outgrows this width again, the trailing
+      // cluster paints over the leading icon and this tap goes dead —
+      // widen the constant, not this test.
+      await pumpEditor(tester, screen: const Size(980, 700));
+
+      expect(inAppBar(find.byIcon(Icons.more_vert)), findsNothing,
+          reason: 'wide chrome at the gate width');
+      await tester.tap(inAppBar(find.byIcon(Icons.account_tree_outlined)));
+      await tester.pumpAndSettle();
+      expect(find.byType(ObjectTreePanel), findsOneWidget);
+    });
+
     testWidgets('layout is unchanged: toolbar among the actions, all loose '
         'icons present, no strip, no overflow', (tester) async {
       await pumpEditor(tester, screen: const Size(1024, 768));
