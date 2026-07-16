@@ -36,6 +36,7 @@ import '../../domain/tools/kite_macro_tool.dart';
 import '../../domain/tools/parallelogram_macro_tool.dart';
 import '../../domain/tools/point_and_line_tool.dart';
 import '../../domain/tools/point_tool.dart';
+import '../../domain/tools/polygon_tool.dart';
 import '../../domain/tools/random_shape_stamp_tool.dart';
 import '../../domain/tools/rectangle_macro_tool.dart';
 import '../../domain/tools/regular_polygon_macro_tool.dart';
@@ -144,6 +145,7 @@ class GeometryToolbar extends ConsumerWidget {
     final anglesActive = tool is AngleTool || tool is AngleBySizeTool;
     final transformActive = tool is TransformObjectTool;
     final macrosActive =
+        tool is PolygonTool ||
         tool is SquareMacroTool ||
         tool is ParallelogramMacroTool ||
         tool is TrapeziumMacroTool ||
@@ -371,9 +373,14 @@ class GeometryToolbar extends ConsumerWidget {
         ),
         _ToolGroup(
           icon: Icons.crop_square,
-          tooltip: 'Shape macros: triangles, quadrilaterals, polygons',
+          tooltip: 'Polygons & shape macros',
           active: macrosActive,
           items: [
+            (
+              'Polygon (tap vertices, tap the first again to close)',
+              _pick(() => PolygonTool(newId: newObjectId)),
+              AppAction.polygonTool,
+            ),
             (
               'Equilateral triangle (two corners)',
               _pick(() => EquilateralTriangleMacroTool(newId: newObjectId)),

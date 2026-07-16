@@ -32,6 +32,7 @@ import 'package:regula/domain/tools/fixed_radius_circle_tool.dart';
 import 'package:regula/domain/tools/intersection_tool.dart';
 import 'package:regula/domain/tools/point_and_line_tool.dart';
 import 'package:regula/domain/tools/point_tool.dart';
+import 'package:regula/domain/tools/polygon_tool.dart';
 import 'package:regula/domain/tools/random_shape_stamp_tool.dart';
 import 'package:regula/domain/tools/rectangle_macro_tool.dart';
 import 'package:regula/domain/tools/regular_polygon_macro_tool.dart';
@@ -420,6 +421,13 @@ void main() {
     final tool = activeTool();
     expect(tool, isA<RegularPolygonMacroTool>());
     expect((tool! as RegularPolygonMacroTool).sideCount, 6);
+  });
+
+  testWidgets('X V activates the polygon tool', (tester) async {
+    await pumpEditor(tester);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyX);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyV);
+    expect(activeTool(), isA<PolygonTool>());
   });
 
   testWidgets('X digit chords reach the random stamps', (tester) async {
