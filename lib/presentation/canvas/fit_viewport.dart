@@ -48,6 +48,12 @@ const double fitMarginPx = 48;
         }
       case GeoMeasurement(:final anchor?):
         include(anchor.x, anchor.y);
+      case GeoLocus(:final samples?):
+        for (final sample in samples) {
+          if (sample != null) {
+            include(sample.x, sample.y);
+          }
+        }
       case GeoLine():
         break;
       // isDefined held above, so the null-payload cases are unreachable;
@@ -57,6 +63,7 @@ const double fitMarginPx = 48;
       case GeoAngle():
       case GeoPolygon():
       case GeoMeasurement():
+      case GeoLocus():
         break;
     }
   }

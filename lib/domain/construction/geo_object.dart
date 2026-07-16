@@ -7,8 +7,8 @@ import 'object_attributes.dart';
 /// Base of every object in the construction graph.
 ///
 /// The hierarchy is sealed at the *kind* level: every object is a
-/// [GeoPoint], a [GeoLine], a [GeoCircle], a [GeoAngle], a
-/// [GeoPolygon] or a [GeoMeasurement], so kind-switches are exhaustive.
+/// [GeoPoint], a [GeoLine], a [GeoCircle], a [GeoAngle], a [GeoPolygon],
+/// a [GeoMeasurement] or a [GeoLocus], so kind-switches are exhaustive.
 /// The kinds themselves are open — concrete objects
 /// (`FreePoint`, `Midpoint`, …) live one-per-file under `objects/`,
 /// which Dart's `sealed` would forbid on the root class directly.
@@ -121,4 +121,19 @@ abstract class GeoMeasurement extends GeoObject {
 
   @override
   bool get isDefined => value != null && anchor != null;
+}
+
+/// A locus: the sampled trace of a point as a driver sweeps its host
+/// curve, drawn as a polyline. Loci take part in no intersection math —
+/// like polygons they are derived pictures over existing geometry.
+/// Null entries in [samples] mark gaps where the traced point was
+/// undefined at that sample; [samples] itself is null only while the
+/// locus is undefined (the driver's host has no geometry to sweep).
+abstract class GeoLocus extends GeoObject {
+  GeoLocus({required super.id, super.attributes});
+
+  List<Vec2?>? get samples;
+
+  @override
+  bool get isDefined => samples != null;
 }
