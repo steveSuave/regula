@@ -6,6 +6,25 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 54 — 2026-07-16
+
+**Done**
+- **Phase 39 complete** on `phase-39-locus` (4 commits incl. docs), merged to `main` — the locus kind, closing the 37–39 queue.
+- `GeoLocus` seventh sealed kind (`samples: List<Vec2?>?`, nulls = gaps, null list = undefined host); `Locus` validates traced-depends-on-driver by a constructor parent walk (also rejects `traced == driver`), exposes the sweep `chain` as an unmodifiable getter, and recomputes by sweep-and-restore: save `driver.parameter`, per sample set + recompute the chain in topo order + record `traced.position`, restore bit-exactly. Circle hosts sweep one full turn (painter closes the loop when gapless); line hosts sweep `[center ± halfSpan]` baked at creation.
+- 15 compiler-surfaced kind switches: painter polyline per non-null run (dash-capable, length-1 runs skipped), hit at the lines tier over consecutive sample segments, band = all non-null samples contained (none → never), fit/anchor over non-null samples (all-gap anchor falls back to the origin), lowercase naming pool with `labelVisible: false`, tree group "Loci", codec `'Locus'` with absent-param defaults (128/0/100, new `_optionalDoubleParam`). `IntersectionPoint`'s guard tightened to lines/circles-only so locus parents fail as `ArgumentError` → codec `FormatException`.
+- `LocusTool` (`⇧L`, Measure row 3): tap 1 slot-consults a `PointOnObject` from the whole hit set (never the point ladder), tap 2 any point whose parent walk reaches the driver; one `AddObjectCommand`, driver haloed. New additive `ToolInput.viewExtent` (canvas passes `screenToWorldLength(width)`) bakes the line-host window: center = tap-time parameter, halfSpan = visible world width, fallback 100.
+- 1092 tests green (42 new) + 22 goldens (new `locus` scene ×2 themes — gap-bearing half-height arch + dashed closed loop — the 20 existing byte-identical before regenerating), analyze clean. Web smoke on a fresh release build: **SMOKE PASS**, zero console errors, drive.js untouched. Ad-hoc Playwright: segment + glued driver + midpoint, `⇧L` + two taps ink a view-spanning trace; saved doc carries `Locus` (driver parent 0, `sampleCount 128`, tap-time `center 450`/`halfSpan 1000`), auto-named `b` label-hidden; one Ctrl+Z empties.
+
+**Next**
+- Phases 43 (viewport rotation) and 44 (line clipping) are the remaining queued phases; either can go next.
+- `main` is ahead of `origin/main` by several phases (37–39) — push when convenient.
+
+**Open questions / gotchas**
+- Painter/hit-tester locus tests drive a private `_StubLocus extends GeoLocus` with hand-picked samples (kinds are open below the sealed root) — a handy pattern for future kind tests; the painter run-count test records `drawPath` calls via a `noSuchMethod` canvas stub and asserts loop closure with `computeMetrics().single.isClosed`.
+- A locus recompute costs `sampleCount × chain-length` member recomputes per upstream drag frame (PLAN's documented perf note, 128 default). Fine in the ad-hoc browser check; revisit with adaptive sampling only if a deep chain drags noticeably.
+- The locus hit path ignores the circle-host closing segment (samples only); the gap it leaves is one sample-spacing wide, well under any usable threshold.
+- `Locus.center`/`halfSpan` are persisted for circle hosts too (unused there) — harmless, keeps the codec uniform.
+
 ## Session 53 — 2026-07-16
 
 **Done**

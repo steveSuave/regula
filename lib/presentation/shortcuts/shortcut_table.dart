@@ -48,6 +48,7 @@ enum AppAction {
   fixedLengthSegmentTool,
   distanceTool,
   areaTool,
+  locusTool,
   // Constructions behind the G leader.
   centroidTool,
   orthocenterTool,
@@ -563,6 +564,13 @@ final List<ShortcutBinding> shortcutTable = [
     label: 'Area (tap a polygon or circle)',
     section: ShortcutSection.tools,
     display: '⇧ D',
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.keyL, shift: true)],
+    action: AppAction.locusTool,
+    label: 'Locus (driver point, then traced point)',
+    section: ShortcutSection.tools,
+    display: '⇧ L',
   ),
   // ── G leader: constructions ──────────────────────────────────────
   _g(LogicalKeyboardKey.keyC, AppAction.centroidTool, 'Centroid', 'G C'),

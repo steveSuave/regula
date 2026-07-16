@@ -23,6 +23,7 @@ import 'package:regula/domain/construction/objects/incenter.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_angle.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
+import 'package:regula/domain/construction/objects/locus.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
 import 'package:regula/domain/construction/objects/orthocenter.dart';
 import 'package:regula/domain/construction/objects/parallel_line.dart';
@@ -145,6 +146,24 @@ Construction buildKitchenSink() {
       ),
     )
     ..add(PointOnObject(id: 'poo', curve: circle, parameter: 1.25));
+  // Non-default locus params, so the round-trip must carry all three;
+  // the traced midpoint exercises the constructor's driver-dependency
+  // walk on the decode side.
+  final locusDriver = PointOnObject(id: 'ldrv', curve: circle, parameter: 0.5);
+  final locusTrace = Midpoint(id: 'ltrace', point1: locusDriver, point2: a);
+  construction
+    ..add(locusDriver)
+    ..add(locusTrace)
+    ..add(
+      Locus(
+        id: 'locus',
+        driver: locusDriver,
+        traced: locusTrace,
+        sampleCount: 16,
+        center: 0.5,
+        halfSpan: 40,
+      ),
+    );
   // Four vertices, so the round-trip exercises variable arity beyond
   // the minimum three (the ratio point sits at (9, 0)).
   final poly = Polygon(
@@ -175,6 +194,7 @@ Object? geometryOf(GeoObject object) => switch (object) {
       GeoAngle(:final angle) => angle,
       GeoPolygon(:final polygonVertices) => polygonVertices,
       GeoMeasurement(:final value, :final anchor) => (value, anchor),
+      GeoLocus(:final samples) => samples,
     };
 
 DecodedDocument roundTrip(
@@ -236,6 +256,29 @@ void main() {
       final tapped = decoded.byId('lang2')! as LineAngle;
       expect(tapped.sign1, -1);
       expect(tapped.sign2, 1);
+      final locus = decoded.byId('locus')! as Locus;
+      expect(locus.sampleCount, 16);
+      expect(locus.center, 0.5);
+      expect(locus.halfSpan, 40);
+    });
+
+    test('a Locus with absent params decodes to the defaults', () {
+      final encoded = encodeDocument(
+        buildKitchenSink(),
+        viewport: const ViewportState(),
+      );
+      final objects = encoded['objects'] as List;
+      objects.cast<Map<String, dynamic>>().singleWhere(
+            (json) => json['id'] == 'locus',
+          )['params'] = <String, dynamic>{};
+      final decoded = decodeDocument(
+        jsonDecode(jsonEncode(encoded)) as Map<String, dynamic>,
+      ).construction;
+      final locus = decoded.byId('locus')! as Locus;
+      expect(locus.sampleCount, 128);
+      expect(locus.center, 0);
+      expect(locus.halfSpan, 100);
+      expect(locus.samples!.whereType<Vec2>(), hasLength(128));
     });
 
     test('a LineAngle without signs stays legacy: no params encoded, '

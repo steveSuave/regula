@@ -3,12 +3,15 @@ import 'dart:ui';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/application/providers/viewport_provider.dart';
 import 'package:regula/domain/construction/construction.dart';
+import 'package:regula/domain/construction/geo_object.dart';
 import 'package:regula/domain/construction/object_attributes.dart';
 import 'package:regula/domain/construction/objects/arc.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
+import 'package:regula/domain/construction/objects/locus.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
+import 'package:regula/domain/construction/objects/point_on_object.dart';
 import 'package:regula/domain/construction/objects/ray.dart';
 import 'package:regula/domain/construction/objects/sector.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
@@ -68,6 +71,18 @@ void main() {
         ..add(Arc(id: 'arc', start: b, via: c, end: a))
         ..add(Sector(id: 'w', center: a, start: b, end: c))
         ..add(VertexAngle(id: 'g', arm1: b, vertex: a, arm2: c));
+      final circle = construction.byId('k')!;
+      final driver = PointOnObject(id: 'drv', curve: circle, parameter: 0);
+      final traced = Midpoint(id: 'tr', point1: driver, point2: c);
+      construction
+        ..add(driver)
+        ..add(traced)
+        ..add(Locus(
+          id: 'loc',
+          driver: driver,
+          traced: traced,
+          sampleCount: 16,
+        ));
 
       paintOnce(painterFor(construction));
     });
@@ -330,5 +345,91 @@ void main() {
         isTrue,
       );
     });
+
+    group('locus paths (Phase 39)', () {
+      test('one path per multi-sample run; isolated samples draw nothing',
+          () {
+        final construction = Construction()
+          ..add(_StubLocus(id: 'loc', samples: const [
+            Vec2(0, 0), Vec2(2, 0), null, Vec2(4, 0), // isolated
+            null, Vec2(6, 0), Vec2(8, 0), Vec2(8, 2), //
+          ]));
+        final canvas = _PathRecordingCanvas();
+        painterFor(construction).paint(canvas, const Size(800, 600));
+        expect(canvas.paths, hasLength(2),
+            reason: 'two runs of ≥ 2 samples; the lone sample is skipped');
+        for (final path in canvas.paths) {
+          expect(path.computeMetrics().single.isClosed, isFalse);
+        }
+      });
+
+      test('an all-gap locus paints no path', () {
+        final construction = Construction()
+          ..add(_StubLocus(id: 'loc', samples: const [null, null, null]));
+        final canvas = _PathRecordingCanvas();
+        painterFor(construction).paint(canvas, const Size(800, 600));
+        expect(canvas.paths, isEmpty);
+      });
+
+      test('a gapless circle-host locus closes into one loop', () {
+        final construction = Construction();
+        final center = FreePoint(id: 'o', position: Vec2.zero);
+        final rim = FreePoint(id: 'r', position: const Vec2(2, 0));
+        final host =
+            CircleCenterPoint(id: 'k', center: center, onCircle: rim);
+        final driver = PointOnObject(id: 'drv', curve: host, parameter: 0);
+        final p = FreePoint(id: 'p', position: const Vec2(4, 0));
+        final traced = Midpoint(id: 'tr', point1: driver, point2: p);
+        construction
+          ..add(center)
+          ..add(rim)
+          ..add(host)
+          ..add(driver)
+          ..add(p)
+          ..add(traced)
+          ..add(Locus(id: 'loc', driver: driver, traced: traced,
+              sampleCount: 16));
+        final canvas = _PathRecordingCanvas();
+        painterFor(construction).paint(canvas, const Size(800, 600));
+        // Everything else in the scene strokes via drawLine/drawCircle,
+        // so the recorded path is the locus polyline alone.
+        expect(canvas.paths, hasLength(1));
+        expect(canvas.paths.single.computeMetrics().single.isClosed, isTrue,
+            reason: 'no gaps and a circle host: the loop closes');
+      });
+    });
   });
+}
+
+/// A [GeoLocus] with hand-picked samples (cf. the hit-tester's stub):
+/// the painter consumes the kind accessor only, so runs and gaps can be
+/// spelled out directly.
+class _StubLocus extends GeoLocus {
+  _StubLocus({required super.id, required List<Vec2?>? samples})
+      : _samples = samples;
+
+  final List<Vec2?>? _samples;
+
+  @override
+  List<Vec2?>? get samples => _samples;
+
+  @override
+  List<GeoObject> get parents => const [];
+
+  @override
+  void recompute() {}
+}
+
+/// Records the paths handed to [drawPath]; every other canvas call is a
+/// no-op. Lets tests count polyline runs without decoding a picture.
+class _PathRecordingCanvas implements Canvas {
+  final List<Path> paths = [];
+
+  @override
+  void drawPath(Path path, Paint paint) {
+    paths.add(path);
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => null;
 }

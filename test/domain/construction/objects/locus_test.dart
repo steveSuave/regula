@@ -1,0 +1,326 @@
+import 'dart:math' as math;
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/domain/construction/construction.dart';
+import 'package:regula/domain/construction/objects/circle_center_point.dart';
+import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/intersection_point.dart';
+import 'package:regula/domain/construction/objects/line_through_two_points.dart';
+import 'package:regula/domain/construction/objects/locus.dart';
+import 'package:regula/domain/construction/objects/midpoint.dart';
+import 'package:regula/domain/construction/objects/perpendicular_line.dart';
+import 'package:regula/domain/construction/objects/point_on_object.dart';
+import 'package:regula/domain/math/vec2.dart';
+
+void main() {
+  group('Locus chain', () {
+    test('straight chain: driver first, traced last, in parent order', () {
+      final center = FreePoint(id: 'o', position: Vec2.zero);
+      final rim = FreePoint(id: 'r', position: const Vec2(2, 0));
+      final host = CircleCenterPoint(id: 'k', center: center, onCircle: rim);
+      final driver = PointOnObject(id: 'drv', curve: host, parameter: 0);
+      final p = FreePoint(id: 'p', position: const Vec2(4, 0));
+      final m1 = Midpoint(id: 'm1', point1: driver, point2: p);
+      final m2 = Midpoint(id: 'm2', point1: m1, point2: p);
+      final locus = Locus(id: 'loc', driver: driver, traced: m2);
+      expect(locus.chain, [driver, m1, m2]);
+    });
+
+    test('diamond is counted once and stays topologically ordered', () {
+      final center = FreePoint(id: 'o', position: Vec2.zero);
+      final rim = FreePoint(id: 'r', position: const Vec2(2, 0));
+      final host = CircleCenterPoint(id: 'k', center: center, onCircle: rim);
+      final driver = PointOnObject(id: 'drv', curve: host, parameter: 0);
+      final p = FreePoint(id: 'p', position: const Vec2(4, 0));
+      final q = FreePoint(id: 'q', position: const Vec2(0, 4));
+      final left = Midpoint(id: 'm1', point1: driver, point2: p);
+      final right = Midpoint(id: 'm2', point1: driver, point2: q);
+      final apex = Midpoint(id: 'm3', point1: left, point2: right);
+      final locus = Locus(id: 'loc', driver: driver, traced: apex);
+      expect(locus.chain.first, driver);
+      expect(locus.chain.last, apex);
+      expect(locus.chain, containsAll([left, right]));
+      expect(locus.chain.length, 4, reason: 'each diamond arm exactly once');
+    });
+
+    test('ancestors independent of the driver are excluded', () {
+      final center = FreePoint(id: 'o', position: Vec2.zero);
+      final rim = FreePoint(id: 'r', position: const Vec2(2, 0));
+      final host = CircleCenterPoint(id: 'k', center: center, onCircle: rim);
+      final driver = PointOnObject(id: 'drv', curve: host, parameter: 0);
+      final p = FreePoint(id: 'p', position: const Vec2(4, 0));
+      // p is an ancestor of traced but does not depend on the driver;
+      // sibling depends on the driver but is no ancestor of traced.
+      final sibling = Midpoint(id: 'sib', point1: driver, point2: p);
+      final traced = Midpoint(id: 'tr', point1: driver, point2: p);
+      final locus = Locus(id: 'loc', driver: driver, traced: traced);
+      expect(locus.chain, [driver, traced]);
+      expect(locus.chain, isNot(contains(p)));
+      expect(locus.chain, isNot(contains(sibling)));
+    });
+
+    test('chain is unmodifiable', () {
+      final locus = _circleLocus(sampleCount: 4);
+      expect(
+        () => locus.chain.removeLast(),
+        throwsUnsupportedError,
+      );
+    });
+  });
+
+  group('Locus constructor validation', () {
+    test('rejects a traced point independent of the driver', () {
+      final center = FreePoint(id: 'o', position: Vec2.zero);
+      final rim = FreePoint(id: 'r', position: const Vec2(2, 0));
+      final host = CircleCenterPoint(id: 'k', center: center, onCircle: rim);
+      final driver = PointOnObject(id: 'drv', curve: host, parameter: 0);
+      final free = FreePoint(id: 'p', position: const Vec2(4, 0));
+      expect(
+        () => Locus(id: 'loc', driver: driver, traced: free),
+        throwsArgumentError,
+      );
+    });
+
+    test('rejects the driver itself as the traced point', () {
+      final center = FreePoint(id: 'o', position: Vec2.zero);
+      final rim = FreePoint(id: 'r', position: const Vec2(2, 0));
+      final host = CircleCenterPoint(id: 'k', center: center, onCircle: rim);
+      final driver = PointOnObject(id: 'drv', curve: host, parameter: 0);
+      expect(
+        () => Locus(id: 'loc', driver: driver, traced: driver),
+        throwsArgumentError,
+      );
+    });
+
+    test('rejects degenerate params', () {
+      final center = FreePoint(id: 'o', position: Vec2.zero);
+      final rim = FreePoint(id: 'r', position: const Vec2(2, 0));
+      final host = CircleCenterPoint(id: 'k', center: center, onCircle: rim);
+      final driver = PointOnObject(id: 'drv', curve: host, parameter: 0);
+      final p = FreePoint(id: 'p', position: const Vec2(4, 0));
+      final traced = Midpoint(id: 'tr', point1: driver, point2: p);
+      Locus build({int sampleCount = 128, double halfSpan = 100}) => Locus(
+            id: 'loc',
+            driver: driver,
+            traced: traced,
+            sampleCount: sampleCount,
+            halfSpan: halfSpan,
+          );
+      expect(() => build(sampleCount: 1), throwsArgumentError);
+      expect(() => build(halfSpan: 0), throwsArgumentError);
+      expect(() => build(halfSpan: double.nan), throwsArgumentError);
+    });
+  });
+
+  group('Locus sweep', () {
+    test('circle host: traced midpoint samples the half-scale circle', () {
+      // Host: circle center (0,0) radius 2; traced = midpoint(driver, P)
+      // with P at (4,0) — analytically the circle center (2,0) radius 1,
+      // sample i at angle 2πi/n: (2 + cos, sin).
+      final locus = _circleLocus(sampleCount: 16);
+      final samples = locus.samples!;
+      expect(samples.length, 16);
+      for (var i = 0; i < samples.length; i++) {
+        final angle = 2 * math.pi * i / 16;
+        final sample = samples[i]!;
+        expect(sample.x, closeTo(2 + math.cos(angle), 1e-12), reason: 'x[$i]');
+        expect(sample.y, closeTo(math.sin(angle), 1e-12), reason: 'y[$i]');
+      }
+    });
+
+    test('line host: uniform samples across [center ± halfSpan]', () {
+      final a = FreePoint(id: 'a', position: Vec2.zero);
+      final b = FreePoint(id: 'b', position: const Vec2(1, 0));
+      final host = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
+      final driver = PointOnObject(id: 'drv', curve: host, parameter: 3);
+      // Midpoint of the driver with itself is the driver's own position:
+      // the identity trace, so samples read the sweep domain directly.
+      final traced = Midpoint(id: 'tr', point1: driver, point2: driver);
+      final locus = Locus(
+        id: 'loc',
+        driver: driver,
+        traced: traced,
+        sampleCount: 3,
+        center: 0,
+        halfSpan: 100,
+      );
+      final samples = locus.samples!;
+      expect(samples.length, 3);
+      expect(samples[1]!.distanceTo(Vec2.zero), closeTo(0, 1e-12));
+      expect(samples[0]!.norm, closeTo(100, 1e-12));
+      expect(samples[2]!.norm, closeTo(100, 1e-12));
+      expect(
+        (samples[0]! + samples[2]!).norm,
+        closeTo(0, 1e-12),
+        reason: 'endpoints sit symmetrically about the center',
+      );
+    });
+
+    test('restores the driver bit-exactly', () {
+      final locus = _circleLocus(sampleCount: 32, driverParameter: 0.7531);
+      final driver = locus.driver;
+      final positionBefore = driver.position;
+      locus.recompute();
+      expect(driver.parameter, 0.7531);
+      expect(driver.position, positionBefore);
+      // The whole chain settled back: traced matches a fresh recompute.
+      final traced = locus.traced;
+      final tracedBefore = traced.position;
+      traced.recompute();
+      expect(traced.position, tracedBefore);
+    });
+
+    test('sliding the driver leaves the samples unchanged', () {
+      final construction = Construction();
+      final locus = _circleLocus(sampleCount: 16, into: construction);
+      final before = List.of(locus.samples!);
+      construction.setPointOnObjectParameter('drv', 2.2);
+      expect(locus.samples, before);
+    });
+
+    test('upstream free-point drag recomputes with one notification', () {
+      final construction = Construction();
+      final locus = _circleLocus(sampleCount: 16, into: construction);
+      final before = List.of(locus.samples!);
+      var notifications = 0;
+      construction.addListener(() => notifications++);
+      // Move P (4,0) → (6,0): the traced midpoints shift right by 1.
+      construction.moveFreePoint('p', const Vec2(6, 0));
+      expect(notifications, 1);
+      final after = locus.samples!;
+      for (var i = 0; i < after.length; i++) {
+        expect(after[i]!.x, closeTo(before[i]!.x + 1, 1e-12));
+        expect(after[i]!.y, closeTo(before[i]!.y, 1e-12));
+      }
+    });
+
+    test('traced undefined mid-sweep leaves null gaps', () {
+      // Driver sweeps the x-axis over [-100, 100] in steps of 5; traced
+      // is the perpendicular-through-driver ∩ circle(radius 10), defined
+      // only while |x| <= 10 — five samples, one contiguous run.
+      final a = FreePoint(id: 'a', position: Vec2.zero);
+      final b = FreePoint(id: 'b', position: const Vec2(1, 0));
+      final host = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
+      final driver = PointOnObject(id: 'drv', curve: host, parameter: 0);
+      final perpendicular =
+          PerpendicularLine(id: 'perp', through: driver, reference: host);
+      final rim = FreePoint(id: 'r', position: const Vec2(10, 0));
+      final circle = CircleCenterPoint(id: 'k', center: a, onCircle: rim);
+      final traced = IntersectionPoint(
+        id: 'tr',
+        curve1: perpendicular,
+        curve2: circle,
+        branchIndex: 0,
+      );
+      final locus = Locus(
+        id: 'loc',
+        driver: driver,
+        traced: traced,
+        sampleCount: 41,
+        center: 0,
+        halfSpan: 100,
+      );
+      final samples = locus.samples!;
+      final defined = [
+        for (var i = 0; i < samples.length; i++)
+          if (samples[i] != null) i,
+      ];
+      // x = -100 + 5i is within the circle for i in 18..22.
+      expect(defined, [18, 19, 20, 21, 22]);
+      for (final i in defined) {
+        final sample = samples[i]!;
+        expect(
+          sample.x * sample.x + sample.y * sample.y,
+          closeTo(100, 1e-9),
+          reason: 'sample $i lies on the circle',
+        );
+      }
+    });
+
+    test('undefined host makes the locus undefined, and it recovers', () {
+      final construction = Construction();
+      final a = FreePoint(id: 'a', position: Vec2.zero);
+      final b = FreePoint(id: 'b', position: Vec2.zero); // coincident
+      final host = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
+      final driver = PointOnObject(id: 'drv', curve: host, parameter: 0);
+      final traced = Midpoint(id: 'tr', point1: driver, point2: driver);
+      construction
+        ..add(a)
+        ..add(b)
+        ..add(host)
+        ..add(driver)
+        ..add(traced);
+      final locus = Locus(
+        id: 'loc',
+        driver: driver,
+        traced: traced,
+        sampleCount: 4,
+      );
+      construction.add(locus);
+      expect(locus.isDefined, isFalse);
+      expect(locus.samples, isNull);
+      construction.moveFreePoint('b', const Vec2(1, 0));
+      expect(locus.isDefined, isTrue);
+      expect(locus.samples!.whereType<Vec2>(), hasLength(4));
+    });
+  });
+
+  group('Locus as a parent', () {
+    test('is rejected as a PointOnObject host', () {
+      final locus = _circleLocus(sampleCount: 4);
+      expect(
+        () => PointOnObject(id: 'bad', curve: locus, parameter: 0),
+        throwsArgumentError,
+      );
+    });
+
+    test('is rejected as an IntersectionPoint curve', () {
+      final locus = _circleLocus(sampleCount: 4);
+      final a = FreePoint(id: 'a2', position: Vec2.zero);
+      final b = FreePoint(id: 'b2', position: const Vec2(1, 0));
+      final line = LineThroughTwoPoints(id: 'l2', point1: a, point2: b);
+      expect(
+        () => IntersectionPoint(
+          id: 'bad',
+          curve1: locus,
+          curve2: line,
+          branchIndex: 0,
+        ),
+        throwsArgumentError,
+      );
+    });
+  });
+}
+
+/// Circle-host fixture: host circle center (0,0) radius 2, driver on it,
+/// traced = midpoint(driver, P) with P at (4, 0) — the half-scale circle
+/// around (2, 0). Optionally adds everything to [into], ids as literals
+/// ('o', 'r', 'k', 'drv', 'p', 'tr', 'loc').
+Locus _circleLocus({
+  required int sampleCount,
+  double driverParameter = 0,
+  Construction? into,
+}) {
+  final center = FreePoint(id: 'o', position: Vec2.zero);
+  final rim = FreePoint(id: 'r', position: const Vec2(2, 0));
+  final host = CircleCenterPoint(id: 'k', center: center, onCircle: rim);
+  final driver =
+      PointOnObject(id: 'drv', curve: host, parameter: driverParameter);
+  final p = FreePoint(id: 'p', position: const Vec2(4, 0));
+  final traced = Midpoint(id: 'tr', point1: driver, point2: p);
+  final locus = Locus(
+    id: 'loc',
+    driver: driver,
+    traced: traced,
+    sampleCount: sampleCount,
+  );
+  into
+    ?..add(center)
+    ..add(rim)
+    ..add(host)
+    ..add(driver)
+    ..add(p)
+    ..add(traced)
+    ..add(locus);
+  return locus;
+}

@@ -6,6 +6,7 @@ import 'package:flutter/rendering.dart';
 import '../../domain/construction/construction.dart';
 import '../../domain/construction/geo_object.dart';
 import '../../domain/construction/objects/arc.dart';
+import '../../domain/construction/objects/locus.dart';
 import '../../domain/construction/objects/ray.dart';
 import '../../domain/construction/objects/sector.dart';
 import '../../domain/construction/objects/segment.dart';
@@ -398,6 +399,61 @@ class GeometryPainter extends CustomPainter {
         // A measurement is pure text, painted by the label pass — always
         // with a value part (see labelText), so it never goes unpainted.
         break;
+      case GeoLocus():
+        _drawLocus(canvas, object, paint, dashPeriod);
+    }
+  }
+
+  /// A locus paints one polyline per non-null sample run — gaps where
+  /// the traced point was undefined split the stroke, and a length-1 run
+  /// draws no ink (a stroke needs two ends). A gapless circle-host locus
+  /// closes into a loop: its samples cover one full turn with no
+  /// duplicated endpoint, so the closing edge is the painter's to add.
+  void _drawLocus(
+    Canvas canvas,
+    GeoLocus object,
+    Paint paint,
+    double dashPeriod,
+  ) {
+    final samples = object.samples!;
+    final runs = <Path>[];
+    Path? run;
+    var runLength = 0;
+    void endRun() {
+      if (run != null && runLength > 1) {
+        runs.add(run!);
+      }
+      run = null;
+      runLength = 0;
+    }
+
+    for (final sample in samples) {
+      if (sample == null) {
+        endRun();
+        continue;
+      }
+      final screen = viewport.worldToScreen(sample);
+      if (run == null) {
+        run = Path()..moveTo(screen.dx, screen.dy);
+        runLength = 1;
+      } else {
+        run!.lineTo(screen.dx, screen.dy);
+        runLength++;
+      }
+    }
+    final gapless = runLength == samples.length;
+    endRun();
+    if (gapless &&
+        runs.length == 1 &&
+        object is Locus &&
+        object.driver.curve is GeoCircle) {
+      runs.single.close();
+    }
+    for (final path in runs) {
+      canvas.drawPath(
+        dashPeriod > 0 ? dashPath(path, dashPeriod) : path,
+        paint,
+      );
     }
   }
 

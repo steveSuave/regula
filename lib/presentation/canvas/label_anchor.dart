@@ -19,7 +19,9 @@ import '../../domain/math/vec2.dart';
 ///   drawn branch;
 /// - polygons: the vertex average (inside for convex regions, stable
 ///   under drags either way);
-/// - measurements: their anchor — the label *is* the object.
+/// - measurements: their anchor — the label *is* the object;
+/// - loci: the first recorded sample (the world origin stands in for an
+///   all-gap locus, which draws no ink to hang a label from).
 ///
 /// Only call on defined objects — the force-unwraps mirror the painter's,
 /// which skips undefined objects before asking for an anchor.
@@ -37,4 +39,6 @@ Vec2 labelAnchor(GeoObject object) => switch (object) {
               .reduce((sum, vertex) => sum + vertex) /
           object.polygonVertices!.length.toDouble(),
       GeoMeasurement() => object.anchor!,
+      GeoLocus() =>
+        object.samples!.whereType<Vec2>().firstOrNull ?? Vec2.zero,
     };

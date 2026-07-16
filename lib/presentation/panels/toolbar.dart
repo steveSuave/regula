@@ -35,6 +35,7 @@ import '../../domain/tools/intersection_tool.dart';
 import '../../domain/tools/isosceles_trapezium_macro_tool.dart';
 import '../../domain/tools/isosceles_triangle_macro_tool.dart';
 import '../../domain/tools/kite_macro_tool.dart';
+import '../../domain/tools/locus_tool.dart';
 import '../../domain/tools/parallelogram_macro_tool.dart';
 import '../../domain/tools/point_and_line_tool.dart';
 import '../../domain/tools/point_tool.dart';
@@ -167,6 +168,7 @@ class GeometryToolbar extends ConsumerWidget {
         tool is RandomShapeStampTool;
     final measureActive =
         tool is AreaTool ||
+        tool is LocusTool ||
         (tool is TwoPointTool && tool.build == buildDistance);
 
     Future<Tool?> ratioPick() async {
@@ -474,7 +476,7 @@ class GeometryToolbar extends ConsumerWidget {
         ),
         _ToolGroup(
           icon: Icons.straighten,
-          tooltip: 'Measure: distance, area',
+          tooltip: 'Measure: distance, area, locus',
           active: measureActive,
           items: [
             (
@@ -486,6 +488,11 @@ class GeometryToolbar extends ConsumerWidget {
               'Area (tap a polygon or circle)',
               _pick(() => AreaTool(newId: newObjectId)),
               AppAction.areaTool,
+            ),
+            (
+              'Locus (driver point, then traced point)',
+              _pick(() => LocusTool(newId: newObjectId)),
+              AppAction.locusTool,
             ),
           ],
         ),
