@@ -8,10 +8,12 @@ import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/object_attributes.dart';
 import 'package:regula/domain/construction/objects/angle_bisector_line.dart';
 import 'package:regula/domain/construction/objects/arc.dart';
+import 'package:regula/domain/construction/objects/area_measurement.dart';
 import 'package:regula/domain/construction/objects/centroid.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/circumcenter.dart';
 import 'package:regula/domain/construction/objects/compass_circle.dart';
+import 'package:regula/domain/construction/objects/distance_measurement.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/incenter.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
@@ -460,6 +462,61 @@ void main() {
     return construction;
   }
 
+  /// Phase 38 measurement texts: a named distance ('a = 5.00'), a bare
+  /// one ('3.00'), a polygon area at the vertex average and a circle
+  /// area at the center — text riding the label machinery over a filled
+  /// region and a plain circle.
+  Construction measurementsScene() {
+    final construction = Construction();
+    final a = FreePoint(id: 'a', position: Vec2.zero);
+    final b = FreePoint(id: 'b', position: const Vec2(3, 4));
+    final c = FreePoint(id: 'c', position: const Vec2(5, 8));
+    final d = FreePoint(id: 'd', position: const Vec2(8, 8));
+    final p1 = FreePoint(id: 'p1', position: const Vec2(6, 0));
+    final p2 = FreePoint(id: 'p2', position: const Vec2(10, 0));
+    final p3 = FreePoint(id: 'p3', position: const Vec2(10, 3));
+    final p4 = FreePoint(id: 'p4', position: const Vec2(6, 3));
+    final center = FreePoint(id: 'o', position: const Vec2(14, 5));
+    final rim = FreePoint(id: 'rim', position: const Vec2(16, 5));
+    final polygon = Polygon(
+      id: 'poly',
+      vertices: [p1, p2, p3, p4],
+      attributes: const ObjectAttributes(fillAlpha: 0.25),
+    );
+    final circle = CircleCenterPoint(id: 'k', center: center, onCircle: rim);
+    construction
+      ..add(a)
+      ..add(b)
+      ..add(c)
+      ..add(d)
+      ..add(p1)
+      ..add(p2)
+      ..add(p3)
+      ..add(p4)
+      ..add(center)
+      ..add(rim)
+      ..add(polygon)
+      ..add(circle)
+      // A 3–4–5 pair: 'a = 5.00'.
+      ..add(DistanceMeasurement(
+        id: 'named',
+        point1: a,
+        point2: b,
+        attributes: const ObjectAttributes(name: 'a'),
+      ))
+      // Unnamed: the bare '3.00'.
+      ..add(DistanceMeasurement(id: 'bare', point1: c, point2: d))
+      // '12.00' at the rectangle's vertex average, 'πr² ≈ 12.57' at the
+      // circle center.
+      ..add(AreaMeasurement(
+        id: 'parea',
+        subject: polygon,
+        attributes: const ObjectAttributes(name: 'b'),
+      ))
+      ..add(AreaMeasurement(id: 'carea', subject: circle));
+    return construction;
+  }
+
   final themes = {'light': AppTheme.light(), 'dark': AppTheme.dark()};
   final scenes = {
     'points': pointsScene,
@@ -469,6 +526,7 @@ void main() {
     'markers': markerStylesScene,
     'measures': measuresScene,
     'polygons': polygonsScene,
+    'measurements': measurementsScene,
   };
 
   for (final MapEntry(key: themeName, value: theme) in themes.entries) {

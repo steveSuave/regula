@@ -46,6 +46,8 @@ enum AppAction {
   compassTool,
   fixedRadiusCircleTool,
   fixedLengthSegmentTool,
+  distanceTool,
+  areaTool,
   // Constructions behind the G leader.
   centroidTool,
   orthocenterTool,
@@ -547,6 +549,20 @@ final List<ShortcutBinding> shortcutTable = [
     label: 'Compass circle',
     section: ShortcutSection.tools,
     display: 'O',
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.keyD)],
+    action: AppAction.distanceTool,
+    label: 'Distance (two points)',
+    section: ShortcutSection.tools,
+    display: 'D',
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.keyD, shift: true)],
+    action: AppAction.areaTool,
+    label: 'Area (tap a polygon or circle)',
+    section: ShortcutSection.tools,
+    display: '⇧ D',
   ),
   // ── G leader: constructions ──────────────────────────────────────
   _g(LogicalKeyboardKey.keyC, AppAction.centroidTool, 'Centroid', 'G C'),

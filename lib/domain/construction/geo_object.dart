@@ -7,9 +7,9 @@ import 'object_attributes.dart';
 /// Base of every object in the construction graph.
 ///
 /// The hierarchy is sealed at the *kind* level: every object is a
-/// [GeoPoint], a [GeoLine], a [GeoCircle], a [GeoAngle] or a
-/// [GeoPolygon], so kind-switches are exhaustive. The kinds themselves
-/// are open — concrete objects
+/// [GeoPoint], a [GeoLine], a [GeoCircle], a [GeoAngle], a
+/// [GeoPolygon] or a [GeoMeasurement], so kind-switches are exhaustive.
+/// The kinds themselves are open — concrete objects
 /// (`FreePoint`, `Midpoint`, …) live one-per-file under `objects/`,
 /// which Dart's `sealed` would forbid on the root class directly.
 ///
@@ -104,4 +104,21 @@ abstract class GeoPolygon extends GeoObject {
 
   @override
   bool get isDefined => polygonVertices != null;
+}
+
+/// A measurement: a live number ([value]) displayed as canvas text at
+/// [anchor]. Measurements carry no drawable geometry and take part in no
+/// intersection math — the text rides the label machinery, so dragging,
+/// font-size presets and color styling come free. Both payloads are null
+/// while undefined.
+abstract class GeoMeasurement extends GeoObject {
+  GeoMeasurement({required super.id, super.attributes});
+
+  double? get value;
+
+  /// World position the measurement's text hangs from.
+  Vec2? get anchor;
+
+  @override
+  bool get isDefined => value != null && anchor != null;
 }

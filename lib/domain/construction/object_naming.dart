@@ -7,8 +7,8 @@ import 'geo_object.dart';
 /// object's kind:
 ///
 /// - points: `A … Z`, then `A1 … Z1`, `A2 …`
-/// - lines, circles *and* polygons (one shared pool): `a … z`, then
-///   `a1 … z1`, `a2 …`
+/// - lines, circles, polygons *and* measurements (one shared pool):
+///   `a … z`, then `a1 … z1`, `a2 …`
 /// - angles: `α … ω`, then `α1 … ω1`, `α2 …`
 ///
 /// Scanning the *used names* rather than a counter means deleted names are
@@ -18,7 +18,8 @@ import 'geo_object.dart';
 String nextAutoName(Set<String> usedNames, GeoObject object) {
   final pool = switch (object) {
     GeoPoint() => _upperLatin,
-    GeoLine() || GeoCircle() || GeoPolygon() => _lowerLatin,
+    GeoLine() || GeoCircle() || GeoPolygon() || GeoMeasurement() =>
+      _lowerLatin,
     GeoAngle() => _lowerGreek,
   };
   for (var round = 0;; round++) {
