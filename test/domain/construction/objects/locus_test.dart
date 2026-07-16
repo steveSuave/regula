@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/domain/construction/construction.dart';
+import 'package:regula/domain/construction/objects/angle_bisector_line.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/fixed_radius_circle.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
@@ -240,11 +241,14 @@ void main() {
       expect(locus.driver.parameter, 0);
     });
 
-    test('a window edge stays open: the walk traces a U through the '
-        'tangency and stops', () {
+    test('an open walk drops the flipped tail: only the reachable '
+        'branch remains (Phase 39c)', () {
       // Window [0, 100] cuts the run at x = 0 (an edge, not a boundary):
-      // down one branch to the tangency at x = 30, flip, back on the
-      // other — an open curve with both endpoints on the window edge.
+      // the walk flips at the tangency (x = 30) and traces back on the
+      // other branch, but never returns to the original assignment — so
+      // the flipped tail is trimmed and the locus is exactly what
+      // dragging the driver with the persisted branch can reach: one
+      // branch from the window edge to the tangency point.
       final locus = _perpendicularCircleLocus(
         center: 50,
         halfSpan: 50,
@@ -255,15 +259,89 @@ void main() {
       expect(samples, isNot(contains(null)));
       final points = samples.cast<Vec2>();
       expect(points.first, isNot(points.last), reason: 'open curve');
-      expect(points.first.x, closeTo(0, 1e-9));
-      expect(points.last.x, closeTo(0, 1e-9));
-      expect(points.first.y, closeTo(-points.last.y, 1e-6),
-          reason: 'the two endpoints are the two branches at x = 0');
-      expect(
-        points.any((p) => p.distanceTo(const Vec2(30, 0)) < 1e-6),
-        isTrue,
-        reason: 'the turn-around is the tangency point',
+      expect(points.first.x, closeTo(0, 1e-9),
+          reason: 'starts at the window edge');
+      expect(points.last.distanceTo(const Vec2(30, 0)), lessThan(1e-6),
+          reason: 'refined up to the tangency point, where it ends');
+      final signs = points.map((p) => p.y.sign).where((s) => s != 0);
+      expect(signs.toSet(), hasLength(1),
+          reason: 'one branch only — the flipped sheet is unreachable '
+              'by deterministic-branch dragging');
+    });
+
+    test('doc-1 shape: open walks keep strokes and dives, no mirror '
+        'sheets (Phase 39c)', () {
+      // The tangent-and-bisector construction from the user document,
+      // scaled down: driver D on line AB, F = circle(A,|AB|) ∩ Thales
+      // circle over AD (exists while |AD| >= |AB|), G = the D-bisector
+      // of ∠FDA re-crossing the Thales circle. G's limit at the tangency
+      // is A itself; the branch-fixed trace per run is a stroke plus a
+      // dive toward A. The flips at the tangencies lead to sheets that
+      // dragging can never reach — they must be trimmed.
+      final a = FreePoint(id: 'a', position: Vec2.zero);
+      final b = FreePoint(id: 'b', position: const Vec2(3, 0));
+      final host = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
+      final driver = PointOnObject(id: 'drv', curve: host, parameter: 5);
+      final mid = Midpoint(id: 'e', point1: driver, point2: a);
+      final thales = CircleCenterPoint(id: 'f', center: mid, onCircle: driver);
+      final circleA = CircleCenterPoint(id: 'c', center: a, onCircle: b);
+      final f = IntersectionPoint(
+        id: 'F',
+        curve1: circleA,
+        curve2: thales,
+        branchIndex: 0,
       );
+      final bisector = AngleBisectorLine(
+        id: 'g',
+        arm1: f,
+        vertex: driver,
+        arm2: a,
+      );
+      final g = IntersectionPoint(
+        id: 'G',
+        curve1: thales,
+        curve2: bisector,
+        branchIndex: 1,
+      );
+      final locus = Locus(
+        id: 'loc',
+        driver: driver,
+        traced: g,
+        sampleCount: 40,
+        center: 3,
+        halfSpan: 10,
+      );
+      final samples = locus.samples!;
+      final components = <List<Vec2>>[[]];
+      for (final s in samples) {
+        if (s == null) {
+          components.add([]);
+        } else {
+          components.last.add(s);
+        }
+      }
+      expect(components, hasLength(2),
+          reason: 'one run each side of the |AD| < |AB| gap');
+      final componentSigns = <double>[];
+      for (final component in components) {
+        final signs =
+            component.map((p) => p.y.sign).where((s) => s != 0).toSet();
+        expect(signs, hasLength(1),
+            reason: 'each component stays on one sheet — no mirror '
+                'strokes from a dangling flipped segment');
+        componentSigns.add(signs.single);
+        expect(
+          component.map((p) => p.norm).reduce(math.min),
+          lessThan(0.1),
+          reason: "the refined dive reaches G's tangency limit at A",
+        );
+      }
+      expect(componentSigns.toSet(), hasLength(2),
+          reason: 'the fixed branch lands on opposite sides of AB for '
+              'the two runs — identical signs mean run 2 was traced '
+              "under run 1's leaked flip (the mirror sheet)");
+      expect(f.branchIndex, 0);
+      expect(g.branchIndex, 1);
     });
 
     test('a circle-host run straddling the wrap closes the figure-eight '
