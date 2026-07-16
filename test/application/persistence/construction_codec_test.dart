@@ -27,6 +27,7 @@ import 'package:regula/domain/construction/objects/parallel_line.dart';
 import 'package:regula/domain/construction/objects/perpendicular_bisector_line.dart';
 import 'package:regula/domain/construction/objects/perpendicular_line.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
+import 'package:regula/domain/construction/objects/polygon.dart';
 import 'package:regula/domain/construction/objects/ray.dart';
 import 'package:regula/domain/construction/objects/reflected_point.dart';
 import 'package:regula/domain/construction/objects/rotated_point.dart';
@@ -142,6 +143,15 @@ Construction buildKitchenSink() {
       ),
     )
     ..add(PointOnObject(id: 'poo', curve: circle, parameter: 1.25))
+    // Four vertices, so the round-trip exercises variable arity beyond
+    // the minimum three (the ratio point sits at (9, 0)).
+    ..add(
+      Polygon(
+        id: 'poly',
+        vertices: [a, b, ratio, c],
+        attributes: const ObjectAttributes(fillAlpha: 0.25),
+      ),
+    )
     ..add(ReflectedPoint(id: 'refl', point: c, mirror: lineAb))
     ..add(CentralReflectionPoint(id: 'crefl', point: c, center: a))
     ..add(RotatedPoint(id: 'rot', point: b, center: a, angle: 0.75))
@@ -156,6 +166,7 @@ Object? geometryOf(GeoObject object) => switch (object) {
       GeoLine(:final line) => line,
       GeoCircle(:final circle) => circle,
       GeoAngle(:final angle) => angle,
+      GeoPolygon(:final polygonVertices) => polygonVertices,
     };
 
 DecodedDocument roundTrip(
@@ -428,6 +439,21 @@ void main() {
             'type': 'IntersectionPoint',
             'parents': ['l', 'c'],
             'params': <String, dynamic>{'branchIndex': 5},
+          },
+        ])),
+        throwsFormatException,
+      );
+    });
+
+    test('rejects a polygon with fewer than 3 parents', () {
+      expect(
+        () => decodeDocument(document([
+          freePoint('a'),
+          freePoint('b'),
+          <String, dynamic>{
+            'id': 'poly',
+            'type': 'Polygon',
+            'parents': ['a', 'b'],
           },
         ])),
         throwsFormatException,

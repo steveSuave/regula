@@ -205,8 +205,9 @@ class TransformObjectTool implements ToolInputPreview {
   /// with the point slot filled only a line commits; with a line pending,
   /// a point (or an empty-canvas tap creating one) commits the point
   /// reflection — either order — while a *second* line commits the
-  /// curve-mode image of the first. Circles and angles are ignored, as is
-  /// the source line itself (a line reflected across itself is itself).
+  /// curve-mode image of the first. Circles, angles and polygons are
+  /// ignored, as is the source line itself (a line reflected across
+  /// itself is itself).
   ToolResult _collectMirrorOrPoint(ToolInput input) {
     switch (input.hit) {
       case final GeoPoint hit:
@@ -233,7 +234,7 @@ class TransformObjectTool implements ToolInputPreview {
           return _commitSource(input.objects, mirror: hit);
         }
         return const ToolIgnored();
-      case GeoCircle() || GeoAngle():
+      case GeoCircle() || GeoAngle() || GeoPolygon():
         return const ToolIgnored();
       case null:
         final mirror = _pendingMirror;

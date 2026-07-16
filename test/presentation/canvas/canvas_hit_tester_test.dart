@@ -6,6 +6,7 @@ import 'package:regula/domain/construction/objects/arc.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
+import 'package:regula/domain/construction/objects/polygon.dart';
 import 'package:regula/domain/construction/objects/ray.dart';
 import 'package:regula/domain/construction/objects/sector.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
@@ -219,6 +220,69 @@ void main() {
           angle.attributes.copyWith(angleMarkerRadius: 36);
       expect(wedgeHit(const Vec2(2.5, 2.5))?.id, 'g',
           reason: 'the wedge tracks the per-object marker radius (3.6)');
+    });
+
+    test('polygon: empty interior selects it, anything drawn inside wins',
+        () {
+      final construction = Construction();
+      final a = FreePoint(id: 'a', position: Vec2.zero);
+      final b = FreePoint(id: 'b', position: const Vec2(8, 0));
+      final c = FreePoint(id: 'c', position: const Vec2(8, 6));
+      final d = FreePoint(id: 'd', position: const Vec2(0, 6));
+      construction
+        ..add(a)
+        ..add(b)
+        ..add(c)
+        ..add(d)
+        ..add(Polygon(id: 'poly', vertices: [a, b, c, d]))
+        ..add(FreePoint(id: 'p', position: const Vec2(4, 3)));
+
+      expect(hit(construction, const Vec2(2, 2))?.id, 'poly',
+          reason: 'an empty interior tap selects the region (distance 0)');
+      expect(hit(construction, const Vec2(4, 3.2))?.id, 'p',
+          reason: 'a point inside the region wins on priority');
+      expect(hit(construction, Vec2.zero)?.id, 'a',
+          reason: 'the vertex point wins at the vertex');
+      expect(hit(construction, const Vec2(4, -0.3))?.id, 'poly',
+          reason: 'outside, the nearest edge decides within the threshold');
+      expect(hit(construction, const Vec2(4, -0.7)), isNull,
+          reason: 'outside and beyond the threshold');
+    });
+
+    test('polygon: a contained angle marker beats the interior', () {
+      const hidden = ObjectAttributes(visible: false);
+      final construction = Construction();
+      final a = FreePoint(id: 'a', position: Vec2.zero);
+      final b = FreePoint(id: 'b', position: const Vec2(8, 0));
+      final c = FreePoint(id: 'c', position: const Vec2(8, 6));
+      final d = FreePoint(id: 'd', position: const Vec2(0, 6));
+      final arm1 =
+          FreePoint(id: 'm', position: const Vec2(7, 3), attributes: hidden);
+      final v =
+          FreePoint(id: 'v', position: const Vec2(4, 3), attributes: hidden);
+      final arm2 =
+          FreePoint(id: 'n', position: const Vec2(4, 6), attributes: hidden);
+      construction
+        ..add(a)
+        ..add(b)
+        ..add(c)
+        ..add(d)
+        ..add(Polygon(id: 'poly', vertices: [a, b, c, d]))
+        ..add(arm1)
+        ..add(v)
+        ..add(arm2)
+        ..add(VertexAngle(id: 'g', arm1: arm1, vertex: v, arm2: arm2));
+
+      // Default marker radius 20 px at 0.1 world/px = 2 world units: the
+      // tap sits on the marker arc, inside the polygon, away from points.
+      final onWedge = tester.hitTest(
+        construction.objects,
+        const Vec2(5.4, 4.4),
+        threshold,
+        worldPerPx: 0.1,
+      );
+      expect(onWedge?.id, 'g',
+          reason: 'the angle marker outranks the interior it sits in');
     });
 
     test('invisible and undefined objects are never hit', () {
@@ -464,6 +528,35 @@ void main() {
         inRect(construction, const Vec2(-1, -1), const Vec2(1, 1)),
         ['v', 'g'],
         reason: 'the marker is screen-sized; the arms are not the angle',
+      );
+    });
+
+    test('polygon needs every vertex inside the band', () {
+      final construction = Construction();
+      final a = FreePoint(id: 'a', position: Vec2.zero);
+      final b = FreePoint(id: 'b', position: const Vec2(4, 0));
+      final c = FreePoint(id: 'c', position: const Vec2(2, 3));
+      construction
+        ..add(a)
+        ..add(b)
+        ..add(c)
+        ..add(Polygon(id: 'poly', vertices: [a, b, c]));
+
+      List<String> banded(Vec2 corner1, Vec2 corner2) => [
+            for (final object
+                in tester.objectsInRect(construction.objects, corner1, corner2))
+              object.id,
+          ];
+
+      expect(
+        banded(const Vec2(-1, -1), const Vec2(5, 4)),
+        contains('poly'),
+        reason: 'every vertex inside — the polygon is taken',
+      );
+      expect(
+        banded(const Vec2(-1, -1), const Vec2(5, 2)),
+        isNot(contains('poly')),
+        reason: 'the apex sticks out — merely crossed, not taken',
       );
     });
 

@@ -53,4 +53,5 @@ String objectKindLabel(GeoObject object) => switch (object) {
       GeoCircle() => 'Circle',
       LineAngle() => 'Angle between lines',
       GeoAngle() => 'Angle',
+      GeoPolygon() => 'Polygon',
     };

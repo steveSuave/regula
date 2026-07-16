@@ -11,6 +11,7 @@ import 'package:regula/domain/tools/intersection_tool.dart';
 import 'package:regula/domain/tools/isosceles_trapezium_macro_tool.dart';
 import 'package:regula/domain/tools/isosceles_triangle_macro_tool.dart';
 import 'package:regula/domain/tools/kite_macro_tool.dart';
+import 'package:regula/domain/tools/polygon_tool.dart';
 import 'package:regula/domain/tools/random_shape_stamp_tool.dart';
 import 'package:regula/domain/tools/rectangle_macro_tool.dart';
 import 'package:regula/domain/tools/regular_polygon_macro_tool.dart';
@@ -131,6 +132,7 @@ void main() {
       'and highlights the group', (tester) async {
     await pumpEditor(tester);
     final rows = {
+      'Polygon (tap vertices, tap the first again to close)': PolygonTool,
       'Rectangle (two corners, then height)': RectangleMacroTool,
       'Rhombus (two corners, then direction)': RhombusMacroTool,
       'Isosceles trapezium (base, then a top corner)':
