@@ -10,11 +10,13 @@ import 'package:regula/domain/construction/geo_object.dart';
 import 'package:regula/domain/construction/object_attributes.dart';
 import 'package:regula/domain/construction/objects/angle_bisector_line.dart';
 import 'package:regula/domain/construction/objects/arc.dart';
+import 'package:regula/domain/construction/objects/area_measurement.dart';
 import 'package:regula/domain/construction/objects/central_reflection_point.dart';
 import 'package:regula/domain/construction/objects/centroid.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/circumcenter.dart';
 import 'package:regula/domain/construction/objects/compass_circle.dart';
+import 'package:regula/domain/construction/objects/distance_measurement.dart';
 import 'package:regula/domain/construction/objects/fixed_radius_circle.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/incenter.dart';
@@ -142,16 +144,21 @@ Construction buildKitchenSink() {
         branchIndex: 1,
       ),
     )
-    ..add(PointOnObject(id: 'poo', curve: circle, parameter: 1.25))
-    // Four vertices, so the round-trip exercises variable arity beyond
-    // the minimum three (the ratio point sits at (9, 0)).
-    ..add(
-      Polygon(
-        id: 'poly',
-        vertices: [a, b, ratio, c],
-        attributes: const ObjectAttributes(fillAlpha: 0.25),
-      ),
-    )
+    ..add(PointOnObject(id: 'poo', curve: circle, parameter: 1.25));
+  // Four vertices, so the round-trip exercises variable arity beyond
+  // the minimum three (the ratio point sits at (9, 0)).
+  final poly = Polygon(
+    id: 'poly',
+    vertices: [a, b, ratio, c],
+    attributes: const ObjectAttributes(fillAlpha: 0.25),
+  );
+  construction
+    ..add(poly)
+    ..add(DistanceMeasurement(id: 'dist', point1: a, point2: c))
+    // Both allowed subject kinds, so the any(0) + constructor validation
+    // path round-trips each.
+    ..add(AreaMeasurement(id: 'parea', subject: poly))
+    ..add(AreaMeasurement(id: 'carea', subject: circle))
     ..add(ReflectedPoint(id: 'refl', point: c, mirror: lineAb))
     ..add(CentralReflectionPoint(id: 'crefl', point: c, center: a))
     ..add(RotatedPoint(id: 'rot', point: b, center: a, angle: 0.75))
@@ -167,6 +174,7 @@ Object? geometryOf(GeoObject object) => switch (object) {
       GeoCircle(:final circle) => circle,
       GeoAngle(:final angle) => angle,
       GeoPolygon(:final polygonVertices) => polygonVertices,
+      GeoMeasurement(:final value, :final anchor) => (value, anchor),
     };
 
 DecodedDocument roundTrip(
@@ -454,6 +462,26 @@ void main() {
             'id': 'poly',
             'type': 'Polygon',
             'parents': ['a', 'b'],
+          },
+        ])),
+        throwsFormatException,
+      );
+    });
+
+    test('rejects an ill-typed area subject', () {
+      expect(
+        () => decodeDocument(document([
+          freePoint('a'),
+          freePoint('b'),
+          <String, dynamic>{
+            'id': 'l',
+            'type': 'LineThroughTwoPoints',
+            'parents': ['a', 'b'],
+          },
+          <String, dynamic>{
+            'id': 'ar',
+            'type': 'AreaMeasurement',
+            'parents': ['l'],
           },
         ])),
         throwsFormatException,

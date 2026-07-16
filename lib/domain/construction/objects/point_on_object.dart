@@ -48,7 +48,8 @@ class PointOnObject extends GeoPoint {
       GeoLine() || GeoCircle() => throw ArgumentError(
           'Cannot project onto an undefined curve',
         ),
-      GeoPoint() || GeoAngle() || GeoPolygon() => throw ArgumentError(
+      GeoPoint() || GeoAngle() || GeoPolygon() || GeoMeasurement() =>
+        throw ArgumentError(
           'PointOnObject requires a line or circle parent',
         ),
     };
@@ -78,7 +79,8 @@ class PointOnObject extends GeoPoint {
     _position = switch (curve) {
       GeoLine(:final line) => line?.pointAt(parameter),
       GeoCircle(:final circle) => circle?.pointAt(parameter),
-      GeoPoint() || GeoAngle() || GeoPolygon() => throw StateError(
+      GeoPoint() || GeoAngle() || GeoPolygon() || GeoMeasurement() =>
+        throw StateError(
           'PointOnObject parent must be a curve',
         ),
     };

@@ -1,6 +1,7 @@
 import 'package:flutter/rendering.dart';
 
 import '../../domain/construction/geo_object.dart';
+import '../../domain/construction/objects/area_measurement.dart';
 import '../../domain/construction/objects/segment.dart';
 import 'canvas_viewport.dart';
 import 'label_anchor.dart';
@@ -11,10 +12,12 @@ import 'measure_format.dart';
 /// Two independent parts (Phase 35): the *name* part exists while
 /// `labelVisible` and the object is named; the *value* part while
 /// `showValue` and the object has a measurable value (a segment's
-/// length, an angle's degrees). Both → `A = 3.00`; one → just it;
-/// neither → null. Visibility and definedness are deliberately *not*
-/// consulted — callers already gate on them, and the painter's
-/// show-hidden mode paints labels this helper must still compose.
+/// length, an angle's degrees) — except measurements (Phase 38), whose
+/// value *is* the object and always shows, `showValue` or not. Both →
+/// `A = 3.00`; one → just it; neither → null. Visibility and definedness
+/// are deliberately *not* consulted — callers already gate on them, and
+/// the painter's show-hidden mode paints labels this helper must still
+/// compose.
 String? labelText(GeoObject object) {
   final attributes = object.attributes;
   final value = switch (object) {
@@ -22,6 +25,8 @@ String? labelText(GeoObject object) {
       formatLength(start.distanceTo(end)),
     GeoAngle(:final angle?) when attributes.showValue =>
       formatAngle(angle.measure),
+    AreaMeasurement(:final value?) => formatArea(value),
+    GeoMeasurement(:final value?) => formatLength(value),
     _ => null,
   };
   final name = attributes.labelVisible && attributes.name.isNotEmpty

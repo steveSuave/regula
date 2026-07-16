@@ -22,8 +22,8 @@ import '../../domain/math/vec2.dart';
 /// within the threshold beats any circle, which beats any line — small,
 /// precise targets must not be shadowed by the big shapes drawn through
 /// them (PLAN: points > arcs/circles > segments/rays/lines > angles >
-/// polygons). Ties go to the object added latest, i.e. the one drawn on
-/// top.
+/// measurements > polygons). Ties go to the object added latest, i.e.
+/// the one drawn on top.
 ///
 /// Undefined and invisible objects are never hit — unless the caller
 /// passes `includeHidden` (the Show/Hide tool, which renders hidden
@@ -86,9 +86,10 @@ class CanvasHitTester {
         GeoCircle() => 1,
         GeoLine() => 2,
         GeoAngle() => 3,
+        GeoMeasurement() => 4,
         // Lowest: a polygon's interior hits at distance 0, so anything
         // drawn inside it must still win the tap.
-        GeoPolygon() => 4,
+        GeoPolygon() => 5,
       };
       candidates.add((object, priority, distance, index));
     }
@@ -152,6 +153,9 @@ class CanvasHitTester {
         GeoLine() => false, // infinite (rays included): never contained
         GeoAngle() => within(object.angle!.vertex),
         GeoPolygon() => object.polygonVertices!.every(within),
+        // A measurement is its text, which is screen-sized like an angle
+        // marker; the anchor stands in for it (cf. GeoAngle above).
+        GeoMeasurement() => within(object.anchor!),
       };
 
   /// The points bounding a carrier-circle branch: the [seeds] (endpoints,
@@ -198,6 +202,10 @@ class CanvasHitTester {
         // an empty interior tap selects the region, anything drawn inside
         // still wins); outside, the nearest edge decides.
         GeoPolygon() => _polygonDistance(object, point),
+        // A measurement's geometry is its text anchor; the canvas tap
+        // handler additionally checks the text's labelScreenRect first,
+        // so text dragged far from the anchor stays tappable.
+        GeoMeasurement() => object.anchor!.distanceTo(point),
       };
 
   /// Distance to an angle's marker wedge: the arc at the marker radius
