@@ -6,6 +6,23 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 58b — 2026-07-16
+
+**Done**
+- **Phase 44b complete** on `phase-44b-derived-incidence` (3 commits incl. docs), merged to `main` — user feedback on 44: in `provoleas2.json` the two-line bisector and the tangent "have more than one point but do not clip".
+- Diagnosis first (codec-loaded probe over the document): two distinct causes. The bisector `i` passes through K (structural — K parents `i`) *and* L = f ∩ h, but L's parents are f and h — a genuine gap: every bisector branch provably passes through its parent lines' crossing. The tangent `k` is different: its apparent points (O, N, L, S) lie on it only because the tangent *coincides with line NO in this figure* — the theorem the construction demonstrates — so no construction tie exists at all.
+- Fix per user decision ("structural extension, keep the epsilon test out"): `lineClipSpan` gains **derived incidences** — `IntersectionPoint` of exactly a `TwoLineBisectorLine`'s two parent lines, `Midpoint` of exactly a `PerpendicularBisectorLine`'s two parent points, both order-blind (`_derivedIncident`/`_samePair`). Coincidence-by-figure stays excluded; the tangent clips once its tangency point exists (intersect it with its circle — the document's hidden twin tangent `l` already clips N→P that way, pinned in-fixture).
+- `provoleas2.json` kept verbatim in `test/fixtures/` with a codec-to-span regression (bisector clips K↔L — fails without the rules, stash-verified; tangent stays infinite; twin clips). PLAN's Phase 44 passage records the derived-incidence rule and the deliberately short v1 list.
+- 1138 tests green (9 new), analyze clean, goldens untouched, web smoke on a fresh release build: **SMOKE PASS**, zero console errors (drive.js untouched). No browser ad-hoc this time — the change is helper-internal; the Phase 44 ad-hoc already proved the inspector→painter wiring and the fixture regression drives the real codec.
+
+**Next**
+- Phase 43 (viewport rotation) is the last queued phase.
+- `main` is ahead of `origin/main` by Phases 44 + 44b — push when convenient.
+
+**Open questions / gotchas**
+- The derived-incidence list is deliberately short: `SegmentRatioPoint`/`Midpoint` over a `LineThroughTwoPoints`' defining pair and `Incenter` on an `AngleBisectorLine`'s triple are also true theorems, recorded in PLAN as candidates when a real construction wants them (a ratio point beyond the pair *would* extend a mode-2 span).
+- If a user reports "the tangent still doesn't clip", the answer is in PLAN: coincidence-by-theorem is not incidence — create the tangency point (intersection tool on tangent + circle; it's a 1-candidate intersection, so either branch lands on it).
+
 ## Session 58 — 2026-07-16
 
 **Done**
