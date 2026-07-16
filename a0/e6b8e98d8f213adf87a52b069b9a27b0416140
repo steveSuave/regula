@@ -1,0 +1,52 @@
+lib/presentation/shortcuts/shortcut_table.dart
+  s_8f6fc585096d94::t_a9597b6b4de35f 49-50
+  s_8f6fc585096d94::t_d2a664dd8a71db 553-566
+lib/main.dart
+  s_8f6fc585096d94::t_390d38010f566f 32
+  s_8f6fc585096d94::t_d2d7a135aff3cb 597-600
+test/presentation/panels/toolbar_test.dart
+  s_8f6fc585096d94::t_214742d06b8821 7
+  s_8f6fc585096d94::t_51c3e679a0b39d 93-119
+test/presentation/compact_layout_test.dart
+  s_8f6fc585096d94::t_96436ff5ffb5cc 108,118-119,122
+  s_8f6fc585096d94::t_901cb25d11fc61 280-295
+test/domain/tools/area_tool_test.dart
+  s_8f6fc585096d94::t_faf35c36766fa4 1-130
+test/presentation/canvas/geometry_canvas_test.dart
+  s_8f6fc585096d94::t_97060b561cc651 1864-1902
+  s_8f6fc585096d94::t_a3ca54791b9679 18
+lib/presentation/canvas/geometry_canvas.dart
+  s_8f6fc585096d94::t_832c042bc0b238 546
+  s_8f6fc585096d94::t_141429895e49f5 540-545,547-557,559,562,564
+lib/presentation/panels/toolbar.dart
+  s_8f6fc585096d94::t_064d5a50d5e6ae 14
+  s_8f6fc585096d94::t_288640ff93484d 130-132,139-140
+  s_8f6fc585096d94::t_0664e5087e9ee0 168-170
+  s_8f6fc585096d94::t_41fd5ac257abb2 475-491
+  s_8f6fc585096d94::t_5d8c1b89cfbadf 102-104
+  s_8f6fc585096d94::t_8fd5d0eebcae79 30
+test/presentation/shortcuts/editor_shortcuts_test.dart
+  s_8f6fc585096d94::t_07aebe82bfaa73 15,18
+  s_8f6fc585096d94::t_73cbe9959e559c 25
+  s_8f6fc585096d94::t_0ad88a1f24154a 32
+  s_8f6fc585096d94::t_e97cfd342d92da 53
+  s_8f6fc585096d94::t_bebd5c23760f67 151-191
+lib/domain/tools/area_tool.dart
+  s_8f6fc585096d94::t_86a159e93dd098 1-35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "a0e6b8e98d8f213adf87a52b069b9a27b0416140",
+  "prompts": {},
+  "sessions": {
+    "s_8f6fc585096d94": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "47327c16-6032-4a97-933f-915de9b77174",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
