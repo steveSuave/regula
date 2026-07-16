@@ -46,6 +46,8 @@ const double fitMarginPx = 48;
         for (final vertex in polygonVertices) {
           include(vertex.x, vertex.y);
         }
+      case GeoMeasurement(:final anchor?):
+        include(anchor.x, anchor.y);
       case GeoLine():
         break;
       // isDefined held above, so the null-payload cases are unreachable;
@@ -54,6 +56,7 @@ const double fitMarginPx = 48;
       case GeoCircle():
       case GeoAngle():
       case GeoPolygon():
+      case GeoMeasurement():
         break;
     }
   }

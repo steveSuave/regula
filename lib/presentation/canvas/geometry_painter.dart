@@ -394,6 +394,10 @@ class GeometryPainter extends CustomPainter {
           dashPeriod > 0 ? dashPath(path, dashPeriod) : path,
           paint,
         );
+      case GeoMeasurement():
+        // A measurement is pure text, painted by the label pass — always
+        // with a value part (see labelText), so it never goes unpainted.
+        break;
     }
   }
 

@@ -1,9 +1,11 @@
 import '../../domain/construction/geo_object.dart';
 import '../../domain/construction/objects/angle_bisector_line.dart';
 import '../../domain/construction/objects/arc.dart';
+import '../../domain/construction/objects/area_measurement.dart';
 import '../../domain/construction/objects/centroid.dart';
 import '../../domain/construction/objects/circumcenter.dart';
 import '../../domain/construction/objects/compass_circle.dart';
+import '../../domain/construction/objects/distance_measurement.dart';
 import '../../domain/construction/objects/incenter.dart';
 import '../../domain/construction/objects/intersection_point.dart';
 import '../../domain/construction/objects/line_angle.dart';
@@ -54,4 +56,7 @@ String objectKindLabel(GeoObject object) => switch (object) {
       LineAngle() => 'Angle between lines',
       GeoAngle() => 'Angle',
       GeoPolygon() => 'Polygon',
+      DistanceMeasurement() => 'Distance',
+      AreaMeasurement() => 'Area',
+      GeoMeasurement() => 'Measurement',
     };

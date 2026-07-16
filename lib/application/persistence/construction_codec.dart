@@ -3,11 +3,13 @@ import '../../domain/construction/geo_object.dart';
 import '../../domain/construction/object_attributes.dart';
 import '../../domain/construction/objects/angle_bisector_line.dart';
 import '../../domain/construction/objects/arc.dart';
+import '../../domain/construction/objects/area_measurement.dart';
 import '../../domain/construction/objects/central_reflection_point.dart';
 import '../../domain/construction/objects/centroid.dart';
 import '../../domain/construction/objects/circle_center_point.dart';
 import '../../domain/construction/objects/circumcenter.dart';
 import '../../domain/construction/objects/compass_circle.dart';
+import '../../domain/construction/objects/distance_measurement.dart';
 import '../../domain/construction/objects/fixed_radius_circle.dart';
 import '../../domain/construction/objects/free_point.dart';
 import '../../domain/construction/objects/incenter.dart';
@@ -190,6 +192,8 @@ Map<String, dynamic> _encodeObject(GeoObject object) {
     Arc() => ('Arc', const {}),
     Sector() => ('Sector', const {}),
     Polygon() => ('Polygon', const {}),
+    DistanceMeasurement() => ('DistanceMeasurement', const {}),
+    AreaMeasurement() => ('AreaMeasurement', const {}),
     VertexAngle() => ('VertexAngle', const {}),
     // Absent sign params = legacy always-acute mode, so pre-31 saves
     // round-trip byte-identically.
@@ -431,6 +435,20 @@ GeoObject _decodeObject(Map<String, dynamic> json, Construction construction) {
     'Polygon' => Polygon(
         id: id,
         vertices: [for (var i = 0; i < parents.length; i++) point(i)],
+        attributes: attributes,
+      ),
+    'DistanceMeasurement' => DistanceMeasurement(
+        id: id,
+        point1: point(0),
+        point2: point(1),
+        attributes: attributes,
+      ),
+    // The subject's kind (polygon or circle) is the constructor's
+    // business — its ArgumentError normalizes to FormatException in the
+    // decode loop, the PointOnObject precedent.
+    'AreaMeasurement' => AreaMeasurement(
+        id: id,
+        subject: any(0),
         attributes: attributes,
       ),
     'VertexAngle' => VertexAngle(
