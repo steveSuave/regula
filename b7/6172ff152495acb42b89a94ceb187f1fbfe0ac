@@ -1,0 +1,38 @@
+lib/domain/construction/objects/locus.dart
+  s_578ec1ff5a0d2a::t_9cbb167e005788 37-55
+  s_578ec1ff5a0d2a::t_abd71caf373f98 287-296,326
+  s_578ec1ff5a0d2a::t_12f52b02c05420 183
+  s_578ec1ff5a0d2a::t_041d9032da5b3c 123-130,137-182,184-191,193,203-206,210,212-286,297-311,317-325,327-337
+  s_578ec1ff5a0d2a::t_286a89df5c5d22 192,194-202,207-209,211
+  s_578ec1ff5a0d2a::t_cd765c34b3e3b2 312-316
+  s_578ec1ff5a0d2a::t_ebf696c6230bb7 5
+  s_578ec1ff5a0d2a::t_a79289194baf03 399-420
+  s_578ec1ff5a0d2a::t_74c0d3f2ff02c8 338
+test/presentation/goldens/object_kinds_golden_test.dart
+  s_578ec1ff5a0d2a::t_e550fa8b0545e0 521-525
+lib/domain/construction/objects/intersection_point.dart
+  s_578ec1ff5a0d2a::t_20cfffc28aa362 53-59,62,67-72,79
+test/domain/construction/objects/locus_test.dart
+  s_578ec1ff5a0d2a::t_f9cd8f1e41bdd5 302-306
+  s_578ec1ff5a0d2a::t_1d68b87aef9f58 198-216,220-278,280-287,289,294,297-301,309-311
+  s_578ec1ff5a0d2a::t_2faffbe546de8a 217-219
+  s_578ec1ff5a0d2a::t_8c93988f1cc7cd 307
+  s_578ec1ff5a0d2a::t_6077ba07dc934a 6
+  s_578ec1ff5a0d2a::t_f05e550285527f 369-401
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "b76172ff152495acb42b89a94ceb187f1fbfe0ac",
+  "prompts": {},
+  "sessions": {
+    "s_578ec1ff5a0d2a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "616e4c5e-a68b-42a5-a1f5-af686de60e6f",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
