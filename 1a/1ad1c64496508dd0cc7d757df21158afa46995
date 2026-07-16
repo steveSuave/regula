@@ -1,0 +1,21 @@
+test/domain/math/polygon_math_test.dart
+  s_8f6fc585096d94::t_e94a33343a7b5c 1-64
+lib/domain/math/polygon_math.dart
+  s_8f6fc585096d94::t_b3a5eaa8651f7a 1-24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "1a1ad1c64496508dd0cc7d757df21158afa46995",
+  "prompts": {},
+  "sessions": {
+    "s_8f6fc585096d94": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "47327c16-6032-4a97-933f-915de9b77174",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
