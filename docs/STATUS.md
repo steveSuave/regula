@@ -6,6 +6,24 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 57 — 2026-07-16
+
+**Done**
+- **Phase 39d complete** on `phase-39d-locus-epsilon-zone`, merged to `main` — user feedback on 39c: doc 1 still drew "a diagonal extension that is not part of the proper locus" off each stroke.
+- Root cause (pinned by probe *before* touching code): Session 56's belief that "G's tangency limit is A / the tangency position" was wrong — those were the artifacts. G converges smoothly to a *finite interior limit* (the bisector's limit direction at the tangency is 45° to AB ⇒ G → A + (AD̂ ± perp)·|AB|/2); only within ~1e-11 grid steps of the boundary does F's `candidateCount` drop 2 → 1 — the intersection math's epsilon-*tolerance* zone, where a fabricated tangent (F ≈ D) collapses the bisector and throws G onto exactly A / B. The 48-deep bisection landed ~2⁻⁴⁸ inside that zone, so the ladder's last rung drew one long diagonal from the true limit to the garbage point.
+- Fix: at a tangency, `_refineBoundary` re-bisects toward the edge of the culprit's **two-candidate region** (the true discriminant-zero point) instead of the defined↔undefined edge. On the coalescing point itself the tolerance zone was harmless (its stand-in *is* the limit), which is why the figure-eight and the closed-circle fixtures never showed it — both still pass with their 1e-6 tangency tolerances, and the locus golden is byte-identical.
+- The doc-1-shaped unit test had *encoded the garbage as the expected limit* (`dive reaches A`); it now asserts convergence to (±1.5, ±1.5) and rejects any sample near A.
+- User request: both problem documents moved verbatim from `~/Documents/geometry/regula/` into `test/fixtures/` with a codec-to-samples regression test (`locus_fixture_regression_test.dart`): doc 1 = two single-sided strokes reaching the analytic limits, no sample within 30 units of A/B (fails without the fix — the spike even crosses AB, tripping the one-side assertion); doc 2 = one closed gapless figure-eight. `tool/locus_render.dart` committed as a document→SVG eyeballing utility (recreated ad hoc three sessions running).
+- 1097 tests green, analyze clean, all 22 goldens byte-identical; both fixtures re-rendered clean (doc 1 = two straight strokes, no diagonals; doc 2 = closed eight).
+
+**Next**
+- Phases 43 (viewport rotation) and 44 (line clipping) remain; either can go next.
+- `main` is ahead of `origin/main` by Phases 37–39d — push when convenient.
+
+**Open questions / gotchas**
+- `candidateCount == 1` is not only "at a tangency": it is the *signature of the tolerance zone* — positions computed there are stand-ins, trustworthy only on the coalescing intersection itself, never downstream of it. Any future sampling near boundaries should stay inside the two-candidate region.
+- The re-bisection assumes the culprit's 2-candidate predicate is monotone across [tIn, tOut] like definedness; if the uniform grid ever lands *inside* the tolerance zone (tIn itself 1-candidate), the ladder degenerates to tIn — harmless duplicates, no spike.
+
 ## Session 56 — 2026-07-16
 
 **Done**
