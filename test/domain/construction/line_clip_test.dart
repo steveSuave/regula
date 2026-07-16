@@ -1,16 +1,19 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/domain/construction/geo_object.dart';
 import 'package:regula/domain/construction/line_clip.dart';
 import 'package:regula/domain/construction/object_attributes.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
+import 'package:regula/domain/construction/objects/midpoint.dart';
 import 'package:regula/domain/construction/objects/parallel_line.dart';
 import 'package:regula/domain/construction/objects/perpendicular_bisector_line.dart';
 import 'package:regula/domain/construction/objects/perpendicular_line.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
 import 'package:regula/domain/construction/objects/ray.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
+import 'package:regula/domain/construction/objects/two_line_bisector_line.dart';
 import 'package:regula/domain/math/vec2.dart';
 
 const clip1 = ObjectAttributes(lineClip: 1);
@@ -276,6 +279,149 @@ void main() {
         position: Vec2(1, 3),
       );
       expect(lineClipSpan([a, b, line, par, glued], par), isNull);
+    });
+  });
+
+  group('mode 2 — derived incidences (Phase 44b)', () {
+    // Two crossing lines through freely-placed points, their crossing,
+    // and the tapped-wedge bisector — the provoleas shape.
+    (List<GeoObject>, TwoLineBisectorLine, IntersectionPoint) bisectorScene({
+      bool swapCrossingParents = false,
+      bool crossingVisible = true,
+    }) {
+      final a = point('a', -4, 0);
+      final b = point('b', 4, 0);
+      final c = point('c', 0, -4);
+      final d = point('d', 0, 4);
+      final l1 = LineThroughTwoPoints(id: 'l1', point1: a, point2: b);
+      final l2 = LineThroughTwoPoints(id: 'l2', point1: c, point2: d);
+      final crossing = IntersectionPoint(
+        id: 'x',
+        curve1: swapCrossingParents ? l2 : l1,
+        curve2: swapCrossingParents ? l1 : l2,
+        branchIndex: 0,
+        attributes: crossingVisible ? null : hidden2,
+      );
+      final bisector = TwoLineBisectorLine(
+        id: 'bis',
+        line1: l1,
+        line2: l2,
+        branch: 0,
+        attributes: clip2,
+      );
+      return ([a, b, c, d, l1, l2, crossing, bisector], bisector, crossing);
+    }
+
+    test('the crossing of the parent lines counts, either parent order',
+        () {
+      for (final swapped in [false, true]) {
+        final (objects, bisector, crossing) =
+            bisectorScene(swapCrossingParents: swapped);
+        final glued = PointOnObject.near(
+          id: 'g',
+          curve: bisector,
+          position: const Vec2(3, 3),
+        );
+        expectSpan(
+          lineClipSpan([...objects, glued], bisector),
+          crossing.position!,
+          glued.position!,
+        );
+      }
+    });
+
+    test('the crossing alone is one incident point — still infinite', () {
+      final (objects, bisector, _) = bisectorScene();
+      expect(lineClipSpan(objects, bisector), isNull);
+    });
+
+    test('a hidden crossing does not count', () {
+      final (objects, bisector, _) = bisectorScene(crossingVisible: false);
+      final glued = PointOnObject.near(
+        id: 'g',
+        curve: bisector,
+        position: const Vec2(3, 3),
+      );
+      expect(lineClipSpan([...objects, glued], bisector), isNull);
+    });
+
+    test('a crossing of different lines never counts', () {
+      final (objects, bisector, _) = bisectorScene();
+      final l1 = objects[4] as LineThroughTwoPoints;
+      final e = point('e', -4, 4);
+      final f = point('f', 4, -4);
+      final other = LineThroughTwoPoints(id: 'l3', point1: e, point2: f);
+      // l1 ∩ other = the origin — geometrically ON the bisector — but the
+      // parent pair is {l1, other}, not {l1, l2}: coincidence-by-figure
+      // is exactly what derived incidence must not count.
+      final otherCrossing = IntersectionPoint(
+        id: 'x2',
+        curve1: l1,
+        curve2: other,
+        branchIndex: 0,
+      );
+      final glued = PointOnObject.near(
+        id: 'g',
+        curve: bisector,
+        position: const Vec2(3, 3),
+      );
+      // Only the glued point is incident; one point → infinite.
+      expect(
+        lineClipSpan(
+          [...objects.where((o) => o.id != 'x'), e, f, other, otherCrossing,
+              glued],
+          bisector,
+        ),
+        isNull,
+      );
+    });
+
+    test('the midpoint of a perpendicular bisector\'s pair counts, either '
+        'order', () {
+      final a = point('a', 0, 0);
+      final b = point('b', 4, 0);
+      for (final swapped in [false, true]) {
+        final mid = Midpoint(
+          id: 'm',
+          point1: swapped ? b : a,
+          point2: swapped ? a : b,
+        );
+        final pbis = PerpendicularBisectorLine(
+          id: 'pb',
+          point1: a,
+          point2: b,
+          attributes: clip2,
+        );
+        final glued = PointOnObject.near(
+          id: 'g',
+          curve: pbis,
+          position: const Vec2(2, 5),
+        );
+        expectSpan(
+          lineClipSpan([a, b, mid, pbis, glued], pbis),
+          const Vec2(2, 0),
+          const Vec2(2, 5),
+        );
+      }
+    });
+
+    test('a midpoint of different points never counts', () {
+      final a = point('a', 0, 0);
+      final b = point('b', 4, 0);
+      final c = point('c', 0, 4);
+      final mid = Midpoint(id: 'm', point1: a, point2: c);
+      final pbis = PerpendicularBisectorLine(
+        id: 'pb',
+        point1: a,
+        point2: b,
+        attributes: clip2,
+      );
+      final glued = PointOnObject.near(
+        id: 'g',
+        curve: pbis,
+        position: const Vec2(2, 5),
+      );
+      expect(lineClipSpan([a, b, c, mid, pbis, glued], pbis), isNull);
     });
   });
 
