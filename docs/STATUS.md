@@ -6,6 +6,25 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 55 — 2026-07-16
+
+**Done**
+- **Phase 39b complete** on `phase-39b-locus-fidelity` (2 commits incl. docs), merged to `main` — locus fidelity, from two user problem documents (`locus-miss.json`: "straight line smaller than what the point traces"; `locus-miss-2.json`: "half the figure-eight, with a small hole").
+- Diagnosis first (temporary probe test, deleted): the sweep machinery was exact — samples matched a ground-truth `setPointOnObjectParameter` sweep to 0.0 — so all three symptoms were sampling/rendering/semantics: (1) runs split at the circle-host 0/2π wrap, (2) ~31 world units truncated at tangency boundaries (traced point moves like √ε there; uniform step was 27 units), (3) the missing half belongs to the other intersection branch.
+- Fixes, all inside `Locus.recompute`'s private sweep: cyclic run grouping (rotate the uniform sweep to start at a gap); boundary bisection + geometrically clustered ladder samples; and **linkage continuation** — a boundary whose culprit is a chain `IntersectionPoint` with coalescing candidates reverses the sweep and flips that branch (Cinderella's complex-tracing behavior, real arithmetic, sweep-scoped), closing the walk when the branch assignment returns to the original (first sample repeated) and bailing to open components on mid-walk undefineds or past an 8-segment budget.
+- `IntersectionPoint.branchIndex` is now mutable under the `driver.parameter` restore contract (flipped only inside a sweep, restored before recompute returns — safe for loci sharing chain members); new public `candidateCount` getter is the coalescence signal. Drag and save semantics unchanged: deterministic persisted branch, no new persisted state; a fully-defined full-turn circle host emits the exact old uniform list, so the painter's close rule and the other goldens stayed byte-identical.
+- 1094 tests green (5 new/rewritten in `locus_test.dart`), analyze clean, locus golden regenerated (the arch now closes into a half-height ellipse through its tangencies). Web smoke on a fresh release build: **SMOKE PASS**, zero console errors; the Phase 39 ad-hoc Playwright locus flow re-run: **ADHOC PASS**. Both user documents verified by probe + rendered SVG: doc 2 = one closed 105-sample figure-eight (no seam), doc 1 = two symmetric U-components walking through their tangencies onto the second parallel line.
+
+**Next**
+- Phases 43 (viewport rotation) and 44 (line clipping) remain; either can go next.
+- `main` is ahead of `origin/main` by Phases 37–39b — push when convenient.
+
+**Open questions / gotchas**
+- Two razor's-edge lessons baked into `_refineBoundary`: probe candidate-count half a grid step *inside* the run (at the bisected boundary the epsilon-tolerant intersection math says "tangent, 1 candidate", and the uniform grid can land exactly on a tangency), and scan for the culprit at the undefined *uniform* sample (just past the bisected boundary an intersection can linger epsilon-defined while a downstream member — doc 1's angle bisector with a degenerating arm — is already undefined, misattributing the gap).
+- A flipping locus costs ~3–5× the plain sweep per upstream drag frame (uniform pass + 48 bisections per boundary + the walk re-evaluating each segment). Fine in testing; if a deep chain drags noticeably, cache the uniform pass positions for the walk's first segment.
+- The continuation deliberately flips only the *culprit* intersection per boundary and re-uses the boundaries detected under the original assignment; exotic cases (different culprit under a flipped assignment, simultaneous coalescences) truncate to open components — never wrong ink.
+- Window edges still cut line-host traces (doc 1's chevrons stop at ±halfSpan) — that's the documented baked-window behavior, not a defect; recreate the locus in a wider view for a wider window.
+
 ## Session 54 — 2026-07-16
 
 **Done**
