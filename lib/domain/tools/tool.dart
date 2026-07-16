@@ -23,8 +23,10 @@ import '../math/vec2.dart';
 /// 0 while snapping is off — the canvas supplies the same adaptive step
 /// the grid draws at, and grid rounding is the resolution ladder's *last*
 /// rung, so snapping to an existing point / curve / crossing always wins.
-/// The defaults (`const []`, `0`) make a bare `ToolInput(pos, hit: x)`
-/// behave exactly as before the fields existed.
+/// [viewExtent] is the visible world width (Phase 39), 0 when the caller
+/// has no viewport — the locus tool bakes a line-host sampling window
+/// from it. The defaults (`const []`, `0`) make a bare
+/// `ToolInput(pos, hit: x)` behave exactly as before the fields existed.
 class ToolInput {
   const ToolInput(
     this.position, {
@@ -33,6 +35,7 @@ class ToolInput {
     this.snapThreshold = 0,
     this.objects = const [],
     this.gridSnapStep = 0,
+    this.viewExtent = 0,
   });
 
   final Vec2 position;
@@ -41,6 +44,7 @@ class ToolInput {
   final double snapThreshold;
   final Iterable<GeoObject> objects;
   final double gridSnapStep;
+  final double viewExtent;
 
   /// Every in-threshold candidate, best first: [hit] (when non-null)
   /// followed by [extraHits].
