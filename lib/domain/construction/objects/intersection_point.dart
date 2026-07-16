@@ -50,12 +50,25 @@ class IntersectionPoint extends GeoPoint {
   final GeoObject curve2;
 
   /// Which intersection branch this point tracks (see class doc).
-  final int branchIndex;
+  ///
+  /// Mutable under the same contract as `PointOnObject.parameter` during
+  /// a locus sweep only: `Locus.recompute`'s linkage continuation flips
+  /// it while tracing through a tangency and always restores it before
+  /// returning, so no listener, command or save ever observes a flipped
+  /// value. Everything else must treat it as fixed at creation.
+  int branchIndex;
 
   Vec2? _position;
+  int _candidateCount = 0;
 
   @override
   Vec2? get position => _position;
+
+  /// How many real intersection points the parent curves currently have
+  /// (0, 1 or 2), as of the last [recompute]. Two candidates collapsing
+  /// to one and then none is a tangency — the signal the locus sweep's
+  /// linkage continuation branches on.
+  int get candidateCount => _candidateCount;
 
   @override
   List<GeoObject> get parents => [curve1, curve2];
@@ -63,6 +76,7 @@ class IntersectionPoint extends GeoPoint {
   @override
   void recompute() {
     final candidates = _intersect();
+    _candidateCount = candidates.length;
     _position = candidates.isEmpty
         ? null
         : candidates[math.min(branchIndex, candidates.length - 1)];
