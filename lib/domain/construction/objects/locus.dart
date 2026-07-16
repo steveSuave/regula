@@ -224,16 +224,26 @@ class Locus extends GeoLocus {
   /// two candidates coalesced — the walk continues through it the way
   /// the physical linkage would (the Cinderella behavior, done with real
   /// arithmetic and scoped to this sweep): reverse direction and flip
-  /// that intersection's branch. The walk closes the component when the
-  /// branch assignment returns to the original at the starting end
-  /// (first sample repeated, so the polyline closes) and stops at open
-  /// ends and non-flip boundaries. Non-generic walks — an undefined
-  /// sample mid-segment under a flipped assignment, or more than
-  /// [_maxWalkSegments] segments — truncate to an open component:
-  /// never wrong ink, at worst less than ideal.
+  /// that intersection's branch.
+  ///
+  /// Flipped sheets survive **only when the walk closes** — parity back
+  /// to the original assignment *and* the trace geometrically rejoining
+  /// its start (see [_closes]) — because a closed continuation is a
+  /// genuine closed curve of the mechanism (the figure-eight, the full
+  /// circle), while an open walk that ends still-flipped dangles into
+  /// positions the app's deterministic-branch dragging can never reach,
+  /// which reads as phantom curves (Phase 39c, user feedback on 39b).
+  /// Any non-closing termination — an open end or non-flip boundary
+  /// reached while flipped, an undefined sample mid-segment, the
+  /// [_maxWalkSegments] budget, a closed parity whose geometry misses
+  /// the join (a downstream branch-ordering swap) — trims the component
+  /// back to the last sample taken under the original assignment: never
+  /// wrong ink, at worst exactly the branch-fixed trace with refined
+  /// boundaries.
   List<Vec2> _walk(_Run run) {
-    final left =
-        run.leftGap == null ? null : _refineBoundary(run.params.first, run.leftGap!);
+    final left = run.leftGap == null
+        ? null
+        : _refineBoundary(run.params.first, run.leftGap!);
     final right = run.rightGap == null
         ? null
         : _refineBoundary(run.params.last, run.rightGap!);
@@ -243,38 +253,76 @@ class Locus extends GeoLocus {
       ...?right?.ladder,
     ];
 
-    // Start at an open end when there is one, so open curves traverse
-    // fully; with both ends flippable the start choice is arbitrary.
+    // Start at an open end when there is one, so the original-assignment
+    // segment traverses the whole run before any flip.
     var direction = right?.flip == null && left?.flip != null ? -1 : 1;
     final out = <Vec2>[];
     final flipped = <IntersectionPoint>{};
+    var lastOriginalEnd = 0;
+    // Every non-closing exit must undo the walk's outstanding flips —
+    // the global restore only runs after *all* runs are traced, and a
+    // leaked flip would put the next run's walk on a mirror sheet.
+    List<Vec2> open() {
+      if (flipped.isEmpty) {
+        return out;
+      }
+      for (final point in flipped) {
+        point.branchIndex = 1 - point.branchIndex;
+      }
+      return out.sublist(0, lastOriginalEnd);
+    }
+
     for (var segment = 0; segment < _maxWalkSegments; segment++) {
       final params =
           direction > 0 ? ascending : ascending.reversed.toList();
       for (final t in params) {
         final p = _evalAt(t);
         if (p == null) {
-          return out;
+          return open();
         }
         out.add(p);
+      }
+      if (flipped.isEmpty) {
+        lastOriginalEnd = out.length;
       }
       final arrival = direction > 0 ? right : left;
       final flip = arrival?.flip;
       if (flip == null) {
-        return out;
+        return open();
       }
       flip.branchIndex = 1 - flip.branchIndex;
       if (!flipped.remove(flip)) {
         flipped.add(flip);
       }
       if (flipped.isEmpty) {
-        // Original assignment again, back at the starting end: closed.
-        out.add(out.first);
-        return out;
+        // Original assignment again, back at the starting end.
+        if (_closes(out)) {
+          out.add(out.first);
+          return out;
+        }
+        return out.sublist(0, lastOriginalEnd);
       }
       direction = -direction;
     }
-    return out;
+    return open();
+  }
+
+  /// Whether a parity-closed walk geometrically rejoins its start: the
+  /// endpoints must sit within a small fraction of the trace's extent.
+  /// At a coalescence the traced limit is branch-independent, so a
+  /// correctly-continued walk ends where it began; a miss means some
+  /// downstream member landed on the wrong sheet.
+  static bool _closes(List<Vec2> out) {
+    var minX = out.first.x, maxX = out.first.x;
+    var minY = out.first.y, maxY = out.first.y;
+    for (final p in out) {
+      minX = math.min(minX, p.x);
+      maxX = math.max(maxX, p.x);
+      minY = math.min(minY, p.y);
+      maxY = math.max(maxY, p.y);
+    }
+    final extent = Vec2(maxX - minX, maxY - minY).norm;
+    return out.first.distanceTo(out.last) <= math.max(extent * 0.05, 1e-9);
   }
 
   static const _maxWalkSegments = 8;

@@ -6,6 +6,24 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 56 — 2026-07-16
+
+**Done**
+- **Phase 39c complete** on `phase-39c-locus-continuation-scope` (2 commits incl. docs), merged to `main` — user feedback on 39b: doc 1's locus grew "a lot more lines that are unexpected" while doc 2's figure-eight was right.
+- Diagnosis: the 39b walk output was continuous and Cinderella-faithful, but its open-walk flipped sheets (mirror strokes + dives) trace positions that the app's deterministic-branch *dragging* can never reach — phantom curves to the user. Worse, a probe showed most of the phantom ink came from a genuine bug: a non-closing walk left its culprit flip in place, so the *next* run's walk traced under the leaked branch (the global restore only runs after all runs).
+- Scope rule: flipped sheets survive **only when the walk closes** — parity back to original *and* geometric rejoin (`_closes`, endpoints within 5 % of trace extent; a closed-parity geometric miss means a downstream branch-ordering swap and demotes to open). Non-closing exits trim to the last original-assignment sample and restore outstanding flips. Doc 1 = branch-fixed strokes + refined dives to their tangency limits (one limit is A, the other side's is the tangency position itself); doc 2 = closed eight, untouched; full-circle/ellipse closed walks untouched (locus golden byte-identical).
+- Continuity-tracking downstream intersections (to keep swap-affected closed walks closed instead of demoting them) deliberately deferred — PLAN records it; the closure guard keeps such walks safely open.
+- 1095 tests green (U-curve fixture re-pinned to the trimmed expectation; new doc-1-shaped tangent+bisector fixture asserting two single-sheet components on *opposite* sides of AB — it fails without the flip-restore, verified by stash-run). Analyze clean. Web smoke on a fresh release build: **SMOKE PASS**; ad-hoc locus flow: **ADHOC PASS**. Both user documents re-verified by probe + render.
+
+**Next**
+- Phases 43 (viewport rotation) and 44 (line clipping) remain; either can go next.
+- `main` is ahead of `origin/main` by Phases 37–39c — push when convenient.
+
+**Open questions / gotchas**
+- The walk's `open()` exit is the only place flips are undone mid-recompute; any future exit path added to `_walk` must go through it (the doc-1 regression test is the tripwire — its opposite-sides assertion exists precisely because per-component assertions can't see a leaked mirror sheet).
+- If a user ever reports a figure-eight-style locus that "lost its second half" after 39c, it's likely a closed-parity walk failing the geometric closure guard (downstream ordering swap) — that's the deferred continuity-tracking case; the construction would be the fixture to build it against.
+- Session cwd trap: an earlier `cd tool/web_smoke && …; cd ..` left the shell in `tool/`, making later relative paths (`NODE_PATH`, `cp`) silently wrong — prefer absolute paths in multi-step shell commands.
+
 ## Session 55 — 2026-07-16
 
 **Done**
