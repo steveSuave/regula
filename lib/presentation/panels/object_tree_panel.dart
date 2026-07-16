@@ -72,6 +72,7 @@ class _ObjectTreePanelState extends ConsumerState<ObjectTreePanel> {
       'Angles': [],
       'Polygons': [],
       'Measurements': [],
+      'Loci': [],
     };
     for (final object in construction.objects) {
       if (query.isNotEmpty &&
@@ -85,6 +86,7 @@ class _ObjectTreePanelState extends ConsumerState<ObjectTreePanel> {
         GeoAngle() => 'Angles',
         GeoPolygon() => 'Polygons',
         GeoMeasurement() => 'Measurements',
+        GeoLocus() => 'Loci',
       }]!
           .add(object);
     }

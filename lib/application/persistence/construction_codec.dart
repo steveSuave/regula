@@ -16,6 +16,7 @@ import '../../domain/construction/objects/incenter.dart';
 import '../../domain/construction/objects/intersection_point.dart';
 import '../../domain/construction/objects/line_angle.dart';
 import '../../domain/construction/objects/line_through_two_points.dart';
+import '../../domain/construction/objects/locus.dart';
 import '../../domain/construction/objects/midpoint.dart';
 import '../../domain/construction/objects/orthocenter.dart';
 import '../../domain/construction/objects/parallel_line.dart';
@@ -194,6 +195,10 @@ Map<String, dynamic> _encodeObject(GeoObject object) {
     Polygon() => ('Polygon', const {}),
     DistanceMeasurement() => ('DistanceMeasurement', const {}),
     AreaMeasurement() => ('AreaMeasurement', const {}),
+    Locus(:final sampleCount, :final center, :final halfSpan) => (
+        'Locus',
+        {'sampleCount': sampleCount, 'center': center, 'halfSpan': halfSpan}
+      ),
     VertexAngle() => ('VertexAngle', const {}),
     // Absent sign params = legacy always-acute mode, so pre-31 saves
     // round-trip byte-identically.
@@ -451,6 +456,19 @@ GeoObject _decodeObject(Map<String, dynamic> json, Construction construction) {
         subject: any(0),
         attributes: attributes,
       ),
+    // The driver must be a PointOnObject and the traced point must
+    // depend on it — both the constructor's business; its ArgumentError
+    // normalizes to FormatException in the decode loop. Absent params
+    // fall back to the constructor defaults (additive, no version bump).
+    'Locus' => Locus(
+        id: id,
+        driver: _typedParent<PointOnObject>(id, parents, 0),
+        traced: point(1),
+        sampleCount: _optionalIntParam(id, params, 'sampleCount') ?? 128,
+        center: _optionalDoubleParam(id, params, 'center') ?? 0,
+        halfSpan: _optionalDoubleParam(id, params, 'halfSpan') ?? 100,
+        attributes: attributes,
+      ),
     'VertexAngle' => VertexAngle(
         id: id,
         arm1: point(0),
@@ -527,6 +545,15 @@ int _intParam(String id, Map<String, dynamic> params, String key) {
 /// [FormatException] when present but not an integer.
 int? _optionalIntParam(String id, Map<String, dynamic> params, String key) =>
     params.containsKey(key) ? _intParam(id, params, key) : null;
+
+/// The [_optionalIntParam] of numeric params: null when absent,
+/// [FormatException] when present but not a number.
+double? _optionalDoubleParam(
+  String id,
+  Map<String, dynamic> params,
+  String key,
+) =>
+    params.containsKey(key) ? _doubleParam(id, params, key) : null;
 
 ObjectAttributes _decodeAttributes(String id, Object? json) {
   if (json == null) {
