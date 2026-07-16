@@ -580,7 +580,81 @@ void main() {
       );
     });
   });
+
+  group('locus hits (Phase 39)', () {
+    test('the polyline of consecutive samples is hit, gaps are not', () {
+      final locus = _StubLocus(id: 'loc', samples: const [
+        Vec2(0, 0), Vec2(4, 0), null, Vec2(8, 0), Vec2(12, 0), //
+      ]);
+      expect(tester.hitTest([locus], const Vec2(2, 0.3), threshold)?.id,
+          'loc');
+      expect(tester.hitTest([locus], const Vec2(9, 0.3), threshold)?.id,
+          'loc');
+      expect(
+        tester.hitTest([locus], const Vec2(6, 0), threshold),
+        isNull,
+        reason: 'the gap between runs is not a segment',
+      );
+    });
+
+    test('an isolated sample and an all-gap locus are unreachable', () {
+      final isolated =
+          _StubLocus(id: 'iso', samples: const [null, Vec2(4, 0), null]);
+      final allGap = _StubLocus(id: 'gap', samples: const [null, null]);
+      expect(tester.hitTest([isolated], const Vec2(4, 0), threshold), isNull,
+          reason: 'a lone sample draws no ink to hit');
+      expect(tester.hitTest([allGap], Vec2.zero, threshold), isNull);
+    });
+
+    test('a point in range beats the locus polyline under it', () {
+      final locus = _StubLocus(
+        id: 'loc',
+        samples: const [Vec2(0, 0), Vec2(10, 0)],
+      );
+      final point = FreePoint(id: 'p', position: const Vec2(5, 0.4));
+      expect(
+        tester.hitTest([locus, point], const Vec2(5, 0), threshold)?.id,
+        'p',
+        reason: 'loci sit at the lines tier, below points',
+      );
+    });
+
+    test('band-select needs every recorded sample inside, and some ink', () {
+      final withGap = _StubLocus(id: 'loc', samples: const [
+        Vec2(1, 1), Vec2(2, 1), null, Vec2(3, 1), //
+      ]);
+      final allGap = _StubLocus(id: 'gap', samples: const [null, null]);
+      List<String> banded(Vec2 c1, Vec2 c2) => [
+            for (final object
+                in tester.objectsInRect([withGap, allGap], c1, c2))
+              object.id,
+          ];
+      expect(banded(Vec2.zero, const Vec2(4, 2)), ['loc'],
+          reason: 'gaps are fine, an all-gap locus is never banded');
+      expect(banded(Vec2.zero, const Vec2(2.5, 2)), isEmpty,
+          reason: 'one sample outside and the locus is merely crossed');
+    });
+  });
 }
 
 Matcher hasId(String id) =>
     isA<GeoObject>().having((o) => o.id, 'id', id);
+
+/// A [GeoLocus] with hand-picked samples: the hit tester consumes the
+/// kind accessor only, so tests can spell out runs and gaps directly
+/// instead of arranging a construction that produces them.
+class _StubLocus extends GeoLocus {
+  _StubLocus({required super.id, required List<Vec2?>? samples})
+      : _samples = samples;
+
+  final List<Vec2?>? _samples;
+
+  @override
+  List<Vec2?>? get samples => _samples;
+
+  @override
+  List<GeoObject> get parents => const [];
+
+  @override
+  void recompute() {}
+}

@@ -19,6 +19,7 @@ import 'package:regula/domain/construction/objects/incenter.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_angle.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
+import 'package:regula/domain/construction/objects/locus.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
 import 'package:regula/domain/construction/objects/orthocenter.dart';
 import 'package:regula/domain/construction/objects/parallel_line.dart';
@@ -517,6 +518,75 @@ void main() {
     return construction;
   }
 
+  /// Phase 39 loci: a gap-bearing arch (the midpoint between the driver
+  /// and perpendicular-through-driver ∩ circle, traced while the driver
+  /// sweeps the x-axis — undefined beyond |x| = 4, and at half height so
+  /// it doesn't hide on the circle's rim) and a dashed closed loop
+  /// (circle-host midpoint trace at half scale).
+  Construction locusScene() {
+    final construction = Construction();
+    final a = FreePoint(id: 'a', position: const Vec2(-6, 0));
+    final b = FreePoint(id: 'b', position: const Vec2(6, 0));
+    final axis = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
+    final driver = PointOnObject(id: 'drv', curve: axis, parameter: 1);
+    final perpendicular =
+        PerpendicularLine(id: 'perp', through: driver, reference: axis);
+    final center = FreePoint(id: 'o', position: Vec2.zero);
+    final rim = FreePoint(id: 'rim', position: const Vec2(0, 4));
+    final circle = CircleCenterPoint(id: 'k', center: center, onCircle: rim);
+    final crossing = IntersectionPoint(
+      id: 'x',
+      curve1: perpendicular,
+      curve2: circle,
+      branchIndex: 0,
+    );
+    final traced = Midpoint(id: 'tr', point1: driver, point2: crossing);
+    final loopCenter = FreePoint(id: 'o2', position: const Vec2(12, 2));
+    final loopRim = FreePoint(id: 'r2', position: const Vec2(14, 2));
+    final loopHost =
+        CircleCenterPoint(id: 'k2', center: loopCenter, onCircle: loopRim);
+    final loopDriver = PointOnObject(id: 'drv2', curve: loopHost, parameter: 0);
+    final loopAnchor = FreePoint(id: 'p2', position: const Vec2(16, 2));
+    final loopTraced =
+        Midpoint(id: 'tr2', point1: loopDriver, point2: loopAnchor);
+    construction
+      ..add(a)
+      ..add(b)
+      ..add(axis)
+      ..add(driver)
+      ..add(perpendicular)
+      ..add(center)
+      ..add(rim)
+      ..add(circle)
+      ..add(crossing)
+      ..add(traced)
+      // Defined only while |x| <= 4: null runs at both ends of the sweep.
+      ..add(Locus(
+        id: 'loc',
+        driver: driver,
+        traced: traced,
+        sampleCount: 64,
+        center: 0,
+        halfSpan: 6,
+      ))
+      ..add(loopCenter)
+      ..add(loopRim)
+      ..add(loopHost)
+      ..add(loopDriver)
+      ..add(loopAnchor)
+      ..add(loopTraced)
+      // Gapless circle host: the polyline closes; dashed to exercise the
+      // dash-capable stroke.
+      ..add(Locus(
+        id: 'loop',
+        driver: loopDriver,
+        traced: loopTraced,
+        sampleCount: 48,
+        attributes: const ObjectAttributes(dashPeriod: 8),
+      ));
+    return construction;
+  }
+
   final themes = {'light': AppTheme.light(), 'dark': AppTheme.dark()};
   final scenes = {
     'points': pointsScene,
@@ -527,6 +597,7 @@ void main() {
     'measures': measuresScene,
     'polygons': polygonsScene,
     'measurements': measurementsScene,
+    'locus': locusScene,
   };
 
   for (final MapEntry(key: themeName, value: theme) in themes.entries) {
