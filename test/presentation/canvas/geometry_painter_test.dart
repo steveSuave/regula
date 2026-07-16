@@ -398,6 +398,90 @@ void main() {
             reason: 'no gaps and a circle host: the loop closes');
       });
     });
+
+    group('line clipping (Phase 44)', () {
+      const size = Size(800, 600);
+      const viewport = CanvasViewport(ViewportState());
+
+      (Construction, LineThroughTwoPoints) lineScene(int lineClip) {
+        final construction = Construction();
+        final a = FreePoint(id: 'a', position: Vec2.zero);
+        final b = FreePoint(id: 'b', position: const Vec2(40, 0));
+        final line = LineThroughTwoPoints(
+          id: 'l',
+          point1: a,
+          point2: b,
+          attributes: ObjectAttributes(lineClip: lineClip),
+        );
+        construction
+          ..add(a)
+          ..add(b)
+          ..add(line);
+        return (construction, line);
+      }
+
+      test('a mode-1 line strokes exactly its defining pair', () {
+        final (construction, _) = lineScene(1);
+        final canvas = _LineRecordingCanvas();
+        painterFor(construction).paint(canvas, size);
+        expect(canvas.lines, hasLength(1));
+        final (p1, p2) = canvas.lines.single;
+        expect({p1, p2}, {
+          viewport.worldToScreen(Vec2.zero),
+          viewport.worldToScreen(const Vec2(40, 0)),
+        });
+      });
+
+      test('a mode-2 line strokes to the outermost incident point', () {
+        final (construction, line) = lineScene(2);
+        construction.add(PointOnObject.near(
+          id: 'g',
+          curve: line,
+          position: const Vec2(70, 0),
+        ));
+        final canvas = _LineRecordingCanvas();
+        painterFor(construction).paint(canvas, size);
+        expect(canvas.lines, hasLength(1));
+        final (p1, p2) = canvas.lines.single;
+        expect({p1, p2}, {
+          viewport.worldToScreen(Vec2.zero),
+          viewport.worldToScreen(const Vec2(70, 0)),
+        });
+      });
+
+      test('a mode-0 line keeps the far-overdraw stroke', () {
+        final (construction, _) = lineScene(0);
+        final canvas = _LineRecordingCanvas();
+        painterFor(construction).paint(canvas, size);
+        expect(canvas.lines, hasLength(1));
+        final (p1, p2) = canvas.lines.single;
+        expect((p1 - p2).distance, greaterThan(size.width + size.height),
+            reason: 'unclipped: drawn far past the canvas on both sides');
+      });
+
+      test('a mode-2 ray clamps its far end at the through point', () {
+        final construction = Construction();
+        final a = FreePoint(id: 'a', position: Vec2.zero);
+        final b = FreePoint(id: 'b', position: const Vec2(40, 0));
+        construction
+          ..add(a)
+          ..add(b)
+          ..add(Ray(
+            id: 'r',
+            origin: a,
+            through: b,
+            attributes: const ObjectAttributes(lineClip: 2),
+          ));
+        final canvas = _LineRecordingCanvas();
+        painterFor(construction).paint(canvas, size);
+        expect(canvas.lines, hasLength(1));
+        final (p1, p2) = canvas.lines.single;
+        expect({p1, p2}, {
+          viewport.worldToScreen(Vec2.zero),
+          viewport.worldToScreen(const Vec2(40, 0)),
+        });
+      });
+    });
   });
 }
 
@@ -428,6 +512,21 @@ class _PathRecordingCanvas implements Canvas {
   @override
   void drawPath(Path path, Paint paint) {
     paths.add(path);
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => null;
+}
+
+/// Records the endpoint pairs handed to [drawLine]; every other canvas
+/// call is a no-op. Points draw via drawCircle, so in a points-and-lines
+/// scene the recorded pairs are the straight strokes alone.
+class _LineRecordingCanvas implements Canvas {
+  final List<(Offset, Offset)> lines = [];
+
+  @override
+  void drawLine(Offset p1, Offset p2, Paint paint) {
+    lines.add((p1, p2));
   }
 
   @override

@@ -68,7 +68,13 @@ Construction buildKitchenSink() {
     ..add(b)
     ..add(c);
 
-  final lineAb = LineThroughTwoPoints(id: 'lab', point1: a, point2: b);
+  // Non-default lineClip (Phase 44) so the round-trip must carry it.
+  final lineAb = LineThroughTwoPoints(
+    id: 'lab',
+    point1: a,
+    point2: b,
+    attributes: const ObjectAttributes(lineClip: 1),
+  );
   final ratio = SegmentRatioPoint(id: 'ratio', point1: a, point2: b, ratio: 2.25);
   construction
     ..add(Midpoint(id: 'mid', point1: a, point2: b))

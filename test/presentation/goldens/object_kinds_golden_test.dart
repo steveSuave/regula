@@ -588,6 +588,57 @@ void main() {
     return construction;
   }
 
+  /// Phase 44 line clipping: a mode-1 line stroked (dashed) exactly over
+  /// its defining pair, a mode-2 line stretched to a glued point beyond
+  /// the pair, a mode-2 ray clamped at its through point, and a mode-0
+  /// line for contrast running across the whole frame.
+  Construction clipsScene() {
+    final construction = Construction();
+    final a = FreePoint(id: 'a', position: const Vec2(0, 6));
+    final b = FreePoint(id: 'b', position: const Vec2(4, 6));
+    final c = FreePoint(id: 'c', position: const Vec2(0, 3));
+    final d = FreePoint(id: 'd', position: const Vec2(4, 3));
+    final e = FreePoint(id: 'e', position: Vec2.zero);
+    final f = FreePoint(id: 'f', position: const Vec2(4, 0));
+    final g = FreePoint(id: 'g', position: const Vec2(0, -3));
+    final h = FreePoint(id: 'h', position: const Vec2(4, -3));
+    final mode2 = LineThroughTwoPoints(
+      id: 'l2',
+      point1: c,
+      point2: d,
+      attributes: const ObjectAttributes(lineClip: 2),
+    );
+    construction
+      ..add(a)
+      ..add(b)
+      ..add(c)
+      ..add(d)
+      ..add(e)
+      ..add(f)
+      ..add(g)
+      ..add(h)
+      ..add(LineThroughTwoPoints(
+        id: 'l1',
+        point1: a,
+        point2: b,
+        attributes: const ObjectAttributes(lineClip: 1, dashPeriod: 8),
+      ))
+      ..add(mode2)
+      ..add(PointOnObject.near(
+        id: 'glue',
+        curve: mode2,
+        position: const Vec2(7, 3),
+      ))
+      ..add(Ray(
+        id: 'ray',
+        origin: e,
+        through: f,
+        attributes: const ObjectAttributes(lineClip: 2),
+      ))
+      ..add(LineThroughTwoPoints(id: 'l0', point1: g, point2: h));
+    return construction;
+  }
+
   final themes = {'light': AppTheme.light(), 'dark': AppTheme.dark()};
   final scenes = {
     'points': pointsScene,
@@ -599,6 +650,7 @@ void main() {
     'polygons': polygonsScene,
     'measurements': measurementsScene,
     'locus': locusScene,
+    'clips': clipsScene,
   };
 
   for (final MapEntry(key: themeName, value: theme) in themes.entries) {

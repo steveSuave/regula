@@ -48,7 +48,7 @@ final class DocumentSettingsNotifierProvider
 }
 
 String _$documentSettingsNotifierHash() =>
-    r'8cc6790a94490970799bd61c17faf9f62544f361';
+    r'136b9bd967ea1fbb63667a4cf7ca1b1539384ca5';
 
 /// Axes/grid toggles for the current document. Not undoable; replaced
 /// wholesale by File > New (defaults) and File > Open (the file's snapshot).

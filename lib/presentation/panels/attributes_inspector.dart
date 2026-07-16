@@ -9,6 +9,7 @@ import '../../domain/construction/geo_object.dart';
 import '../../domain/construction/object_attributes.dart';
 import '../../domain/construction/object_naming.dart';
 import '../../domain/construction/objects/arc.dart';
+import '../../domain/construction/objects/line_through_two_points.dart';
 import '../../domain/construction/objects/segment.dart';
 import 'object_kind_label.dart';
 
@@ -94,6 +95,15 @@ class AttributesInspector extends ConsumerWidget {
       for (final object in objects)
         if (object is Segment || object is GeoAngle) object,
     ];
+    // The kinds the lineClip modes apply to (Phase 44): lines and rays.
+    // Segments are already their own clip and ignore the attribute.
+    final clippables = [
+      for (final object in objects)
+        if (object is GeoLine && object is! Segment) object,
+    ];
+    // Mode 1 clips to the defining pair, which only a LineThroughTwoPoints
+    // has on its carrier — the segment is offered only when one is here.
+    final hasDefiningPair = clippables.any((o) => o is LineThroughTwoPoints);
     return SizedBox(
       width: panelWidth,
       child: Row(
@@ -202,6 +212,27 @@ class AttributesInspector extends ConsumerWidget {
                       ref,
                       dashables,
                       (attributes) => attributes.copyWith(dashPeriod: period),
+                    ),
+                  ),
+                ],
+                if (clippables.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  _PresetSelector(
+                    key: const ValueKey('line-extent'),
+                    label: 'Extent',
+                    presets: [
+                      for (final preset in _extentPresets)
+                        if (preset.$3 != 1 || hasDefiningPair) preset,
+                    ],
+                    values: [
+                      for (final object in clippables)
+                        object.attributes.lineClip.toDouble(),
+                    ],
+                    onChanged: (mode) => _setForAll(
+                      ref,
+                      clippables,
+                      (attributes) =>
+                          attributes.copyWith(lineClip: mode.toInt()),
                     ),
                   ),
                 ],
@@ -546,6 +577,17 @@ const _radiusPresets = <(String, String, double)>[
   ('M', 'Medium', 20),
   ('L', 'Large', 28),
   ('XL', 'Extra large', 36),
+];
+
+/// The Phase 44 line-extent presets (`ObjectAttributes.lineClip`, carried
+/// as doubles for [_PresetSelector]), same single-letter convention as
+/// [_dashPresets] with the full wording in the tooltip. The 'D' segment
+/// is offered only while a `LineThroughTwoPoints` is selected; on other
+/// kinds mode 1 draws infinite (see `lineClipSpan`).
+const _extentPresets = <(String, String, double)>[
+  ('∞', 'Infinite', 0),
+  ('D', 'Between the defining points', 1),
+  ('P', 'Span of the incident points', 2),
 ];
 
 /// The label font-size presets in logical pixels, same single-letter
