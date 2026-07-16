@@ -15,6 +15,7 @@ import 'package:regula/domain/construction/object_attributes.dart';
 import 'package:regula/domain/construction/objects/arc.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/compass_circle.dart';
+import 'package:regula/domain/construction/objects/distance_measurement.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_angle.dart';
@@ -1858,6 +1859,45 @@ void main() {
     await tester.pump();
     expect(point.attributes.labelDx, 6);
     expect(point.attributes.labelDy, -18);
+  });
+
+  testWidgets('a measurement text dragged off its anchor stays tappable '
+      '(Phase 38)', (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+    final construction = container.read(constructionProvider).construction;
+    final a = FreePoint(id: 'a', position: const Vec2(100, -100));
+    final b = FreePoint(id: 'b', position: const Vec2(200, -100));
+    // Text offset near the 40 px clamp: the anchor at local (150, 100)
+    // is well outside any hit threshold of the tap below.
+    final distance = DistanceMeasurement(
+      id: 'd',
+      point1: a,
+      point2: b,
+      attributes: const ObjectAttributes(labelDx: 0, labelDy: -38),
+    );
+    construction
+      ..add(a)
+      ..add(b)
+      ..add(distance);
+    await tester.pump();
+
+    // Inside the text rect (top-left local (150, 62), 12 px line).
+    await tester.tapAt(origin + const Offset(160, 68));
+    await tester.pump();
+    expect(container.read(selectionProvider), {'d'},
+        reason: 'the text is the measurement\'s body');
+
+    // An empty tap still clears — the text rect is not sticky.
+    await tester.tapAt(origin + const Offset(400, 300));
+    await tester.pump();
+    expect(container.read(selectionProvider), isEmpty);
+
+    // And a tap at the world anchor selects through the hit tester's
+    // measurement tier even with the text far away.
+    await tester.tapAt(origin + const Offset(150, 100));
+    await tester.pump();
+    expect(container.read(selectionProvider), {'d'});
   });
 
   testWidgets('a label drag clamps to the max offset radius',

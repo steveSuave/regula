@@ -12,20 +12,24 @@ import 'package:regula/application/providers/tool_provider.dart';
 import 'package:regula/application/providers/viewport_provider.dart';
 import 'package:regula/domain/commands/add_object_command.dart';
 import 'package:regula/domain/construction/object_attributes.dart';
+import 'package:regula/domain/construction/objects/area_measurement.dart';
 import 'package:regula/domain/construction/objects/centroid.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
+import 'package:regula/domain/construction/objects/distance_measurement.dart';
 import 'package:regula/domain/construction/objects/fixed_radius_circle.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
 import 'package:regula/domain/construction/objects/parallel_line.dart';
 import 'package:regula/domain/construction/objects/perpendicular_bisector_line.dart';
+import 'package:regula/domain/construction/objects/polygon.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/construction/objects/tangent_line.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/tools/angle_bisector_tool.dart';
 import 'package:regula/domain/tools/angle_by_size_tool.dart';
 import 'package:regula/domain/tools/angle_tool.dart';
+import 'package:regula/domain/tools/area_tool.dart';
 import 'package:regula/domain/tools/equilateral_triangle_macro_tool.dart';
 import 'package:regula/domain/tools/fixed_length_segment_tool.dart';
 import 'package:regula/domain/tools/fixed_radius_circle_tool.dart';
@@ -46,6 +50,7 @@ import 'package:regula/domain/tools/two_point_tool.dart';
 import 'package:regula/domain/tools/visibility_tool.dart';
 import 'package:regula/main.dart';
 import 'package:regula/presentation/canvas/geometry_canvas.dart';
+import 'package:regula/presentation/panels/toolbar.dart' show buildDistance;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../wide_window.dart';
 
@@ -141,6 +146,47 @@ void main() {
     final bisector = objects.last as PerpendicularBisectorLine;
     expect(bisector.line!.contains(const Vec2(2, 7)), isTrue,
         reason: 'vertical bisector of the horizontal pair at x = 2');
+  });
+
+  testWidgets('D measures a distance end to end', (tester) async {
+    await pumpEditor(tester);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyD);
+    expect(activeTool(), isA<TwoPointTool>());
+    expect((activeTool()! as TwoPointTool).build, buildDistance);
+
+    tapWorld(0, 0);
+    tapWorld(3, 4);
+    final objects =
+        container.read(constructionProvider).construction.objects.toList();
+    expect(objects.last, isA<DistanceMeasurement>());
+    expect((objects.last as DistanceMeasurement).value, 5);
+  });
+
+  testWidgets('⇧D activates the area tool and measures a tapped polygon', (
+    tester,
+  ) async {
+    await pumpEditor(tester);
+    final stack = container.read(commandStackProvider.notifier);
+    final a = FreePoint(id: 'a', position: const Vec2(0, 0));
+    final b = FreePoint(id: 'b', position: const Vec2(4, 0));
+    final c = FreePoint(id: 'c', position: const Vec2(4, 3));
+    final polygon = Polygon(id: 'p', vertices: [a, b, c]);
+    for (final object in [a, b, c, polygon]) {
+      stack.execute(AddObjectCommand(object));
+    }
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyD);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    expect(activeTool(), isA<AreaTool>());
+
+    container
+        .read(toolProvider.notifier)
+        .handleInput(ToolInput(const Vec2(3, 1), hit: polygon));
+    final objects =
+        container.read(constructionProvider).construction.objects.toList();
+    expect(objects.last, isA<AreaMeasurement>());
+    expect((objects.last as AreaMeasurement).value, 6);
   });
 
   testWidgets('⇧C asks for the radius; OK builds a circle by radius end '
