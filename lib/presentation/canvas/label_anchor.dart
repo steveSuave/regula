@@ -16,7 +16,9 @@ import '../../domain/math/vec2.dart';
 /// - infinite lines: the anchor closest to the world origin (the only
 ///   stable point an unbounded carrier has);
 /// - circles: the top of the rim; arcs and sectors: the middle of the
-///   drawn branch.
+///   drawn branch;
+/// - polygons: the vertex average (inside for convex regions, stable
+///   under drags either way).
 ///
 /// Only call on defined objects — the force-unwraps mirror the painter's,
 /// which skips undefined objects before asking for an anchor.
@@ -30,4 +32,7 @@ Vec2 labelAnchor(GeoObject object) => switch (object) {
         object.circle!.pointAt(object.startAngle! + object.sweep! / 2),
       GeoCircle() => object.circle!.pointAt(math.pi / 2),
       GeoAngle() => object.angle!.vertex,
+      GeoPolygon() => object.polygonVertices!
+              .reduce((sum, vertex) => sum + vertex) /
+          object.polygonVertices!.length.toDouble(),
     };

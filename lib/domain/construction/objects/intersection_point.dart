@@ -96,6 +96,7 @@ class IntersectionPoint extends GeoPoint {
       // Unreachable: the constructor rejects non-curve parents.
       case ((GeoPoint(), _) || (_, GeoPoint())):
       case ((GeoAngle(), _) || (_, GeoAngle())):
+      case ((GeoPolygon(), _) || (_, GeoPolygon())):
         throw StateError('IntersectionPoint parents must be curves');
     }
   }

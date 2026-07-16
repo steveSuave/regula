@@ -3,6 +3,7 @@ import 'package:regula/domain/construction/object_naming.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
+import 'package:regula/domain/construction/objects/polygon.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/construction/objects/vertex_angle.dart';
 import 'package:regula/domain/math/vec2.dart';
@@ -15,6 +16,7 @@ void main() {
   final segment = Segment(id: 's', point1: a, point2: b);
   final circle = CircleCenterPoint(id: 'k', center: a, onCircle: b);
   final angle = VertexAngle(id: 'v', arm1: b, vertex: a, arm2: c);
+  final polygon = Polygon(id: 'p', vertices: [a, b, c]);
 
   group('points', () {
     test('first point is A, scan skips used names', () {
@@ -45,7 +47,7 @@ void main() {
     });
   });
 
-  group('lines and circles share one lowercase pool', () {
+  group('lines, circles and polygons share one lowercase pool', () {
     test('lines draw from a…', () {
       expect(nextAutoName({}, line), 'a');
       expect(nextAutoName({'a'}, segment), 'b');
@@ -54,6 +56,11 @@ void main() {
     test('circles draw from the same pool', () {
       expect(nextAutoName({}, circle), 'a');
       expect(nextAutoName({'a', 'b'}, circle), 'c');
+    });
+
+    test('polygons draw from the same pool', () {
+      expect(nextAutoName({}, polygon), 'a');
+      expect(nextAutoName({'a', 'b'}, polygon), 'c');
     });
 
     test('pool is case-sensitive: point names do not block it', () {
