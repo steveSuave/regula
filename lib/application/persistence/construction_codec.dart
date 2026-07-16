@@ -20,6 +20,7 @@ import '../../domain/construction/objects/parallel_line.dart';
 import '../../domain/construction/objects/perpendicular_bisector_line.dart';
 import '../../domain/construction/objects/perpendicular_line.dart';
 import '../../domain/construction/objects/point_on_object.dart';
+import '../../domain/construction/objects/polygon.dart';
 import '../../domain/construction/objects/ray.dart';
 import '../../domain/construction/objects/reflected_point.dart';
 import '../../domain/construction/objects/rotated_point.dart';
@@ -188,6 +189,7 @@ Map<String, dynamic> _encodeObject(GeoObject object) {
       ),
     Arc() => ('Arc', const {}),
     Sector() => ('Sector', const {}),
+    Polygon() => ('Polygon', const {}),
     VertexAngle() => ('VertexAngle', const {}),
     // Absent sign params = legacy always-acute mode, so pre-31 saves
     // round-trip byte-identically.
@@ -421,6 +423,14 @@ GeoObject _decodeObject(Map<String, dynamic> json, Construction construction) {
         center: point(0),
         start: point(1),
         end: point(2),
+        attributes: attributes,
+      ),
+    // Variable arity: every parent is a vertex, in loop order. Fewer than
+    // 3 fails the Polygon constructor's ArgumentError, which the decode
+    // loop normalizes to FormatException.
+    'Polygon' => Polygon(
+        id: id,
+        vertices: [for (var i = 0; i < parents.length; i++) point(i)],
         attributes: attributes,
       ),
     'VertexAngle' => VertexAngle(

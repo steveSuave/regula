@@ -388,7 +388,26 @@ class GeometryPainter extends CustomPainter {
         }
       case GeoAngle():
         _drawAngleMarker(canvas, object, paint);
+      case GeoPolygon():
+        final path = _polygonPath(object);
+        canvas.drawPath(
+          dashPeriod > 0 ? dashPath(path, dashPeriod) : path,
+          paint,
+        );
     }
+  }
+
+  /// The closed screen-space outline over a polygon's vertex loop —
+  /// shared by the stroke, fill and halo passes.
+  Path _polygonPath(GeoPolygon object) {
+    final vertices = object.polygonVertices!;
+    final first = viewport.worldToScreen(vertices.first);
+    final path = Path()..moveTo(first.dx, first.dy);
+    for (final vertex in vertices.skip(1)) {
+      final screen = viewport.worldToScreen(vertex);
+      path.lineTo(screen.dx, screen.dy);
+    }
+    return path..close();
   }
 
   /// One straight stroke — solid via `drawLine`, or rebuilt as a dashed
@@ -486,9 +505,11 @@ class GeometryPainter extends CustomPainter {
     }
   }
 
-  /// Fills the interior of a fillable kind — a sector's pie wedge, or an
-  /// angle marker's wedge/square — with [fill], drawn under the stroke
-  /// pass. Other kinds have no filled form and are skipped.
+  /// Fills the interior of a fillable kind — a sector's pie wedge, an
+  /// angle marker's wedge/square, a polygon's region, or a full circle's
+  /// disc — with [fill], drawn under the stroke pass. Other kinds have no
+  /// filled form and are skipped; an arc's fill shape is ambiguous
+  /// (wedge? circular segment?), so arcs deliberately don't fill.
   void _drawFill(Canvas canvas, GeoObject object, Paint fill) {
     switch (object) {
       case Sector():
@@ -498,8 +519,19 @@ class GeometryPainter extends CustomPainter {
           radius: viewport.worldToScreenLength(circle.radius),
         );
         canvas.drawArc(rect, -object.startAngle!, -object.sweep!, true, fill);
+      case Arc():
+        break;
+      case GeoCircle():
+        final circle = object.circle!;
+        canvas.drawCircle(
+          viewport.worldToScreen(circle.center),
+          viewport.worldToScreenLength(circle.radius),
+          fill,
+        );
       case GeoAngle():
         _drawAngleMarker(canvas, object, fill);
+      case GeoPolygon():
+        canvas.drawPath(_polygonPath(object), fill);
       default:
         break;
     }

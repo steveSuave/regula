@@ -21,8 +21,9 @@ import '../../domain/math/vec2.dart';
 /// Selection order is (priority, distance), lexicographically: any point
 /// within the threshold beats any circle, which beats any line — small,
 /// precise targets must not be shadowed by the big shapes drawn through
-/// them (PLAN: points > arcs/circles > segments/rays/lines > angles).
-/// Ties go to the object added latest, i.e. the one drawn on top.
+/// them (PLAN: points > arcs/circles > segments/rays/lines > angles >
+/// polygons). Ties go to the object added latest, i.e. the one drawn on
+/// top.
 ///
 /// Undefined and invisible objects are never hit — unless the caller
 /// passes `includeHidden` (the Show/Hide tool, which renders hidden
@@ -85,6 +86,9 @@ class CanvasHitTester {
         GeoCircle() => 1,
         GeoLine() => 2,
         GeoAngle() => 3,
+        // Lowest: a polygon's interior hits at distance 0, so anything
+        // drawn inside it must still win the tap.
+        GeoPolygon() => 4,
       };
       candidates.add((object, priority, distance, index));
     }
@@ -147,6 +151,7 @@ class CanvasHitTester {
           _branchExtremes(object.circle!, (_) => true, const []).every(within),
         GeoLine() => false, // infinite (rays included): never contained
         GeoAngle() => within(object.angle!.vertex),
+        GeoPolygon() => object.polygonVertices!.every(within),
       };
 
   /// The points bounding a carrier-circle branch: the [seeds] (endpoints,
@@ -187,8 +192,12 @@ class CanvasHitTester {
             object.start!, object.throughPosition!, point, double.infinity),
         GeoLine() => object.line!.distanceTo(point),
         // An angle is picked on its marker wedge (see _angleDistance) —
-        // lowest priority, so anything else there wins.
+        // low priority, so anything else there wins.
         GeoAngle() => _angleDistance(object, point, worldPerPx),
+        // A polygon's interior hits at distance 0 (but lowest priority —
+        // an empty interior tap selects the region, anything drawn inside
+        // still wins); outside, the nearest edge decides.
+        GeoPolygon() => _polygonDistance(object, point),
       };
 
   /// Distance to an angle's marker wedge: the arc at the marker radius
@@ -215,6 +224,38 @@ class CanvasHitTester {
     final edge2 =
         _clampedDistance(angle.vertex, angle.vertex + d2 * radius, p, 1);
     return math.min(arc, math.min(edge1, edge2));
+  }
+
+  double _polygonDistance(GeoPolygon object, Vec2 p) {
+    final vertices = object.polygonVertices!;
+    if (_pointInPolygon(vertices, p)) {
+      return 0;
+    }
+    var best = double.infinity;
+    for (var i = 0; i < vertices.length; i++) {
+      best = math.min(
+        best,
+        _clampedDistance(
+            vertices[i], vertices[(i + 1) % vertices.length], p, 1),
+      );
+    }
+    return best;
+  }
+
+  /// Even-odd ray cast: [p] is inside when a ray towards +x crosses the
+  /// loop's edges an odd number of times. Matches the painter's default
+  /// even-odd fill, self-intersecting loops included.
+  bool _pointInPolygon(List<Vec2> vertices, Vec2 p) {
+    var inside = false;
+    for (var i = 0, j = vertices.length - 1; i < vertices.length; j = i++) {
+      final a = vertices[i];
+      final b = vertices[j];
+      if ((a.y > p.y) != (b.y > p.y) &&
+          p.x < (b.x - a.x) * (p.y - a.y) / (b.y - a.y) + a.x) {
+        inside = !inside;
+      }
+    }
+    return inside;
   }
 
   double _arcDistance(Arc arc, Vec2 p) {

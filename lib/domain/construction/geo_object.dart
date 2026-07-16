@@ -7,8 +7,9 @@ import 'object_attributes.dart';
 /// Base of every object in the construction graph.
 ///
 /// The hierarchy is sealed at the *kind* level: every object is a
-/// [GeoPoint], a [GeoLine], a [GeoCircle] or a [GeoAngle], so
-/// kind-switches are exhaustive. The kinds themselves are open — concrete objects
+/// [GeoPoint], a [GeoLine], a [GeoCircle], a [GeoAngle] or a
+/// [GeoPolygon], so kind-switches are exhaustive. The kinds themselves
+/// are open — concrete objects
 /// (`FreePoint`, `Midpoint`, …) live one-per-file under `objects/`,
 /// which Dart's `sealed` would forbid on the root class directly.
 ///
@@ -88,4 +89,19 @@ abstract class GeoAngle extends GeoObject {
 
   @override
   bool get isDefined => angle != null;
+}
+
+/// A polygon-valued object: a filled region bounded by the closed loop
+/// of [polygonVertices]. Polygons take part in no intersection math —
+/// like angles they decorate existing geometry rather than carrying any.
+/// A collinear or self-intersecting loop is still *defined* (it is a
+/// drawable outline); [polygonVertices] is null only while a vertex is
+/// undefined.
+abstract class GeoPolygon extends GeoObject {
+  GeoPolygon({required super.id, super.attributes});
+
+  List<Vec2>? get polygonVertices;
+
+  @override
+  bool get isDefined => polygonVertices != null;
 }

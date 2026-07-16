@@ -42,6 +42,10 @@ const double fitMarginPx = 48;
             circle.center.y + circle.radius);
       case GeoAngle(:final angle?):
         include(angle.vertex.x, angle.vertex.y);
+      case GeoPolygon(:final polygonVertices?):
+        for (final vertex in polygonVertices) {
+          include(vertex.x, vertex.y);
+        }
       case GeoLine():
         break;
       // isDefined held above, so the null-payload cases are unreachable;
@@ -49,6 +53,7 @@ const double fitMarginPx = 48;
       case GeoPoint():
       case GeoCircle():
       case GeoAngle():
+      case GeoPolygon():
         break;
     }
   }
