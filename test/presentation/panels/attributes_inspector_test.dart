@@ -9,6 +9,8 @@ import 'package:regula/domain/construction/objects/arc.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/distance_measurement.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/line_through_two_points.dart';
+import 'package:regula/domain/construction/objects/perpendicular_line.dart';
 import 'package:regula/domain/construction/objects/polygon.dart';
 import 'package:regula/domain/construction/objects/sector.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
@@ -401,6 +403,82 @@ void main() {
     await tester.tap(find.byIcon(Icons.undo));
     await tester.pump();
     expect(angle.attributes.angleMarkerRadius, 20.0);
+  });
+
+  testWidgets('extent selector: clippable lines only, one command over '
+      'the line slice, undo restores infinite', (tester) async {
+    await pumpEditor(tester);
+    final a = addPoint('a', Vec2.zero);
+    final b = addPoint('b', const Vec2(4, 0));
+    final s = Segment(id: 's', point1: a, point2: b);
+    final l = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
+    container.read(constructionProvider).construction
+      ..add(s)
+      ..add(l);
+
+    container.read(selectionProvider.notifier).select('a');
+    await tester.pump();
+    expect(find.byKey(const ValueKey('line-extent')), findsNothing,
+        reason: 'an extent means nothing for a point-only selection');
+
+    container.read(selectionProvider.notifier).select('s');
+    await tester.pump();
+    expect(find.byKey(const ValueKey('line-extent')), findsNothing,
+        reason: 'a segment is already its own clip');
+
+    container.read(selectionProvider.notifier).selectMany(['a', 's', 'l']);
+    await tester.pump();
+    final extent = find.byKey(const ValueKey('line-extent'));
+    await tester.scrollUntilVisible(
+      extent,
+      100,
+      scrollable: find.descendant(
+        of: find.byType(AttributesInspector),
+        matching: find.byType(Scrollable),
+      ),
+    );
+
+    await tester.tap(find.descendant(of: extent, matching: find.text('P')));
+    await tester.pump();
+    expect(l.attributes.lineClip, 2);
+    expect(s.attributes.lineClip, 0,
+        reason: 'the command covers only the clippable slice');
+    expect(a.attributes.lineClip, 0);
+
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(l.attributes.lineClip, 0);
+  });
+
+  testWidgets('extent selector offers the defining-points mode only while '
+      'a LineThroughTwoPoints is selected', (tester) async {
+    await pumpEditor(tester);
+    final a = addPoint('a', Vec2.zero);
+    final b = addPoint('b', const Vec2(4, 0));
+    final c = addPoint('c', const Vec2(1, 3));
+    final l = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
+    final perp = PerpendicularLine(id: 'pp', through: c, reference: l);
+    container.read(constructionProvider).construction
+      ..add(l)
+      ..add(perp);
+
+    container.read(selectionProvider.notifier).select('pp');
+    await tester.pump();
+    final extent = find.byKey(const ValueKey('line-extent'));
+    expect(extent, findsOneWidget);
+    expect(find.descendant(of: extent, matching: find.text('D')),
+        findsNothing,
+        reason: 'a perpendicular has no defining pair on its carrier');
+
+    await tester.tap(find.descendant(of: extent, matching: find.text('P')));
+    await tester.pump();
+    expect(perp.attributes.lineClip, 2);
+
+    container.read(selectionProvider.notifier).selectMany(['l', 'pp']);
+    await tester.pump();
+    expect(find.descendant(of: extent, matching: find.text('D')),
+        findsOneWidget,
+        reason: 'the line in the selection brings the mode back');
   });
 
   testWidgets('label-size selector: whole selection, one command, undo '

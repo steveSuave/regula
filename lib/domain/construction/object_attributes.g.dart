@@ -22,6 +22,7 @@ _ObjectAttributes _$ObjectAttributesFromJson(Map<String, dynamic> json) =>
       angleMarkerRadius:
           (json['angleMarkerRadius'] as num?)?.toDouble() ?? 20.0,
       fillAlpha: (json['fillAlpha'] as num?)?.toDouble(),
+      lineClip: (json['lineClip'] as num?)?.toInt() ?? 0,
     );
 
 Map<String, dynamic> _$ObjectAttributesToJson(_ObjectAttributes instance) =>
@@ -39,4 +40,5 @@ Map<String, dynamic> _$ObjectAttributesToJson(_ObjectAttributes instance) =>
       'pointSize': instance.pointSize,
       'angleMarkerRadius': instance.angleMarkerRadius,
       'fillAlpha': instance.fillAlpha,
+      'lineClip': instance.lineClip,
     };

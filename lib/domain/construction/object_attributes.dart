@@ -59,6 +59,15 @@ abstract class ObjectAttributes with _$ObjectAttributes {
     /// Fill opacity in [0, 1] for filled kinds (sectors and angle
     /// markers); null = unfilled.
     double? fillAlpha,
+
+    /// Cinderella-style display extent for line kinds (infinite lines and
+    /// rays; segments are already their own clip and ignore this):
+    /// 0 = infinite (default), 1 = clipped to the segment between the two
+    /// defining points (`LineThroughTwoPoints` only), 2 = clipped to the
+    /// span of the visible points structurally incident to the line (see
+    /// `lineClipSpan`). Display and hit-test only — the carrier stays
+    /// infinite for intersection math.
+    @Default(0) int lineClip,
   }) = _ObjectAttributes;
 
   factory ObjectAttributes.fromJson(Map<String, dynamic> json) =>

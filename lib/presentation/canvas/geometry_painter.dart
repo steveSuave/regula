@@ -5,6 +5,7 @@ import 'package:flutter/rendering.dart';
 
 import '../../domain/construction/construction.dart';
 import '../../domain/construction/geo_object.dart';
+import '../../domain/construction/line_clip.dart';
 import '../../domain/construction/objects/arc.dart';
 import '../../domain/construction/objects/locus.dart';
 import '../../domain/construction/objects/ray.dart';
@@ -354,9 +355,31 @@ class GeometryPainter extends CustomPainter {
           dashPeriod,
         );
       case Ray():
-        _drawRay(canvas, size, object, paint, dashPeriod);
+        final span = _clipSpan(object);
+        if (span != null) {
+          _drawStraight(
+            canvas,
+            viewport.worldToScreen(span.start),
+            viewport.worldToScreen(span.end),
+            paint,
+            dashPeriod,
+          );
+        } else {
+          _drawRay(canvas, size, object, paint, dashPeriod);
+        }
       case GeoLine():
-        _drawInfiniteLine(canvas, size, object, paint, dashPeriod);
+        final span = _clipSpan(object);
+        if (span != null) {
+          _drawStraight(
+            canvas,
+            viewport.worldToScreen(span.start),
+            viewport.worldToScreen(span.end),
+            paint,
+            dashPeriod,
+          );
+        } else {
+          _drawInfiniteLine(canvas, size, object, paint, dashPeriod);
+        }
       case Arc():
         _drawCarrierBranch(
           canvas,
@@ -469,6 +492,14 @@ class GeometryPainter extends CustomPainter {
     }
     return path..close();
   }
+
+  /// The world endpoints of a clipped line/ray's drawn stretch, or null
+  /// for the full carrier. The `lineClip == 0` guard skips the helper's
+  /// whole-construction scan for the common unclipped case.
+  ({Vec2 start, Vec2 end})? _clipSpan(GeoLine object) =>
+      object.attributes.lineClip == 0
+          ? null
+          : lineClipSpan(construction.objects, object);
 
   /// One straight stroke — solid via `drawLine`, or rebuilt as a dashed
   /// path when [dashPeriod] > 0.
