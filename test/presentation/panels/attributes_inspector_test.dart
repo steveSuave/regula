@@ -7,6 +7,7 @@ import 'package:regula/application/providers/selection_provider.dart';
 import 'package:regula/domain/construction/object_attributes.dart';
 import 'package:regula/domain/construction/objects/arc.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
+import 'package:regula/domain/construction/objects/distance_measurement.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/polygon.dart';
 import 'package:regula/domain/construction/objects/sector.dart';
@@ -408,9 +409,13 @@ void main() {
     final a = addPoint('a', Vec2.zero);
     final b = addPoint('b', const Vec2(4, 0));
     final s = Segment(id: 's', point1: a, point2: b);
-    container.read(constructionProvider).construction.add(s);
+    // A measurement rides the same row — its text is all it has (Phase 38).
+    final d = DistanceMeasurement(id: 'd', point1: a, point2: b);
+    container.read(constructionProvider).construction
+      ..add(s)
+      ..add(d);
 
-    container.read(selectionProvider.notifier).selectMany(['a', 's']);
+    container.read(selectionProvider.notifier).selectMany(['a', 's', 'd']);
     await tester.pump();
     final labelSize = find.byKey(const ValueKey('label-size'));
     await tester.scrollUntilVisible(
@@ -430,11 +435,13 @@ void main() {
     expect(a.attributes.labelFontSize, 22.0);
     expect(s.attributes.labelFontSize, 22.0,
         reason: 'every kind carries a label — one command over all of it');
+    expect(d.attributes.labelFontSize, 22.0);
 
     await tester.tap(find.byIcon(Icons.undo));
     await tester.pump();
     expect(a.attributes.labelFontSize, 12.0);
     expect(s.attributes.labelFontSize, 12.0);
+    expect(d.attributes.labelFontSize, 12.0);
     expect(container.read(commandStackProvider).canUndo, isFalse,
         reason: 'both updates rode a single command');
   });

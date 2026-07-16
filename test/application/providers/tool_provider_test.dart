@@ -12,6 +12,7 @@ import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/geo_object.dart';
 import 'package:regula/domain/construction/object_attributes.dart';
 import 'package:regula/domain/construction/objects/centroid.dart';
+import 'package:regula/domain/construction/objects/distance_measurement.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/rotated_point.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
@@ -268,6 +269,26 @@ void main() {
         expect(nameOf(container, 's0'), 'a');
         expect(segment.attributes.labelVisible, isFalse,
             reason: 'lines are named but their canvas label stays hidden');
+      });
+
+      test('a measurement joins the lowercase pool but keeps its label — '
+          'the on-canvas text is its whole point', () {
+        final a = FreePoint(id: 'a', position: Vec2.zero);
+        final b = FreePoint(id: 'b', position: const Vec2(3, 4));
+        final distance = DistanceMeasurement(id: 'd', point1: a, point2: b);
+        commit(
+          container,
+          MacroCommand([
+            AddObjectCommand(a),
+            AddObjectCommand(b),
+            AddObjectCommand(distance),
+          ]),
+        );
+
+        expect(nameOf(container, 'd'), 'a');
+        expect(distance.attributes.labelVisible, isTrue,
+            reason: 'unlike lines/circles/polygons, the label stays shown — '
+                'it reads as "a = 5.00"');
       });
 
       test('points keep labelVisible, hidden scaffolding burns no letters',
