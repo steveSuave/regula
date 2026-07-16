@@ -6,6 +6,24 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 58 — 2026-07-16
+
+**Done**
+- **Phase 44 complete** on `phase-44-line-clip` (5 commits incl. docs), merged to `main` — Cinderella-style line clipping, one of the two remaining queued phases.
+- `ObjectAttributes.lineClip` (0 infinite / 1 defining pair / 2 incident-point span; additive, no version bump) + pure `lineClipSpan(objects, line)` in `domain/construction/line_clip.dart` returning world endpoints (signature takes the objects iterable, not a `Construction` — the hit tester holds no construction). Structural incidence, visible + defined points only; per-kind on-carrier defining points (line/ray pairs, `RelativeLine.through`, `AngleBisectorLine.vertex`, `TangentLine.point`; perpendicular-bisector and two-line-bisector contribute none); ray mode 2 keeps the origin and clamps the far end at the outermost incident point strictly ahead; `Segment` ignores the attribute entirely.
+- Painter strokes exactly the span (halo + dash included; `lineClip == 0` guard skips the O(objects) scan) and `CanvasHitTester._distanceTo` clamps to the same span, so taps on the invisible carrier stretch miss. Carriers stay infinite for intersection math — pinned by test. Inspector "Extent" ∞/D/P `_PresetSelector` row over the clippable slice (lines + rays, not segments/points); D offered only while a `LineThroughTwoPoints` is selected.
+- 1129 tests green (36 new) + 24 goldens (new `clips` scene ×2 themes; the 22 existing verified byte-identical *before* regenerating), analyze clean. Web smoke on a fresh release build: **SMOKE PASS**, zero console errors (drive.js untouched). Ad-hoc Playwright: L + two taps, select, inspector P segment → far-carrier ink clears, span stays, saved document carries `lineClip: 2`, one Ctrl+Z restores the infinite carrier — **ADHOC PASS**.
+
+**Next**
+- Phase 43 (viewport rotation) is the last queued phase.
+- `main` is ahead of `origin/main` by this phase — push when convenient.
+
+**Open questions / gotchas**
+- Mode 1 is deliberately visibility-blind (hiding a defining point doesn't un-clip) while mode 2 counts visible points only — per PLAN, but the asymmetry may surprise; watch for feedback.
+- Band selection (`objectsInRect`) still never takes lines/rays, clipped or not — a mode-2 line *looks* like a segment but won't band-select. Not in the phase spec; revisit if reported.
+- A clipped line's span endpoint usually coincides with a visible point, so a tap at the clip edge selects the *point* (priority), exactly like tapping a segment end — the hit-tester test documents this.
+- The painter/hit-tester span scan is O(objects) per clipped line per frame/tap — fine at realistic sizes (Phase 40 precedent); revisit only if a document full of clipped lines drags.
+
 ## Session 57 — 2026-07-16
 
 **Done**
