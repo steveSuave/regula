@@ -1,0 +1,22 @@
+test/domain/construction/objects/locus_test.dart
+  s_578ec1ff5a0d2a::t_443389a1aef008 277-285
+  s_578ec1ff5a0d2a::t_1eeca4ef79c043 340-350
+lib/domain/construction/objects/locus.dart
+  s_578ec1ff5a0d2a::t_251c0f4a189db9 345-356,360-371,373,375-376,378,391,393-396
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "f31676d3e6e32f09fc27441c5e518ce74cf7fe6c",
+  "prompts": {},
+  "sessions": {
+    "s_578ec1ff5a0d2a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "616e4c5e-a68b-42a5-a1f5-af686de60e6f",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
