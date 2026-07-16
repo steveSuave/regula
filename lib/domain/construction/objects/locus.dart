@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import '../../math/vec2.dart';
 import '../geo_object.dart';
+import 'intersection_point.dart';
 import 'point_on_object.dart';
 
 /// The trace of [traced] as [driver] sweeps its host curve, sampled as a
@@ -33,9 +34,25 @@ import 'point_on_object.dart';
 /// become null entries — gaps in the drawn polyline; the locus itself is
 /// undefined only while the driver's host has no geometry to sweep.
 ///
-/// Perf note: one recompute costs [sampleCount] × chain-length member
-/// recomputes, paid every drag frame that touches an ancestor — fine for
-/// realistic chains; revisit with adaptive sampling if it ever isn't.
+/// The uniform sweep is post-processed for fidelity (Phase 39b — see
+/// [_trace] and [_walk]): circle-host runs are grouped cyclically so no
+/// stroke splits at the 0/2π wrap, defined↔undefined boundaries are
+/// bisected and given extra samples clustered toward them, and a
+/// boundary caused by a chain [IntersectionPoint]'s candidates
+/// coalescing (a tangency) is walked *through* by reversing the sweep
+/// and flipping that branch — the physical-linkage continuation, which
+/// closes figure-eight-style loci. Branch flips are sweep-internal:
+/// [IntersectionPoint.branchIndex] is restored (with [driver]'s
+/// parameter) before recompute returns, so drag and save semantics keep
+/// the deterministic persisted branch. Consequently [samples] is not
+/// aligned to the uniform grid and its length varies; [sampleCount] is
+/// the uniform resolution the post-processing starts from.
+///
+/// Perf note: one recompute costs roughly [sampleCount] × chain-length
+/// member recomputes — 2–3× that for loci with refined or flipped
+/// boundaries — paid every drag frame that touches an ancestor. Fine
+/// for realistic chains; revisit with adaptive sampling if it ever
+/// isn't.
 class Locus extends GeoLocus {
   Locus({
     required super.id,
@@ -103,20 +120,220 @@ class Locus extends GeoLocus {
       _samples = null;
       return;
     }
-    final saved = driver.parameter;
-    final samples = List<Vec2?>.filled(sampleCount, null);
-    for (var i = 0; i < sampleCount; i++) {
-      driver.parameter = parameters[i];
-      for (final object in _chain) {
-        object.recompute();
-      }
-      samples[i] = traced.position;
-    }
-    driver.parameter = saved;
+    final savedParameter = driver.parameter;
+    final savedBranches = <IntersectionPoint, int>{
+      for (final object in _chain)
+        if (object is IntersectionPoint) object: object.branchIndex,
+    };
+    final samples = _trace(parameters);
+    savedBranches.forEach((point, branch) => point.branchIndex = branch);
+    driver.parameter = savedParameter;
     for (final object in _chain) {
       object.recompute();
     }
     _samples = samples;
+  }
+
+  /// Sets the driver to [parameter], recomputes the chain in topological
+  /// order and returns the traced position (null while undefined) — one
+  /// step of the sweep. Total: safe to call at any parameter, in any
+  /// order, under any branch assignment.
+  Vec2? _evalAt(double parameter) {
+    driver.parameter = parameter;
+    for (final object in _chain) {
+      object.recompute();
+    }
+    return traced.position;
+  }
+
+  /// The full trace (Phase 39b). A uniform sweep first; when it is
+  /// entirely defined or entirely undefined the uniform list is returned
+  /// as-is — a gapless full-turn circle host stays exactly the list the
+  /// painter closes into a loop. Otherwise the defined runs (grouped
+  /// *cyclically* on circle hosts, so a run straddling the 0/2π wrap is
+  /// one stroke) each become a component via [_walk]; components are
+  /// separated by single nulls.
+  List<Vec2?> _trace(List<double> parameters) {
+    final positions = [for (final t in parameters) _evalAt(t)];
+    final anyDefined = positions.any((p) => p != null);
+    final anyGap = positions.contains(null);
+    if (!anyDefined || !anyGap) {
+      return positions;
+    }
+    final out = <Vec2?>[];
+    for (final run in _runs(parameters, positions)) {
+      if (out.isNotEmpty) {
+        out.add(null);
+      }
+      out.addAll(_walk(run));
+    }
+    return out;
+  }
+
+  /// Groups the defined uniform samples into runs. On a circle host the
+  /// index space is cyclic: iteration starts at a gap, so no run is ever
+  /// split by the array wrap, and the second part of a wrapped run gets
+  /// its parameters unwrapped by +2π to keep each run's parameter list
+  /// monotone (the host geometry is 2π-periodic, so evaluation agrees).
+  /// Every run ends in a gap parameter or, on line hosts, the sweep
+  /// window's edge (null — an open end, not a boundary to refine).
+  List<_Run> _runs(List<double> parameters, List<Vec2?> positions) {
+    final n = positions.length;
+    final cyclic = driver.curve is GeoCircle;
+    final first = cyclic ? positions.indexWhere((p) => p == null) : 0;
+    double parameterAt(int slot) {
+      final index = (first + slot) % n;
+      final unwrap = cyclic && first + slot >= n ? 2 * math.pi : 0.0;
+      return parameters[index] + unwrap;
+    }
+
+    final runs = <_Run>[];
+    List<double>? current;
+    double? leftGap;
+    for (var slot = 0; slot < n; slot++) {
+      if (positions[(first + slot) % n] != null) {
+        if (current == null) {
+          current = [];
+          leftGap = slot == 0 ? null : parameterAt(slot - 1);
+        }
+        current.add(parameterAt(slot));
+      } else if (current != null) {
+        runs.add(
+            _Run(current, leftGap: leftGap, rightGap: parameterAt(slot)));
+        current = null;
+      }
+    }
+    if (current != null) {
+      // A run touching the last slot: the window's right edge on a line
+      // host (open end); on a circle host the slot past it is the gap
+      // the cyclic iteration started at, one unwrapped turn up.
+      runs.add(_Run(current,
+          leftGap: leftGap, rightGap: cyclic ? parameterAt(n) : null));
+    }
+    return runs;
+  }
+
+  /// Traces one defined run into a polyline component.
+  ///
+  /// Gap-adjacent ends are refined by [_refineBoundary]: the boundary is
+  /// bisected and the run gains samples geometrically clustered toward
+  /// it — near a tangency the traced point moves like √ε per parameter
+  /// step, so the uniform grid alone visibly truncates the curve.
+  ///
+  /// When a boundary is a *tangency* — a chain [IntersectionPoint] whose
+  /// two candidates coalesced — the walk continues through it the way
+  /// the physical linkage would (the Cinderella behavior, done with real
+  /// arithmetic and scoped to this sweep): reverse direction and flip
+  /// that intersection's branch. The walk closes the component when the
+  /// branch assignment returns to the original at the starting end
+  /// (first sample repeated, so the polyline closes) and stops at open
+  /// ends and non-flip boundaries. Non-generic walks — an undefined
+  /// sample mid-segment under a flipped assignment, or more than
+  /// [_maxWalkSegments] segments — truncate to an open component:
+  /// never wrong ink, at worst less than ideal.
+  List<Vec2> _walk(_Run run) {
+    final left =
+        run.leftGap == null ? null : _refineBoundary(run.params.first, run.leftGap!);
+    final right = run.rightGap == null
+        ? null
+        : _refineBoundary(run.params.last, run.rightGap!);
+    final ascending = <double>[
+      ...?left?.ladder.reversed,
+      ...run.params,
+      ...?right?.ladder,
+    ];
+
+    // Start at an open end when there is one, so open curves traverse
+    // fully; with both ends flippable the start choice is arbitrary.
+    var direction = right?.flip == null && left?.flip != null ? -1 : 1;
+    final out = <Vec2>[];
+    final flipped = <IntersectionPoint>{};
+    for (var segment = 0; segment < _maxWalkSegments; segment++) {
+      final params =
+          direction > 0 ? ascending : ascending.reversed.toList();
+      for (final t in params) {
+        final p = _evalAt(t);
+        if (p == null) {
+          return out;
+        }
+        out.add(p);
+      }
+      final arrival = direction > 0 ? right : left;
+      final flip = arrival?.flip;
+      if (flip == null) {
+        return out;
+      }
+      flip.branchIndex = 1 - flip.branchIndex;
+      if (!flipped.remove(flip)) {
+        flipped.add(flip);
+      }
+      if (flipped.isEmpty) {
+        // Original assignment again, back at the starting end: closed.
+        out.add(out.first);
+        return out;
+      }
+      direction = -direction;
+    }
+    return out;
+  }
+
+  static const _maxWalkSegments = 8;
+  static const _boundaryBisections = 48;
+  static const _ladderSize = 6;
+
+  /// Locates the defined↔undefined boundary between [tIn] (defined) and
+  /// [tOut] (undefined) by bisection, and classifies it: when the first
+  /// undefined chain member just past the boundary is an
+  /// [IntersectionPoint] that has two candidates strictly *inside* the
+  /// run, the boundary is a tangency (two continuous real roots can only
+  /// vanish by coalescing) and [_Boundary.flip] names the intersection
+  /// to flip; anything else (a line∩line gone parallel, a derived member
+  /// undefined for its own reasons) is a genuine end. The two-candidate
+  /// probe deliberately sits half a grid step inside — at the boundary
+  /// itself the epsilon-tolerant intersection math reports a *tangent*
+  /// (one candidate), and the uniform grid can even land exactly on the
+  /// tangency, so probing at [tIn] or the bisected boundary misreads
+  /// coalescence as a genuine end.
+  /// [_Boundary.ladder] holds extra sample parameters from [tIn] toward
+  /// the boundary, geometrically clustered, boundary last.
+  _Boundary _refineBoundary(double tIn, double tOut) {
+    var lo = tIn, hi = tOut;
+    for (var i = 0; i < _boundaryBisections; i++) {
+      final mid = (lo + hi) / 2;
+      if (mid == lo || mid == hi) {
+        break;
+      }
+      if (_evalAt(mid) != null) {
+        lo = mid;
+      } else {
+        hi = mid;
+      }
+    }
+    // The culprit scan runs at [tOut] (the undefined uniform sample),
+    // not at the bisected `hi`: on the razor's edge past the boundary an
+    // intersection can linger epsilon-defined while a *downstream*
+    // member has already degenerated, misattributing the gap.
+    _evalAt(tOut);
+    GeoObject? culprit;
+    for (final object in _chain) {
+      if (!object.isDefined) {
+        culprit = object;
+        break;
+      }
+    }
+    IntersectionPoint? flip;
+    if (culprit is IntersectionPoint) {
+      _evalAt(tIn - (tOut - tIn) / 2);
+      if (culprit.candidateCount == 2) {
+        flip = culprit;
+      }
+    }
+    final ladder = <double>[
+      for (var k = 1; k < _ladderSize; k++)
+        tIn + (lo - tIn) * (1 - math.pow(2, -k)),
+      lo,
+    ];
+    return _Boundary(ladder, flip);
   }
 
   /// The parameter values one sweep visits, or null while the host has no
@@ -178,4 +395,26 @@ class Locus extends GeoLocus {
     visit(traced);
     return chain;
   }
+}
+
+/// One defined run of the uniform sweep: its sample parameters in
+/// monotone order, plus the adjacent undefined parameter on each side —
+/// null when the run ends at the sweep window's edge instead of a gap.
+class _Run {
+  _Run(this.params, {required this.leftGap, required this.rightGap});
+
+  final List<double> params;
+  final double? leftGap;
+  final double? rightGap;
+}
+
+/// A refined defined↔undefined boundary: extra sample [ladder]
+/// parameters clustered toward the bisected boundary (boundary last),
+/// and, when the boundary is a tangency, the chain intersection whose
+/// branch the linkage continuation flips to walk through it.
+class _Boundary {
+  _Boundary(this.ladder, this.flip);
+
+  final List<double> ladder;
+  final IntersectionPoint? flip;
 }

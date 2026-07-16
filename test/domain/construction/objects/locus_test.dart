@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
+import 'package:regula/domain/construction/objects/fixed_radius_circle.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
@@ -194,47 +195,120 @@ void main() {
       }
     });
 
-    test('traced undefined mid-sweep leaves null gaps', () {
-      // Driver sweeps the x-axis over [-100, 100] in steps of 5; traced
-      // is the perpendicular-through-driver ∩ circle(radius 10), defined
-      // only while |x| <= 10 — five samples, one contiguous run.
-      final a = FreePoint(id: 'a', position: Vec2.zero);
-      final b = FreePoint(id: 'b', position: const Vec2(1, 0));
-      final host = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
-      final driver = PointOnObject(id: 'drv', curve: host, parameter: 0);
-      final perpendicular =
-          PerpendicularLine(id: 'perp', through: driver, reference: host);
-      final rim = FreePoint(id: 'r', position: const Vec2(10, 0));
-      final circle = CircleCenterPoint(id: 'k', center: a, onCircle: rim);
-      final traced = IntersectionPoint(
-        id: 'tr',
-        curve1: perpendicular,
-        curve2: circle,
-        branchIndex: 0,
+    test(
+        'tangency-bounded run closes through the linkage continuation '
+        'into the full circle', () {
+      // Driver sweeps the x-axis over [-100, 100]; traced is the
+      // perpendicular-through-driver ∩ circle(radius 10), defined only
+      // while |x| <= 10 with both branches coalescing at x = ±10. The
+      // Phase 39b walk flips the branch at each tangency, so the locus
+      // is the whole circle — one closed component, no gaps.
+      final locus = _perpendicularCircleLocus(
+        center: 0,
+        halfSpan: 100,
+        sampleCount: 41,
       );
+      final samples = locus.samples!;
+      expect(samples, isNot(contains(null)),
+          reason: 'a single run walks into a single component');
+      final points = samples.cast<Vec2>();
+      expect(points.first, points.last, reason: 'closed loop');
+      for (final p in points) {
+        // 1e-6: the boundary samples sit in the intersection math's
+        // epsilon-tangent zone, ~1e-8 outside the exact circle.
+        expect(p.x * p.x + p.y * p.y, closeTo(100, 1e-6),
+            reason: 'every sample lies on the circle');
+      }
+      expect(points.any((p) => p.y > 5), isTrue,
+          reason: 'the flipped branch covers the upper half');
+      expect(points.any((p) => p.y < -5), isTrue,
+          reason: 'the original branch covers the lower half');
+      // Boundary refinement reaches the tangency points themselves.
+      expect(
+        points.any((p) => p.distanceTo(const Vec2(10, 0)) < 1e-6),
+        isTrue,
+        reason: 'right tangency sampled',
+      );
+      expect(
+        points.any((p) => p.distanceTo(const Vec2(-10, 0)) < 1e-6),
+        isTrue,
+        reason: 'left tangency sampled',
+      );
+      // The sweep restored the flipped branch.
+      expect(locus.traced, isA<IntersectionPoint>());
+      expect((locus.traced as IntersectionPoint).branchIndex, 0);
+      expect(locus.driver.parameter, 0);
+    });
+
+    test('a window edge stays open: the walk traces a U through the '
+        'tangency and stops', () {
+      // Window [0, 100] cuts the run at x = 0 (an edge, not a boundary):
+      // down one branch to the tangency at x = 30, flip, back on the
+      // other — an open curve with both endpoints on the window edge.
+      final locus = _perpendicularCircleLocus(
+        center: 50,
+        halfSpan: 50,
+        sampleCount: 21,
+        radius: 30,
+      );
+      final samples = locus.samples!;
+      expect(samples, isNot(contains(null)));
+      final points = samples.cast<Vec2>();
+      expect(points.first, isNot(points.last), reason: 'open curve');
+      expect(points.first.x, closeTo(0, 1e-9));
+      expect(points.last.x, closeTo(0, 1e-9));
+      expect(points.first.y, closeTo(-points.last.y, 1e-6),
+          reason: 'the two endpoints are the two branches at x = 0');
+      expect(
+        points.any((p) => p.distanceTo(const Vec2(30, 0)) < 1e-6),
+        isTrue,
+        reason: 'the turn-around is the tangency point',
+      );
+    });
+
+    test('a circle-host run straddling the wrap closes the figure-eight '
+        'in one component', () {
+      // The three-bar linkage: driver B on circle(O, 100), circle(B, 170)
+      // meets circle(C, 70) at D, traced E = midpoint(D, B). D exists
+      // while |BC| <= 240 — an arc straddling θ = 0, so the run wraps the
+      // sample array; the tangencies at both arc ends flip D's branch and
+      // the walk closes the full figure-eight.
+      final o = FreePoint(id: 'o', position: Vec2.zero);
+      final rim = FreePoint(id: 'r', position: const Vec2(100, 0));
+      final host = CircleCenterPoint(id: 'k', center: o, onCircle: rim);
+      final driver = PointOnObject(id: 'drv', curve: host, parameter: 0);
+      final bar = FixedRadiusCircle(id: 'b', center: driver, radius: 170);
+      final c = FreePoint(id: 'c', position: const Vec2(281, 0));
+      final anchor = FixedRadiusCircle(id: 'ca', center: c, radius: 70);
+      final d = IntersectionPoint(
+        id: 'd',
+        curve1: anchor,
+        curve2: bar,
+        branchIndex: 1,
+      );
+      final traced = Midpoint(id: 'tr', point1: d, point2: driver);
       final locus = Locus(
         id: 'loc',
         driver: driver,
         traced: traced,
-        sampleCount: 41,
-        center: 0,
-        halfSpan: 100,
+        sampleCount: 64,
       );
       final samples = locus.samples!;
-      final defined = [
-        for (var i = 0; i < samples.length; i++)
-          if (samples[i] != null) i,
-      ];
-      // x = -100 + 5i is within the circle for i in 18..22.
-      expect(defined, [18, 19, 20, 21, 22]);
-      for (final i in defined) {
-        final sample = samples[i]!;
-        expect(
-          sample.x * sample.x + sample.y * sample.y,
-          closeTo(100, 1e-9),
-          reason: 'sample $i lies on the circle',
-        );
+      expect(samples, isNot(contains(null)),
+          reason: 'one wrapped run, one component — no seam at 0/2π');
+      final points = samples.cast<Vec2>();
+      expect(points.first, points.last, reason: 'the eight closes');
+      // The walk covers both branches: roughly twice the defined uniform
+      // samples (plus ladders and the closing duplicate). Definedness is
+      // |BC| <= 240 analytically.
+      var uniformDefined = 0;
+      for (var i = 0; i < 64; i++) {
+        final b = host.circle!.pointAt(2 * math.pi * i / 64);
+        if (b.distanceTo(c.position) <= 240) uniformDefined++;
       }
+      expect(points.length, greaterThan((1.8 * uniformDefined).round()),
+          reason: 'both halves of the eight are traced');
+      expect(d.branchIndex, 1, reason: 'flips restored after the sweep');
     });
 
     test('undefined host makes the locus undefined, and it recovers', () {
@@ -290,6 +364,39 @@ void main() {
       );
     });
   });
+}
+
+/// Line-host tangency fixture: driver sweeps the x-axis, traced is the
+/// perpendicular-through-driver ∩ circle(center origin, [radius]) at
+/// branch 0 — defined while |x| <= radius, branches coalescing at ±radius.
+Locus _perpendicularCircleLocus({
+  required double center,
+  required double halfSpan,
+  required int sampleCount,
+  double radius = 10,
+}) {
+  final a = FreePoint(id: 'a', position: Vec2.zero);
+  final b = FreePoint(id: 'b', position: const Vec2(1, 0));
+  final host = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
+  final driver = PointOnObject(id: 'drv', curve: host, parameter: 0);
+  final perpendicular =
+      PerpendicularLine(id: 'perp', through: driver, reference: host);
+  final rim = FreePoint(id: 'r', position: Vec2(radius, 0));
+  final circle = CircleCenterPoint(id: 'k', center: a, onCircle: rim);
+  final traced = IntersectionPoint(
+    id: 'tr',
+    curve1: perpendicular,
+    curve2: circle,
+    branchIndex: 0,
+  );
+  return Locus(
+    id: 'loc',
+    driver: driver,
+    traced: traced,
+    sampleCount: sampleCount,
+    center: center,
+    halfSpan: halfSpan,
+  );
 }
 
 /// Circle-host fixture: host circle center (0,0) radius 2, driver on it,

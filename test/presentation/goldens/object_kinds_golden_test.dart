@@ -518,10 +518,11 @@ void main() {
     return construction;
   }
 
-  /// Phase 39 loci: a gap-bearing arch (the midpoint between the driver
-  /// and perpendicular-through-driver ∩ circle, traced while the driver
-  /// sweeps the x-axis — undefined beyond |x| = 4, and at half height so
-  /// it doesn't hide on the circle's rim) and a dashed closed loop
+  /// Phase 39 loci: a tangency-bounded trace (the midpoint between the
+  /// driver and perpendicular-through-driver ∩ circle, at half height so
+  /// it doesn't hide on the circle's rim) — since Phase 39b the linkage
+  /// continuation flips the intersection branch at |x| = 4 and closes it
+  /// into a full half-height ellipse — and a dashed closed loop
   /// (circle-host midpoint trace at half scale).
   Construction locusScene() {
     final construction = Construction();
