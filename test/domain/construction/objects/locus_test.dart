@@ -274,10 +274,15 @@ void main() {
       // The tangent-and-bisector construction from the user document,
       // scaled down: driver D on line AB, F = circle(A,|AB|) ∩ Thales
       // circle over AD (exists while |AD| >= |AB|), G = the D-bisector
-      // of ∠FDA re-crossing the Thales circle. G's limit at the tangency
-      // is A itself; the branch-fixed trace per run is a stroke plus a
-      // dive toward A. The flips at the tangencies lead to sheets that
-      // dragging can never reach — they must be trimmed.
+      // of ∠FDA re-crossing the Thales circle. At the tangency |AD| =
+      // |AB| the bisector's limit direction is 45° to AB, so G converges
+      // to (±r/2, ±r/2) — a genuine finite limit the refined dive must
+      // reach. Inside the intersection math's tolerance zone, though,
+      // the fabricated tangent F ≈ D collapses the bisector's vertex
+      // rays and throws G to A — the Phase 39d phantom diagonal, which
+      // must never be sampled. The flips at the tangencies lead to
+      // sheets that dragging can never reach — they must be trimmed
+      // (Phase 39c).
       final a = FreePoint(id: 'a', position: Vec2.zero);
       final b = FreePoint(id: 'b', position: const Vec2(3, 0));
       final host = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
@@ -332,8 +337,17 @@ void main() {
         componentSigns.add(signs.single);
         expect(
           component.map((p) => p.norm).reduce(math.min),
-          lessThan(0.1),
-          reason: "the refined dive reaches G's tangency limit at A",
+          greaterThan(1.0),
+          reason: 'no sample near A — a sample there means the ladder '
+              'entered the tolerance zone past the true tangency',
+        );
+      }
+      for (final (i, component) in components.indexed) {
+        final limit = Vec2(i == 0 ? -1.5 : 1.5, componentSigns[i] * 1.5);
+        expect(
+          component.map((p) => p.distanceTo(limit)).reduce(math.min),
+          lessThan(0.01),
+          reason: "the refined dive converges to G's true tangency limit",
         );
       }
       expect(componentSigns.toSet(), hasLength(2),
