@@ -342,23 +342,40 @@ class Locus extends GeoLocus {
   /// (one candidate), and the uniform grid can even land exactly on the
   /// tangency, so probing at [tIn] or the bisected boundary misreads
   /// coalescence as a genuine end.
+  ///
+  /// At a tangency the boundary refined toward is the edge of the
+  /// *two-candidate* region — the true discriminant-zero point — not the
+  /// defined↔undefined edge. Between the two lies the intersection
+  /// math's epsilon-tolerance zone, where a *fabricated* tangent
+  /// position stands in for two roots that have already gone complex;
+  /// on the coalescing point itself that stand-in is harmless (it is
+  /// the coalescence limit), but a *downstream* member can amplify it
+  /// arbitrarily — in the tangent-and-bisector document the bisector's
+  /// vertex rays degenerate there and the traced point shoots off to a
+  /// phantom position, drawn as a long diagonal spike (Phase 39d, user
+  /// feedback on 39c).
   /// [_Boundary.ladder] holds extra sample parameters from [tIn] toward
   /// the boundary, geometrically clustered, boundary last.
   _Boundary _refineBoundary(double tIn, double tOut) {
-    var lo = tIn, hi = tOut;
-    for (var i = 0; i < _boundaryBisections; i++) {
-      final mid = (lo + hi) / 2;
-      if (mid == lo || mid == hi) {
-        break;
+    double bisect(bool Function(Vec2? position) inside) {
+      var lo = tIn, hi = tOut;
+      for (var i = 0; i < _boundaryBisections; i++) {
+        final mid = (lo + hi) / 2;
+        if (mid == lo || mid == hi) {
+          break;
+        }
+        if (inside(_evalAt(mid))) {
+          lo = mid;
+        } else {
+          hi = mid;
+        }
       }
-      if (_evalAt(mid) != null) {
-        lo = mid;
-      } else {
-        hi = mid;
-      }
+      return lo;
     }
+
+    var lo = bisect((position) => position != null);
     // The culprit scan runs at [tOut] (the undefined uniform sample),
-    // not at the bisected `hi`: on the razor's edge past the boundary an
+    // not at the bisected boundary: on the razor's edge past it an
     // intersection can linger epsilon-defined while a *downstream*
     // member has already degenerated, misattributing the gap.
     _evalAt(tOut);
@@ -371,9 +388,12 @@ class Locus extends GeoLocus {
     }
     IntersectionPoint? flip;
     if (culprit is IntersectionPoint) {
+      final coalescing = culprit;
       _evalAt(tIn - (tOut - tIn) / 2);
-      if (culprit.candidateCount == 2) {
-        flip = culprit;
+      if (coalescing.candidateCount == 2) {
+        flip = coalescing;
+        lo = bisect((position) =>
+            position != null && coalescing.candidateCount == 2);
       }
     }
     final ladder = <double>[

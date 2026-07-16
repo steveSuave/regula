@@ -1,0 +1,106 @@
+import 'dart:convert';
+import 'dart:io';
+import 'dart:math' as math;
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/application/persistence/construction_codec.dart';
+import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/locus.dart';
+import 'package:regula/domain/math/vec2.dart';
+
+/// Regression tests over the two user documents that drove Phases 39b–39d,
+/// kept verbatim in `test/fixtures/`. They load through the real codec so
+/// the whole path — decode, chain construction, sweep, walk, boundary
+/// refinement — is exercised on real-world geometry, not scaled fixtures.
+void main() {
+  Locus loadLocus(String fixture, {required List<FreePoint> freeOut}) {
+    final json = jsonDecode(File('test/fixtures/$fixture').readAsStringSync())
+        as Map<String, dynamic>;
+    final construction = decodeDocument(json).construction;
+    freeOut.addAll(construction.objects.whereType<FreePoint>());
+    return construction.objects.whereType<Locus>().single;
+  }
+
+  List<List<Vec2>> components(Locus locus) {
+    final out = <List<Vec2>>[[]];
+    for (final s in locus.samples!) {
+      if (s == null) {
+        out.add([]);
+      } else {
+        out.last.add(s);
+      }
+    }
+    return out;
+  }
+
+  test(
+      'locus-miss.json (tangent-and-bisector): two single-sided strokes, '
+      'dives converge to the true tangency limits, never to A or B', () {
+    // G = bisector of ∠FDA re-crossing the Thales circle over AD, F the
+    // tangency point of the tangent from D to circle(A, |AB|). Failure
+    // history: 39b/39c drew mirror sheets from leaked branch flips; 39c
+    // still sampled the intersection tolerance zone past the true
+    // tangency, where the fabricated tangent F ≈ D collapses the
+    // bisector and throws G onto A (one run) and B (the other) — long
+    // phantom diagonals from each stroke's end down to the line AB.
+    final free = <FreePoint>[];
+    final locus = loadLocus('locus-miss.json', freeOut: free);
+    final a = free.singleWhere((p) => p.attributes.name == 'A').position;
+    final b = free.singleWhere((p) => p.attributes.name == 'B').position;
+
+    final comps = components(locus);
+    expect(comps, hasLength(2),
+        reason: 'one run each side of the |AD| < |AB| gap');
+
+    // Analytic limit of G at the tangency |AD| = |AB|: the bisector's
+    // limit direction is 45° to AB, so G → A + (AD̂ ± perp) · |AB| / 2,
+    // with D at the tangency parameter on each side of A.
+    final r = (b - a).norm;
+    final dir = (b - a) / r;
+    final perp = Vec2(-dir.y, dir.x);
+    Vec2 limit(double side, double sheet) =>
+        a + (dir * side + perp * sheet) * (r / 2);
+
+    for (final (i, comp) in comps.indexed) {
+      // Sweep ascends from below A: component 0 meets the tangency on
+      // the far side of A from B, component 1 on the B side.
+      final side = i == 0 ? -1.0 : 1.0;
+      final sides = comp
+          .map((p) => (p - a).cross(dir).sign)
+          .where((s) => s != 0)
+          .toSet();
+      expect(sides, hasLength(1),
+          reason: 'each stroke stays on one side of line AB — no mirror '
+              'sheet from a leaked or dangling branch flip');
+      final sheet = -sides.single;
+      expect(
+        comp.map((p) => p.distanceTo(limit(side, sheet))).reduce(math.min),
+        lessThan(0.5),
+        reason: "the refined dive converges to G's true tangency limit",
+      );
+      for (final anchor in [a, b]) {
+        expect(
+          comp.map((p) => p.distanceTo(anchor)).reduce(math.min),
+          greaterThan(30),
+          reason: 'no sample near A or B — a sample there is the '
+              'tolerance-zone phantom (the Phase 39d diagonal)',
+        );
+      }
+    }
+  });
+
+  test(
+      'locus-miss-2.json (twin tangent points): one closed figure-eight, '
+      'no gap and no dropped half', () {
+    // Traced is itself the coalescing intersection; the walk must flip
+    // through both tangencies and close. Failure history: pre-39b the
+    // sweep drew only the reachable half of the eight, with a hole at
+    // the wrap of the circle-host parameter.
+    final locus = loadLocus('locus-miss-2.json', freeOut: <FreePoint>[]);
+    expect(locus.samples, isNot(contains(null)),
+        reason: 'a single closed component — no hole');
+    final points = locus.samples!.cast<Vec2>();
+    expect(points.first, points.last, reason: 'the walk closes the eight');
+    expect(points.length, greaterThan(50));
+  });
+}
