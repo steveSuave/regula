@@ -8,7 +8,7 @@ import '../../domain/commands/change_attributes_command.dart';
 import '../../domain/construction/geo_object.dart';
 import '../../domain/construction/object_attributes.dart';
 import '../../domain/construction/object_naming.dart';
-import '../../domain/construction/objects/sector.dart';
+import '../../domain/construction/objects/arc.dart';
 import '../../domain/construction/objects/segment.dart';
 import 'object_kind_label.dart';
 
@@ -77,10 +77,16 @@ class AttributesInspector extends ConsumerWidget {
       for (final object in objects)
         if (object is GeoAngle) object,
     ];
-    // The kinds the painter can fill: sectors and angle markers.
+    // The kinds the painter can fill (Phase 37): angle markers, polygons,
+    // and circle-carrier kinds — sectors as pie wedges, full circles as
+    // discs. Arcs excluded: their fill shape is ambiguous, the painter
+    // skips them.
     final fillables = [
       for (final object in objects)
-        if (object is GeoAngle || object is Sector) object,
+        if (object is GeoAngle ||
+            object is GeoPolygon ||
+            (object is GeoCircle && object is! Arc))
+          object,
     ];
     // The kinds with a measurable value (Phase 35): segment lengths and
     // angle degrees.

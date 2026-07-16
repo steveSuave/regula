@@ -22,6 +22,7 @@ import 'package:regula/domain/construction/objects/orthocenter.dart';
 import 'package:regula/domain/construction/objects/parallel_line.dart';
 import 'package:regula/domain/construction/objects/perpendicular_line.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
+import 'package:regula/domain/construction/objects/polygon.dart';
 import 'package:regula/domain/construction/objects/ray.dart';
 import 'package:regula/domain/construction/objects/sector.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
@@ -357,6 +358,52 @@ void main() {
     return construction;
   }
 
+  /// Phase 37 polygons and disc fill: a filled pentagon (the tool's
+  /// default 0.25 alpha), a dashed unfilled triangle outline, and a full
+  /// circle filled as a disc.
+  Construction polygonsScene() {
+    final construction = Construction();
+    final a = FreePoint(id: 'a', position: Vec2.zero);
+    final b = FreePoint(id: 'b', position: const Vec2(5, 0));
+    final c = FreePoint(id: 'c', position: const Vec2(6, 4));
+    final d = FreePoint(id: 'd', position: const Vec2(2, 5));
+    final e = FreePoint(id: 'e', position: const Vec2(-2, 3));
+    final p = FreePoint(id: 'p', position: const Vec2(9, 0));
+    final q = FreePoint(id: 'q', position: const Vec2(12, 2));
+    final r = FreePoint(id: 'r', position: const Vec2(9, 4));
+    final center = FreePoint(id: 'k', position: const Vec2(16, 2));
+    final rim = FreePoint(id: 'rim', position: const Vec2(18, 2));
+    construction
+      ..add(a)
+      ..add(b)
+      ..add(c)
+      ..add(d)
+      ..add(e)
+      ..add(p)
+      ..add(q)
+      ..add(r)
+      ..add(center)
+      ..add(rim)
+      ..add(Polygon(
+        id: 'pent',
+        vertices: [a, b, c, d, e],
+        attributes: const ObjectAttributes(fillAlpha: 0.25),
+      ))
+      ..add(Polygon(
+        id: 'tri',
+        vertices: [p, q, r],
+        attributes:
+            const ObjectAttributes(dashPeriod: 8, colorArgb: 0xFF2E7D32),
+      ))
+      ..add(CircleCenterPoint(
+        id: 'disc',
+        center: center,
+        onCircle: rim,
+        attributes: const ObjectAttributes(fillAlpha: 0.25),
+      ));
+    return construction;
+  }
+
   /// Phase 35 show-value labels: a named measured segment ('c = 5.00'),
   /// a value-only segment ('4.00' — no name part), a name-only segment
   /// beside them for contrast, and a measured right angle ('90.0°').
@@ -421,6 +468,7 @@ void main() {
     'angles': anglesScene,
     'markers': markerStylesScene,
     'measures': measuresScene,
+    'polygons': polygonsScene,
   };
 
   for (final MapEntry(key: themeName, value: theme) in themes.entries) {
