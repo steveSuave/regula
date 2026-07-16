@@ -21,9 +21,9 @@ import '../../domain/math/vec2.dart';
 /// Selection order is (priority, distance), lexicographically: any point
 /// within the threshold beats any circle, which beats any line — small,
 /// precise targets must not be shadowed by the big shapes drawn through
-/// them (PLAN: points > arcs/circles > segments/rays/lines > angles >
-/// measurements > polygons). Ties go to the object added latest, i.e.
-/// the one drawn on top.
+/// them (PLAN: points > arcs/circles > segments/rays/lines/loci >
+/// angles > measurements > polygons). Ties go to the object added
+/// latest, i.e. the one drawn on top.
 ///
 /// Undefined and invisible objects are never hit — unless the caller
 /// passes `includeHidden` (the Show/Hide tool, which renders hidden
@@ -85,6 +85,7 @@ class CanvasHitTester {
         GeoPoint() => 0,
         GeoCircle() => 1,
         GeoLine() => 2,
+        GeoLocus() => 2, // a locus is picked like the line it draws as
         GeoAngle() => 3,
         GeoMeasurement() => 4,
         // Lowest: a polygon's interior hits at distance 0, so anything
@@ -156,7 +157,15 @@ class CanvasHitTester {
         // A measurement is its text, which is screen-sized like an angle
         // marker; the anchor stands in for it (cf. GeoAngle above).
         GeoMeasurement() => within(object.anchor!),
+        // Every recorded sample must be inside; an all-gap locus (no
+        // drawn ink) can never be band-selected.
+        GeoLocus() => _locusContained(object, within),
       };
+
+  bool _locusContained(GeoLocus locus, bool Function(Vec2) within) {
+    final points = locus.samples!.whereType<Vec2>();
+    return points.isNotEmpty && points.every(within);
+  }
 
   /// The points bounding a carrier-circle branch: the [seeds] (endpoints,
   /// and for a sector its center) plus each cardinal-direction extreme of
@@ -206,7 +215,25 @@ class CanvasHitTester {
         // handler additionally checks the text's labelScreenRect first,
         // so text dragged far from the anchor stays tappable.
         GeoMeasurement() => object.anchor!.distanceTo(point),
+        // A locus is its drawn polyline: the nearest of the consecutive
+        // sample segments (gaps break the chain; isolated samples and an
+        // all-gap locus are unreachable, matching the painter's ink).
+        GeoLocus() => _locusDistance(object, point),
       };
+
+  double _locusDistance(GeoLocus locus, Vec2 p) {
+    final samples = locus.samples!;
+    var best = double.infinity;
+    for (var i = 0; i + 1 < samples.length; i++) {
+      final a = samples[i];
+      final b = samples[i + 1];
+      if (a == null || b == null) {
+        continue;
+      }
+      best = math.min(best, _clampedDistance(a, b, p, 1));
+    }
+    return best;
+  }
 
   /// Distance to an angle's marker wedge: the arc at the marker radius
   /// clamped to the sweep, plus the two straight edges — the

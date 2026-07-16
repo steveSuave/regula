@@ -19,9 +19,11 @@ import 'package:regula/domain/construction/objects/distance_measurement.dart';
 import 'package:regula/domain/construction/objects/fixed_radius_circle.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
+import 'package:regula/domain/construction/objects/locus.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
 import 'package:regula/domain/construction/objects/parallel_line.dart';
 import 'package:regula/domain/construction/objects/perpendicular_bisector_line.dart';
+import 'package:regula/domain/construction/objects/point_on_object.dart';
 import 'package:regula/domain/construction/objects/polygon.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/construction/objects/tangent_line.dart';
@@ -34,6 +36,7 @@ import 'package:regula/domain/tools/equilateral_triangle_macro_tool.dart';
 import 'package:regula/domain/tools/fixed_length_segment_tool.dart';
 import 'package:regula/domain/tools/fixed_radius_circle_tool.dart';
 import 'package:regula/domain/tools/intersection_tool.dart';
+import 'package:regula/domain/tools/locus_tool.dart';
 import 'package:regula/domain/tools/point_and_line_tool.dart';
 import 'package:regula/domain/tools/point_tool.dart';
 import 'package:regula/domain/tools/polygon_tool.dart';
@@ -187,6 +190,41 @@ void main() {
         container.read(constructionProvider).construction.objects.toList();
     expect(objects.last, isA<AreaMeasurement>());
     expect((objects.last as AreaMeasurement).value, 6);
+  });
+
+  testWidgets('⇧L activates the locus tool and traces driver → traced', (
+    tester,
+  ) async {
+    await pumpEditor(tester);
+    final stack = container.read(commandStackProvider.notifier);
+    final center = FreePoint(id: 'o', position: const Vec2(0, 0));
+    final rim = FreePoint(id: 'r', position: const Vec2(2, 0));
+    final host = CircleCenterPoint(id: 'k', center: center, onCircle: rim);
+    final driver = PointOnObject(id: 'drv', curve: host, parameter: 0);
+    final p = FreePoint(id: 'p', position: const Vec2(4, 0));
+    final traced = Midpoint(id: 'tr', point1: driver, point2: p);
+    for (final object in [center, rim, host, driver, p, traced]) {
+      stack.execute(AddObjectCommand(object));
+    }
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyL);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    expect(activeTool(), isA<LocusTool>());
+
+    final tools = container.read(toolProvider.notifier);
+    tools.handleInput(ToolInput(const Vec2(2, 0), hit: driver));
+    tools.handleInput(ToolInput(const Vec2(3, 0), hit: traced));
+    final objects =
+        container.read(constructionProvider).construction.objects.toList();
+    expect(objects.last, isA<Locus>());
+    final locus = objects.last as Locus;
+    expect(locus.driver, same(driver));
+    expect(locus.samples!.whereType<Vec2>(), hasLength(128));
+    expect(locus.attributes.name, isNotEmpty,
+        reason: 'auto-named from the lowercase pool');
+    expect(locus.attributes.labelVisible, isFalse,
+        reason: 'curve convention: named, label hidden until revealed');
   });
 
   testWidgets('⇧C asks for the radius; OK builds a circle by radius end '

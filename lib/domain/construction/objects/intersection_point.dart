@@ -35,7 +35,8 @@ class IntersectionPoint extends GeoPoint {
     if (branchIndex < 0 || branchIndex > 1) {
       throw ArgumentError.value(branchIndex, 'branchIndex', 'must be 0 or 1');
     }
-    if (curve1 is GeoPoint || curve2 is GeoPoint) {
+    if ((curve1 is! GeoLine && curve1 is! GeoCircle) ||
+        (curve2 is! GeoLine && curve2 is! GeoCircle)) {
       throw ArgumentError('IntersectionPoint parents must be curves');
     }
     if (identical(curve1, curve2)) {
@@ -98,6 +99,7 @@ class IntersectionPoint extends GeoPoint {
       case ((GeoAngle(), _) || (_, GeoAngle())):
       case ((GeoPolygon(), _) || (_, GeoPolygon())):
       case ((GeoMeasurement(), _) || (_, GeoMeasurement())):
+      case ((GeoLocus(), _) || (_, GeoLocus())):
         throw StateError('IntersectionPoint parents must be curves');
     }
   }
