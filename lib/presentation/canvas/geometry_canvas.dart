@@ -524,6 +524,8 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
         snapThreshold: threshold,
         objects: construction.objects,
         gridSnapStep: _gridSnapStep(viewport),
+        viewExtent:
+            viewport.screenToWorldLength(context.size?.width ?? 0),
       );
       if (tool is DeleteTool) {
         // Deleting cascades, and the cascade warning is a dialog — a
