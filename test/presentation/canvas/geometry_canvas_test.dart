@@ -1898,6 +1898,21 @@ void main() {
     await tester.tapAt(origin + const Offset(150, 100));
     await tester.pump();
     expect(container.read(selectionProvider), {'d'});
+
+    // Dragging the text rides the generic label drag: one
+    // ChangeAttributesCommand, one undo restores the offset. The 40 px
+    // move beats the recognizer's pan slop.
+    final drag = await tester.startGesture(origin + const Offset(160, 68));
+    await drag.moveTo(origin + const Offset(160, 108));
+    await tester.pump();
+    await drag.up();
+    await tester.pump();
+    expect(distance.attributes.labelDy, 2,
+        reason: '-38 start offset + 40 px drag down');
+
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(distance.attributes.labelDy, -38);
   });
 
   testWidgets('a label drag clamps to the max offset radius',
