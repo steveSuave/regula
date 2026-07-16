@@ -1,0 +1,20 @@
+test/presentation/canvas/geometry_canvas_test.dart
+  s_8f6fc585096d94::t_c742861ec253b6 1901-1902,1905,1907-1909,1912-1915
+  s_8f6fc585096d94::t_2623e3d0713728 1903-1904,1906,1910-1911
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "29dcc760c9a27fbe975ef0731f1bc231a4fda734",
+  "prompts": {},
+  "sessions": {
+    "s_8f6fc585096d94": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "47327c16-6032-4a97-933f-915de9b77174",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
