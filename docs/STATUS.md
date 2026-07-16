@@ -6,6 +6,26 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 53 — 2026-07-16
+
+**Done**
+- **Phase 38 complete** on `phase-38-measurements` (6 commits incl. docs), merged to `main` — distance + area measurements, the sixth sealed kind and the seventh (Measure) toolbar group.
+- `polygonSignedArea` (shoelace, positive CCW; |shoelace| for self-intersecting loops, bowtie pinned) in new `domain/math/polygon_math.dart`; `GeoMeasurement` sealed kind (`value` + `anchor`, undefined with the parents); `DistanceMeasurement` (|ab|, midpoint anchor) and `AreaMeasurement` (constructor-enforced `GeoPolygon || GeoCircle` subject — ill-typed saves normalize to `FormatException` via the decode loop; |shoelace| / πr², vertex-average / center anchor).
+- All kind switches swept (15 compiler-surfaced sites): measurements get hit priority 4 (polygons drop to 5, anchor distance + band-by-anchor), painter draws nothing — the text rides `labelText`, which now always composes a value part for measurements (`a = 5.00` named, bare `5.00` otherwise; `AreaMeasurement` through `formatArea`); naming joins the lowercase pool but **keeps `labelVisible: true`** (unlike lines/circles/polygons — the text is the object); tree group "Measurements"; kind labels Distance/Area; codec entries with empty params + `any(0)` subject.
+- Tools: distance = `TwoPointTool` + `buildDistance` tear-off (`D`; Points catch-all excludes it), `AreaTool` = dedicated stateless one-tap class consulting `hit`/`extraHits` for the topmost polygon/circle, never the point ladder (`⇧D`). Measure flyout (icon `straighten`) after Macros. The canvas tap handler checks measurement `labelScreenRect`s before geometry (label-drag precedent), so text dragged off its anchor stays tappable; the text drag itself rides the generic label drag unchanged.
+- 1058 tests green (54 new) + 20 goldens (new `measurements` scene ×2 themes; the 18 existing verified byte-identical *before* regenerating), analyze clean. Web smoke on a fresh release build: **SMOKE PASS**, zero console errors, drive.js untouched (14 detected icons; the ≥10 check absorbed the new group). Ad-hoc Playwright: `D` + two taps and `⇧D` inside an `X V` polygon render text ink and save `DistanceMeasurement` + `AreaMeasurement` (area subject = the polygon; auto-names `A B a C D E b c` — shared lowercase pool, labels shown), three Ctrl+Z empty.
+- Session 44's re-measure note resolved: a new widget test pins wide chrome at the exact 980-px floor (leading tree icon hit-testable with the Measure group aboard); the compact strip test re-counted to seven groups.
+
+**Next**
+- Phase 39 (locus) closes the 37–39 queue; Phases 43 (viewport rotation) and 44 (line clipping) can still slot anywhere.
+- `main` is ahead of `origin/main` by this phase — push when convenient.
+
+**Open questions / gotchas**
+- An `AreaMeasurement` over an `Arc`/`Sector` subject passes the `GeoCircle` constructor test and reports the full **carrier-disc** πr² — and `AreaTool` will consume a tapped arc/sector. Documented at the class; if it reads as a bug in practice, exclude arcs at the tool (the `fillables` `!Arc` precedent).
+- The measurement text-rect promotion runs only in the no-tool selection path of `_handleTap`; tool taps (incl. `DeleteTool`) see measurements by anchor distance only — deleting a far-dragged text needs a tap at its anchor or tree selection.
+- The measurement label-drag canvas test needed a 40-px move: 30 px sits under the scale recognizer's ~36-px pan slop (the older label test's 42-px diagonal cleared it silently). Future canvas drag tests should budget ≥ 40 px.
+- drive.js survived untouched this time, but the Measure group shifted the whole wide cluster left another 48 px — the next app-bar/toolbar icon will re-roll the popup-side dice again (standing Session 43/50 gotcha).
+
 ## Session 52 — 2026-07-16
 
 **Done**

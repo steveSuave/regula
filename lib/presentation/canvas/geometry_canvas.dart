@@ -537,13 +537,31 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
       ref.read(toolProvider.notifier).handleInput(input);
       return;
     }
+    // A measurement's body is its text, which is screen-sized and can be
+    // dragged far from the world anchor the hit tester measures to — so
+    // its label rect is checked before geometry, exactly like the label
+    // drag in _panStart. Reverse insertion order picks the topmost of
+    // overlapping texts. Other kinds keep label taps inert: their label
+    // is a caption, not the object.
+    var target = hit;
+    for (final object in construction.objects.toList().reversed) {
+      if (object is! GeoMeasurement) {
+        continue;
+      }
+      final rect = labelScreenRect(object, viewport);
+      if (rect != null &&
+          rect.inflate(GeometryCanvas.labelGrabSlackPx).contains(screen)) {
+        target = object;
+        break;
+      }
+    }
     final selection = ref.read(selectionProvider.notifier);
-    if (hit == null) {
+    if (target == null) {
       selection.clear();
     } else if (HardwareKeyboard.instance.isShiftPressed) {
-      selection.toggle(hit.id);
+      selection.toggle(target.id);
     } else {
-      selection.select(hit.id);
+      selection.select(target.id);
     }
   }
 }

@@ -18,7 +18,8 @@ import '../../domain/math/vec2.dart';
 /// - circles: the top of the rim; arcs and sectors: the middle of the
 ///   drawn branch;
 /// - polygons: the vertex average (inside for convex regions, stable
-///   under drags either way).
+///   under drags either way);
+/// - measurements: their anchor — the label *is* the object.
 ///
 /// Only call on defined objects — the force-unwraps mirror the painter's,
 /// which skips undefined objects before asking for an anchor.
@@ -35,4 +36,5 @@ Vec2 labelAnchor(GeoObject object) => switch (object) {
       GeoPolygon() => object.polygonVertices!
               .reduce((sum, vertex) => sum + vertex) /
           object.polygonVertices!.length.toDouble(),
+      GeoMeasurement() => object.anchor!,
     };

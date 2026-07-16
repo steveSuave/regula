@@ -1,7 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/application/providers/viewport_provider.dart';
 import 'package:regula/domain/construction/object_attributes.dart';
+import 'package:regula/domain/construction/objects/area_measurement.dart';
+import 'package:regula/domain/construction/objects/distance_measurement.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/polygon.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/construction/objects/vertex_angle.dart';
 import 'package:regula/domain/math/vec2.dart';
@@ -82,6 +85,43 @@ void main() {
         'A',
       );
       expect(labelText(point(const ObjectAttributes(showValue: true))), isNull);
+    });
+
+    test('a measurement always has a value part, showValue or not', () {
+      // The same 3–4–5 endpoints as the segment fixture: value '5.00'.
+      DistanceMeasurement distance(ObjectAttributes attributes) =>
+          DistanceMeasurement(
+            id: 'd',
+            point1: FreePoint(id: 'a', position: const Vec2(0, 0)),
+            point2: FreePoint(id: 'b', position: const Vec2(3, 4)),
+            attributes: attributes,
+          );
+      expect(labelText(distance(const ObjectAttributes())), '5.00');
+      expect(
+        labelText(distance(const ObjectAttributes(name: 'a'))),
+        'a = 5.00',
+      );
+      expect(
+        labelText(
+          distance(const ObjectAttributes(name: 'a', labelVisible: false)),
+        ),
+        '5.00',
+        reason: 'labelVisible off hides only the name part',
+      );
+    });
+
+    test('an area measurement formats through formatArea', () {
+      final square = Polygon(
+        id: 'p',
+        vertices: [
+          FreePoint(id: 'a', position: const Vec2(0, 0)),
+          FreePoint(id: 'b', position: const Vec2(4, 0)),
+          FreePoint(id: 'c', position: const Vec2(4, 3)),
+          FreePoint(id: 'd', position: const Vec2(0, 3)),
+        ],
+      );
+      final area = AreaMeasurement(id: 'ar', subject: square);
+      expect(labelText(area), '12.00');
     });
   });
 

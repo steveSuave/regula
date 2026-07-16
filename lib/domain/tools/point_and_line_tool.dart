@@ -59,7 +59,7 @@ class PointAndLineTool implements ToolInputPreview {
       case final GeoLine hit:
         if (_line != null) return const ToolIgnored();
         _line = hit;
-      case GeoCircle() || GeoAngle() || GeoPolygon():
+      case GeoCircle() || GeoAngle() || GeoPolygon() || GeoMeasurement():
         return const ToolIgnored();
       case null:
         if (_point != null) return const ToolIgnored();

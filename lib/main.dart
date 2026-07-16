@@ -29,6 +29,7 @@ import 'domain/math/vec2.dart';
 import 'domain/tools/angle_bisector_tool.dart';
 import 'domain/tools/angle_by_size_tool.dart';
 import 'domain/tools/angle_tool.dart';
+import 'domain/tools/area_tool.dart';
 import 'domain/tools/delete_tool.dart';
 import 'domain/tools/equilateral_triangle_macro_tool.dart';
 import 'domain/tools/fixed_length_segment_tool.dart';
@@ -593,6 +594,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _activateFixedRadiusCircleTool();
       case AppAction.fixedLengthSegmentTool:
         _activateFixedLengthSegmentTool();
+      case AppAction.distanceTool:
+        tools.activate(TwoPointTool(newId: newObjectId, build: buildDistance));
+      case AppAction.areaTool:
+        tools.activate(AreaTool(newId: newObjectId));
       case AppAction.compassTool:
         tools.activate(
           ThreePointTool(newId: newObjectId, build: buildCompassCircle),

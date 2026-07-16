@@ -1,0 +1,121 @@
+import 'dart:math' as math;
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/domain/construction/objects/area_measurement.dart';
+import 'package:regula/domain/construction/objects/circle_center_point.dart';
+import 'package:regula/domain/construction/objects/fixed_radius_circle.dart';
+import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/intersection_point.dart';
+import 'package:regula/domain/construction/objects/line_through_two_points.dart';
+import 'package:regula/domain/construction/objects/polygon.dart';
+import 'package:regula/domain/construction/objects/segment.dart';
+import 'package:regula/domain/construction/objects/vertex_angle.dart';
+import 'package:regula/domain/math/vec2.dart';
+
+void main() {
+  group('AreaMeasurement', () {
+    test('polygon subject: |shoelace| area, vertex-average anchor', () {
+      final a = FreePoint(id: 'a', position: const Vec2(0, 0));
+      final b = FreePoint(id: 'b', position: const Vec2(4, 0));
+      final c = FreePoint(id: 'c', position: const Vec2(4, 3));
+      final d = FreePoint(id: 'd', position: const Vec2(0, 3));
+      final polygon = Polygon(id: 'p', vertices: [a, b, c, d]);
+      final area = AreaMeasurement(id: 'ar', subject: polygon);
+      expect(area.isDefined, isTrue);
+      expect(area.value, 12);
+      expect(area.anchor, const Vec2(2, 1.5));
+      expect(area.parents, [polygon]);
+    });
+
+    test('clockwise loop reports the same positive area', () {
+      final a = FreePoint(id: 'a', position: const Vec2(0, 0));
+      final b = FreePoint(id: 'b', position: const Vec2(4, 0));
+      final c = FreePoint(id: 'c', position: const Vec2(4, 3));
+      final ccw = AreaMeasurement(
+        id: 'ar1',
+        subject: Polygon(id: 'p1', vertices: [a, b, c]),
+      );
+      final cw = AreaMeasurement(
+        id: 'ar2',
+        subject: Polygon(id: 'p2', vertices: [c, b, a]),
+      );
+      expect(ccw.value, 6);
+      expect(cw.value, 6);
+    });
+
+    test('circle subject: πr², center anchor', () {
+      final center = FreePoint(id: 'o', position: const Vec2(1, 2));
+      final circle = FixedRadiusCircle(id: 'k', center: center, radius: 2.5);
+      final area = AreaMeasurement(id: 'ar', subject: circle);
+      expect(area.value, closeTo(math.pi * 6.25, 1e-12));
+      expect(area.anchor, const Vec2(1, 2));
+    });
+
+    test('recompute tracks the subject', () {
+      final center = FreePoint(id: 'o', position: const Vec2(0, 0));
+      final rim = FreePoint(id: 'r', position: const Vec2(1, 0));
+      final circle = CircleCenterPoint(id: 'k', center: center, onCircle: rim);
+      final area = AreaMeasurement(id: 'ar', subject: circle);
+      expect(area.value, closeTo(math.pi, 1e-12));
+
+      rim.position = const Vec2(3, 0);
+      circle.recompute();
+      area.recompute();
+      expect(area.value, closeTo(9 * math.pi, 1e-12));
+    });
+
+    test('rejects subjects that are not polygons or circles', () {
+      final a = FreePoint(id: 'a', position: const Vec2(0, 0));
+      final b = FreePoint(id: 'b', position: const Vec2(1, 0));
+      final c = FreePoint(id: 'c', position: const Vec2(0, 1));
+      final segment = Segment(id: 's', point1: a, point2: b);
+      final angle = VertexAngle(id: 'ang', arm1: a, vertex: b, arm2: c);
+      expect(
+        () => AreaMeasurement(id: 'ar', subject: segment),
+        throwsArgumentError,
+      );
+      expect(
+        () => AreaMeasurement(id: 'ar', subject: a),
+        throwsArgumentError,
+      );
+      expect(
+        () => AreaMeasurement(id: 'ar', subject: angle),
+        throwsArgumentError,
+      );
+    });
+
+    test('undefined while the subject is, recovers when it does', () {
+      final a = FreePoint(id: 'a', position: const Vec2(-4, 0));
+      final b = FreePoint(id: 'b', position: const Vec2(4, 0));
+      final center = FreePoint(id: 'o', position: const Vec2(0, 3));
+      final rim = FreePoint(id: 'rim', position: const Vec2(0, -1));
+      final line = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
+      final circle = CircleCenterPoint(id: 'k', center: center, onCircle: rim);
+      final crossing = IntersectionPoint(
+        id: 'x',
+        curve1: line,
+        curve2: circle,
+        branchIndex: 0,
+      );
+      final polygon = Polygon(id: 'p', vertices: [a, b, crossing]);
+      final area = AreaMeasurement(id: 'ar', subject: polygon);
+      expect(area.isDefined, isTrue);
+
+      rim.position = const Vec2(0, 2);
+      circle.recompute();
+      crossing.recompute();
+      polygon.recompute();
+      area.recompute();
+      expect(area.isDefined, isFalse);
+      expect(area.value, isNull);
+      expect(area.anchor, isNull);
+
+      rim.position = const Vec2(0, -1);
+      circle.recompute();
+      crossing.recompute();
+      polygon.recompute();
+      area.recompute();
+      expect(area.isDefined, isTrue);
+    });
+  });
+}

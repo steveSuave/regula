@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/domain/construction/object_naming.dart';
+import 'package:regula/domain/construction/objects/area_measurement.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
+import 'package:regula/domain/construction/objects/distance_measurement.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/polygon.dart';
@@ -17,6 +19,8 @@ void main() {
   final circle = CircleCenterPoint(id: 'k', center: a, onCircle: b);
   final angle = VertexAngle(id: 'v', arm1: b, vertex: a, arm2: c);
   final polygon = Polygon(id: 'p', vertices: [a, b, c]);
+  final distance = DistanceMeasurement(id: 'd', point1: a, point2: b);
+  final area = AreaMeasurement(id: 'ar', subject: polygon);
 
   group('points', () {
     test('first point is A, scan skips used names', () {
@@ -47,7 +51,8 @@ void main() {
     });
   });
 
-  group('lines, circles and polygons share one lowercase pool', () {
+  group('lines, circles, polygons and measurements share one lowercase pool',
+      () {
     test('lines draw from a…', () {
       expect(nextAutoName({}, line), 'a');
       expect(nextAutoName({'a'}, segment), 'b');
@@ -61,6 +66,11 @@ void main() {
     test('polygons draw from the same pool', () {
       expect(nextAutoName({}, polygon), 'a');
       expect(nextAutoName({'a', 'b'}, polygon), 'c');
+    });
+
+    test('measurements draw from the same pool', () {
+      expect(nextAutoName({}, distance), 'a');
+      expect(nextAutoName({'a'}, area), 'b');
     });
 
     test('pool is case-sensitive: point names do not block it', () {
