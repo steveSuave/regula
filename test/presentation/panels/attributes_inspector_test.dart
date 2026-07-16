@@ -5,7 +5,10 @@ import 'package:regula/application/providers/command_stack_provider.dart';
 import 'package:regula/application/providers/construction_provider.dart';
 import 'package:regula/application/providers/selection_provider.dart';
 import 'package:regula/domain/construction/object_attributes.dart';
+import 'package:regula/domain/construction/objects/arc.dart';
+import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/polygon.dart';
 import 'package:regula/domain/construction/objects/sector.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/construction/objects/vertex_angle.dart';
@@ -496,6 +499,54 @@ void main() {
     expect(angle.attributes.fillAlpha, 0.25,
         reason: 'the all-off toggle was one command over both kinds');
     expect(sector.attributes.fillAlpha, 0.25);
+  });
+
+  testWidgets('fill checkbox covers circles and polygons, not arcs '
+      '(Phase 37)', (tester) async {
+    await pumpEditor(tester);
+    final a = addPoint('a', Vec2.zero);
+    final b = addPoint('b', const Vec2(4, 0));
+    final c = addPoint('c', const Vec2(1, 3));
+    final circle = CircleCenterPoint(id: 'circ', center: a, onCircle: b);
+    final polygon = Polygon(id: 'poly', vertices: [a, b, c]);
+    final arc = Arc(id: 'arc', start: a, via: c, end: b);
+    container.read(constructionProvider).construction
+      ..add(circle)
+      ..add(polygon)
+      ..add(arc);
+
+    container.read(selectionProvider.notifier).select('arc');
+    await tester.pump();
+    expect(find.widgetWithText(CheckboxListTile, 'Fill'), findsNothing,
+        reason: 'an arc has no fill shape — the painter skips it');
+
+    container.read(selectionProvider.notifier).selectMany(['circ', 'poly']);
+    await tester.pump();
+    final fill = find.widgetWithText(CheckboxListTile, 'Fill');
+    await tester.scrollUntilVisible(
+      fill,
+      100,
+      scrollable: find.descendant(
+        of: find.byType(AttributesInspector),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    await tester.ensureVisible(fill);
+    await tester.pump();
+    expect(tester.widget<CheckboxListTile>(fill).value, isFalse,
+        reason: 'neither is filled yet');
+
+    await tester.tap(fill);
+    await tester.pump();
+    expect(circle.attributes.fillAlpha, 0.25);
+    expect(polygon.attributes.fillAlpha, 0.25);
+    expect(container.read(commandStackProvider).canUndo, isTrue);
+
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(circle.attributes.fillAlpha, isNull,
+        reason: 'both updates rode a single command');
+    expect(polygon.attributes.fillAlpha, isNull);
   });
 
   testWidgets('show-value checkbox: segments + angles only, one command '
