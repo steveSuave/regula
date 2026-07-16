@@ -5,7 +5,9 @@ import 'package:regula/domain/construction/object_attributes.dart';
 import 'package:regula/domain/construction/objects/arc.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
+import 'package:regula/domain/construction/objects/point_on_object.dart';
 import 'package:regula/domain/construction/objects/polygon.dart';
 import 'package:regula/domain/construction/objects/ray.dart';
 import 'package:regula/domain/construction/objects/sector.dart';
@@ -633,6 +635,105 @@ void main() {
           reason: 'gaps are fine, an all-gap locus is never banded');
       expect(banded(Vec2.zero, const Vec2(2.5, 2)), isEmpty,
           reason: 'one sample outside and the locus is merely crossed');
+    });
+  });
+
+  group('line clipping (Phase 44)', () {
+    Construction clippedLine(int lineClip) {
+      final construction = Construction();
+      final a = FreePoint(id: 'a', position: Vec2.zero);
+      final b = FreePoint(id: 'b', position: const Vec2(4, 0));
+      construction
+        ..add(a)
+        ..add(b)
+        ..add(LineThroughTwoPoints(
+          id: 'l',
+          point1: a,
+          point2: b,
+          attributes: ObjectAttributes(lineClip: lineClip),
+        ));
+      return construction;
+    }
+
+    test('mode 0 hits far beyond the defining points', () {
+      expect(hit(clippedLine(0), const Vec2(50, 0.2))?.id, 'l');
+    });
+
+    test('a tap beyond the clipped extent misses', () {
+      for (final mode in [1, 2]) {
+        final construction = clippedLine(mode);
+        expect(hit(construction, const Vec2(50, 0.2)), isNull,
+            reason: 'mode $mode: beyond the span is not drawn');
+        expect(hit(construction, const Vec2(2, 0.2))?.id, 'l',
+            reason: 'mode $mode: within the span still hits');
+        // Just past an endpoint the clamp measures to the endpoint —
+        // segment semantics — but the defining point sits there and wins
+        // on priority, exactly like tapping a segment's end.
+        expect(hit(construction, const Vec2(4.3, 0))?.id, 'b',
+            reason: 'mode $mode: the endpoint point wins at the clip edge');
+      }
+    });
+
+    test('a hidden incident point does not stretch the hit target', () {
+      final construction = clippedLine(2);
+      final line = construction.objects.last as LineThroughTwoPoints;
+      construction.add(
+        PointOnObject.near(id: 'g', curve: line, position: const Vec2(8, 0))
+          ..attributes = const ObjectAttributes(visible: false),
+      );
+      expect(hit(construction, const Vec2(7, 0.2)), isNull);
+    });
+
+    test('a visible incident point extends the hit target', () {
+      final construction = clippedLine(2);
+      final line = construction.objects.last as LineThroughTwoPoints;
+      construction.add(
+        PointOnObject.near(id: 'g', curve: line, position: const Vec2(8, 0)),
+      );
+      expect(hit(construction, const Vec2(7, 0.2))?.id, 'l');
+    });
+
+    test('a clipped ray misses past its far clamp', () {
+      final construction = Construction();
+      final a = FreePoint(id: 'a', position: Vec2.zero);
+      final b = FreePoint(id: 'b', position: const Vec2(4, 0));
+      construction
+        ..add(a)
+        ..add(b)
+        ..add(Ray(
+          id: 'r',
+          origin: a,
+          through: b,
+          attributes: const ObjectAttributes(lineClip: 2),
+        ));
+      expect(hit(construction, const Vec2(2, 0.2))?.id, 'r');
+      expect(hit(construction, const Vec2(50, 0.2)), isNull,
+          reason: 'the far end clamps at the through point');
+    });
+
+    test('intersections beyond the clipped extent are still computed', () {
+      // The clip is display + hit only: the carrier stays infinite for
+      // intersection math, so a crossing outside the drawn span exists.
+      final construction = clippedLine(1);
+      final line = construction.objects.last as LineThroughTwoPoints;
+      final center = FreePoint(id: 'c', position: const Vec2(10, 0));
+      final rim = FreePoint(id: 'rim', position: const Vec2(10, 2));
+      final circle = CircleCenterPoint(id: 'k', center: center, onCircle: rim);
+      final cross = IntersectionPoint(
+        id: 'x',
+        curve1: line,
+        curve2: circle,
+        branchIndex: 0,
+      );
+      construction
+        ..add(center)
+        ..add(rim)
+        ..add(circle)
+        ..add(cross);
+      expect(cross.isDefined, isTrue);
+      expect(cross.position!.x, closeTo(8, 1e-9));
+      // …and the intersection point itself is hit-testable out there.
+      expect(hit(construction, const Vec2(8, 0.2))?.id, 'x');
     });
   });
 }

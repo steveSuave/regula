@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import '../../domain/construction/geo_object.dart';
+import '../../domain/construction/line_clip.dart';
 import '../../domain/construction/objects/arc.dart';
 import '../../domain/construction/objects/ray.dart';
 import '../../domain/construction/objects/sector.dart';
@@ -77,7 +78,7 @@ class CanvasHitTester {
           !object.isDefined) {
         continue;
       }
-      final distance = _distanceTo(object, point, worldPerPx);
+      final distance = _distanceTo(objects, object, point, worldPerPx);
       if (distance > threshold) {
         continue;
       }
@@ -187,8 +188,16 @@ class CanvasHitTester {
   }
 
   /// Distance from [point] to the object's visible geometry. Only called
-  /// on defined objects, so the force-unwraps are safe.
-  double _distanceTo(GeoObject object, Vec2 point, double worldPerPx) =>
+  /// on defined objects, so the force-unwraps are safe. [objects] feeds
+  /// the `lineClipSpan` scan for clipped lines and rays — the hit target
+  /// follows the drawn stretch, so a tap on the invisible part of a
+  /// clipped carrier misses.
+  double _distanceTo(
+    Iterable<GeoObject> objects,
+    GeoObject object,
+    Vec2 point,
+    double worldPerPx,
+  ) =>
       switch (object) {
         GeoPoint() => object.position!.distanceTo(point),
         // An arc measures to its branch of the carrier: on the far branch
@@ -201,9 +210,19 @@ class CanvasHitTester {
         // Segments and rays measure to their extent, not the infinite
         // carrier: t clamps to [0, 1] and [0, ∞) respectively.
         Segment() => _clampedDistance(object.start!, object.end!, point, 1),
-        Ray() => _clampedDistance(
-            object.start!, object.throughPosition!, point, double.infinity),
-        GeoLine() => object.line!.distanceTo(point),
+        Ray() => _lineClippedDistance(
+            objects,
+            object,
+            point,
+            orElse: () => _clampedDistance(object.start!,
+                object.throughPosition!, point, double.infinity),
+          ),
+        GeoLine() => _lineClippedDistance(
+            objects,
+            object,
+            point,
+            orElse: () => object.line!.distanceTo(point),
+          ),
         // An angle is picked on its marker wedge (see _angleDistance) —
         // low priority, so anything else there wins.
         GeoAngle() => _angleDistance(object, point, worldPerPx),
@@ -311,6 +330,27 @@ class CanvasHitTester {
     final edge1 = _clampedDistance(circle.center, sector.startRim!, p, 1);
     final edge2 = _clampedDistance(circle.center, sector.endRim!, p, 1);
     return math.min(arc, math.min(edge1, edge2));
+  }
+
+  /// Distance to a line/ray's *drawn* stretch under its `lineClip` mode:
+  /// clamped to the `lineClipSpan` endpoints when a clip applies,
+  /// [orElse] (the kind's unclipped rule) otherwise. The `lineClip == 0`
+  /// guard skips the helper's whole-construction scan for the common
+  /// unclipped case.
+  double _lineClippedDistance(
+    Iterable<GeoObject> objects,
+    GeoLine line,
+    Vec2 p, {
+    required double Function() orElse,
+  }) {
+    if (line.attributes.lineClip == 0) {
+      return orElse();
+    }
+    final span = lineClipSpan(objects, line);
+    if (span == null) {
+      return orElse();
+    }
+    return _clampedDistance(span.start, span.end, p, 1);
   }
 
   double _clampedDistance(Vec2 a, Vec2 b, Vec2 p, double tMax) {
