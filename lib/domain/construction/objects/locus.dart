@@ -37,11 +37,15 @@ import 'point_on_object.dart';
 /// The uniform sweep is post-processed for fidelity (Phase 39b — see
 /// [_trace] and [_walk]): circle-host runs are grouped cyclically so no
 /// stroke splits at the 0/2π wrap, defined↔undefined boundaries are
-/// bisected and given extra samples clustered toward them, and a
-/// boundary caused by a chain [IntersectionPoint]'s candidates
-/// coalescing (a tangency) is walked *through* by reversing the sweep
-/// and flipping that branch — the physical-linkage continuation, which
-/// closes figure-eight-style loci. Branch flips are sweep-internal:
+/// bisected and given extra samples clustered toward them, a boundary
+/// caused by a chain [IntersectionPoint]'s candidates coalescing (a
+/// tangency) is walked *through* by reversing the sweep and flipping
+/// that branch — the physical-linkage continuation, which closes
+/// figure-eight-style loci — and a line-host run ending at the sweep
+/// window's edge grows an *infinity tail* when the trace has a finite
+/// limit at driver-infinity, so such a stroke touches its limit instead
+/// of stopping at the window cut (see [_infinityTail]). Branch flips
+/// are sweep-internal:
 /// [IntersectionPoint.branchIndex] is restored (with [driver]'s
 /// parameter) before recompute returns, so drag and save semantics keep
 /// the deterministic persisted branch. Consequently [samples] is not
@@ -50,9 +54,10 @@ import 'point_on_object.dart';
 ///
 /// Perf note: one recompute costs roughly [sampleCount] × chain-length
 /// member recomputes — 2–3× that for loci with refined or flipped
-/// boundaries — paid every drag frame that touches an ancestor. Fine
-/// for realistic chains; revisit with adaptive sampling if it ever
-/// isn't.
+/// boundaries, and line hosts pay one extra sweep plus ~30 tail probes
+/// per window-edge end even when fully defined — paid every drag frame
+/// that touches an ancestor. Fine for realistic chains; revisit with
+/// adaptive sampling if it ever isn't.
 class Locus extends GeoLocus {
   Locus({
     required super.id,
@@ -147,25 +152,42 @@ class Locus extends GeoLocus {
   }
 
   /// The full trace (Phase 39b). A uniform sweep first; when it is
-  /// entirely defined or entirely undefined the uniform list is returned
-  /// as-is — a gapless full-turn circle host stays exactly the list the
-  /// painter closes into a loop. Otherwise the defined runs (grouped
-  /// *cyclically* on circle hosts, so a run straddling the 0/2π wrap is
-  /// one stroke) each become a component via [_walk]; components are
-  /// separated by single nulls.
+  /// entirely undefined, or entirely defined on a *circle* host, the
+  /// uniform list is returned as-is — a gapless full-turn circle host
+  /// stays exactly the list the painter closes into a loop. Everything
+  /// else — any line-host sweep, so window-edge ends can grow their
+  /// infinity tails (Phase 39e), and gappy circle sweeps — has its
+  /// defined runs (grouped *cyclically* on circle hosts, so a run
+  /// straddling the 0/2π wrap is one stroke) each become a component via
+  /// [_walk]; components are separated by single nulls. A line-host run
+  /// with no accepted tails emits exactly the uniform samples it started
+  /// from, at one extra sweep of eval cost.
   List<Vec2?> _trace(List<double> parameters) {
     final positions = [for (final t in parameters) _evalAt(t)];
     final anyDefined = positions.any((p) => p != null);
     final anyGap = positions.contains(null);
-    if (!anyDefined || !anyGap) {
+    if (!anyDefined || (!anyGap && driver.curve is GeoCircle)) {
       return positions;
     }
+    // The trace's extent — the scale against which an infinity tail's
+    // increments count as converged.
+    var minX = double.infinity, minY = double.infinity;
+    var maxX = double.negativeInfinity, maxY = double.negativeInfinity;
+    for (final p in positions) {
+      if (p != null) {
+        minX = math.min(minX, p.x);
+        maxX = math.max(maxX, p.x);
+        minY = math.min(minY, p.y);
+        maxY = math.max(maxY, p.y);
+      }
+    }
+    final extent = Vec2(maxX - minX, maxY - minY).norm;
     final out = <Vec2?>[];
     for (final run in _runs(parameters, positions)) {
       if (out.isNotEmpty) {
         out.add(null);
       }
-      out.addAll(_walk(run));
+      out.addAll(_walk(run, extent));
     }
     return out;
   }
@@ -240,17 +262,27 @@ class Locus extends GeoLocus {
   /// back to the last sample taken under the original assignment: never
   /// wrong ink, at worst exactly the branch-fixed trace with refined
   /// boundaries.
-  List<Vec2> _walk(_Run run) {
+  List<Vec2> _walk(_Run run, double extent) {
+    // A null gap is a sweep-window edge (line hosts only): instead of a
+    // boundary ladder the end may grow an infinity tail (Phase 39e).
     final left = run.leftGap == null
         ? null
         : _refineBoundary(run.params.first, run.leftGap!);
     final right = run.rightGap == null
         ? null
         : _refineBoundary(run.params.last, run.rightGap!);
+    final leftTail = run.leftGap == null
+        ? _infinityTail(run.params.first, -1, extent)
+        : const <double>[];
+    final rightTail = run.rightGap == null
+        ? _infinityTail(run.params.last, 1, extent)
+        : const <double>[];
     final ascending = <double>[
+      ...leftTail.reversed,
       ...?left?.ladder.reversed,
       ...run.params,
       ...?right?.ladder,
+      ...rightTail,
     ];
 
     // Start at an open end when there is one, so the original-assignment
@@ -328,6 +360,70 @@ class Locus extends GeoLocus {
   static const _maxWalkSegments = 8;
   static const _boundaryBisections = 48;
   static const _ladderSize = 6;
+  static const _tailMaxDistance = 1e9;
+  static const _tailDecay = 0.95;
+  static const _tailConvergedFraction = 1e-6;
+
+  /// Extra sample parameters extending a window-edge open end toward the
+  /// driver's point at infinity, in edge-outward order — empty when the
+  /// end has no finite limit there (Phase 39e, user feedback on 39d).
+  ///
+  /// Some traces converge as the driver runs off its host line — in the
+  /// tangent-and-bisector document the Thales circle over AD flattens
+  /// onto the perpendicular through A, carrying the traced point onto it
+  /// like 1/t — and Cinderella's projective driver draws such a stroke
+  /// touching its limit, which a finite sweep window never reaches (the
+  /// gap at doc 1's window edge is ≈ 11 world units). The tail samples
+  /// at geometrically *doubling* distances from [edge] — starting at
+  /// 2 × [halfSpan] so the driver's distance from the figure roughly
+  /// doubles every rung, capped at [_tailMaxDistance] where double
+  /// precision still holds and any remaining gap is far subpixel — and
+  /// is kept **all-or-nothing**: only when the traced point stays
+  /// defined the whole way *and* every position increment decays to at
+  /// most [_tailDecay] × the previous. Under distance doubling an
+  /// algebraic approach t^−p yields increment ratio 2^−p < 1, while any
+  /// divergence — even logarithmic — yields ≥ 1, so rejection is sharp;
+  /// rejecting keeps the window cut bit-exact: no ink ever leaks past
+  /// the window for a diverging trace, nor into a merely-defined region
+  /// just beyond the edge (a genuine end out there also rejects).
+  ///
+  /// The ladder stops early — converged, tail accepted — once an
+  /// increment falls below [_tailConvergedFraction] of the trace's
+  /// [extent]: the remaining gap to the limit is the same order (the
+  /// increments decay geometrically), far subpixel at any zoom that
+  /// shows the trace. The stop also matters for correctness at small
+  /// figure scales: deep in the ladder the traced position's
+  /// double-precision noise (~parameter × ε) overtakes the shrinking
+  /// true increments and flaps the decay test — convergence is reached
+  /// long before that regime.
+  List<double> _infinityTail(double edge, double sign, double extent) {
+    final edgePosition = _evalAt(edge);
+    if (edgePosition == null) {
+      return const [];
+    }
+    var previous = edgePosition;
+    final tail = <double>[];
+    double? lastIncrement;
+    for (var distance = 2 * halfSpan;
+        distance <= _tailMaxDistance;
+        distance *= 2) {
+      final position = _evalAt(edge + sign * distance);
+      if (position == null) {
+        return const [];
+      }
+      final increment = position.distanceTo(previous);
+      if (lastIncrement != null && increment > lastIncrement * _tailDecay) {
+        return const [];
+      }
+      tail.add(edge + sign * distance);
+      if (increment <= extent * _tailConvergedFraction) {
+        break;
+      }
+      previous = position;
+      lastIncrement = increment;
+    }
+    return tail;
+  }
 
   /// Locates the defined↔undefined boundary between [tIn] (defined) and
   /// [tOut] (undefined) by bisection, and classifies it: when the first
