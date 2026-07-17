@@ -1,0 +1,24 @@
+test/presentation/app_bar_layout_test.dart
+  s_122c668f051b35::t_577193d9ade56c 14-241,245,250-251,254,260,264,269-270
+docs/TODO.md
+  s_122c668f051b35::t_7c29cf276976f7 403-409
+docs/PLAN.md
+  s_122c668f051b35::t_ce60cc5b9c73e0 118
+  s_122c668f051b35::t_79fcc0da88320d 345
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "4639a5994b4bc74cd99e6f74725656152b654060",
+  "prompts": {},
+  "sessions": {
+    "s_122c668f051b35": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d6aae093-d651-48a0-8860-39c3843d0e52",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
