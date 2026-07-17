@@ -39,6 +39,9 @@ Vec2 labelAnchor(GeoObject object) => switch (object) {
               .reduce((sum, vertex) => sum + vertex) /
           object.polygonVertices!.length.toDouble(),
       GeoMeasurement() => object.anchor!,
-      GeoLocus() =>
-        object.samples!.whereType<Vec2>().firstOrNull ?? Vec2.zero,
+      // Core samples, not the full trace: a diverging line-host arm
+      // reaches astronomically far out — an anchor there is never
+      // on-screen. All-gap core (defined ink only far out) falls back
+      // to the world origin, like the all-gap defined locus always has.
+      GeoLocus() => object.coreSamples!.firstOrNull ?? Vec2.zero,
     };

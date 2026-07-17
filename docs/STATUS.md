@@ -6,6 +6,25 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 59b — 2026-07-17
+
+**Done**
+- **Phase 39f complete** on `phase-39f-projective-line-sweep` (3 commits incl. docs), merged to `main` — user feedback on 39e: a parabola locus (`locus3.json`, E on a square's side, G = midpoint of E and the perpendicular's crossing with the far side's carrier — analytically x = y²/4) "also stops early before infinity".
+- The trace *diverges* at driver-infinity, so no finite tail can complete it: the bounded sweep window itself was the defect — third user report against it (Session 55 chevrons, 39e touch, this). Decision: line hosts now sweep **projectively** (Cinderella's driver semantics) — `t = center + halfSpan·tan(φ)`, φ cell-centered uniform over (−π/2, π/2). Whole carrier covered; `center`/`halfSpan` keep their persisted values as the sampling **focus** (half the samples within one view-width); no codec change, old documents just stop truncating.
+- `_infinityTail` rungs now start at `max(2·halfSpan, |edge − center|)`: from the ≈80·halfSpan projective edge, a 2·halfSpan first rung barely moves the driver, increments *grow* toward the doubling regime and the decay test spuriously rejected (caught by the doc-1 fixture before the fix landed).
+- Unbounded arms would explode zoom-to-fit and throw labels off-view, so `GeoLocus` gained **`coreSamples`** (defined uniform positions inside the focus; default all defined samples): consumed by `fit_viewport`, `label_anchor`, `tool/locus_render.dart`. Band selection deliberately stays whole-samples — a diverging locus is line-like and, like lines, never band-selects.
+- Test churn, all deliberate: identity-trace re-pinned to the tan grid; the 39c cut-window U-curve now *closes* (no cut exists) and is re-pinned as the projective-coverage test — open-walk trimming stays pinned by the doc-1-shaped fixture; tangency-sampled pins relaxed 1e-6 → 1e-3 (the old bound was an artifact of the uniform grid hitting the tangency parameter exactly; the dive stops at the two-candidate epsilon edge ~1e-4 away). Locus goldens regenerated after visual review — indistinguishable. `goldens/failures/` untracked + gitignored (accidentally committed in 39b).
+- 1142 tests green (4 new: parabola fixture regression, fit + 2 anchor stub pins), analyze clean, doc 1 still touches line b, web SMOKE PASS on a fresh release build.
+
+**Next**
+- Phase 43 (viewport rotation) is the last queued phase.
+- `main` is ahead of `origin/main` by Phases 44, 44b, 39e, 39f — push when convenient.
+
+**Open questions / gotchas**
+- In-focus sampling density is ~0.64× the old window grid (tan′ spreads samples); boundary ladders compensate at gaps. If a real document shows faceting, bump the default `sampleCount` — it's per-locus and persisted.
+- The far tan-grid chords double in parameter per sample; a trace that curves at 10–80 view-widths out will facet when zoomed out that far. Baked sampling can't be zoom-adaptive — accepted, Cinderella shows similar artifacts.
+- The two projective ends of a line host are NOT joined through infinity even when both converge to the *same* point (they'd render as two strokes meeting there, not a closed loop); no user document has hit this.
+
 ## Session 59 — 2026-07-17
 
 **Done**

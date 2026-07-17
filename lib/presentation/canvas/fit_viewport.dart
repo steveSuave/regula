@@ -48,11 +48,12 @@ const double fitMarginPx = 48;
         }
       case GeoMeasurement(:final anchor?):
         include(anchor.x, anchor.y);
-      case GeoLocus(:final samples?):
-        for (final sample in samples) {
-          if (sample != null) {
-            include(sample.x, sample.y);
-          }
+      // Core samples, not the full trace: a line-host locus sweeps its
+      // whole carrier and a diverging arm reaches astronomically far —
+      // fitting on it would zoom the figure down to a dot.
+      case GeoLocus(:final coreSamples?):
+        for (final sample in coreSamples) {
+          include(sample.x, sample.y);
         }
       case GeoLine():
         break;
