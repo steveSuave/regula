@@ -14,6 +14,7 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 - `compactPanels` (drawers vs docked, drawer-opening tree button, selection-gated style button) untouched.
 - Tests: `compact_layout_test.dart` → `app_bar_layout_test.dart` (phone: full cluster present + scroll-to-tap delete at the far end; tablet portrait: same bar over docked panels; desktop: `maxScrollExtent == 0`, cluster right-aligned). `toolbar_test`'s flyout `scrollUntilVisible` calls now pass `find.byType(Scrollable).last` — the bar is a second Scrollable and the default lookup threw "Too many elements".
 - 1141 tests green (suite went 12 → 11 in the renamed file), analyze clean, web SMOKE PASS on a fresh release build (drive.js untouched — wide icon order is unchanged). Ad-hoc Playwright: 400×800 wheel + CDP touch-drag scroll the bar end to end; 1280×800 looks byte-identical to the old wide chrome and the wheel is inert there.
+- Follow-up in the same session: the unified bar read as "fatter" on mobile (56-px default vs the old 48). `toolbarHeight` now rides the `compactPanels` gate — 48 px on phones, default elsewhere; content identical. Tests re-pinned (phone 48, desktop `kToolbarHeight`), 1141 green, slim bar confirmed on the release build at 400×800.
 
 **Next**
 - Phase 43 (viewport rotation) is the last queued phase.
