@@ -5,10 +5,9 @@ import 'package:regula/application/providers/document_settings_provider.dart';
 import 'package:regula/main.dart';
 import '../wide_window.dart';
 
-/// The Phase 36 axes/grid popup: two checked items over the
-/// per-document `DocumentSettings` toggles — in the wide app bar as its
-/// own grid-icon popup, absorbed by the overflow menu under compact
-/// chrome.
+/// The Phase 36 axes/grid popup: checked items over the per-document
+/// `DocumentSettings` toggles — its grid-icon popup sits in the unified
+/// app bar at every width (Phase 47), scrolled into view on phones.
 void main() {
   late ProviderContainer container;
 
@@ -93,32 +92,34 @@ void main() {
     expect(settings(), const DocumentSettings());
   });
 
-  testWidgets('compact chrome: the overflow menu carries both toggles', (
+  testWidgets('phone width: the same popup sits in the scrollable bar', (
     tester,
   ) async {
     await pumpEditor(tester, screen: const Size(400, 800));
-    expect(find.byIcon(Icons.grid_4x4), findsNothing,
-        reason: 'compact chrome absorbs the popup into the overflow');
 
-    await tester.tap(find.byIcon(Icons.more_vert));
+    // The unified bar carries the grid popup at every width — scroll it
+    // into view instead of reaching for the retired overflow menu.
+    await tester.scrollUntilVisible(
+      find.byIcon(Icons.grid_4x4),
+      80,
+      scrollable: find.descendant(
+        of: find.byType(AppBar),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    await tester.tap(find.byIcon(Icons.grid_4x4));
     await tester.pumpAndSettle();
     await tapItem(tester, 'Show axes');
     await tester.pumpAndSettle();
     expect(settings(), const DocumentSettings(showAxes: true));
 
-    await tester.tap(find.byIcon(Icons.more_vert));
-    await tester.pumpAndSettle();
-    await tapItem(tester, 'Show grid');
-    await tester.pumpAndSettle();
-    expect(settings(), const DocumentSettings(showAxes: true, showGrid: true));
-
-    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.tap(find.byIcon(Icons.grid_4x4));
     await tester.pumpAndSettle();
     await tapItem(tester, 'Snap to grid');
     await tester.pumpAndSettle();
     expect(
       settings(),
-      const DocumentSettings(showAxes: true, showGrid: true, snapToGrid: true),
+      const DocumentSettings(showAxes: true, snapToGrid: true),
     );
   });
 }
