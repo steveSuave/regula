@@ -1,0 +1,14 @@
+lib/presentation/panels/toolbar.dart
+  h_7b6bd6d3048c34 470
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "9c1322a4ef5c598094004023816c5d8372de2a28",
+  "prompts": {},
+  "humans": {
+    "h_7b6bd6d3048c34": {
+      "author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
