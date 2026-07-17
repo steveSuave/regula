@@ -46,3 +46,6 @@ app.*.map.json
 tool/web_smoke/node_modules/
 devtools_options.yaml
 regula.code-workspace
+
+# golden_toolkit failure artifacts (diff images from failed golden runs)
+test/presentation/goldens/failures/

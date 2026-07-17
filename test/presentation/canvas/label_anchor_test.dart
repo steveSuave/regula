@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/domain/construction/geo_object.dart';
 import 'package:regula/domain/construction/objects/arc.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
@@ -69,5 +70,48 @@ void main() {
           VertexAngle(id: 'g', arm1: east, vertex: origin, arm2: north);
       expectAnchor(labelAnchor(angle), Vec2.zero);
     });
+
+    test('locus: the first core sample, never a diverging arm '
+        '(Phase 39f)', () {
+      final locus = _StubLocus(
+        samples: const [Vec2(-1e6, 1e5), Vec2(2, 1), Vec2(1e6, 1e5)],
+        coreSamples: const [Vec2(2, 1)],
+      );
+      expectAnchor(labelAnchor(locus), const Vec2(2, 1));
+    });
+
+    test('locus with an all-gap core anchors at the world origin', () {
+      final locus = _StubLocus(
+        samples: const [Vec2(-1e6, 1e5), null, Vec2(1e6, 1e5)],
+        coreSamples: const [],
+      );
+      expectAnchor(labelAnchor(locus), Vec2.zero);
+    });
   });
+}
+
+/// A [GeoLocus] with hand-picked samples and core samples: the anchor
+/// consumes the kind accessors only.
+class _StubLocus extends GeoLocus {
+  _StubLocus({
+    required List<Vec2?>? samples,
+    required List<Vec2> coreSamples,
+  })  : _samples = samples,
+        _coreSamples = coreSamples,
+        super(id: 'loc');
+
+  final List<Vec2?>? _samples;
+  final List<Vec2> _coreSamples;
+
+  @override
+  List<Vec2?>? get samples => _samples;
+
+  @override
+  List<Vec2>? get coreSamples => _coreSamples;
+
+  @override
+  List<GeoObject> get parents => const [];
+
+  @override
+  void recompute() {}
 }

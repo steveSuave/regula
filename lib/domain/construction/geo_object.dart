@@ -134,6 +134,18 @@ abstract class GeoLocus extends GeoObject {
 
   List<Vec2?>? get samples;
 
+  /// Bounded positions for viewport fitting and label anchoring: a line
+  /// host sweeps its whole carrier (Phase 39f), so [samples] can reach
+  /// astronomically far out along diverging arms — fitting or anchoring
+  /// on those would throw the viewport or label past any useful zoom.
+  /// Concrete loci override this with the defined positions traced from
+  /// the sweep's focus window; the default is every defined sample.
+  /// Null exactly while [samples] is.
+  List<Vec2>? get coreSamples => switch (samples) {
+        null => null,
+        final s => [for (final p in s) ?p],
+      };
+
   @override
   bool get isDefined => samples != null;
 }
