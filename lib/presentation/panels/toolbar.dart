@@ -388,11 +388,6 @@ class GeometryToolbar extends ConsumerWidget {
           active: macrosActive,
           items: [
             (
-              'Polygon (tap vertices, tap the first again to close)',
-              _pick(() => PolygonTool(newId: newObjectId)),
-              AppAction.polygonTool,
-            ),
-            (
               'Equilateral triangle (two corners)',
               _pick(() => EquilateralTriangleMacroTool(newId: newObjectId)),
               AppAction.equilateralTriangleMacroTool,
@@ -471,6 +466,11 @@ class GeometryToolbar extends ConsumerWidget {
               'Kite (apex, side corner, apex)',
               _pick(() => KiteMacroTool(newId: newObjectId)),
               AppAction.kiteMacroTool,
+            ),
+            (
+              'Polygon (tap vertices, tap the first again to close)',
+              _pick(() => PolygonTool(newId: newObjectId)),
+              AppAction.polygonTool,
             ),
           ],
         ),
