@@ -6,6 +6,25 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 60 — 2026-07-17
+
+**Done**
+- **Phase 47 complete** on `phase-47-unified-app-bar`, merged to `main` — user feedback on the Phase 42 split: the app bar must not re-arrange on small windows (compact variant moved the loose icons into a `more_vert` overflow and pinned delete/undo/redo); it should stay identical and scroll **in its entirety**, object tree through redo.
+- Retired the compact chrome wholesale: `compactChrome`/`_wideChromeMinWidth`/`_compactBarHeight`, the title-slot-only toolbar and the overflow menu are gone from `main.dart`. The whole bar is now one `_appBarRow` in the AppBar title slot (`automaticallyImplyLeading: false`, `titleSpacing: 0`) inside a horizontal `SingleChildScrollView`; `ConstrainedBox(minWidth: bar width)` + `IntrinsicWidth` let the `Spacer` right-align the action cluster while it fits and collapse to zero exactly when scrolling starts — desktop renders as before, narrow windows scroll the unchanged row. A lone `SizedBox.shrink()` in `actions` suppresses Material's implicit end-drawer button.
+- `compactPanels` (drawers vs docked, drawer-opening tree button, selection-gated style button) untouched.
+- Tests: `compact_layout_test.dart` → `app_bar_layout_test.dart` (phone: full cluster present + scroll-to-tap delete at the far end; tablet portrait: same bar over docked panels; desktop: `maxScrollExtent == 0`, cluster right-aligned). `toolbar_test`'s flyout `scrollUntilVisible` calls now pass `find.byType(Scrollable).last` — the bar is a second Scrollable and the default lookup threw "Too many elements".
+- 1141 tests green (suite went 12 → 11 in the renamed file), analyze clean, web SMOKE PASS on a fresh release build (drive.js untouched — wide icon order is unchanged). Ad-hoc Playwright: 400×800 wheel + CDP touch-drag scroll the bar end to end; 1280×800 looks byte-identical to the old wide chrome and the wheel is inert there.
+
+**Next**
+- Phase 43 (viewport rotation) is the last queued phase.
+- `main` is ahead of `origin/main` by several phases — push when convenient.
+
+**Open questions / gotchas**
+- Mouse-only desktop users in a narrow window can't drag-scroll the bar (Flutter's default drag devices exclude mice); trackpad/wheel horizontal scroll works. Same behavior as the old compact toolbar strip, so no regression — revisit if it grates.
+- `wide_window.dart` (1280×800) is still required in `EditorScreen` suites: at flutter_test's 800×600 default the trailing bar buttons sit off-screen and taps would need a scroll first.
+
+---
+
 ## Session 59b — 2026-07-17
 
 **Done**
