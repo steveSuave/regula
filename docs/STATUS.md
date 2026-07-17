@@ -6,6 +6,24 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 59 — 2026-07-17
+
+**Done**
+- **Phase 39e complete** on `phase-39e-locus-infinity-limit` (3 commits incl. docs), merged to `main` — user feedback on 39d: doc 1's first locus stroke "should be touching the AC line" but stops short.
+- Diagnosis first, analytic: in doc 1 the traced G has constant height ±|AB|/2 and G_x → A_x like |AB|²/(4t) as driver D → ±∞ (the Thales circle over AD flattens onto the perpendicular through A — line b, through A and C), so each stroke's far end has a *finite limit on line b*; the baked sweep window cut it |AB|²/(4·t_edge) ≈ 10.7 world units short — exactly the ~22 px gap in the user's ~2× screenshot. Cinderella's projective driver sweeps through infinity and touches the limit; the Session 55 "window edges cut line-host traces, not a defect" note was wrong for converging traces.
+- Fix: `_infinityTail` — window-edge open ends grow samples at geometrically doubling driver distances (start 2·halfSpan, cap 10⁹), accepted all-or-nothing on increment decay (each ≤ 0.95 × previous; t^−p convergence gives ratio 2^−p, divergence ≥ 1), so diverging traces keep the window cut bit-exact and nothing leaks into merely-defined regions past the edge. `_trace`'s uniform-list early return is now circle-host-only so fully-defined line sweeps also route through the walk.
+- Razor's edge found by the scaled unit fixture (r = 3): deep in the ladder, double-precision position noise (~parameter × ε; G_x visibly quantizes to 0.0 near t ≈ 10⁸) overtakes the true increments and one noise uptick rejected a genuinely converging tail. Hence the **converged stop**: increment ≤ 10⁻⁶ × trace extent accepts the tail immediately — remaining gap same order, far subpixel, and reached long before the noise regime.
+- Tests: doc-1-shaped unit fixture asserts far ends within 10⁻³ of (0, ±1.5); fixture regression asserts a sample within 0.01 of the infinity limit on line b per stroke (both stash-verified to fail without the fix); identity-trace and U-curve pins unchanged. 1138 green, analyze clean, goldens byte-identical, render of doc 1 shows both strokes touching line b, web SMOKE PASS on a fresh release build (change is domain-internal; drive.js untouched).
+
+**Next**
+- Phase 43 (viewport rotation) is the last queued phase.
+- `main` is ahead of `origin/main` by Phases 44, 44b and 39e — push when convenient.
+
+**Open questions / gotchas**
+- The tail's chord faceting decays with the increments (doc 1's tail is exactly straight — constant G_y), but a trace that *curves* while converging would show doubling-length chords near the window edge; PLAN records ×√2 rungs as the densification fallback if a document ever shows it.
+- The two strokes' infinity limits differ (upper sheet vs lower sheet), so they stay separate components — nothing to join through infinity here; a construction whose both window ends converge to the *same* point would still render as two strokes meeting there, not a closed loop.
+- A leftover `python3 -m http.server 8321` from an earlier session is still serving `build/web` (reads from disk per request, so fresh builds are picked up); my own server bind failed harmlessly. Kill PID if the port is ever needed.
+
 ## Session 58b — 2026-07-16
 
 **Done**
