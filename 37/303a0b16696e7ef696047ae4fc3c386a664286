@@ -1,0 +1,23 @@
+docs/PLAN.md
+  s_61ec6654d74a0e::t_6d537e7db9f212 52
+docs/TODO.md
+  s_61ec6654d74a0e::t_bc9245362574e7 339-345
+test/fixtures/locus3.json
+  s_61ec6654d74a0e::t_b328b096fbe64a 1-478
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "37303a0b16696e7ef696047ae4fc3c386a664286",
+  "prompts": {},
+  "sessions": {
+    "s_61ec6654d74a0e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "59c77b30-218b-49c7-b567-af4a9cf0ed43",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
