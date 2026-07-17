@@ -182,7 +182,13 @@ void main() {
       await tester.tap(find.byIcon(Icons.crop_square));
       await tester.pumpAndSettle();
       // The grown menu overflows the test screen; later rows scroll in.
-      await tester.scrollUntilVisible(find.text(label), 50);
+      // The open flyout is the last Scrollable — the unified app bar
+      // (Phase 47) is one too, so the default lookup is ambiguous.
+      await tester.scrollUntilVisible(
+        find.text(label),
+        50,
+        scrollable: find.byType(Scrollable).last,
+      );
       await tester.tap(find.text(label));
       await tester.pumpAndSettle();
 
@@ -291,9 +297,11 @@ void main() {
     Future<void> pickPolygon() async {
       await tester.tap(find.byIcon(Icons.crop_square));
       await tester.pumpAndSettle();
+      // Last Scrollable: the open flyout, not the scrollable app bar.
       await tester.scrollUntilVisible(
         find.text('Regular polygon (two corners)…'),
         50,
+        scrollable: find.byType(Scrollable).last,
       );
       await tester.tap(find.text('Regular polygon (two corners)…'));
       await tester.pumpAndSettle();
@@ -452,7 +460,12 @@ void main() {
       await tester.pump();
       await tester.tap(find.byIcon(Icons.timeline));
       await tester.pumpAndSettle();
-      await tester.scrollUntilVisible(find.text(label), 50);
+      // Last Scrollable: the open flyout, not the scrollable app bar.
+      await tester.scrollUntilVisible(
+        find.text(label),
+        50,
+        scrollable: find.byType(Scrollable).last,
+      );
       await tester.tap(find.text(label));
       await tester.pumpAndSettle();
     }
