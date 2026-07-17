@@ -86,8 +86,8 @@ void main() {
       expect(inAppBar(find.byType(DrawerButton)), findsNothing);
       expect(inAppBar(find.byIcon(Icons.menu)), findsNothing);
 
-      // Same bar height as everywhere else — no slim variant.
-      expect(tester.getSize(find.byType(AppBar)).height, kToolbarHeight);
+      // Same row, slim phone height: canvas pixels matter most here.
+      expect(tester.getSize(find.byType(AppBar)).height, 48);
     });
 
     testWidgets('the whole row scrolls: the trailing delete / undo / redo '
@@ -253,7 +253,9 @@ void main() {
         greaterThan(1200),
       );
 
-      // Panels stay inline: no drawers on desktop.
+      // Panels stay inline: no drawers on desktop. Bar at the Material
+      // default height — the slim 48-px variant is phones-only.
+      expect(tester.getSize(find.byType(AppBar)).height, kToolbarHeight);
       final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
       expect(scaffold.drawer, isNull);
       expect(scaffold.endDrawer, isNull);
