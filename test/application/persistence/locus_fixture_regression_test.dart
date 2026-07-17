@@ -106,6 +106,42 @@ void main() {
   });
 
   test(
+      'locus3.json (parabola): the projective sweep covers the whole '
+      'carrier — arms run far past any view, core stays at figure scale',
+      () {
+    // E on square side BC, F = the perpendicular to AE at E crossing the
+    // carrier of the far side CD, G = midpoint(F, E) — analytically the
+    // parabola x = y²/4 (vertex at the world origin), diverging as E
+    // runs off the carrier. Failure history: before Phase 39f the baked
+    // window `[center ± halfSpan]` cut both arms ~1 view-width out —
+    // "stops early before infinity" — because a diverging trace is
+    // exactly what no finite infinity tail can complete.
+    final locus = loadLocus('locus3.json', freeOut: <FreePoint>[]);
+    final samples = locus.samples!;
+    expect(samples, isNot(contains(null)),
+        reason: 'one gapless component — F exists for every E');
+    final points = samples.cast<Vec2>();
+    for (final p in points) {
+      expect(
+        (p.x - p.y * p.y / 4).abs(),
+        lessThan(1e-6 * (1 + p.x.abs())),
+        reason: 'every sample lies on the parabola x = y²/4',
+      );
+    }
+    expect(points.map((p) => p.y).reduce(math.max), greaterThan(500),
+        reason: 'the upper arm runs far past any reasonable zoom');
+    expect(points.map((p) => p.y).reduce(math.min), lessThan(-500),
+        reason: 'the lower arm too');
+    final core = locus.coreSamples!;
+    expect(core, isNotEmpty);
+    for (final p in core) {
+      expect(p.norm, lessThan(100),
+          reason: 'the core slice stays at figure scale — viewport fit '
+              'and the label anchor must not chase the arms');
+    }
+  });
+
+  test(
       'locus-miss-2.json (twin tangent points): one closed figure-eight, '
       'no gap and no dropped half', () {
     // Traced is itself the coalescing intersection; the walk must flip

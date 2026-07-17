@@ -26,13 +26,15 @@ import 'point_on_object.dart';
 /// locus — the sweep domain is fixed.
 ///
 /// Sampling domain: a circle host is swept one full turn ([sampleCount]
-/// uniform angles; the painter closes the loop when gapless); a line host
-/// is swept over `[center - halfSpan, center + halfSpan]`, endpoints
-/// included, both baked at creation by the tool — the locus sibling of
-/// `PointOnObject`'s analytic-parameter caveat (translating the host line
-/// along itself shifts the window). Samples where [traced] is undefined
-/// become null entries — gaps in the drawn polyline; the locus itself is
-/// undefined only while the driver's host has no geometry to sweep.
+/// uniform angles; the painter closes the loop when gapless); a line
+/// host is swept *projectively* over its whole carrier (Phase 39f),
+/// with sampling density focused on `[center - halfSpan, center +
+/// halfSpan]` — both baked at creation by the tool, the locus sibling
+/// of `PointOnObject`'s analytic-parameter caveat (translating the host
+/// line along itself shifts the focus; see [_sampleParameters]).
+/// Samples where [traced] is undefined become null entries — gaps in
+/// the drawn polyline; the locus itself is undefined only while the
+/// driver's host has no geometry to sweep.
 ///
 /// The uniform sweep is post-processed for fidelity (Phase 39b — see
 /// [_trace] and [_walk]): circle-host runs are grouped cyclically so no
@@ -42,9 +44,9 @@ import 'point_on_object.dart';
 /// tangency) is walked *through* by reversing the sweep and flipping
 /// that branch — the physical-linkage continuation, which closes
 /// figure-eight-style loci — and a line-host run ending at the sweep
-/// window's edge grows an *infinity tail* when the trace has a finite
-/// limit at driver-infinity, so such a stroke touches its limit instead
-/// of stopping at the window cut (see [_infinityTail]). Branch flips
+/// grid's outermost sample grows an *infinity tail* when the trace has
+/// a finite limit at driver-infinity, so such a stroke touches its
+/// limit (see [_infinityTail]). Branch flips
 /// are sweep-internal:
 /// [IntersectionPoint.branchIndex] is restored (with [driver]'s
 /// parameter) before recompute returns, so drag and save semantics keep
@@ -55,7 +57,7 @@ import 'point_on_object.dart';
 /// Perf note: one recompute costs roughly [sampleCount] × chain-length
 /// member recomputes — 2–3× that for loci with refined or flipped
 /// boundaries, and line hosts pay one extra sweep plus ~30 tail probes
-/// per window-edge end even when fully defined — paid every drag frame
+/// per infinity-edge end even when fully defined — paid every drag frame
 /// that touches an ancestor. Fine for realistic chains; revisit with
 /// adaptive sampling if it ever isn't.
 class Locus extends GeoLocus {
@@ -95,9 +97,10 @@ class Locus extends GeoLocus {
   /// Number of sample positions recorded per sweep. At least 2.
   final int sampleCount;
 
-  /// Line hosts only: the sweep covers `[center - halfSpan, center +
-  /// halfSpan]` in the host line's arc-length parameter. Baked at
-  /// creation; unused (but persisted) for circle hosts.
+  /// Line hosts only: the sweep's *focus* in the host line's arc-length
+  /// parameter — the whole carrier is covered, with half the samples
+  /// inside `[center - halfSpan, center + halfSpan]` (Phase 39f). Baked
+  /// at creation; unused (but persisted) for circle hosts.
   final double center;
 
   /// See [center]. Positive.
@@ -111,9 +114,17 @@ class Locus extends GeoLocus {
   List<GeoObject> get chain => _chain;
 
   List<Vec2?>? _samples;
+  List<Vec2>? _coreSamples;
 
   @override
   List<Vec2?>? get samples => _samples;
+
+  /// The defined uniform positions traced from the sweep's focus window
+  /// `|t − center| ≤ halfSpan` (every defined position on circle hosts) —
+  /// see [GeoLocus.coreSamples] for why fitting and anchoring need a
+  /// bounded slice.
+  @override
+  List<Vec2>? get coreSamples => _coreSamples;
 
   @override
   List<GeoObject> get parents => [driver, traced];
@@ -123,6 +134,7 @@ class Locus extends GeoLocus {
     final parameters = _sampleParameters();
     if (parameters == null) {
       _samples = null;
+      _coreSamples = null;
       return;
     }
     final savedParameter = driver.parameter;
@@ -130,13 +142,14 @@ class Locus extends GeoLocus {
       for (final object in _chain)
         if (object is IntersectionPoint) object: object.branchIndex,
     };
-    final samples = _trace(parameters);
+    final (samples, core) = _trace(parameters);
     savedBranches.forEach((point, branch) => point.branchIndex = branch);
     driver.parameter = savedParameter;
     for (final object in _chain) {
       object.recompute();
     }
     _samples = samples;
+    _coreSamples = core;
   }
 
   /// Sets the driver to [parameter], recomputes the chain in topological
@@ -155,19 +168,29 @@ class Locus extends GeoLocus {
   /// entirely undefined, or entirely defined on a *circle* host, the
   /// uniform list is returned as-is — a gapless full-turn circle host
   /// stays exactly the list the painter closes into a loop. Everything
-  /// else — any line-host sweep, so window-edge ends can grow their
+  /// else — any line-host sweep, so infinity-edge ends can grow their
   /// infinity tails (Phase 39e), and gappy circle sweeps — has its
   /// defined runs (grouped *cyclically* on circle hosts, so a run
   /// straddling the 0/2π wrap is one stroke) each become a component via
   /// [_walk]; components are separated by single nulls. A line-host run
   /// with no accepted tails emits exactly the uniform samples it started
   /// from, at one extra sweep of eval cost.
-  List<Vec2?> _trace(List<double> parameters) {
+  ///
+  /// Also returns the [coreSamples] slice — the defined uniform
+  /// positions inside the focus window (all of them on circle hosts).
+  (List<Vec2?>, List<Vec2>) _trace(List<double> parameters) {
     final positions = [for (final t in parameters) _evalAt(t)];
+    final cyclic = driver.curve is GeoCircle;
+    final core = <Vec2>[
+      for (var i = 0; i < positions.length; i++)
+        if (positions[i] != null &&
+            (cyclic || (parameters[i] - center).abs() <= halfSpan))
+          positions[i]!,
+    ];
     final anyDefined = positions.any((p) => p != null);
     final anyGap = positions.contains(null);
-    if (!anyDefined || (!anyGap && driver.curve is GeoCircle)) {
-      return positions;
+    if (!anyDefined || (!anyGap && cyclic)) {
+      return (positions, core);
     }
     // The trace's extent — the scale against which an infinity tail's
     // increments count as converged.
@@ -189,7 +212,7 @@ class Locus extends GeoLocus {
       }
       out.addAll(_walk(run, extent));
     }
-    return out;
+    return (out, core);
   }
 
   /// Groups the defined uniform samples into runs. On a circle host the
@@ -198,7 +221,8 @@ class Locus extends GeoLocus {
   /// its parameters unwrapped by +2π to keep each run's parameter list
   /// monotone (the host geometry is 2π-periodic, so evaluation agrees).
   /// Every run ends in a gap parameter or, on line hosts, the sweep
-  /// window's edge (null — an open end, not a boundary to refine).
+  /// grid's infinity edge (null — an open end, not a boundary to
+  /// refine).
   List<_Run> _runs(List<double> parameters, List<Vec2?> positions) {
     final n = positions.length;
     final cyclic = driver.curve is GeoCircle;
@@ -226,9 +250,9 @@ class Locus extends GeoLocus {
       }
     }
     if (current != null) {
-      // A run touching the last slot: the window's right edge on a line
-      // host (open end); on a circle host the slot past it is the gap
-      // the cyclic iteration started at, one unwrapped turn up.
+      // A run touching the last slot: the grid's +infinity edge on a
+      // line host (open end); on a circle host the slot past it is the
+      // gap the cyclic iteration started at, one unwrapped turn up.
       runs.add(_Run(current,
           leftGap: leftGap, rightGap: cyclic ? parameterAt(n) : null));
     }
@@ -263,8 +287,8 @@ class Locus extends GeoLocus {
   /// wrong ink, at worst exactly the branch-fixed trace with refined
   /// boundaries.
   List<Vec2> _walk(_Run run, double extent) {
-    // A null gap is a sweep-window edge (line hosts only): instead of a
-    // boundary ladder the end may grow an infinity tail (Phase 39e).
+    // A null gap is the grid's infinity edge (line hosts only): instead
+    // of a boundary ladder the end may grow an infinity tail (39e/39f).
     final left = run.leftGap == null
         ? null
         : _refineBoundary(run.params.first, run.leftGap!);
@@ -364,7 +388,8 @@ class Locus extends GeoLocus {
   static const _tailDecay = 0.95;
   static const _tailConvergedFraction = 1e-6;
 
-  /// Extra sample parameters extending a window-edge open end toward the
+  /// Extra sample parameters extending an infinity-edge open end toward
+  /// the
   /// driver's point at infinity, in edge-outward order — empty when the
   /// end has no finite limit there (Phase 39e, user feedback on 39d).
   ///
@@ -372,8 +397,9 @@ class Locus extends GeoLocus {
   /// tangent-and-bisector document the Thales circle over AD flattens
   /// onto the perpendicular through A, carrying the traced point onto it
   /// like 1/t — and Cinderella's projective driver draws such a stroke
-  /// touching its limit, which a finite sweep window never reaches (the
-  /// gap at doc 1's window edge is ≈ 11 world units). The tail samples
+  /// touching its limit, which finite samples alone never reach (before
+  /// Phase 39e, doc 1's gap at the then-window edge was ≈ 11 world
+  /// units). The tail samples
   /// at geometrically *doubling* distances from [edge] — starting at
   /// 2 × [halfSpan] so the driver's distance from the figure roughly
   /// doubles every rung, capped at [_tailMaxDistance] where double
@@ -383,9 +409,9 @@ class Locus extends GeoLocus {
   /// most [_tailDecay] × the previous. Under distance doubling an
   /// algebraic approach t^−p yields increment ratio 2^−p < 1, while any
   /// divergence — even logarithmic — yields ≥ 1, so rejection is sharp;
-  /// rejecting keeps the window cut bit-exact: no ink ever leaks past
-  /// the window for a diverging trace, nor into a merely-defined region
-  /// just beyond the edge (a genuine end out there also rejects).
+  /// rejecting keeps the sampled end exact: no tail ink for a diverging
+  /// trace (the projective grid already carries it far out), nor into a
+  /// merely-defined region past the edge (a genuine end also rejects).
   ///
   /// The ladder stops early — converged, tail accepted — once an
   /// increment falls below [_tailConvergedFraction] of the trace's
@@ -404,7 +430,12 @@ class Locus extends GeoLocus {
     var previous = edgePosition;
     final tail = <double>[];
     double? lastIncrement;
-    for (var distance = 2 * halfSpan;
+    // The first rung must at least double the driver's distance from the
+    // focus: from the projective grid's far edge (≈ 80 · halfSpan out) a
+    // 2 · halfSpan rung barely moves the driver, so early increments
+    // *grow* toward the doubling regime and would spuriously trip the
+    // decay rejection.
+    for (var distance = math.max(2 * halfSpan, (edge - center).abs());
         distance <= _tailMaxDistance;
         distance *= 2) {
       final position = _evalAt(edge + sign * distance);
@@ -503,8 +534,15 @@ class Locus extends GeoLocus {
   /// The parameter values one sweep visits, or null while the host has no
   /// geometry. A circle host gets [sampleCount] uniform angles over one
   /// full turn (no duplicated closing sample — the painter closes the
-  /// loop); a line host gets [sampleCount] uniform values across
-  /// `[center - halfSpan, center + halfSpan]`, endpoints included.
+  /// loop); a line host is swept *projectively* (Phase 39f, the
+  /// Cinderella driver semantics): `center + halfSpan · tan(φ)` over a
+  /// cell-centered uniform φ grid in (−π/2, π/2) — strictly monotone,
+  /// symmetric about [center], covering the entire carrier. Half the
+  /// samples land within the focus `|t − center| ≤ halfSpan` (|φ| ≤ π/4),
+  /// density falling hyperbolically toward the ±infinity ends
+  /// (outermost samples ≈ ±halfSpan · 2n/π out), so diverging traces run
+  /// far past any reasonable zoom and converging ones land close enough
+  /// to their limit for the infinity tail to close the rest.
   List<double>? _sampleParameters() {
     switch (driver.curve) {
       case GeoCircle(:final circle):
@@ -519,10 +557,10 @@ class Locus extends GeoLocus {
         if (line == null) {
           return null;
         }
-        final start = center - halfSpan;
-        final step = 2 * halfSpan / (sampleCount - 1);
         return [
-          for (var i = 0; i < sampleCount; i++) start + step * i,
+          for (var i = 0; i < sampleCount; i++)
+            center +
+                halfSpan * math.tan(math.pi * ((i + 0.5) / sampleCount - 0.5)),
         ];
       default:
         // Unreachable: PointOnObject only hosts on lines and circles.
@@ -563,7 +601,7 @@ class Locus extends GeoLocus {
 
 /// One defined run of the uniform sweep: its sample parameters in
 /// monotone order, plus the adjacent undefined parameter on each side —
-/// null when the run ends at the sweep window's edge instead of a gap.
+/// null when the run ends at the grid's infinity edge instead of a gap.
 class _Run {
   _Run(this.params, {required this.leftGap, required this.rightGap});
 

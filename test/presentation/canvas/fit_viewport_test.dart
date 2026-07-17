@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/domain/construction/geo_object.dart';
 import 'package:regula/domain/construction/object_attributes.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
@@ -131,5 +132,47 @@ void main() {
       )!;
       expect(microscopic.scale, CanvasViewport.maxScale);
     });
+
+    test('a locus contributes its core samples, not its diverging arms '
+        '(Phase 39f)', () {
+      // A projective line-host sweep carries diverging arms to
+      // astronomically far positions; fitting on the full trace would
+      // shrink the figure to a dot.
+      final bounds = visibleWorldBounds([
+        _StubLocus(
+          id: 'loc',
+          samples: const [Vec2(-1e6, 1e5), Vec2(0, 0), Vec2(1e6, 1e5)],
+          coreSamples: const [Vec2(0, 0), Vec2(4, 2)],
+        ),
+      ])!;
+      expect(bounds.min, const Vec2(0, 0));
+      expect(bounds.max, const Vec2(4, 2));
+    });
   });
+}
+
+/// A [GeoLocus] with hand-picked samples and core samples (cf. the
+/// painter's stub): fit consumes the kind accessors only.
+class _StubLocus extends GeoLocus {
+  _StubLocus({
+    required super.id,
+    required List<Vec2?>? samples,
+    required List<Vec2> coreSamples,
+  })  : _samples = samples,
+        _coreSamples = coreSamples;
+
+  final List<Vec2?>? _samples;
+  final List<Vec2> _coreSamples;
+
+  @override
+  List<Vec2?>? get samples => _samples;
+
+  @override
+  List<Vec2>? get coreSamples => _coreSamples;
+
+  @override
+  List<GeoObject> get parents => const [];
+
+  @override
+  void recompute() {}
 }
