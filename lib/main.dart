@@ -682,32 +682,146 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     }
   }
 
-  /// Compact height of the app bar's single row — visibly slimmer than
-  /// the 56-px Material default while still fitting standard 48-px
-  /// icon-button touch targets.
-  static const double _compactBarHeight = 48;
-
-  /// Minimum window width for the wide app-bar chrome: the full wide
-  /// action cluster (tree toggle, File, six tool groups, four view
-  /// icons, delete, undo/redo ≈ 800 px today, plus headroom for the
-  /// planned Measure group). Narrower windows — iPad portrait most of
-  /// all — made `NavigationToolbar` paint the too-wide trailing cluster
-  /// over the leading tree icon, so below this the bar uses the compact
-  /// single-row chrome regardless of where the panels live.
-  static const double _wideChromeMinWidth = 980;
-
-  /// Compact-only home of the [GeometryToolbar]: it scrolls horizontally
-  /// in the app bar's flexible title slot, so the six flyout groups share
-  /// one row with undo/redo and the overflow menu and are never truncated
-  /// however narrow the screen (the title text carries no information a
-  /// phone user needs).
-  Widget _scrollableToolbar() => const Align(
-        alignment: Alignment.centerLeft,
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: GeometryToolbar(),
+  /// The app bar's one row — tree toggle, title, then the full action
+  /// cluster through undo/redo. The same chrome shows at every window
+  /// width (Phase 47, user feedback on the Phase 42 compact variant):
+  /// when the row outgrows the window it scrolls horizontally in its
+  /// entirety instead of re-arranging into a compact layout, so every
+  /// affordance keeps one home. [IntrinsicWidth] over the min-width
+  /// constraint sizes the row to max(content, bar), so the [Spacer]
+  /// right-aligns the action cluster while it fits and is exactly
+  /// zero-width once the row scrolls.
+  Widget _appBarRow({
+    required bool compactPanels,
+    required bool hasSelection,
+    required bool isDeleteActive,
+    required UndoRedoState undoRedo,
+  }) {
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minWidth: constraints.maxWidth),
+          child: IntrinsicWidth(
+            child: Row(
+              children: [
+                // Always an explicit tree button (never Material's
+                // auto-hamburger). What it opens follows the panel gate:
+                // drawer under [compactPanels], docked-panel toggle
+                // otherwise.
+                if (compactPanels)
+                  IconButton(
+                    tooltip: 'Show object tree',
+                    icon: const Icon(Icons.account_tree_outlined),
+                    onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+                  )
+                else
+                  IconButton(
+                    tooltip: _showObjectTree
+                        ? 'Hide object tree'
+                        : 'Show object tree',
+                    isSelected: _showObjectTree,
+                    icon: const Icon(Icons.account_tree_outlined),
+                    onPressed: () =>
+                        setState(() => _showObjectTree = !_showObjectTree),
+                  ),
+                // Styled by the AppBar's DefaultTextStyle (titleLarge).
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 8),
+                  child: Text('regula'),
+                ),
+                const Spacer(),
+                if (hasSelection)
+                  IconButton(
+                    tooltip: 'Style & properties',
+                    icon: const Icon(Icons.palette_outlined),
+                    onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
+                  ),
+                PopupMenuButton<Future<void> Function()>(
+                  tooltip: 'File: new, open, save',
+                  icon: const Icon(Icons.folder_outlined),
+                  onSelected: (action) => action(),
+                  itemBuilder: (context) => [
+                    PopupMenuItem(
+                      value: _newConstruction,
+                      child: const Text('New'),
+                    ),
+                    PopupMenuItem(
+                      value: _openConstruction,
+                      child: const Text('Open…'),
+                    ),
+                    PopupMenuItem(
+                      value: _saveConstruction,
+                      child: const Text('Save…'),
+                    ),
+                    PopupMenuItem(
+                      value: _exportPng,
+                      child: const Text('Export as PNG…'),
+                    ),
+                  ],
+                ),
+                const GeometryToolbar(),
+                IconButton(
+                  tooltip: 'Fit construction to view',
+                  icon: const Icon(Icons.fit_screen),
+                  onPressed: _fitConstruction,
+                ),
+                IconButton(
+                  tooltip: 'Reset view (origin at 100 %)',
+                  icon: const Icon(Icons.filter_center_focus),
+                  onPressed: () => ref.read(viewportProvider.notifier).reset(),
+                ),
+                _gridMenu(),
+                IconButton(
+                  tooltip: 'Keyboard shortcuts (?)',
+                  isSelected: _showCheatSheet,
+                  icon: const Icon(Icons.keyboard_outlined),
+                  onPressed: () =>
+                      setState(() => _showCheatSheet = !_showCheatSheet),
+                ),
+                IconButton(
+                  tooltip: Theme.of(context).brightness == Brightness.dark
+                      ? 'Switch to light theme'
+                      : 'Switch to dark theme',
+                  icon: Icon(
+                    Theme.of(context).brightness == Brightness.dark
+                        ? Icons.light_mode_outlined
+                        : Icons.dark_mode_outlined,
+                  ),
+                  onPressed: () => ref
+                      .read(themeModeProvider.notifier)
+                      .toggle(Theme.of(context).brightness),
+                ),
+                IconButton(
+                  key: const ValueKey('delete-tool-button'),
+                  tooltip: isDeleteActive
+                      ? 'Exit delete (Esc)'
+                      : 'Delete objects',
+                  isSelected: isDeleteActive,
+                  icon: const Icon(Icons.delete_outline),
+                  onPressed: _activateDeleteTool,
+                ),
+                IconButton(
+                  tooltip: 'Undo',
+                  icon: const Icon(Icons.undo),
+                  onPressed: undoRedo.canUndo
+                      ? () => ref.read(commandStackProvider.notifier).undo()
+                      : null,
+                ),
+                IconButton(
+                  tooltip: 'Redo',
+                  icon: const Icon(Icons.redo),
+                  onPressed: undoRedo.canRedo
+                      ? () => ref.read(commandStackProvider.notifier).redo()
+                      : null,
+                ),
+              ],
+            ),
+          ),
         ),
-      );
+      ),
+    );
+  }
 
   /// The Phase 36 axes/grid popup: two checked items flipping the
   /// per-document `DocumentSettings` toggles — view chrome like the
@@ -741,97 +855,15 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     );
   }
 
-  /// Compact-chrome overflow absorbing the File menu and the loose
-  /// wide-layout icon buttons (fit, reset, object tree, cheat sheet,
-  /// theme) — they don't fit an app bar that also hosts the scrolling
-  /// toolbar and undo/redo. The object-tree entry follows the panel
-  /// gate: drawer under [compactPanels], docked-panel toggle otherwise.
-  Widget _overflowMenu(BuildContext context, {required bool compactPanels}) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final settings = ref.watch(documentSettingsProvider);
-    return PopupMenuButton<VoidCallback>(
-      tooltip: 'More: file, view, panels, shortcuts, theme',
-      icon: const Icon(Icons.more_vert),
-      onSelected: (action) => action(),
-      itemBuilder: (context) => [
-        PopupMenuItem(
-          value: _newConstruction,
-          child: const Text('New'),
-        ),
-        PopupMenuItem(
-          value: _openConstruction,
-          child: const Text('Open…'),
-        ),
-        PopupMenuItem(
-          value: _saveConstruction,
-          child: const Text('Save…'),
-        ),
-        PopupMenuItem(
-          value: _exportPng,
-          child: const Text('Export as PNG…'),
-        ),
-        const PopupMenuDivider(),
-        PopupMenuItem(
-          value: _fitConstruction,
-          child: const Text('Fit construction to view'),
-        ),
-        PopupMenuItem(
-          value: () => ref.read(viewportProvider.notifier).reset(),
-          child: const Text('Reset view'),
-        ),
-        CheckedPopupMenuItem(
-          checked: settings.showAxes,
-          value: () =>
-              ref.read(documentSettingsProvider.notifier).toggleAxes(),
-          child: const Text('Show axes'),
-        ),
-        CheckedPopupMenuItem(
-          checked: settings.showGrid,
-          value: () =>
-              ref.read(documentSettingsProvider.notifier).toggleGrid(),
-          child: const Text('Show grid'),
-        ),
-        CheckedPopupMenuItem(
-          checked: settings.snapToGrid,
-          value: () =>
-              ref.read(documentSettingsProvider.notifier).toggleSnapToGrid(),
-          child: const Text('Snap to grid'),
-        ),
-        PopupMenuItem(
-          value: compactPanels
-              ? () => _scaffoldKey.currentState?.openDrawer()
-              : () => setState(() => _showObjectTree = !_showObjectTree),
-          child: Text(
-            !compactPanels && _showObjectTree
-                ? 'Hide object tree'
-                : 'Show object tree',
-          ),
-        ),
-        PopupMenuItem(
-          value: () => setState(() => _showCheatSheet = !_showCheatSheet),
-          child: const Text('Keyboard shortcuts'),
-        ),
-        PopupMenuItem(
-          value: () => ref
-              .read(themeModeProvider.notifier)
-              .toggle(Theme.of(context).brightness),
-          child: Text(dark ? 'Switch to light theme' : 'Switch to dark theme'),
-        ),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final undoRedo = ref.watch(commandStackProvider);
-    // Two independent gates (PLAN "Responsive chrome split"): the
-    // Material compact breakpoint decides only where the panels live
-    // (drawers vs docked), while app-bar density follows the window
-    // width — an iPad-portrait window is wide enough for docked panels
-    // but not for the wide action cluster.
+    // One gate (PLAN "Unified scrollable app bar"): the Material compact
+    // breakpoint decides only where the panels live (drawers vs docked).
+    // The app bar itself is the same at every width — too-narrow windows
+    // scroll it horizontally instead of re-arranging it.
     final screen = MediaQuery.sizeOf(context);
     final compactPanels = screen.shortestSide < 600;
-    final compactChrome = screen.width < _wideChromeMinWidth;
     // Watched only with drawer panels: the app bar's style button
     // appears with the selection (it opens the inspector drawer, which
     // never auto-opens); a docked inspector is already visible.
@@ -863,122 +895,21 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
             ? Drawer(width: drawerWidth, child: const AttributesInspector())
             : null,
         appBar: AppBar(
-          // Compact chrome: one slim row — tree button, the toolbar
-          // scrolling in the title slot, then style (with a selection),
-          // delete, undo/redo and the overflow menu.
-          toolbarHeight: compactChrome ? _compactBarHeight : null,
-          leadingWidth: compactChrome ? _compactBarHeight : null,
-          titleSpacing: compactChrome ? 0 : null,
-          // Always an explicit tree button: with a drawer set, a null
-          // leading makes Material inject its auto-hamburger, hiding the
-          // tree affordance behind a generic burger. What it opens
-          // follows the panel gate, not the chrome gate.
-          leading: compactPanels
-              ? IconButton(
-                  tooltip: 'Show object tree',
-                  icon: const Icon(Icons.account_tree_outlined),
-                  onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-                )
-              : IconButton(
-                  tooltip: _showObjectTree
-                      ? 'Hide object tree'
-                      : 'Show object tree',
-                  isSelected: _showObjectTree,
-                  icon: const Icon(Icons.account_tree_outlined),
-                  onPressed: () =>
-                      setState(() => _showObjectTree = !_showObjectTree),
-                ),
-          title: compactChrome ? _scrollableToolbar() : const Text('regula'),
-          actions: [
-            if (hasSelection)
-              IconButton(
-                tooltip: 'Style & properties',
-                icon: const Icon(Icons.palette_outlined),
-                onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
-              ),
-            if (!compactChrome) ...[
-              PopupMenuButton<Future<void> Function()>(
-                tooltip: 'File: new, open, save',
-                icon: const Icon(Icons.folder_outlined),
-                onSelected: (action) => action(),
-                itemBuilder: (context) => [
-                  PopupMenuItem(
-                    value: _newConstruction,
-                    child: const Text('New'),
-                  ),
-                  PopupMenuItem(
-                    value: _openConstruction,
-                    child: const Text('Open…'),
-                  ),
-                  PopupMenuItem(
-                    value: _saveConstruction,
-                    child: const Text('Save…'),
-                  ),
-                  PopupMenuItem(
-                    value: _exportPng,
-                    child: const Text('Export as PNG…'),
-                  ),
-                ],
-              ),
-              const GeometryToolbar(),
-              IconButton(
-                tooltip: 'Fit construction to view',
-                icon: const Icon(Icons.fit_screen),
-                onPressed: _fitConstruction,
-              ),
-              IconButton(
-                tooltip: 'Reset view (origin at 100 %)',
-                icon: const Icon(Icons.filter_center_focus),
-                onPressed: () => ref.read(viewportProvider.notifier).reset(),
-              ),
-              _gridMenu(),
-              IconButton(
-                tooltip: 'Keyboard shortcuts (?)',
-                isSelected: _showCheatSheet,
-                icon: const Icon(Icons.keyboard_outlined),
-                onPressed: () =>
-                    setState(() => _showCheatSheet = !_showCheatSheet),
-              ),
-              IconButton(
-                tooltip: Theme.of(context).brightness == Brightness.dark
-                    ? 'Switch to light theme'
-                    : 'Switch to dark theme',
-                icon: Icon(
-                  Theme.of(context).brightness == Brightness.dark
-                      ? Icons.light_mode_outlined
-                      : Icons.dark_mode_outlined,
-                ),
-                onPressed: () => ref
-                    .read(themeModeProvider.notifier)
-                    .toggle(Theme.of(context).brightness),
-              ),
-            ],
-            IconButton(
-              key: const ValueKey('delete-tool-button'),
-              tooltip: isDeleteActive
-                  ? 'Exit delete (Esc)'
-                  : 'Delete objects',
-              isSelected: isDeleteActive,
-              icon: const Icon(Icons.delete_outline),
-              onPressed: _activateDeleteTool,
-            ),
-            IconButton(
-              tooltip: 'Undo',
-              icon: const Icon(Icons.undo),
-              onPressed: undoRedo.canUndo
-                  ? () => ref.read(commandStackProvider.notifier).undo()
-                  : null,
-            ),
-            IconButton(
-              tooltip: 'Redo',
-              icon: const Icon(Icons.redo),
-              onPressed: undoRedo.canRedo
-                  ? () => ref.read(commandStackProvider.notifier).redo()
-                  : null,
-            ),
-            if (compactChrome)
-              _overflowMenu(context, compactPanels: compactPanels),
-          ],
+          // The whole bar is [_appBarRow] in the title slot; no leading
+          // (a null leading with a drawer set would inject Material's
+          // auto-hamburger — the row carries its own tree button).
+          automaticallyImplyLeading: false,
+          titleSpacing: 0,
+          title: _appBarRow(
+            compactPanels: compactPanels,
+            hasSelection: hasSelection,
+            isDeleteActive: isDeleteActive,
+            undoRedo: undoRedo,
+          ),
+          // Non-empty actions suppress the end-drawer button Material
+          // injects when `endDrawer` is set — the inspector drawer opens
+          // from the row's style button only.
+          actions: const [SizedBox.shrink()],
         ),
         body: SafeArea(
           // A no-op except on notched mobile devices, where the

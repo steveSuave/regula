@@ -9,7 +9,6 @@ import 'wide_window.dart';
 
 void main() {
   testWidgets('app scaffold renders the editor', (tester) async {
-    // The 'regula' title only renders in the wide chrome.
     useWideTestWindow(tester);
     // MainApp reads the theme choice, so it needs the same preferences
     // override main() installs.
