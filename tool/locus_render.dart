@@ -14,7 +14,10 @@ void main(List<String> args) {
   final construction = decodeDocument(json).construction;
   final locus = construction.objects.whereType<Locus>().single;
   final samples = locus.samples!;
-  final points = samples.whereType<Vec2>().toList();
+  // Frame on the core (focus-window) samples: a projective line-host
+  // sweep carries diverging arms astronomically far out, and a frame
+  // fit to those shrinks the figure to a dot.
+  final points = locus.coreSamples!;
   var minX = points.first.x, maxX = points.first.x;
   var minY = points.first.y, maxY = points.first.y;
   for (final p in points) {
@@ -56,5 +59,6 @@ void main(List<String> args) {
   File(args[1]).writeAsStringSync(sb.toString());
   stdout.writeln('components: '
       '${samples.fold<int>(1, (n, s) => s == null ? n + 1 : n)}, '
-      'samples: ${points.length}');
+      'samples: ${samples.whereType<Vec2>().length}, '
+      'core: ${points.length}');
 }

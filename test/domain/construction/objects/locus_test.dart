@@ -130,7 +130,8 @@ void main() {
       }
     });
 
-    test('line host: uniform samples across [center ± halfSpan]', () {
+    test('line host: projective tan grid focused on [center ± halfSpan] '
+        '(Phase 39f)', () {
       final a = FreePoint(id: 'a', position: Vec2.zero);
       final b = FreePoint(id: 'b', position: const Vec2(1, 0));
       final host = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
@@ -146,16 +147,25 @@ void main() {
         center: 0,
         halfSpan: 100,
       );
+      // The identity trace diverges, so the infinity tails reject
+      // (increments double rung to rung) and the samples are exactly the
+      // uniform grid: t = center + halfSpan·tan(φ), φ cell-centered over
+      // (−π/2, π/2) — for n = 3 that is −π/3, 0, π/3.
       final samples = locus.samples!;
       expect(samples.length, 3);
       expect(samples[1]!.distanceTo(Vec2.zero), closeTo(0, 1e-12));
-      expect(samples[0]!.norm, closeTo(100, 1e-12));
-      expect(samples[2]!.norm, closeTo(100, 1e-12));
+      expect(samples[0]!.norm, closeTo(100 * math.tan(math.pi / 3), 1e-9));
+      expect(samples[2]!.norm, closeTo(100 * math.tan(math.pi / 3), 1e-9));
       expect(
         (samples[0]! + samples[2]!).norm,
-        closeTo(0, 1e-12),
-        reason: 'endpoints sit symmetrically about the center',
+        closeTo(0, 1e-9),
+        reason: 'the grid sits symmetrically about the focus center',
       );
+      expect(locus.coreSamples, hasLength(1),
+          reason: 'only the center sample lies inside the focus window — '
+              'coreSamples is the bounded slice fit and labels consume');
+      expect(locus.coreSamples!.single.distanceTo(Vec2.zero),
+          closeTo(0, 1e-12));
     });
 
     test('restores the driver bit-exactly', () {
@@ -224,14 +234,17 @@ void main() {
           reason: 'the flipped branch covers the upper half');
       expect(points.any((p) => p.y < -5), isTrue,
           reason: 'the original branch covers the lower half');
-      // Boundary refinement reaches the tangency points themselves.
+      // Boundary refinement dives to the two-candidate edge — the
+      // intersection epsilon puts it ~1e-4 from the exact tangency (the
+      // old 1e-6 pin relied on the uniform window grid landing a sample
+      // exactly on the tangency parameter; the tan grid does not).
       expect(
-        points.any((p) => p.distanceTo(const Vec2(10, 0)) < 1e-6),
+        points.any((p) => p.distanceTo(const Vec2(10, 0)) < 1e-3),
         isTrue,
         reason: 'right tangency sampled',
       );
       expect(
-        points.any((p) => p.distanceTo(const Vec2(-10, 0)) < 1e-6),
+        points.any((p) => p.distanceTo(const Vec2(-10, 0)) < 1e-3),
         isTrue,
         reason: 'left tangency sampled',
       );
@@ -241,14 +254,15 @@ void main() {
       expect(locus.driver.parameter, 0);
     });
 
-    test('an open walk drops the flipped tail: only the reachable '
-        'branch remains (Phase 39c)', () {
-      // Window [0, 100] cuts the run at x = 0 (an edge, not a boundary):
-      // the walk flips at the tangency (x = 30) and traces back on the
-      // other branch, but never returns to the original assignment — so
-      // the flipped tail is trimmed and the locus is exactly what
-      // dragging the driver with the persisted branch can reach: one
-      // branch from the window edge to the tangency point.
+    test('a focus window that once cut the run no longer does: the '
+        'projective sweep closes the full circle (Phase 39f)', () {
+      // Before 39f the window [0, 100] cut the run at x = 0 and the walk,
+      // flipping at the x = 30 tangency but never regaining the original
+      // assignment, trimmed to one open branch (the Phase 39c pin). The
+      // projective sweep covers the whole carrier, so both tangencies
+      // are interior boundaries, both flip, and the walk closes — the
+      // open-walk trim is now pinned by the doc-1-shaped fixture below,
+      // whose walks end at the grid's infinity edges.
       final locus = _perpendicularCircleLocus(
         center: 50,
         halfSpan: 50,
@@ -258,15 +272,15 @@ void main() {
       final samples = locus.samples!;
       expect(samples, isNot(contains(null)));
       final points = samples.cast<Vec2>();
-      expect(points.first, isNot(points.last), reason: 'open curve');
-      expect(points.first.x, closeTo(0, 1e-9),
-          reason: 'starts at the window edge');
-      expect(points.last.distanceTo(const Vec2(30, 0)), lessThan(1e-6),
-          reason: 'refined up to the tangency point, where it ends');
-      final signs = points.map((p) => p.y.sign).where((s) => s != 0);
-      expect(signs.toSet(), hasLength(1),
-          reason: 'one branch only — the flipped sheet is unreachable '
-              'by deterministic-branch dragging');
+      expect(points.first, points.last, reason: 'closed loop');
+      for (final p in points) {
+        expect(p.x * p.x + p.y * p.y, closeTo(900, 1e-4),
+            reason: 'every sample lies on the circle');
+      }
+      expect(points.any((p) => p.y > 15), isTrue,
+          reason: 'the flipped branch covers the upper half');
+      expect(points.any((p) => p.y < -15), isTrue,
+          reason: 'the original branch covers the lower half');
     });
 
     test('doc-1 shape: open walks keep strokes and dives, no mirror '
