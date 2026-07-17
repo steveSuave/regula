@@ -682,6 +682,12 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     }
   }
 
+  /// Slim app-bar height for phones — visibly slimmer than the 56-px
+  /// Material default while still fitting the standard 48-px icon-button
+  /// touch targets. Canvas pixels matter most where the screen is
+  /// smallest; the row's content is identical at every height.
+  static const double _phoneBarHeight = 48;
+
   /// The app bar's one row — tree toggle, title, then the full action
   /// cluster through undo/redo. The same chrome shows at every window
   /// width (Phase 47, user feedback on the Phase 42 compact variant):
@@ -900,6 +906,9 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
           // auto-hamburger — the row carries its own tree button).
           automaticallyImplyLeading: false,
           titleSpacing: 0,
+          // Same row everywhere, but slimmer on phones (user feedback):
+          // the height rides the panel gate, not a chrome gate.
+          toolbarHeight: compactPanels ? _phoneBarHeight : null,
           title: _appBarRow(
             compactPanels: compactPanels,
             hasSelection: hasSelection,
