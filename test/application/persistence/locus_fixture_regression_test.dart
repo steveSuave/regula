@@ -42,7 +42,9 @@ void main() {
     // still sampled the intersection tolerance zone past the true
     // tangency, where the fabricated tangent F ≈ D collapses the
     // bisector and throws G onto A (one run) and B (the other) — long
-    // phantom diagonals from each stroke's end down to the line AB.
+    // phantom diagonals from each stroke's end down to the line AB;
+    // 39d still cut each stroke at the sweep window's edge, ≈ 11 world
+    // units short of its driver-at-infinity limit on line b (39e).
     final free = <FreePoint>[];
     final locus = loadLocus('locus-miss.json', freeOut: free);
     final a = free.singleWhere((p) => p.attributes.name == 'A').position;
@@ -77,6 +79,20 @@ void main() {
         comp.map((p) => p.distanceTo(limit(side, sheet))).reduce(math.min),
         lessThan(0.5),
         reason: "the refined dive converges to G's true tangency limit",
+      );
+      // The stroke's far end (Phase 39e): as D runs off line AB the
+      // Thales circle over AD flattens onto the perpendicular through A
+      // (the document's line b, through A and C) and G → A + perp·|AB|/2
+      // like 1/t. The sweep window used to cut the stroke ≈ 11 world
+      // units short of it — the reported visible gap; the infinity tail
+      // must carry the stroke onto the limit.
+      expect(
+        comp.map((p) => p.distanceTo(a + perp * (sheet * r / 2))).reduce(
+              math.min,
+            ),
+        lessThan(0.01),
+        reason: 'the window-edge end touches the driver-at-infinity '
+            'limit on line b',
       );
       for (final anchor in [a, b]) {
         expect(

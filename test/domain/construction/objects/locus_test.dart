@@ -349,6 +349,18 @@ void main() {
           lessThan(0.01),
           reason: "the refined dive converges to G's true tangency limit",
         );
+        // The other end of each stroke: as the driver runs off the host
+        // line, the Thales circle over AD flattens onto the perpendicular
+        // through A and G → (0, ±r/2) like 1/t — the infinity tail must
+        // carry the stroke onto that limit instead of stopping at the
+        // sweep window's cut (Phase 39e).
+        final infinityLimit = Vec2(0, componentSigns[i] * 1.5);
+        expect(
+          component.map((p) => p.distanceTo(infinityLimit)).reduce(math.min),
+          lessThan(1e-3),
+          reason: 'the window-edge end touches the driver-at-infinity '
+              'limit on the perpendicular through A',
+        );
       }
       expect(componentSigns.toSet(), hasLength(2),
           reason: 'the fixed branch lands on opposite sides of AB for '
