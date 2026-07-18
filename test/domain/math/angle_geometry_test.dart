@@ -70,6 +70,36 @@ void main() {
     );
   });
 
+  group('angularDistance', () {
+    test('takes the shorter way around', () {
+      expect(angularDistance(0, math.pi / 2), closeTo(math.pi / 2, 1e-12));
+      expect(
+        angularDistance(0, 3 * math.pi / 2),
+        closeTo(math.pi / 2, 1e-12),
+      );
+      expect(
+        angularDistance(-3 * math.pi / 4, math.pi),
+        closeTo(math.pi / 4, 1e-12),
+        reason: 'wraps across the atan2 seam',
+      );
+    });
+
+    test('zero for equal angles, π for opposite ones', () {
+      expect(angularDistance(1.25, 1.25), 0);
+      expect(angularDistance(0, math.pi), closeTo(math.pi, 1e-12));
+    });
+
+    Glados2(any.coordinate, any.coordinate).test(
+      'is symmetric and within [0, π]',
+      (a, b) {
+        final distance = angularDistance(a, b);
+        expect(distance, greaterThanOrEqualTo(0));
+        expect(distance, lessThanOrEqualTo(math.pi));
+        expect(angularDistance(b, a), closeTo(distance, 1e-9));
+      },
+    );
+  });
+
   group('AngleGeometry', () {
     test('rejects a sweep outside [0, 2π)', () {
       expect(

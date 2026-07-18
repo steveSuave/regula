@@ -11,6 +11,7 @@ import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
+import 'package:regula/domain/construction/objects/sector.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/tools/drag_session.dart';
@@ -376,6 +377,38 @@ void main() {
       expect(onCircle.position, const Vec2(4, 0));
       command.apply(construction);
       expect(onCircle.position!.y, closeTo(4, 1e-12));
+    });
+
+    test('slide on a sector stops at the wedge ends instead of circling',
+        () {
+      final center = FreePoint(id: 'c', position: Vec2.zero);
+      final end = FreePoint(id: 'e', position: const Vec2(0, 4));
+      // b sits at (4, 0): wedge from angle 0 to π/2, radius 4.
+      final sector = Sector(id: 'w', center: center, start: b, end: end);
+      final onSector =
+          PointOnObject(id: 'q', curve: sector, parameter: math.pi / 4);
+      construction
+        ..add(center)
+        ..add(end)
+        ..add(sector)
+        ..add(onSector);
+
+      final session =
+          DragSession.start(construction, onSector, onSector.position!)!;
+      // Drag far past the end rim: the point must stop there instead of
+      // following the pointer around the carrier.
+      session.update(const Vec2(-4, 4));
+      expect(onSector.parameter, closeTo(math.pi / 2, 1e-9));
+      expect(onSector.position!.closeTo(const Vec2(0, 4)), isTrue);
+
+      // Reverse below the start rim: it stops at the other end.
+      session.update(const Vec2(4, -4));
+      expect(onSector.parameter, closeTo(0, 1e-9));
+      expect(onSector.position!.closeTo(const Vec2(4, 0)), isTrue);
+
+      final command = session.end()! as SetPointOnObjectParameterCommand;
+      expect(command.to, closeTo(0, 1e-9),
+          reason: 'the committed parameter is the clamped one');
     });
 
     test('grabbing near the ±π angular cut never jumps the point a turn',

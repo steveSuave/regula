@@ -18,7 +18,12 @@ import '../geo_object.dart';
 /// move through `moveFreePoint`.
 ///
 /// Segments and rays constrain to their infinite carrier line for now,
-/// matching `IntersectionPoint`'s deferred-clipping caveat.
+/// matching `IntersectionPoint`'s deferred-clipping caveat. Arcs and
+/// sectors do *not* share that deferral: the effective angle is clamped
+/// into the host's `angularExtent` on every recompute, so the point never
+/// leaves the drawn branch — and because [parameter] itself is kept as
+/// stored, a wedge that shrinks past the point carries it along on its
+/// rim end and gives it back when it grows again.
 class PointOnObject extends GeoPoint {
   PointOnObject({
     required super.id,
@@ -44,7 +49,8 @@ class PointOnObject extends GeoPoint {
   }) {
     final parameter = switch (curve) {
       GeoLine(:final line?) => line.parameterAt(position),
-      GeoCircle(:final circle?) => circle.angleAt(position),
+      GeoCircle(:final circle?) && final GeoCircle host =>
+        host.clampAngle(circle.angleAt(position)),
       GeoLine() || GeoCircle() => throw ArgumentError(
           'Cannot project onto an undefined curve',
         ),
@@ -79,7 +85,8 @@ class PointOnObject extends GeoPoint {
   void recompute() {
     _position = switch (curve) {
       GeoLine(:final line) => line?.pointAt(parameter),
-      GeoCircle(:final circle) => circle?.pointAt(parameter),
+      GeoCircle(:final circle) && final GeoCircle host =>
+        circle?.pointAt(host.clampAngle(parameter)),
       GeoPoint() || GeoAngle() || GeoPolygon() || GeoMeasurement() ||
       GeoLocus() =>
         throw StateError(

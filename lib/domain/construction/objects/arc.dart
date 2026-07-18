@@ -48,6 +48,18 @@ class Arc extends GeoCircle {
   Vec2? get startPosition => start.position;
   Vec2? get endPosition => end.position;
 
+  /// The drawn branch as a counter-clockwise span: a negative [sweep]
+  /// walks back from [startAngle], so the span starts at the far endpoint.
+  @override
+  (double, double)? get angularExtent {
+    final startAngle = _startAngle;
+    final sweep = _sweep;
+    if (startAngle == null || sweep == null) {
+      return null;
+    }
+    return sweep >= 0 ? (startAngle, sweep) : (startAngle + sweep, -sweep);
+  }
+
   /// Whether the carrier point at [angle] lies on the arc (endpoints
   /// included). False while undefined.
   bool containsAngle(double angle) {

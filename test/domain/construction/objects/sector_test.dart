@@ -50,6 +50,27 @@ void main() {
       expect(sector.containsAngle(-math.pi / 4), isFalse);
     });
 
+    test('angularExtent is the wedge; clampAngle confines carrier angles '
+        'to it', () {
+      final sector = Sector(
+        id: 'w',
+        center: FreePoint(id: 'c', position: Vec2.zero),
+        start: FreePoint(id: 's', position: const Vec2(2, 0)),
+        end: FreePoint(id: 'e', position: const Vec2(0, 5)),
+      );
+
+      final (start, sweep) = sector.angularExtent!;
+      expect(start, closeTo(0, 1e-9));
+      expect(sweep, closeTo(math.pi / 2, 1e-9));
+      expect(sector.clampAngle(math.pi / 4), math.pi / 4,
+          reason: 'inside angles pass through untouched');
+      expect(sector.clampAngle(-math.pi / 6), closeTo(0, 1e-9));
+      expect(
+        sector.clampAngle(3 * math.pi / 4),
+        closeTo(math.pi / 2, 1e-9),
+      );
+    });
+
     test('undefined while start or end sits on the center; recovers', () {
       final construction = Construction();
       final c = FreePoint(id: 'c', position: Vec2.zero);
@@ -67,6 +88,7 @@ void main() {
       expect(sector.startRim, isNull);
       expect(sector.endRim, isNull);
       expect(sector.containsAngle(0), isFalse);
+      expect(sector.angularExtent, isNull);
 
       construction.moveFreePoint('s', const Vec2(2, 0));
       expect(sector.isDefined, isTrue);

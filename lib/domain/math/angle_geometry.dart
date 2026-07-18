@@ -14,6 +14,13 @@ double ccwSweep(double from, double to) {
   return sweep == _tau ? 0 : sweep;
 }
 
+/// Absolute angular separation between [a] and [b] — the shorter way
+/// around, in [0, π].
+double angularDistance(double a, double b) {
+  final sweep = ccwSweep(a, b);
+  return math.min(sweep, _tau - sweep);
+}
+
 /// Signed sweep from angle [start] to angle [end] along the side that
 /// passes [via]: positive (counter-clockwise) when [via] lies on the CCW
 /// path from [start] to [end], negative (clockwise) otherwise.

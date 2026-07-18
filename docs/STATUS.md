@@ -6,6 +6,27 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 65 — 2026-07-18
+
+**Done**
+- Bug fix (user report): a `PointOnObject` hosted on an `Arc`/`Sector` slid the full 360° of the carrier, and a locus driven by such a point traced the whole turn. Root cause was threefold: the slide drag re-projects onto the carrier circle, `PointOnObject` never clamps its polar angle, and `Locus` sweeps every `GeoCircle` host one full turn.
+- New API on `GeoCircle`: `angularExtent` (`(start, sweep)` CCW span, null = whole turn; `Arc` normalizes its signed sweep, `Sector` exposes its wedge, both null while undefined) and `clampAngle` (identity for full circles, else snaps outside angles to the angularly nearer extent endpoint, via new `angularDistance` in `angle_geometry.dart`).
+- `PointOnObject`: `near()` clamps the tap's angle; `recompute()` clamps the *effective* angle without mutating `parameter` — a wedge that shrinks past the point carries it on its rim end and gives it back when it grows again.
+- `_SlideDragSession`: clamps each frame's parameter (point stops at the branch ends, reverses immediately) and takes the grab offset from the clamped parameter; committed command carries the clamped value.
+- `Locus`: bounded hosts sweep only their extent (endpoints included, `sampleCount` uniform steps), treated non-cyclically — no 0/2π wrap merging in `_runs`, infinity tails now gated to line hosts. Painter closes a gapless circle-host locus into a loop only when `angularExtent == null`.
+- Tests: `angularDistance` (glados), Arc/Sector `angularExtent`+`clampAngle`, full-circle passthrough, sector-hosted `near`/shrink-restore, sector slide-drag clamp, sector-host locus domain. 1180 green, analyze clean.
+
+**Next**
+- Phase 43 (viewport rotation) is the last queued phase.
+- `main` is ahead of `origin/main` by several phases — push when convenient.
+
+**Open questions / gotchas**
+- Segments/rays still constrain to their infinite carrier line (deferred as before) — only the circle kinds got extent clamping; do segments next if the same complaint comes in.
+- Intersection points on arcs/sectors remain unclipped to the extent (the pre-existing deferred-clipping caveat, untouched).
+- A gappy bounded-host locus run touching a domain edge gets a null gap on that side, like a line host's infinity edge — genuine end, no refinement ladder there (the arc endpoint is a domain edge, not a defined↔undefined boundary).
+
+---
+
 ## Session 64 — 2026-07-18
 
 **Done**
