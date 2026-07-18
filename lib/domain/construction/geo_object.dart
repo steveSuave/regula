@@ -74,6 +74,32 @@ abstract class GeoCircle extends GeoObject {
 
   CircleEq? get circle;
 
+  /// The angular span of the carrier this object actually occupies, as
+  /// `(start, sweep)` with a counter-clockwise sweep in [0, 2π) — or null
+  /// when the whole turn is available. Full circles are always null;
+  /// `Arc` and `Sector` override with their drawn extent (null while
+  /// undefined), so constrained points and locus sweeps stay on the
+  /// visible branch instead of roaming the full carrier.
+  (double, double)? get angularExtent => null;
+
+  /// Clamps a carrier angle into [angularExtent]: [angle] itself when the
+  /// extent is the whole turn or already contains it, otherwise the
+  /// angularly nearer extent endpoint.
+  double clampAngle(double angle) {
+    final extent = angularExtent;
+    if (extent == null) {
+      return angle;
+    }
+    final (start, sweep) = extent;
+    if (ccwSweep(start, angle) <= sweep) {
+      return angle;
+    }
+    final end = start + sweep;
+    return angularDistance(angle, start) <= angularDistance(angle, end)
+        ? start
+        : end;
+  }
+
   @override
   bool get isDefined => circle != null;
 }

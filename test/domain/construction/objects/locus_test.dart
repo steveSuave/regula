@@ -12,6 +12,7 @@ import 'package:regula/domain/construction/objects/locus.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
 import 'package:regula/domain/construction/objects/perpendicular_line.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
+import 'package:regula/domain/construction/objects/sector.dart';
 import 'package:regula/domain/math/vec2.dart';
 
 void main() {
@@ -127,6 +128,36 @@ void main() {
         final sample = samples[i]!;
         expect(sample.x, closeTo(2 + math.cos(angle), 1e-12), reason: 'x[$i]');
         expect(sample.y, closeTo(math.sin(angle), 1e-12), reason: 'y[$i]');
+      }
+    });
+
+    test('sector host: the sweep covers only the wedge, endpoints '
+        'included', () {
+      final center = FreePoint(id: 'c', position: Vec2.zero);
+      final start = FreePoint(id: 's', position: const Vec2(2, 0));
+      final end = FreePoint(id: 'e', position: const Vec2(0, 2));
+      final host = Sector(id: 'w', center: center, start: start, end: end);
+      final driver = PointOnObject(id: 'drv', curve: host, parameter: 0);
+      final p = FreePoint(id: 'p', position: const Vec2(4, 0));
+      final traced = Midpoint(id: 'tr', point1: driver, point2: p);
+      final locus = Locus(
+        id: 'loc',
+        driver: driver,
+        traced: traced,
+        sampleCount: 9,
+      );
+
+      // Midpoint of the radius-2 wedge with P(4,0): a quarter circle
+      // around (2,0), radius 1 — sample i at angle (π/2)·i/8, both
+      // wedge ends included (the stroke is open, never a full turn).
+      final samples = locus.samples!;
+      expect(samples.length, 9);
+      for (var i = 0; i < samples.length; i++) {
+        final angle = math.pi / 2 * i / 8;
+        expect(samples[i]!.x, closeTo(2 + math.cos(angle), 1e-12),
+            reason: 'x[$i]');
+        expect(samples[i]!.y, closeTo(math.sin(angle), 1e-12),
+            reason: 'y[$i]');
       }
     });
 

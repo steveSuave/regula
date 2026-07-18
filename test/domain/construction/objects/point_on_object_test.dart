@@ -1,9 +1,12 @@
+import 'dart:math' as math;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
+import 'package:regula/domain/construction/objects/sector.dart';
 import 'package:regula/domain/math/vec2.dart';
 
 void main() {
@@ -35,6 +38,59 @@ void main() {
       );
 
       expect(p.position!.closeTo(const Vec2(1, 3)), isTrue);
+    });
+
+    test('near() on a sector clamps the tap into the wedge', () {
+      final center = FreePoint(id: 'c', position: Vec2.zero);
+      final start = FreePoint(id: 's', position: const Vec2(4, 0));
+      final end = FreePoint(id: 'e', position: const Vec2(0, 4));
+      final sector = Sector(id: 'w', center: center, start: start, end: end);
+
+      final inside = PointOnObject.near(
+        id: 'p',
+        curve: sector,
+        position: const Vec2(3, 3),
+      );
+      expect(inside.parameter, closeTo(math.pi / 4, 1e-9));
+
+      final outside = PointOnObject.near(
+        id: 'q',
+        curve: sector,
+        position: const Vec2(-4, 4),
+      );
+      expect(outside.parameter, closeTo(math.pi / 2, 1e-9),
+          reason: 'a tap past the end rim snaps to the nearer wedge end');
+      expect(outside.position!.closeTo(const Vec2(0, 4)), isTrue);
+    });
+
+    test('a shrinking wedge carries the point on its rim end, then gives '
+        'it back', () {
+      final construction = Construction();
+      final center = FreePoint(id: 'c', position: Vec2.zero);
+      final start = FreePoint(id: 's', position: const Vec2(4, 0));
+      final end = FreePoint(id: 'e', position: const Vec2(0, 4));
+      final sector = Sector(id: 'w', center: center, start: start, end: end);
+      final p = PointOnObject(id: 'p', curve: sector, parameter: math.pi / 2);
+      construction
+        ..add(center)
+        ..add(start)
+        ..add(end)
+        ..add(sector)
+        ..add(p);
+      expect(p.position!.closeTo(const Vec2(0, 4)), isTrue);
+
+      // Shrink the wedge to [0, π/4]: the stored parameter falls outside
+      // and the rendered position clamps to the end rim.
+      construction.moveFreePoint('e', const Vec2(4, 4));
+      final rim = Vec2(math.sqrt(8), math.sqrt(8));
+      expect(p.position!.closeTo(rim), isTrue);
+      expect(p.parameter, math.pi / 2,
+          reason: 'the stored parameter is untouched — clamping is a '
+              'rendering of the extent, not a mutation');
+
+      // Grow the wedge back: the point returns to where it was.
+      construction.moveFreePoint('e', const Vec2(0, 4));
+      expect(p.position!.closeTo(const Vec2(0, 4)), isTrue);
     });
 
     test('rides along when the line moves', () {

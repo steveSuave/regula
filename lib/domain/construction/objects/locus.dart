@@ -25,8 +25,11 @@ import 'point_on_object.dart';
 /// consequence: sliding the driver along its host does not change the
 /// locus — the sweep domain is fixed.
 ///
-/// Sampling domain: a circle host is swept one full turn ([sampleCount]
-/// uniform angles; the painter closes the loop when gapless); a line
+/// Sampling domain: a full-circle host is swept one full turn
+/// ([sampleCount] uniform angles; the painter closes the loop when
+/// gapless); an `Arc`/`Sector` host is swept only over its drawn
+/// `angularExtent` — endpoints included, non-cyclic, its edges genuine
+/// curve ends (no wrap merging, no infinity tails); a line
 /// host is swept *projectively* over its whole carrier (Phase 39f),
 /// with sampling density focused on `[center - halfSpan, center +
 /// halfSpan]` — both baked at creation by the tool, the locus sibling
@@ -152,6 +155,14 @@ class Locus extends GeoLocus {
     _coreSamples = core;
   }
 
+  /// Whether the sweep domain is one full turn — a plain-circle host.
+  /// Bounded circle hosts (`Arc`, `Sector`) sweep their `angularExtent`
+  /// as a plain interval: no cyclic wrap at the domain edges.
+  bool get _fullTurnHost {
+    final curve = driver.curve;
+    return curve is GeoCircle && curve.angularExtent == null;
+  }
+
   /// Sets the driver to [parameter], recomputes the chain in topological
   /// order and returns the traced position (null while undefined) — one
   /// step of the sweep. Total: safe to call at any parameter, in any
@@ -180,16 +191,16 @@ class Locus extends GeoLocus {
   /// positions inside the focus window (all of them on circle hosts).
   (List<Vec2?>, List<Vec2>) _trace(List<double> parameters) {
     final positions = [for (final t in parameters) _evalAt(t)];
-    final cyclic = driver.curve is GeoCircle;
+    final onCircle = driver.curve is GeoCircle;
     final core = <Vec2>[
       for (var i = 0; i < positions.length; i++)
         if (positions[i] != null &&
-            (cyclic || (parameters[i] - center).abs() <= halfSpan))
+            (onCircle || (parameters[i] - center).abs() <= halfSpan))
           positions[i]!,
     ];
     final anyDefined = positions.any((p) => p != null);
     final anyGap = positions.contains(null);
-    if (!anyDefined || (!anyGap && cyclic)) {
+    if (!anyDefined || (!anyGap && onCircle)) {
       return (positions, core);
     }
     // The trace's extent — the scale against which an infinity tail's
@@ -225,7 +236,7 @@ class Locus extends GeoLocus {
   /// refine).
   List<_Run> _runs(List<double> parameters, List<Vec2?> positions) {
     final n = positions.length;
-    final cyclic = driver.curve is GeoCircle;
+    final cyclic = _fullTurnHost;
     final first = cyclic ? positions.indexWhere((p) => p == null) : 0;
     double parameterAt(int slot) {
       final index = (first + slot) % n;
@@ -287,18 +298,21 @@ class Locus extends GeoLocus {
   /// wrong ink, at worst exactly the branch-fixed trace with refined
   /// boundaries.
   List<Vec2> _walk(_Run run, double extent) {
-    // A null gap is the grid's infinity edge (line hosts only): instead
-    // of a boundary ladder the end may grow an infinity tail (39e/39f).
+    // A null gap is the sweep grid's edge: on a line host that is the
+    // infinity edge, where instead of a boundary ladder the end may grow
+    // an infinity tail (39e/39f); on a bounded circle host (Arc/Sector)
+    // it is the extent's genuine endpoint — an open end, nothing to grow.
+    final lineHost = driver.curve is GeoLine;
     final left = run.leftGap == null
         ? null
         : _refineBoundary(run.params.first, run.leftGap!);
     final right = run.rightGap == null
         ? null
         : _refineBoundary(run.params.last, run.rightGap!);
-    final leftTail = run.leftGap == null
+    final leftTail = run.leftGap == null && lineHost
         ? _infinityTail(run.params.first, -1, extent)
         : const <double>[];
-    final rightTail = run.rightGap == null
+    final rightTail = run.rightGap == null && lineHost
         ? _infinityTail(run.params.last, 1, extent)
         : const <double>[];
     final ascending = <double>[
@@ -545,9 +559,18 @@ class Locus extends GeoLocus {
   /// to their limit for the infinity tail to close the rest.
   List<double>? _sampleParameters() {
     switch (driver.curve) {
-      case GeoCircle(:final circle):
+      case GeoCircle(:final circle, :final angularExtent):
         if (circle == null) {
           return null;
+        }
+        // A bounded host (Arc, Sector) sweeps only its drawn extent,
+        // endpoints included — the constrained driver cannot leave it.
+        if (angularExtent != null) {
+          final (start, sweep) = angularExtent;
+          return [
+            for (var i = 0; i < sampleCount; i++)
+              start + sweep * i / (sampleCount - 1),
+          ];
         }
         const tau = 2 * math.pi;
         return [

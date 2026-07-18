@@ -59,6 +59,14 @@ class Sector extends GeoCircle {
     return circle.pointAt(startAngle + sweep);
   }
 
+  /// The wedge's arc as a counter-clockwise span from [startAngle].
+  @override
+  (double, double)? get angularExtent {
+    final startAngle = _startAngle;
+    final sweep = _sweep;
+    return (startAngle == null || sweep == null) ? null : (startAngle, sweep);
+  }
+
   /// Whether the carrier point at [angle] lies on the wedge's arc
   /// (endpoints included). False while undefined.
   bool containsAngle(double angle) {

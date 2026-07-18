@@ -179,7 +179,10 @@ class _TranslateDragSession implements DragSession {
 /// and never touches the curve's parents. Each frame projects the pointer
 /// onto that form, offset so the point rides the pointer's motion instead
 /// of jumping under the cursor (the grab may be up to a hit-threshold away
-/// from the point itself).
+/// from the point itself). On an `Arc`/`Sector` host every frame's
+/// parameter is clamped into the drawn `angularExtent`, so the point stops
+/// at the branch ends instead of continuing around the carrier — and
+/// reverses the moment the pointer does.
 class _SlideDragSession implements DragSession {
   _SlideDragSession._(
     this._construction,
@@ -187,6 +190,7 @@ class _SlideDragSession implements DragSession {
     this._startParameter,
     this._grabOffset,
     this._project,
+    this._clamp,
   ) : _parameter = _startParameter;
 
   /// Null when the host curve is undefined — nothing to slide on (the hit
@@ -196,7 +200,8 @@ class _SlideDragSession implements DragSession {
     PointOnObject target,
     Vec2 grabStart,
   ) {
-    final project = switch (target.curve) {
+    final curve = target.curve;
+    final project = switch (curve) {
       GeoLine(:final line?) => line.parameterAt,
       GeoCircle(:final circle?) => circle.angleAt,
       _ => null,
@@ -204,8 +209,13 @@ class _SlideDragSession implements DragSession {
     if (project == null) {
       return null;
     }
-    var grabOffset = target.parameter - project(grabStart);
-    if (target.curve is GeoCircle) {
+    final clamp =
+        curve is GeoCircle ? curve.clampAngle : _identityParameter;
+    // The offset is taken from the *effective* (clamped) parameter: after
+    // a host arc shrank past the stored parameter the point renders on
+    // the branch end, and that is where the user grabbed it.
+    var grabOffset = clamp(target.parameter) - project(grabStart);
+    if (curve is GeoCircle) {
       // Angular parameters are periodic: near atan2's ±π cut the raw
       // offset can come out ~2π even though the grab sits on the point.
       // Normalize to (−π, π] so the stored parameter never jumps a turn.
@@ -217,20 +227,24 @@ class _SlideDragSession implements DragSession {
       target.parameter,
       grabOffset,
       project,
+      clamp,
     );
   }
+
+  static double _identityParameter(double parameter) => parameter;
 
   final Construction _construction;
   final String _pointId;
   final double _startParameter;
   final double _grabOffset;
   final double Function(Vec2) _project;
+  final double Function(double) _clamp;
 
   double _parameter;
 
   @override
   void update(Vec2 pointer) {
-    _parameter = _project(pointer) + _grabOffset;
+    _parameter = _clamp(_project(pointer) + _grabOffset);
     _construction.setPointOnObjectParameter(_pointId, _parameter);
   }
 

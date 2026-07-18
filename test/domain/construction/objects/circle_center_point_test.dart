@@ -21,6 +21,15 @@ void main() {
       expect(circle.circle!.radius, 0);
     });
 
+    test('a full circle offers the whole turn: no angular extent, '
+        'clampAngle passes through', () {
+      final c = FreePoint(id: 'c', position: Vec2.zero);
+      final p = FreePoint(id: 'p', position: const Vec2(2, 0));
+      final circle = CircleCenterPoint(id: 'k', center: c, onCircle: p);
+      expect(circle.angularExtent, isNull);
+      expect(circle.clampAngle(5.87), 5.87);
+    });
+
     test('radius tracks a dragged perimeter point', () {
       final c = FreePoint(id: 'c', position: Vec2.zero);
       final p = FreePoint(id: 'p', position: const Vec2(2, 0));

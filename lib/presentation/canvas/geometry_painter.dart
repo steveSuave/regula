@@ -429,9 +429,11 @@ class GeometryPainter extends CustomPainter {
 
   /// A locus paints one polyline per non-null sample run — gaps where
   /// the traced point was undefined split the stroke, and a length-1 run
-  /// draws no ink (a stroke needs two ends). A gapless circle-host locus
-  /// closes into a loop: its samples cover one full turn with no
+  /// draws no ink (a stroke needs two ends). A gapless full-circle-host
+  /// locus closes into a loop: its samples cover one full turn with no
   /// duplicated endpoint, so the closing edge is the painter's to add.
+  /// Arc/Sector hosts sweep only their angular extent — an open stroke
+  /// whose samples already include both endpoints.
   void _drawLocus(
     Canvas canvas,
     GeoLocus object,
@@ -466,10 +468,11 @@ class GeometryPainter extends CustomPainter {
     }
     final gapless = runLength == samples.length;
     endRun();
+    final host = object is Locus ? object.driver.curve : null;
     if (gapless &&
         runs.length == 1 &&
-        object is Locus &&
-        object.driver.curve is GeoCircle) {
+        host is GeoCircle &&
+        host.angularExtent == null) {
       runs.single.close();
     }
     for (final path in runs) {
