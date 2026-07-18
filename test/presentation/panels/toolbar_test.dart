@@ -160,7 +160,6 @@ void main() {
       'and highlights the group', (tester) async {
     await pumpEditor(tester);
     final rows = {
-      'Polygon (tap vertices, tap the first again to close)': PolygonTool,
       'Rectangle (two corners, then height)': RectangleMacroTool,
       'Rhombus (two corners, then direction)': RhombusMacroTool,
       'Isosceles trapezium (base, then a top corner)':
@@ -450,8 +449,8 @@ void main() {
     );
   });
 
-  testWidgets('perpendicular bisector and tangent rows activate from the '
-      'Lines flyout and highlight Lines, not Points', (tester) async {
+  testWidgets('perpendicular bisector, tangent and polygon rows activate from '
+      'the Lines flyout and highlight Lines, not Points', (tester) async {
     await pumpEditor(tester);
     final theme = Theme.of(tester.element(find.byType(AppBar)));
 
@@ -490,6 +489,10 @@ void main() {
     await pickLinesRow('Tangents from point (point and circle)');
     expect(container.read(toolProvider).tool, isA<TangentTool>());
     expectLinesHighlight('Tangents from point');
+
+    await pickLinesRow('Polygon (tap vertices, tap the first again to close)');
+    expect(container.read(toolProvider).tool, isA<PolygonTool>());
+    expectLinesHighlight('Polygon');
   });
 
   testWidgets('flyout rows show their shortcut as trailing text',
