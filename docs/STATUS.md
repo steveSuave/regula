@@ -6,6 +6,25 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 63 — 2026-07-18
+
+**Done**
+- User request: GeoGebra-style "Midpoint or Center" — the midpoint tool now emits a circle's center when the first tap lands on a circle-valued object. New derived point `CircleCenter` (`domain/construction/objects/circle_center.dart`, parent: any `GeoCircle`; arcs/sectors yield the *carrier* circle's center). Not to be confused with the pre-existing `CircleCenterPoint`, which is the circle built from center + rim point.
+- New `MidpointTool extends TwoPointTool` (`domain/tools/midpoint_tool.dart`): first tap whose *topmost* hit is a `GeoCircle` → commits `AddObjectCommand(CircleCenter)` in one step; everything else falls through to the normal two-point midpoint flow. The shortcut only fires with nothing collected, so a circle tap as the *second* input still glues a `PointOnObject` parent as before. A point sitting on the circle still wins the tap (points outrank curves in the hit order).
+- Wiring: toolbar menu row + `M` shortcut label renamed "Midpoint or center"; `buildMidpoint` removed from `toolbar.dart` (the builder now lives inside `MidpointTool`; the Points-group catch-all in `pointsActive` still matches it as a `TwoPointTool`). Codec: `CircleCenter` encode/decode (no params, parent index 0) + kitchen-sink coverage. Kind label: "Circle center". Painter/hit-test/naming needed no changes — all generic over `GeoPoint`.
+- Tests: `circle_center_test.dart` (4), `midpoint_tool_test.dart` (5: point-point unchanged, circle → center, arc carrier center, point-over-circle priority, second-tap glue). 1159 green, analyze clean.
+
+**Next**
+- Phase 43 (viewport rotation) is the last queued phase.
+- `main` is ahead of `origin/main` by several phases — push when convenient.
+
+**Open questions / gotchas**
+- A first tap on a circle-line *crossing* where the circle ranks topmost now creates the center, not an intersection-snap midpoint parent. Deemed the right trade — tap the crossing with a point already collected (or use the intersection tool) if the crossing is wanted.
+- Tapping the same circle twice makes two coincident centers (GeoGebra does the same); no dedup.
+- No web smoke — flows are pinned by tool unit tests + toolbar/canvas widget tests.
+
+---
+
 ## Session 62 — 2026-07-18
 
 **Done**
