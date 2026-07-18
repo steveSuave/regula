@@ -22,16 +22,22 @@ typedef ResolvedPoint = ({GeoPoint point, bool isNew});
 ///    at the nearest such branch. Pairs are tried in rank order and a
 ///    strictly closer branch is required to displace the running best,
 ///    so ties go to the better-ranked pair.
-/// 3. At least one curve is in threshold → a new [PointOnObject] glued
-///    to the ranked-best one ([ToolInput.hits] order) — this also
-///    catches parallel/coincident curves and crossings out of reach.
+/// 3. At least one curve's glued position stays within
+///    [ToolInput.snapThreshold] of the tap → a new [PointOnObject] glued
+///    to the ranked-best such curve ([ToolInput.hits] order) — this also
+///    catches parallel/coincident curves and crossings out of reach. The
+///    projection check matters for curves whose hit target is wider than
+///    their analytic carrier: a `Sector` is hit on its straight radius
+///    edges too, but a glue there would teleport the point out to the
+///    carrier arc, so those taps fall through instead.
 /// 4. Otherwise → a new [FreePoint] at the tap position, quantized to
 ///    the grid while [ToolInput.gridSnapStep] > 0 (Phase 45) — grid
 ///    rounding is deliberately the *last* rung, so reusing an existing
 ///    point or snapping to a curve/crossing always wins over the grid.
 ///
-/// A `snapThreshold` of 0 (the `ToolInput` default) disables rung 2, so
-/// inputs built without the extra hit data degrade to the old behavior.
+/// A `snapThreshold` of 0 (the `ToolInput` default) disables rung 2 and
+/// rung 3's projection check, so inputs built without the extra hit data
+/// degrade to the old behavior (glue to the ranked-best curve, always).
 ResolvedPoint resolvePoint(ToolInput input, String Function() newId) {
   final hit = input.hit;
   if (hit is GeoPoint) {
@@ -41,15 +47,6 @@ ResolvedPoint resolvePoint(ToolInput input, String Function() newId) {
     for (final object in input.hits)
       if (object is GeoLine || object is GeoCircle) object,
   ];
-  if (curves.isEmpty) {
-    return (
-      point: FreePoint(
-        id: newId(),
-        position: snapToGrid(input.position, input.gridSnapStep),
-      ),
-      isNew: true,
-    );
-  }
   var bestDistance = input.snapThreshold;
   (GeoObject, GeoObject, int)? bestPair;
   for (var i = 0; i < curves.length; i++) {
@@ -73,11 +70,29 @@ ResolvedPoint resolvePoint(ToolInput input, String Function() newId) {
       isNew: true,
     );
   }
-  return (
-    point: PointOnObject.near(
-      id: newId(),
-      curve: curves.first,
+  for (final curve in curves) {
+    final glued = PointOnObject.near(
+      id: 'glue-probe',
+      curve: curve,
       position: input.position,
+    );
+    if (input.snapThreshold > 0 &&
+        glued.position!.distanceTo(input.position) > input.snapThreshold) {
+      continue;
+    }
+    return (
+      point: PointOnObject(
+        id: newId(),
+        curve: curve,
+        parameter: glued.parameter,
+      ),
+      isNew: true,
+    );
+  }
+  return (
+    point: FreePoint(
+      id: newId(),
+      position: snapToGrid(input.position, input.gridSnapStep),
     ),
     isNew: true,
   );
