@@ -4,6 +4,8 @@ import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
+import 'package:regula/domain/construction/objects/sector.dart';
+import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/tools/point_resolution.dart';
 import 'package:regula/domain/tools/tool.dart';
@@ -235,6 +237,86 @@ void main() {
 
       expect(resolved.point, isA<PointOnObject>());
       expect(resolved.point.parents, [l1]);
+    });
+
+    group('sector straight edges (glue projection check)', () {
+      // Half-circle sector: carrier radius 2 around the origin, arc on
+      // the upper half, straight edges along the x-axis diameter.
+      Sector halfSector() => Sector(
+            id: 's',
+            center: FreePoint(id: 's-c', position: Vec2.zero),
+            start: FreePoint(id: 's-s', position: const Vec2(2, 0)),
+            end: FreePoint(id: 's-e', position: const Vec2(-2, 0)),
+          );
+
+      test('a segment under the diameter takes the glue', () {
+        final sector = halfSector();
+        final diameter = Segment(
+          id: 'd',
+          point1: FreePoint(id: 'd-1', position: const Vec2(2, 0)),
+          point2: FreePoint(id: 'd-2', position: const Vec2(-2, 0)),
+        );
+
+        // The sector outranks the segment (circle beats line), but a glue
+        // to its carrier would land out on the arc, ~1.5 from the tap.
+        final resolved = resolvePoint(
+          ToolInput(
+            const Vec2(0.5, 0.1),
+            hit: sector,
+            extraHits: [diameter],
+            snapThreshold: 0.5,
+          ),
+          newId,
+        );
+
+        expect(resolved.isNew, isTrue);
+        final point = resolved.point as PointOnObject;
+        expect(point.parents, [diameter],
+            reason: 'the carrier glue must skip to the in-reach curve');
+        expect(point.position!.closeTo(const Vec2(0.5, 0)), isTrue);
+      });
+
+      test('a bare straight-edge tap degrades to a FreePoint', () {
+        final resolved = resolvePoint(
+          ToolInput(
+            const Vec2(0.5, 0.1),
+            hit: halfSector(),
+            snapThreshold: 0.5,
+          ),
+          newId,
+        );
+
+        expect(resolved.isNew, isTrue);
+        final point = resolved.point as FreePoint;
+        expect(point.position, const Vec2(0.5, 0.1),
+            reason: 'better a free point here than one flung to the arc');
+      });
+
+      test('a tap near the arc still glues to the sector', () {
+        final sector = halfSector();
+
+        final resolved = resolvePoint(
+          ToolInput(const Vec2(0, 2.1), hit: sector, snapThreshold: 0.5),
+          newId,
+        );
+
+        final point = resolved.point as PointOnObject;
+        expect(point.parents, [sector]);
+        expect(point.position!.closeTo(const Vec2(0, 2)), isTrue);
+      });
+
+      test('legacy snapThreshold 0 keeps the ranked-best glue', () {
+        final sector = halfSector();
+
+        final resolved = resolvePoint(
+          ToolInput(const Vec2(0.5, 0.1), hit: sector),
+          newId,
+        );
+
+        final point = resolved.point as PointOnObject;
+        expect(point.parents, [sector],
+            reason: 'no threshold data → old always-glue behavior');
+      });
     });
 
     test('three curves: the nearest branch across all pairs wins', () {

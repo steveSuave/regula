@@ -6,6 +6,24 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 62 — 2026-07-18
+
+**Done**
+- Bug fix (user report): half-circle sector + segment over its diameter → no point creatable on the segment. Cause: the hit tester ranks the sector (circle priority) above the segment and hits it on its straight radius edges, and `resolvePoint` rung 3 glued to the ranked-best curve unconditionally — `PointOnObject.near` on a `Sector` projects onto the *carrier circle*, so the point teleported out to the arc.
+- Fix in `point_resolution.dart` rung 3: glue to the ranked-best curve **whose glued position stays within `snapThreshold` of the tap**; curves whose hit target is wider than their analytic carrier (a sector's straight edges) fall through to the next candidate, and if none qualifies, to the grid-snapped `FreePoint` rung. `snapThreshold == 0` (legacy inputs) keeps the old always-glue behavior, same degradation contract as rung 2.
+- Only sectors change in practice: for lines, circles, arcs, clipped lines and rays the projection distance is ≤ the hit distance, so the check always passes.
+- Tests: 4 new in `point_resolution_test.dart` (segment-under-diameter regression, bare straight-edge tap → free point, near-arc tap still glues, legacy threshold-0 pin). 1150 green, analyze clean.
+
+**Next**
+- Phase 43 (viewport rotation) is the last queued phase.
+- `main` is ahead of `origin/main` by several phases — push when convenient.
+
+**Open questions / gotchas**
+- A tap on a sector's straight edge with nothing underneath now makes a *free* point at the tap (was: a point flung to the arc). A point constrained to the radius edge would need a new parameterization — not worth it unless requested.
+- No web smoke — domain-only change, exact scenario pinned by unit tests.
+
+---
+
 ## Session 61 — 2026-07-18
 
 **Done**
