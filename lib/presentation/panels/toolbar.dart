@@ -140,6 +140,7 @@ class GeometryToolbar extends ConsumerWidget {
             tool.build != buildCircle &&
             tool.build != buildDistance);
     final linesActive =
+        tool is PolygonTool ||
         tool is PointAndLineTool ||
         tool is AngleBisectorTool ||
         tool is TangentTool ||
@@ -152,7 +153,6 @@ class GeometryToolbar extends ConsumerWidget {
     final anglesActive = tool is AngleTool || tool is AngleBySizeTool;
     final transformActive = tool is TransformObjectTool;
     final macrosActive =
-        tool is PolygonTool ||
         tool is SquareMacroTool ||
         tool is ParallelogramMacroTool ||
         tool is TrapeziumMacroTool ||
@@ -297,6 +297,11 @@ class GeometryToolbar extends ConsumerWidget {
               'Tangents from point (point and circle)',
               _pick(() => TangentTool(newId: newObjectId)),
               AppAction.tangentTool,
+            ),
+            (
+              'Polygon (tap vertices, tap the first again to close)',
+              _pick(() => PolygonTool(newId: newObjectId)),
+              AppAction.polygonTool,
             ),
           ],
         ),
@@ -466,11 +471,6 @@ class GeometryToolbar extends ConsumerWidget {
               'Kite (apex, side corner, apex)',
               _pick(() => KiteMacroTool(newId: newObjectId)),
               AppAction.kiteMacroTool,
-            ),
-            (
-              'Polygon (tap vertices, tap the first again to close)',
-              _pick(() => PolygonTool(newId: newObjectId)),
-              AppAction.polygonTool,
             ),
           ],
         ),
