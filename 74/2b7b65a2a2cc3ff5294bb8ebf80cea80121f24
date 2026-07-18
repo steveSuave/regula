@@ -1,0 +1,63 @@
+lib/domain/construction/objects/arc.dart
+  s_794ee29d34e5a6::t_f6304666d4e54c 51-62
+lib/domain/construction/geo_object.dart
+  s_794ee29d34e5a6::t_38ece103430c94 77-102
+lib/domain/construction/objects/point_on_object.dart
+  s_794ee29d34e5a6::t_90f99ad3e8c084 52-53
+  s_794ee29d34e5a6::t_5276042f951a51 21-26
+  s_794ee29d34e5a6::t_99ceabc4fc89ba 88-89
+test/domain/construction/objects/point_on_object_test.dart
+  s_794ee29d34e5a6::t_e80b738a10e166 1-2,9
+  s_794ee29d34e5a6::t_4160f462f90920 43-95
+docs/STATUS.md
+  s_794ee29d34e5a6::t_7b0b6da24aaca5 9-29
+test/domain/construction/objects/arc_test.dart
+  s_794ee29d34e5a6::t_b71b327f845d72 64-96
+  s_794ee29d34e5a6::t_e3d0a448446aba 114
+test/domain/math/angle_geometry_test.dart
+  s_794ee29d34e5a6::t_f650626872952c 73-102
+lib/domain/math/angle_geometry.dart
+  s_794ee29d34e5a6::t_d906a406e96bcc 17-23
+lib/domain/construction/objects/sector.dart
+  s_794ee29d34e5a6::t_0abdf15612964b 62-69
+lib/domain/construction/objects/locus.dart
+  s_794ee29d34e5a6::t_b964a73112aa8f 301-305,312,315
+  s_794ee29d34e5a6::t_9da702b7fb7d09 562,566-573
+  s_794ee29d34e5a6::t_e3ce180f3808ba 194,198,203
+  s_794ee29d34e5a6::t_110298c612fe90 158-165
+  s_794ee29d34e5a6::t_f79d4d5496fecc 239
+  s_794ee29d34e5a6::t_6af1aab56840e2 28-32
+  s_794ee29d34e5a6::t_003f7727410fa5 574
+test/domain/construction/objects/locus_test.dart
+  s_794ee29d34e5a6::t_1d7900f21c6bb4 134-163
+  s_794ee29d34e5a6::t_8c6edd48e593df 15
+lib/domain/tools/drag_session.dart
+  s_794ee29d34e5a6::t_18cd4c7da7ce2d 182-185,193,203-204,212-218,230,234-235,241,247
+test/domain/construction/objects/sector_test.dart
+  s_794ee29d34e5a6::t_34fd27b6b6d137 53-73
+  s_794ee29d34e5a6::t_64fabb4e897ea1 91
+test/domain/tools/drag_session_test.dart
+  s_794ee29d34e5a6::t_9aa1800b531dee 14
+  s_794ee29d34e5a6::t_c7ec6d376fc5df 382-413
+lib/presentation/canvas/geometry_painter.dart
+  s_794ee29d34e5a6::t_4abe4f71e39112 432-433,435-436
+  s_794ee29d34e5a6::t_338048a108e9fc 471,474-475
+test/domain/construction/objects/circle_center_point_test.dart
+  s_794ee29d34e5a6::t_35ba7b20b57ab6 24-32
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "742b7b65a2a2cc3ff5294bb8ebf80cea80121f24",
+  "prompts": {},
+  "sessions": {
+    "s_794ee29d34e5a6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "43d66e8d-e416-4a40-a00c-7a24789b9fec",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
