@@ -1,10 +1,14 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/domain/commands/add_object_command.dart';
+import 'package:regula/domain/construction/geo_object.dart';
+import 'package:regula/domain/construction/object_attributes.dart';
+import 'package:regula/domain/construction/objects/angle_bisector_line.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
+import 'package:regula/domain/construction/objects/two_line_bisector_line.dart';
 import 'package:regula/domain/construction/objects/vertex_angle.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/tools/intersection_tool.dart';
@@ -175,6 +179,139 @@ void main() {
         isA<ToolAccepted>(),
         reason: 'the tool reset itself on commit',
       );
+    });
+
+    test('bisector × segment reuses the existing crossing point', () {
+      // Segments ab and cd cross at (2, 0); p is that crossing and bi is
+      // their wedge bisector — bi's only crossing with ab *is* p, so the
+      // tap must not stack a second point on it.
+      final a = FreePoint(id: 'a', position: Vec2.zero);
+      final b = FreePoint(id: 'b', position: const Vec2(4, 0));
+      final c = FreePoint(id: 'c', position: const Vec2(2, -2));
+      final d = FreePoint(id: 'd', position: const Vec2(2, 2));
+      final ab = Segment(id: 'ab', point1: a, point2: b);
+      final cd = Segment(id: 'cd', point1: c, point2: d);
+      final p = IntersectionPoint(
+        curve1: ab,
+        curve2: cd,
+        branchIndex: 0,
+        id: 'p',
+      );
+      final bi = TwoLineBisectorLine(id: 'bi', line1: ab, line2: cd, branch: 0);
+      final objects = [a, b, c, d, ab, cd, p, bi];
+      final t = tool()
+        ..onInput(ToolInput(const Vec2(2.4, 0.4), hit: bi, objects: objects));
+
+      expect(
+        t.onInput(ToolInput(const Vec2(3, 0.1), hit: ab, objects: objects)),
+        isA<ToolIgnored>(),
+      );
+      expect(
+        t.previewObjectIds,
+        ['bi'],
+        reason: 'the refused tap keeps the first curve armed',
+      );
+    });
+
+    test('three-point bisector × arm segment reuses the vertex too', () {
+      final a = FreePoint(id: 'a', position: Vec2.zero);
+      final b = FreePoint(id: 'b', position: const Vec2(4, 0));
+      final c = FreePoint(id: 'c', position: const Vec2(2, -2));
+      final d = FreePoint(id: 'd', position: const Vec2(2, 2));
+      final ab = Segment(id: 'ab', point1: a, point2: b);
+      final cd = Segment(id: 'cd', point1: c, point2: d);
+      final p = IntersectionPoint(
+        curve1: ab,
+        curve2: cd,
+        branchIndex: 0,
+        id: 'p',
+      );
+      final bi = AngleBisectorLine(id: 'bi', arm1: b, vertex: p, arm2: d);
+      final objects = [a, b, c, d, ab, cd, p, bi];
+      final t = tool()
+        ..onInput(ToolInput(const Vec2(2.4, 0.4), hit: bi, objects: objects));
+
+      expect(
+        t.onInput(ToolInput(const Vec2(1, 0.1), hit: ab, objects: objects)),
+        isA<ToolIgnored>(),
+      );
+    });
+
+    test('the same pair twice is refused, per branch', () {
+      // The horizontal line cuts the radius-4 circle at (±4, 0); with the
+      // (4, 0) branch already constructed only the (-4, 0) tap commits.
+      final horizontal = LineThroughTwoPoints(id: 'h', point1: o, point2: x);
+      final circle = circleAtOrigin();
+      var objects = <GeoObject>[o, x, horizontal, circle];
+      final existing = committedPoint(
+        (tool()..onInput(ToolInput(const Vec2(1, 0), hit: horizontal)))
+            .onInput(ToolInput(const Vec2(3.9, 0.1), hit: circle)),
+      );
+      objects = [...objects, existing];
+
+      expect(
+        (tool()
+              ..onInput(
+                ToolInput(const Vec2(1, 0), hit: horizontal, objects: objects),
+              ))
+            .onInput(
+          ToolInput(const Vec2(3.9, 0.1), hit: circle, objects: objects),
+        ),
+        isA<ToolIgnored>(),
+        reason: 'the (4, 0) branch already exists',
+      );
+      final other = committedPoint(
+        (tool()
+              ..onInput(
+                ToolInput(const Vec2(1, 0), hit: horizontal, objects: objects),
+              ))
+            .onInput(
+          ToolInput(const Vec2(-3.9, 0.1), hit: circle, objects: objects),
+        ),
+      );
+      expect(other.position!.closeTo(const Vec2(-4, 0)), isTrue);
+    });
+
+    test('two lines sharing a defining point reuse that point', () {
+      final horizontal = LineThroughTwoPoints(id: 'h', point1: o, point2: x);
+      final vertical = LineThroughTwoPoints(id: 'v', point1: o, point2: y);
+      final objects = [o, x, y, horizontal, vertical];
+      final t = tool()
+        ..onInput(
+          ToolInput(const Vec2(2, 0), hit: horizontal, objects: objects),
+        );
+
+      expect(
+        t.onInput(ToolInput(const Vec2(0, 2), hit: vertical, objects: objects)),
+        isA<ToolIgnored>(),
+        reason: 'o already is the crossing of both lines',
+      );
+    });
+
+    test('a hidden coincident point does not block the tap', () {
+      final c = FreePoint(id: 'c', position: const Vec2(2, -2));
+      final d = FreePoint(id: 'd', position: const Vec2(2, 2));
+      final horizontal = LineThroughTwoPoints(id: 'h', point1: o, point2: x);
+      final vertical = LineThroughTwoPoints(id: 'v', point1: c, point2: d);
+      final hidden = IntersectionPoint(
+        curve1: horizontal,
+        curve2: vertical,
+        branchIndex: 0,
+        id: 'p',
+        attributes: const ObjectAttributes(visible: false),
+      );
+      final objects = [o, x, c, d, horizontal, vertical, hidden];
+      final t = tool()
+        ..onInput(
+          ToolInput(const Vec2(1, 0), hit: horizontal, objects: objects),
+        );
+
+      final point = committedPoint(
+        t.onInput(
+          ToolInput(const Vec2(2, 1), hit: vertical, objects: objects),
+        ),
+      );
+      expect(point.position!.closeTo(const Vec2(2, 0)), isTrue);
     });
 
     test('reset clears the collected curve', () {
