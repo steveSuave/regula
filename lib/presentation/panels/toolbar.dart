@@ -14,7 +14,6 @@ import '../../domain/construction/objects/compass_circle.dart';
 import '../../domain/construction/objects/distance_measurement.dart';
 import '../../domain/construction/objects/incenter.dart';
 import '../../domain/construction/objects/line_through_two_points.dart';
-import '../../domain/construction/objects/midpoint.dart';
 import '../../domain/construction/objects/orthocenter.dart';
 import '../../domain/construction/objects/parallel_line.dart';
 import '../../domain/construction/objects/perpendicular_bisector_line.dart';
@@ -36,6 +35,7 @@ import '../../domain/tools/isosceles_trapezium_macro_tool.dart';
 import '../../domain/tools/isosceles_triangle_macro_tool.dart';
 import '../../domain/tools/kite_macro_tool.dart';
 import '../../domain/tools/locus_tool.dart';
+import '../../domain/tools/midpoint_tool.dart';
 import '../../domain/tools/parallelogram_macro_tool.dart';
 import '../../domain/tools/point_and_line_tool.dart';
 import '../../domain/tools/point_tool.dart';
@@ -85,9 +85,6 @@ GeoObject buildCircle(String id, GeoPoint a, GeoPoint b) =>
 GeoObject buildPerpendicularBisector(String id, GeoPoint a, GeoPoint b) =>
     PerpendicularBisectorLine(id: id, point1: a, point2: b);
 
-GeoObject buildMidpoint(String id, GeoPoint a, GeoPoint b) =>
-    Midpoint(id: id, point1: a, point2: b);
-
 GeoObject buildThreePointCircle(String id, GeoPoint a, GeoPoint b, GeoPoint c) =>
     ThreePointCircle(id: id, point1: a, point2: b, point3: c);
 
@@ -129,8 +126,9 @@ class GeometryToolbar extends ConsumerWidget {
 
     // Points is the catch-all for TwoPointTools whose builder isn't
     // claimed by Lines, Circles, Transform or Measure: that covers
-    // buildMidpoint *and* the segment-ratio dialog's closure, which
-    // captures the ratio and so can never be a canonicalized tear-off.
+    // MidpointTool (its builder is private to the subclass) *and* the
+    // segment-ratio dialog's closure, which captures the ratio and so
+    // can never be a canonicalized tear-off.
     final pointsActive =
         tool is PointTool ||
         tool is IntersectionTool ||
@@ -227,8 +225,8 @@ class GeometryToolbar extends ConsumerWidget {
               AppAction.pointTool,
             ),
             (
-              'Midpoint',
-              _pick(() => TwoPointTool(newId: newObjectId, build: buildMidpoint)),
+              'Midpoint or center',
+              _pick(() => MidpointTool(newId: newObjectId)),
               AppAction.midpointTool,
             ),
             ('Segment-ratio point…', ratioPick, AppAction.segmentRatioTool),

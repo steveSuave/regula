@@ -13,6 +13,7 @@ import 'package:regula/domain/construction/objects/arc.dart';
 import 'package:regula/domain/construction/objects/area_measurement.dart';
 import 'package:regula/domain/construction/objects/central_reflection_point.dart';
 import 'package:regula/domain/construction/objects/centroid.dart';
+import 'package:regula/domain/construction/objects/circle_center.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/circumcenter.dart';
 import 'package:regula/domain/construction/objects/compass_circle.dart';
@@ -108,6 +109,7 @@ Construction buildKitchenSink() {
     ..add(AngleBisectorLine(id: 'bis', arm1: a, vertex: b, arm2: c))
     ..add(PerpendicularBisectorLine(id: 'pbis', point1: a, point2: c))
     ..add(circle)
+    ..add(CircleCenter(id: 'ccen', circle: circle))
     ..add(TwoLineBisectorLine(id: 'llbis', line1: lineAb, line2: perp, branch: 1))
     // The ratio point sits at (9, 0), outside the radius-4 circle, so the
     // tangent is defined and its geometry participates in the round-trip.

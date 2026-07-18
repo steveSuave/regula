@@ -3,6 +3,7 @@ import '../../domain/construction/objects/angle_bisector_line.dart';
 import '../../domain/construction/objects/arc.dart';
 import '../../domain/construction/objects/area_measurement.dart';
 import '../../domain/construction/objects/centroid.dart';
+import '../../domain/construction/objects/circle_center.dart';
 import '../../domain/construction/objects/circumcenter.dart';
 import '../../domain/construction/objects/compass_circle.dart';
 import '../../domain/construction/objects/distance_measurement.dart';
@@ -39,6 +40,7 @@ String objectKindLabel(GeoObject object) => switch (object) {
       Orthocenter() => 'Orthocenter',
       Incenter() => 'Incenter',
       Circumcenter() => 'Circumcenter',
+      CircleCenter() => 'Circle center',
       GeoPoint() => 'Point',
       Segment() => 'Segment',
       Ray() => 'Ray',

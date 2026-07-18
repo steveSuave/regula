@@ -39,6 +39,7 @@ import 'domain/tools/isosceles_trapezium_macro_tool.dart';
 import 'domain/tools/isosceles_triangle_macro_tool.dart';
 import 'domain/tools/kite_macro_tool.dart';
 import 'domain/tools/locus_tool.dart';
+import 'domain/tools/midpoint_tool.dart';
 import 'domain/tools/parallelogram_macro_tool.dart';
 import 'domain/tools/point_and_line_tool.dart';
 import 'domain/tools/point_tool.dart';
@@ -574,7 +575,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
       case AppAction.circleTool:
         tools.activate(TwoPointTool(newId: newObjectId, build: buildCircle));
       case AppAction.midpointTool:
-        tools.activate(TwoPointTool(newId: newObjectId, build: buildMidpoint));
+        tools.activate(MidpointTool(newId: newObjectId));
       case AppAction.intersectionTool:
         tools.activate(IntersectionTool(newId: newObjectId));
       case AppAction.angleBisectorTool:

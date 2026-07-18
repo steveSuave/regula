@@ -132,7 +132,7 @@ void main() {
     await tester.tap(find.byIcon(Icons.control_point));
     await tester.pump(kDoubleTapTimeout);
     await tester.pumpAndSettle();
-    expect(find.text('Midpoint'), findsOneWidget);
+    expect(find.text('Midpoint or center'), findsOneWidget);
     expect(container.read(toolProvider).tool, isNotNull);
   });
 

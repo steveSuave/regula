@@ -6,6 +6,7 @@ import '../../domain/construction/objects/arc.dart';
 import '../../domain/construction/objects/area_measurement.dart';
 import '../../domain/construction/objects/central_reflection_point.dart';
 import '../../domain/construction/objects/centroid.dart';
+import '../../domain/construction/objects/circle_center.dart';
 import '../../domain/construction/objects/circle_center_point.dart';
 import '../../domain/construction/objects/circumcenter.dart';
 import '../../domain/construction/objects/compass_circle.dart';
@@ -171,6 +172,7 @@ Map<String, dynamic> _encodeObject(GeoObject object) {
     Orthocenter() => ('Orthocenter', const {}),
     Incenter() => ('Incenter', const {}),
     Circumcenter() => ('Circumcenter', const {}),
+    CircleCenter() => ('CircleCenter', const {}),
     LineThroughTwoPoints() => ('LineThroughTwoPoints', const {}),
     Segment() => ('Segment', const {}),
     Ray() => ('Ray', const {}),
@@ -335,6 +337,11 @@ GeoObject _decodeObject(Map<String, dynamic> json, Construction construction) {
         vertex1: point(0),
         vertex2: point(1),
         vertex3: point(2),
+        attributes: attributes,
+      ),
+    'CircleCenter' => CircleCenter(
+        id: id,
+        circle: circle(0),
         attributes: attributes,
       ),
     'LineThroughTwoPoints' => LineThroughTwoPoints(
