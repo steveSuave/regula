@@ -6,6 +6,25 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 64 — 2026-07-18
+
+**Done**
+- Bug fix (user report): two crossing segments + their `IntersectionPoint`, then their angle bisector — intersecting the bisector with one of the segments stacked a *new* point on the existing crossing instead of reusing it. Cause: `IntersectionTool` committed unconditionally, and the bisector's only crossing with either segment *is* the existing vertex.
+- Extracted the structural-incidence rules out of `line_clip.dart` into a shared public predicate `structurallyIncident(curve, point)` (`domain/construction/incidence.dart`): hosted `PointOnObject`s, `IntersectionPoint` parents, on-carrier defining points (now also covering `Segment` and the circle kinds — `onCircle`, three-point circle, arc points, sector `start`), plus the Phase 44b derived theorems (two-line bisector ∋ parents' crossing, perpendicular bisector ∋ pair's midpoint). Zero-epsilon as before; mere coincidence is still not incidence. `lineClipSpan` mode 2 now rides the shared predicate (behavior unchanged — defining points are found via the objects scan, valid since parents always live in the construction).
+- `IntersectionTool`: before committing, a visible defined point structurally incident on *both* curves and classified (by the same nearest-branch probe the tap uses) onto the chosen branch means the intersection already exists → tap refused like the transform tool's duplicate image, first curve stays armed. Covers both bisector modes (`TwoLineBisectorLine` via the derived theorem, `AngleBisectorLine` via its vertex), the same-pair-twice duplicate, and two curves sharing a defining point. Per-branch: the other branch of a line×circle pair still commits. Hidden points don't block.
+- Tests: new `incidence_test.dart` (6), 4 new + 1 reworked in `intersection_tool_test.dart`. 1170 green, analyze clean.
+
+**Next**
+- Phase 43 (viewport rotation) is the last queued phase.
+- `main` is ahead of `origin/main` by several phases — push when convenient.
+
+**Open questions / gotchas**
+- The dedupe is structural only — a `FreePoint` merely dragged onto the crossing doesn't block a new intersection point (by design, same zero-epsilon rule as line clipping).
+- Candidate extensions to `structurallyIncident` deliberately left out to keep `lineClipSpan` behavior identical: `Midpoint`/`SegmentRatioPoint` on the segment/line of the same pair. Adding them would slightly change mode-2 ray clamping when endpoints are hidden.
+- The point tool was never affected: at the crossing the existing point outranks curves in the hit order (rung 1 of the resolution ladder).
+
+---
+
 ## Session 63 — 2026-07-18
 
 **Done**
