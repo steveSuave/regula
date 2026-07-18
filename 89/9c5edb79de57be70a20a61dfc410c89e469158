@@ -1,0 +1,53 @@
+lib/domain/construction/objects/circle_center.dart
+  s_6dc112363c91a1::t_5de693fbab86c0 1-31
+test/application/persistence/construction_codec_test.dart
+  s_6dc112363c91a1::t_8592f594b48f4c 16
+  s_6dc112363c91a1::t_756404a68acf4a 112
+lib/presentation/panels/object_kind_label.dart
+  s_6dc112363c91a1::t_14fe9795d9dc19 43
+  s_6dc112363c91a1::t_c6701ed49b489f 6
+lib/application/persistence/construction_codec.dart
+  s_6dc112363c91a1::t_30c4d33177f5a0 9
+  s_6dc112363c91a1::t_a005c6fa0afe57 342-346
+  s_6dc112363c91a1::t_553f8134e8eade 175
+test/domain/construction/objects/circle_center_test.dart
+  s_6dc112363c91a1::t_56051f0ec40cd4 41-44,46
+  s_6dc112363c91a1::t_ba874a5a8cd071 1-5,7-40,45,47-51
+  s_6dc112363c91a1::t_6ad22a1e883ef7 6
+lib/main.dart
+  s_6dc112363c91a1::t_58cd42388c072f 42
+  s_6dc112363c91a1::t_38f384cca6c1bd 578
+test/presentation/panels/toolbar_test.dart
+  s_6dc112363c91a1::t_69b0234a719da6 135
+test/presentation/panels/object_kind_label_test.dart
+  s_6dc112363c91a1::t_af4ae647eb4b20 4
+  s_6dc112363c91a1::t_7fa404c68458a1 45-53
+test/presentation/canvas/geometry_canvas_test.dart
+  s_6dc112363c91a1::t_2d68f44a2e10dc 1308
+lib/domain/tools/midpoint_tool.dart
+  s_6dc112363c91a1::t_f1c47d8f6c9b60 1-33
+lib/presentation/shortcuts/shortcut_table.dart
+  s_6dc112363c91a1::t_8efd3682bb8d95 487
+test/domain/tools/midpoint_tool_test.dart
+  s_6dc112363c91a1::t_8339804087a931 1-113
+lib/presentation/panels/toolbar.dart
+  s_6dc112363c91a1::t_961c878c268832 38
+  s_6dc112363c91a1::t_27beb6de54aae6 228-229
+  s_6dc112363c91a1::t_12591b5df328cc 129-131
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "899c5edb79de57be70a20a61dfc410c89e469158",
+  "prompts": {},
+  "sessions": {
+    "s_6dc112363c91a1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "98fe34b5-05fa-4589-865d-1e27689366b5",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
