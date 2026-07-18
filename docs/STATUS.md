@@ -6,6 +6,23 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 67 — 2026-07-18
+
+**Done**
+- Phase 49 (user request, small polish): object tree group headers are now visually separated — a `Divider` between groups (none above the first) and the header text restyled to `primary` color + `w600`. Label text/casing untouched so the widget tests' `find.text('Points')` finders keep working. The `noRows` flag became a `visibleGroups` list feeding both the empty-state check and the divider indexing.
+- Snap to grid gets a shortcut: `AppAction.toggleSnapToGrid` on `Ctrl/⌘ ⇧ G` — the primary-modifier escalation of `⇧G` (show/hide grid) — wired to the existing `DocumentSettingsNotifier.toggleSnapToGrid`. Cheat sheet lists it automatically from the table; the grid popup item is unchanged (menu items don't show shortcut hints, consistent with axes/grid).
+- New editor-shortcut test: Ctrl variant toggles `snapToGrid` on, Meta variant back off, `showGrid`/`showAxes` untouched. 1190 green, analyze clean.
+- Tagged `v0.2`.
+
+**Next**
+- Phase 43 (viewport rotation) is the last queued phase.
+- `main` is ahead of `origin/main` by several phases — push when convenient.
+
+**Open questions / gotchas**
+- The `?`-cheat-sheet's viewport section grew a row; no layout issues at default sizes, but nobody re-checked phone-width overlay scrolling this session.
+
+---
+
 ## Session 66 — 2026-07-18
 
 **Done**
