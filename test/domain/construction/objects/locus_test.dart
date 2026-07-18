@@ -12,7 +12,9 @@ import 'package:regula/domain/construction/objects/locus.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
 import 'package:regula/domain/construction/objects/perpendicular_line.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
+import 'package:regula/domain/construction/objects/ray.dart';
 import 'package:regula/domain/construction/objects/sector.dart';
+import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/math/vec2.dart';
 
 void main() {
@@ -158,6 +160,64 @@ void main() {
             reason: 'x[$i]');
         expect(samples[i]!.y, closeTo(math.sin(angle), 1e-12),
             reason: 'y[$i]');
+      }
+    });
+
+    test('segment host: the sweep covers only the span, endpoints '
+        'included', () {
+      final a = FreePoint(id: 'a', position: Vec2.zero);
+      final b = FreePoint(id: 'b', position: const Vec2(4, 0));
+      final host = Segment(id: 's', point1: a, point2: b);
+      final driver = PointOnObject(id: 'drv', curve: host, parameter: 1);
+      final traced = Midpoint(id: 'tr', point1: driver, point2: driver);
+      final locus = Locus(
+        id: 'loc',
+        driver: driver,
+        traced: traced,
+        sampleCount: 5,
+      );
+
+      // Identity trace: samples read the sweep domain directly — uniform
+      // over [0, 4], both endpoints included, nothing on the carrier
+      // beyond them.
+      final samples = locus.samples!;
+      expect(samples.length, 5);
+      for (var i = 0; i < 5; i++) {
+        expect(samples[i]!.closeTo(Vec2(i.toDouble(), 0)), isTrue,
+            reason: 'sample $i');
+      }
+      expect(locus.coreSamples, hasLength(5),
+          reason: 'a bounded sweep has no far-out samples — all core');
+    });
+
+    test('ray host: the sweep starts at the origin and runs only along '
+        'the ray', () {
+      final o = FreePoint(id: 'o', position: const Vec2(1, 0));
+      final t = FreePoint(id: 't', position: const Vec2(2, 0));
+      final host = Ray(id: 'r', origin: o, through: t);
+      final driver = PointOnObject(id: 'drv', curve: host, parameter: 1);
+      final traced = Midpoint(id: 'tr', point1: driver, point2: driver);
+      final locus = Locus(
+        id: 'loc',
+        driver: driver,
+        traced: traced,
+        sampleCount: 4,
+        center: 1,
+        halfSpan: 100,
+      );
+
+      // Identity trace, diverging: the infinity tail rejects (increments
+      // never decay), so the samples are exactly the half-bounded tan
+      // grid t = 1 + 100·tan((π/2)·i/4) — anchored on the ray origin,
+      // never behind it.
+      final samples = locus.samples!;
+      expect(samples.length, 4);
+      expect(samples.first!.closeTo(const Vec2(1, 0)), isTrue,
+          reason: 'the first sample sits exactly on the ray origin');
+      for (var i = 0; i < 4; i++) {
+        final expected = 1 + 100 * math.tan(math.pi / 2 * i / 4);
+        expect(samples[i]!.x, closeTo(expected, 1e-9), reason: 'x[$i]');
+        expect(samples[i]!.y, closeTo(0, 1e-12), reason: 'y[$i]');
       }
     });
 

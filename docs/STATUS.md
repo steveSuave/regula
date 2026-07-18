@@ -6,6 +6,26 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 66 — 2026-07-18
+
+**Done**
+- Follow-up to Session 65 (user request): the same extent clamping for `Segment` and `Ray`. New API on `GeoLine`: `parameterExtent` (`(min, max)` in the carrier's arc-length parameterization, null bound = unbounded side, null = whole carrier; Segment spans its endpoints ordered, Ray is bounded at its origin and open past `through`) and `clampParameter` — the line siblings of `angularExtent`/`clampAngle`.
+- `PointOnObject` clamps line parameters at creation and (effectively, without mutating the stored parameter) on recompute; the slide drag clamps every frame via a per-kind clamp switch. A segment that shrinks past the point carries it on its endpoint and gives it back.
+- `Locus`: a Segment host sweeps only its span (uniform, endpoints included, all samples core, gapless sweeps skip the walk); a Ray host sweeps `[origin, ∞)` on a tan grid anchored at the origin (first sample exactly on it, halfSpan as density scale, baked `center` unused); infinity tails now gated per-side to genuinely unbounded edges (`_infiniteEdges`), `_boundedSweep` replaces the circle-host special cases in core/early-return.
+- **Semantic change, deliberate**: `locus3.json` (parabola) regression test rewritten. Phase 39f swept a *segment-hosted* driver over the whole carrier projectively (full parabola); with points now confined to their hosts that behavior is unreachable (the clamped chain flattens beyond the extent), and today's user request explicitly wants bounded loci. The fixture now asserts the parabola piece between the endpoint images, (1, −2) → (1, 2). Full-parabola workflow: host the driver on the *line* through B and C. Infinite-line hosts keep the full 39f projective sweep + tails (locus-miss.json still green).
+- Tests: Segment/Ray/LineThroughTwoPoints extent + clamp, PointOnObject near/shrink on segment and ray, segment slide-drag clamp, segment- and ray-host locus domains. 1189 green, analyze clean.
+
+**Next**
+- Phase 43 (viewport rotation) is the last queued phase.
+- `main` is ahead of `origin/main` by several phases — push when convenient.
+
+**Open questions / gotchas**
+- If the user misses the full parabola from segment-hosted drivers, the answer is "drive on a line, not a segment" — or a future toggle; do not silently revert the clamp.
+- Intersection points remain unclipped to segment/ray/arc extents (deferred as before) — only constrained points clamp.
+- Ray extent orientation is derived per-recompute from origin/through carrier parameters, so it survives any future carrier canonicalization.
+
+---
+
 ## Session 65 — 2026-07-18
 
 **Done**

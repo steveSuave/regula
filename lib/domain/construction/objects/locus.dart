@@ -27,9 +27,14 @@ import 'point_on_object.dart';
 ///
 /// Sampling domain: a full-circle host is swept one full turn
 /// ([sampleCount] uniform angles; the painter closes the loop when
-/// gapless); an `Arc`/`Sector` host is swept only over its drawn
-/// `angularExtent` — endpoints included, non-cyclic, its edges genuine
-/// curve ends (no wrap merging, no infinity tails); a line
+/// gapless); a bounded host — `Arc`/`Sector` over its `angularExtent`,
+/// `Segment` over its `parameterExtent` — is swept only over its drawn
+/// extent, endpoints included, non-cyclic, its edges genuine curve ends
+/// (no wrap merging, no infinity tails); a `Ray` host is swept over
+/// `[origin, ∞)` on a tan grid anchored at the origin's parameter (first
+/// sample exactly on the origin, half the samples within [halfSpan] of
+/// it, hyperbolically sparser outward, an infinity tail only on the open
+/// side); a line
 /// host is swept *projectively* over its whole carrier (Phase 39f),
 /// with sampling density focused on `[center - halfSpan, center +
 /// halfSpan]` — both baked at creation by the tool, the locus sibling
@@ -163,6 +168,31 @@ class Locus extends GeoLocus {
     return curve is GeoCircle && curve.angularExtent == null;
   }
 
+  /// Whether the sweep domain is bounded on both sides — any circle host
+  /// (a full turn included) or a line host with a two-sided extent
+  /// (`Segment`). A bounded sweep has no infinity edges: every defined
+  /// sample is core, and a gapless one needs no walk post-processing.
+  bool get _boundedSweep {
+    final curve = driver.curve;
+    if (curve is! GeoLine) {
+      return true;
+    }
+    final (min, max) = curve.parameterExtent ?? (null, null);
+    return min != null && max != null;
+  }
+
+  /// Which sides of the sweep grid run off toward a point at infinity —
+  /// only a line host's unbounded sides. Bounded edges are genuine curve
+  /// ends and never grow tails.
+  (bool, bool) get _infiniteEdges {
+    final curve = driver.curve;
+    if (curve is! GeoLine) {
+      return (false, false);
+    }
+    final (min, max) = curve.parameterExtent ?? (null, null);
+    return (min == null, max == null);
+  }
+
   /// Sets the driver to [parameter], recomputes the chain in topological
   /// order and returns the traced position (null while undefined) — one
   /// step of the sweep. Total: safe to call at any parameter, in any
@@ -191,16 +221,16 @@ class Locus extends GeoLocus {
   /// positions inside the focus window (all of them on circle hosts).
   (List<Vec2?>, List<Vec2>) _trace(List<double> parameters) {
     final positions = [for (final t in parameters) _evalAt(t)];
-    final onCircle = driver.curve is GeoCircle;
+    final bounded = _boundedSweep;
     final core = <Vec2>[
       for (var i = 0; i < positions.length; i++)
         if (positions[i] != null &&
-            (onCircle || (parameters[i] - center).abs() <= halfSpan))
+            (bounded || (parameters[i] - center).abs() <= halfSpan))
           positions[i]!,
     ];
     final anyDefined = positions.any((p) => p != null);
     final anyGap = positions.contains(null);
-    if (!anyDefined || (!anyGap && onCircle)) {
+    if (!anyDefined || (!anyGap && bounded)) {
       return (positions, core);
     }
     // The trace's extent — the scale against which an infinity tail's
@@ -231,9 +261,9 @@ class Locus extends GeoLocus {
   /// split by the array wrap, and the second part of a wrapped run gets
   /// its parameters unwrapped by +2π to keep each run's parameter list
   /// monotone (the host geometry is 2π-periodic, so evaluation agrees).
-  /// Every run ends in a gap parameter or, on line hosts, the sweep
-  /// grid's infinity edge (null — an open end, not a boundary to
-  /// refine).
+  /// Every run ends in a gap parameter or, on non-cyclic hosts, the
+  /// sweep grid's edge (null — an open end, not a boundary to refine:
+  /// a line host's infinity edge or a bounded extent's endpoint).
   List<_Run> _runs(List<double> parameters, List<Vec2?> positions) {
     final n = positions.length;
     final cyclic = _fullTurnHost;
@@ -261,9 +291,10 @@ class Locus extends GeoLocus {
       }
     }
     if (current != null) {
-      // A run touching the last slot: the grid's +infinity edge on a
-      // line host (open end); on a circle host the slot past it is the
-      // gap the cyclic iteration started at, one unwrapped turn up.
+      // A run touching the last slot: the grid's high edge on a
+      // non-cyclic host (open end); on a full-turn host the slot past it
+      // is the gap the cyclic iteration started at, one unwrapped turn
+      // up.
       runs.add(_Run(current,
           leftGap: leftGap, rightGap: cyclic ? parameterAt(n) : null));
     }
@@ -298,21 +329,22 @@ class Locus extends GeoLocus {
   /// wrong ink, at worst exactly the branch-fixed trace with refined
   /// boundaries.
   List<Vec2> _walk(_Run run, double extent) {
-    // A null gap is the sweep grid's edge: on a line host that is the
-    // infinity edge, where instead of a boundary ladder the end may grow
-    // an infinity tail (39e/39f); on a bounded circle host (Arc/Sector)
-    // it is the extent's genuine endpoint — an open end, nothing to grow.
-    final lineHost = driver.curve is GeoLine;
+    // A null gap is the sweep grid's edge. On a line host's unbounded
+    // side that is the infinity edge, where instead of a boundary ladder
+    // the end may grow an infinity tail (39e/39f); on a bounded edge —
+    // an Arc/Sector extent end, a Segment endpoint, a Ray origin — it is
+    // the extent's genuine endpoint: an open end, nothing to grow.
+    final (lowInfinite, highInfinite) = _infiniteEdges;
     final left = run.leftGap == null
         ? null
         : _refineBoundary(run.params.first, run.leftGap!);
     final right = run.rightGap == null
         ? null
         : _refineBoundary(run.params.last, run.rightGap!);
-    final leftTail = run.leftGap == null && lineHost
+    final leftTail = run.leftGap == null && lowInfinite
         ? _infinityTail(run.params.first, -1, extent)
         : const <double>[];
-    final rightTail = run.rightGap == null && lineHost
+    final rightTail = run.rightGap == null && highInfinite
         ? _infinityTail(run.params.last, 1, extent)
         : const <double>[];
     final ascending = <double>[
@@ -546,9 +578,12 @@ class Locus extends GeoLocus {
   }
 
   /// The parameter values one sweep visits, or null while the host has no
-  /// geometry. A circle host gets [sampleCount] uniform angles over one
-  /// full turn (no duplicated closing sample — the painter closes the
-  /// loop); a line host is swept *projectively* (Phase 39f, the
+  /// geometry. A full-circle host gets [sampleCount] uniform angles over
+  /// one full turn (no duplicated closing sample — the painter closes the
+  /// loop); a bounded host (Arc/Sector extent, Segment span) gets
+  /// [sampleCount] uniform parameters over its extent, endpoints
+  /// included; a Ray gets a tan grid over `[origin, ∞)` (see the class
+  /// doc); an infinite line host is swept *projectively* (Phase 39f, the
   /// Cinderella driver semantics): `center + halfSpan · tan(φ)` over a
   /// cell-centered uniform φ grid in (−π/2, π/2) — strictly monotone,
   /// symmetric about [center], covering the entire carrier. Half the
@@ -576,9 +611,33 @@ class Locus extends GeoLocus {
         return [
           for (var i = 0; i < sampleCount; i++) tau * i / sampleCount,
         ];
-      case GeoLine(:final line):
+      case GeoLine(:final line, :final parameterExtent):
         if (line == null) {
           return null;
+        }
+        final (min, max) = parameterExtent ?? (null, null);
+        if (min != null && max != null) {
+          // A two-sided extent (Segment): uniform over it, endpoints
+          // included — the constrained driver cannot leave it.
+          return [
+            for (var i = 0; i < sampleCount; i++)
+              min + (max - min) * i / (sampleCount - 1),
+          ];
+        }
+        if (min != null || max != null) {
+          // A half-bounded extent (Ray): tan grid anchored at the bounded
+          // end — first sample exactly on it, half the samples within
+          // [halfSpan] of it (the tool's density scale; the baked focus
+          // [center] is irrelevant, the geometry fixes the edge),
+          // hyperbolically sparser toward the infinite side.
+          final edge = min ?? max!;
+          final sign = min != null ? 1 : -1;
+          final outward = [
+            for (var i = 0; i < sampleCount; i++)
+              edge +
+                  sign * halfSpan * math.tan(math.pi / 2 * i / sampleCount),
+          ];
+          return sign > 0 ? outward : outward.reversed.toList();
         }
         return [
           for (var i = 0; i < sampleCount; i++)

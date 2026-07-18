@@ -7,8 +7,9 @@ import 'line_through_two_points.dart';
 ///
 /// A [GeoLine] via its carrier [line], so segments participate in
 /// intersections like infinite lines do (clipping intersection points to
-/// the segment's extent is deferred — see `IntersectionPoint`). Undefined
-/// while the endpoints coincide or a parent is undefined.
+/// the segment's extent is deferred — see `IntersectionPoint`; constrained
+/// points do clamp, via [parameterExtent]). Undefined while the endpoints
+/// coincide or a parent is undefined.
 class Segment extends GeoLine {
   Segment({
     required super.id,
@@ -31,6 +32,18 @@ class Segment extends GeoLine {
   /// The painter draws from these, [line] exists for intersection math.
   Vec2? get start => point1.position;
   Vec2? get end => point2.position;
+
+  /// Both endpoints' carrier parameters, ordered.
+  @override
+  (double?, double?)? get parameterExtent {
+    final line = _line;
+    if (line == null) {
+      return null;
+    }
+    final t1 = line.parameterAt(point1.position!);
+    final t2 = line.parameterAt(point2.position!);
+    return t1 <= t2 ? (t1, t2) : (t2, t1);
+  }
 
   @override
   List<GeoObject> get parents => [point1, point2];

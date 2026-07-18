@@ -7,8 +7,9 @@ import 'line_through_two_points.dart';
 ///
 /// A [GeoLine] via its carrier [line], so rays participate in
 /// intersections like infinite lines do (clipping intersection points to
-/// the ray's extent is deferred, matching `Segment`). Undefined while the
-/// points coincide or a parent is undefined.
+/// the ray's extent is deferred, matching `Segment`; constrained points
+/// do clamp, via [parameterExtent]). Undefined while the points coincide
+/// or a parent is undefined.
 ///
 /// The carrier's `direction` is normalized independently of the parents'
 /// order, so painter and hit tester must use [start] and
@@ -37,6 +38,19 @@ class Ray extends GeoLine {
   /// A point the ray passes through, fixing its direction from [start];
   /// null while [through] is undefined.
   Vec2? get throughPosition => through.position;
+
+  /// Bounded at [origin]'s carrier parameter, unbounded past [through] —
+  /// on whichever side of the carrier's parameterization that is.
+  @override
+  (double?, double?)? get parameterExtent {
+    final line = _line;
+    if (line == null) {
+      return null;
+    }
+    final t0 = line.parameterAt(origin.position!);
+    final tThrough = line.parameterAt(through.position!);
+    return tThrough >= t0 ? (t0, null) : (null, t0);
+  }
 
   @override
   List<GeoObject> get parents => [origin, through];

@@ -64,6 +64,33 @@ abstract class GeoLine extends GeoObject {
 
   LineEq? get line;
 
+  /// The parameter span of the carrier this object actually occupies, in
+  /// the carrier's arc-length parameterization (`LineEq.parameterAt`), as
+  /// `(min, max)` — a null bound is unbounded on that side. Null when the
+  /// whole carrier is available: infinite lines always, `Segment` and
+  /// `Ray` only while undefined. The line sibling of
+  /// [GeoCircle.angularExtent], so constrained points and locus sweeps
+  /// stay on the drawn extent instead of the infinite carrier.
+  (double?, double?)? get parameterExtent => null;
+
+  /// Clamps a carrier parameter into [parameterExtent]: [t] itself when
+  /// the whole carrier is available or the extent already contains it,
+  /// otherwise the nearer extent bound.
+  double clampParameter(double t) {
+    final extent = parameterExtent;
+    if (extent == null) {
+      return t;
+    }
+    final (min, max) = extent;
+    if (min != null && t < min) {
+      return min;
+    }
+    if (max != null && t > max) {
+      return max;
+    }
+    return t;
+  }
+
   @override
   bool get isDefined => line != null;
 }

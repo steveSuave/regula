@@ -17,13 +17,13 @@ import '../geo_object.dart';
 /// via `Construction.setPointOnObjectParameter`, the same way free points
 /// move through `moveFreePoint`.
 ///
-/// Segments and rays constrain to their infinite carrier line for now,
-/// matching `IntersectionPoint`'s deferred-clipping caveat. Arcs and
-/// sectors do *not* share that deferral: the effective angle is clamped
-/// into the host's `angularExtent` on every recompute, so the point never
-/// leaves the drawn branch — and because [parameter] itself is kept as
-/// stored, a wedge that shrinks past the point carries it along on its
-/// rim end and gives it back when it grows again.
+/// Bounded hosts confine the point to their drawn extent: the effective
+/// parameter is clamped into the host's `angularExtent` (arcs, sectors)
+/// or `parameterExtent` (segments, rays) on every recompute, so the point
+/// never leaves the visible curve — `IntersectionPoint`'s deferred
+/// clipping does not apply here. Because [parameter] itself is kept as
+/// stored, a host that shrinks past the point carries it along on its
+/// nearer end and gives it back when it grows again.
 class PointOnObject extends GeoPoint {
   PointOnObject({
     required super.id,
@@ -48,7 +48,8 @@ class PointOnObject extends GeoPoint {
     required Vec2 position,
   }) {
     final parameter = switch (curve) {
-      GeoLine(:final line?) => line.parameterAt(position),
+      GeoLine(:final line?) && final GeoLine host =>
+        host.clampParameter(line.parameterAt(position)),
       GeoCircle(:final circle?) && final GeoCircle host =>
         host.clampAngle(circle.angleAt(position)),
       GeoLine() || GeoCircle() => throw ArgumentError(
@@ -84,7 +85,8 @@ class PointOnObject extends GeoPoint {
   @override
   void recompute() {
     _position = switch (curve) {
-      GeoLine(:final line) => line?.pointAt(parameter),
+      GeoLine(:final line) && final GeoLine host =>
+        line?.pointAt(host.clampParameter(parameter)),
       GeoCircle(:final circle) && final GeoCircle host =>
         circle?.pointAt(host.clampAngle(parameter)),
       GeoPoint() || GeoAngle() || GeoPolygon() || GeoMeasurement() ||

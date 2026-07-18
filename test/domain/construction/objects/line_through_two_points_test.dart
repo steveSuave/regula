@@ -14,6 +14,15 @@ void main() {
       expect(l.line!.contains(b.position), isTrue);
     });
 
+    test('an infinite line offers the whole carrier: no parameter extent, '
+        'clampParameter passes through', () {
+      final a = FreePoint(id: 'a', position: const Vec2(0, 1));
+      final b = FreePoint(id: 'b', position: const Vec2(3, 4));
+      final l = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
+      expect(l.parameterExtent, isNull);
+      expect(l.clampParameter(-1234.5), -1234.5);
+    });
+
     test('undefined while points coincide, recovers when they separate', () {
       final a = FreePoint(id: 'a', position: const Vec2(2, 2));
       final b = FreePoint(id: 'b', position: const Vec2(5, 2));

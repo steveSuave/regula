@@ -6,7 +6,9 @@ import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
+import 'package:regula/domain/construction/objects/ray.dart';
 import 'package:regula/domain/construction/objects/sector.dart';
+import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/math/vec2.dart';
 
 void main() {
@@ -38,6 +40,65 @@ void main() {
       );
 
       expect(p.position!.closeTo(const Vec2(1, 3)), isTrue);
+    });
+
+    test('near() on a segment clamps a tap past an endpoint onto it', () {
+      final a = FreePoint(id: 'a', position: Vec2.zero);
+      final b = FreePoint(id: 'b', position: const Vec2(4, 0));
+      final segment = Segment(id: 's', point1: a, point2: b);
+
+      final p = PointOnObject.near(
+        id: 'p',
+        curve: segment,
+        position: const Vec2(6, 1),
+      );
+      expect(p.position!.closeTo(const Vec2(4, 0)), isTrue,
+          reason: 'the projection lands past b and clamps to it');
+    });
+
+    test('near() on a ray clamps a tap behind the origin onto it', () {
+      final origin = FreePoint(id: 'o', position: const Vec2(1, 0));
+      final through = FreePoint(id: 't', position: const Vec2(4, 0));
+      final ray = Ray(id: 'r', origin: origin, through: through);
+
+      final behind = PointOnObject.near(
+        id: 'p',
+        curve: ray,
+        position: const Vec2(-5, 2),
+      );
+      expect(behind.position!.closeTo(const Vec2(1, 0)), isTrue);
+
+      final ahead = PointOnObject.near(
+        id: 'q',
+        curve: ray,
+        position: const Vec2(90, -3),
+      );
+      expect(ahead.position!.closeTo(const Vec2(90, 0)), isTrue,
+          reason: 'the through side is unbounded');
+    });
+
+    test('a shrinking segment carries the point on its endpoint, then '
+        'gives it back', () {
+      final construction = Construction();
+      final a = FreePoint(id: 'a', position: Vec2.zero);
+      final b = FreePoint(id: 'b', position: const Vec2(4, 0));
+      final segment = Segment(id: 's', point1: a, point2: b);
+      final p = PointOnObject(id: 'p', curve: segment, parameter: 3);
+      construction
+        ..add(a)
+        ..add(b)
+        ..add(segment)
+        ..add(p);
+      expect(p.position!.closeTo(const Vec2(3, 0)), isTrue);
+
+      // Shorten the segment past the point: it clamps to the endpoint.
+      construction.moveFreePoint('b', const Vec2(2, 0));
+      expect(p.position!.closeTo(const Vec2(2, 0)), isTrue);
+      expect(p.parameter, 3, reason: 'the stored parameter is untouched');
+
+      // Grow it back: the point returns to where it was.
+      construction.moveFreePoint('b', const Vec2(4, 0));
+      expect(p.position!.closeTo(const Vec2(3, 0)), isTrue);
     });
 
     test('near() on a sector clamps the tap into the wedge', () {
