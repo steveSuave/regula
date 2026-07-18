@@ -6,6 +6,25 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 61 — 2026-07-18
+
+**Done**
+- User request in two steps: surface the hide tool in the app bar, then group it with delete "like the rest of the tools". Landed as one **hide/delete flyout group** (`hide-delete-group`, `main.dart`) replacing the delete `IconButton`: rows Hide (`H`), Show/Hide (`⇧H` — its first pointer affordance) and Delete (`Del` hint), rendered by the toolbar's row widget (`_ItemRow` made public as `ToolMenuRow`). Group icon stays `delete_outline`, tints `colorScheme.primary` while any of `DeleteTool`/`VisibilityTool` is active, double-click deactivates (the `_ToolGroup` pattern — recognizer mounted only while active).
+- Act-on-selection semantics unchanged: Hide/Delete still act on the current selection at activation (one undo step; hide keeps the selection, delete runs the cascade confirmation). The old press-again-to-toggle-off is retired with the buttons — re-picking a menu item just re-arms; leaving is double-click / Esc / `V`. `_activateShowHideTool` extracted so the `⇧H` shortcut and the menu share one path.
+- The group lives in `main.dart`, not `GeometryToolbar`: its items act on the selection at activation, which the toolbar's pure tool factories deliberately can't.
+- Tests: new `hide_tool_flow_test.dart` (6 flows incl. tint + double-click + Show/Hide item); `delete_tool_flow_test.dart` reworked for menu activation and double-click deactivation; `app_bar_layout_test.dart`'s scroll-to-delete now goes through the flyout. 1146 green, analyze clean.
+- Also landed just before this entry (separate commits `9c1322a`, `325cce6`): polygon macro order change and the polygon tool's move to the Lines group.
+
+**Next**
+- Phase 43 (viewport rotation) is the last queued phase.
+- `main` is ahead of `origin/main` by several phases — push when convenient.
+
+**Open questions / gotchas**
+- The Delete row shows `Del` as its shortcut hint, but `Del` only deletes the selection — it doesn't arm the tap tool. The row's act-on-selection path matches `Del` exactly when a selection exists, so the hint reads true in practice; revisit if it confuses.
+- No web smoke this session — app-bar-only change, covered by the widget suites; run one before the next release-facing phase.
+
+---
+
 ## Session 60 — 2026-07-17
 
 **Done**
