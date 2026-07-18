@@ -1305,7 +1305,7 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.control_point));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Midpoint'));
+    await tester.tap(find.text('Midpoint or center'));
     await tester.pumpAndSettle();
     await tester.tapAt(origin + const Offset(100, 100));
     await tester.pump();

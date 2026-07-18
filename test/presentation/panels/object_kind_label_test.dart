@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/domain/construction/objects/arc.dart';
 import 'package:regula/domain/construction/objects/centroid.dart';
+import 'package:regula/domain/construction/objects/circle_center.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
@@ -40,6 +41,15 @@ void main() {
         Centroid(id: 'g', vertex1: a, vertex2: b, vertex3: c),
       ),
       'Centroid',
+    );
+    expect(
+      objectKindLabel(
+        CircleCenter(
+          id: 'cc',
+          circle: CircleCenterPoint(id: 'k2', center: a, onCircle: b),
+        ),
+      ),
+      'Circle center',
     );
   });
 

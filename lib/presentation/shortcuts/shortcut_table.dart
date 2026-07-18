@@ -484,7 +484,7 @@ final List<ShortcutBinding> shortcutTable = [
   const ShortcutBinding(
     sequence: [KeyStroke(LogicalKeyboardKey.keyM)],
     action: AppAction.midpointTool,
-    label: 'Midpoint',
+    label: 'Midpoint or center',
     section: ShortcutSection.tools,
     display: 'M',
   ),
