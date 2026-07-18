@@ -1,0 +1,23 @@
+lib/presentation/panels/object_tree_panel.dart
+  s_db838b66b04920::t_808d0d1bcdc354 215
+  s_db838b66b04920::t_4d3d94b3c29945 128
+  s_db838b66b04920::t_2624b4bce06435 142-153,155-166
+  s_db838b66b04920::t_36226794d74d37 211-212,216
+  s_db838b66b04920::t_c5eb4c7708e5bf 93-96
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "1de295d8d44100eee1b8c0b2f3f1adb5c2c8a02a",
+  "prompts": {},
+  "sessions": {
+    "s_db838b66b04920": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "20c9d213-6df9-4ad9-8ab6-f353069ea8d0",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
