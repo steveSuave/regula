@@ -414,3 +414,8 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] Reuse the toolbar's flyout row for the hints: `_ItemRow` → public `ToolMenuRow`; group stays in `main.dart` because Hide/Delete act on the selection at activation (one undo step, cascade confirmation) — toolbar items are pure tool factories
 - [x] Retire the buttons' press-again-to-toggle-off (re-picking a menu item re-arms; leave via double-click / Esc / `V`); extract `_activateShowHideTool` shared by `⇧H` and the menu
 - [x] Tests: new `hide_tool_flow_test.dart` (activation tint, double-click deactivate, act-on-selection one-undo-step + selection kept, tap-by-tap, Show/Hide item); `delete_tool_flow_test.dart` reworked for menu activation; `app_bar_layout_test.dart` scroll-to-delete goes through the flyout (1146 tests green, analyze clean)
+
+## Phase 49 — Object-tree header polish + snap-to-grid shortcut (user request)
+- [x] Object tree group headers separated by a `Divider` between groups (not above the first) and restyled — `primary` color, `w600` weight — so they read as section breaks rather than rows; header text unchanged (tests find them by label)
+- [x] `AppAction.toggleSnapToGrid` bound to `Ctrl/⌘ ⇧ G` — the primary escalation of `⇧G` (grid) — wired to `DocumentSettingsNotifier.toggleSnapToGrid`; cheat sheet picks it up from the table (retires Phase 45's "menu-only v1, no shortcut")
+- [x] Tests: editor shortcut toggles `snapToGrid` on via Ctrl and back off via Meta without touching `showGrid`/`showAxes` (1190 green, analyze clean)
