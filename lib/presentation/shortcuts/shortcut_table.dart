@@ -26,6 +26,7 @@ enum AppAction {
   fitView,
   toggleAxes,
   toggleGrid,
+  toggleSnapToGrid,
   nudgeLeft,
   nudgeRight,
   nudgeUp,
@@ -409,6 +410,15 @@ final List<ShortcutBinding> shortcutTable = [
     label: 'Show/hide grid',
     section: ShortcutSection.viewport,
     display: '⇧ G',
+  ),
+  const ShortcutBinding(
+    // Next to ⇧G (grid) in the same key family: primary escalates the
+    // grid toggle to its snapping cousin.
+    sequence: [KeyStroke(LogicalKeyboardKey.keyG, shift: true, primary: true)],
+    action: AppAction.toggleSnapToGrid,
+    label: 'Snap to grid on/off',
+    section: ShortcutSection.viewport,
+    display: 'Ctrl/⌘ ⇧ G',
   ),
   const ShortcutBinding(
     sequence: [KeyStroke(LogicalKeyboardKey.arrowLeft)],
