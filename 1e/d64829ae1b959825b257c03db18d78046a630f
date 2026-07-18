@@ -1,0 +1,36 @@
+test/domain/construction/incidence_test.dart
+  s_cc58e65941b854::t_b78773eb6a1032 1-157
+test/domain/tools/intersection_tool_test.dart
+  s_cc58e65941b854::t_9f915789d9f8db 3
+  s_cc58e65941b854::t_32d0a172c916b4 4-5,11
+  s_cc58e65941b854::t_246001e2d2d83b 184-274,276-277,296-302,304-305,307-309,313,315-316
+  s_cc58e65941b854::t_6b3194f85f2d67 275,278-295,303,306,310-312,314
+lib/domain/construction/line_clip.dart
+  s_cc58e65941b854::t_a27a217f8e16ba 76-86
+  s_cc58e65941b854::t_59b80636d20cce 3
+docs/STATUS.md
+  s_cc58e65941b854::t_899d124c3fd2df 9-27
+lib/domain/tools/intersection_tool.dart
+  s_cc58e65941b854::t_2cd08b7061d502 3,18-25
+  s_cc58e65941b854::t_ad49be14ba6248 62-66,73,80-103
+  s_cc58e65941b854::t_64a4aca54510fc 26
+  s_cc58e65941b854::t_b157d362223692 104-105
+lib/domain/construction/incidence.dart
+  s_cc58e65941b854::t_64d198a83a91cf 1-94
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "1ed64829ae1b959825b257c03db18d78046a630f",
+  "prompts": {},
+  "sessions": {
+    "s_cc58e65941b854": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1e475e7a-39b1-48e2-bffb-e9ee0fe73ff0",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
