@@ -179,9 +179,10 @@ class _TranslateDragSession implements DragSession {
 /// and never touches the curve's parents. Each frame projects the pointer
 /// onto that form, offset so the point rides the pointer's motion instead
 /// of jumping under the cursor (the grab may be up to a hit-threshold away
-/// from the point itself). On an `Arc`/`Sector` host every frame's
-/// parameter is clamped into the drawn `angularExtent`, so the point stops
-/// at the branch ends instead of continuing around the carrier — and
+/// from the point itself). On a bounded host — `Arc`/`Sector`
+/// (`angularExtent`) or `Segment`/`Ray` (`parameterExtent`) — every
+/// frame's parameter is clamped into the drawn extent, so the point stops
+/// at the curve's ends instead of continuing along the carrier — and
 /// reverses the moment the pointer does.
 class _SlideDragSession implements DragSession {
   _SlideDragSession._(
@@ -209,11 +210,14 @@ class _SlideDragSession implements DragSession {
     if (project == null) {
       return null;
     }
-    final clamp =
-        curve is GeoCircle ? curve.clampAngle : _identityParameter;
+    final clamp = switch (curve) {
+      final GeoCircle host => host.clampAngle,
+      final GeoLine host => host.clampParameter,
+      _ => _identityParameter,
+    };
     // The offset is taken from the *effective* (clamped) parameter: after
-    // a host arc shrank past the stored parameter the point renders on
-    // the branch end, and that is where the user grabbed it.
+    // a host shrank past the stored parameter the point renders on the
+    // extent's end, and that is where the user grabbed it.
     var grabOffset = clamp(target.parameter) - project(grabStart);
     if (curve is GeoCircle) {
       // Angular parameters are periodic: near atan2's ±π cut the raw

@@ -348,6 +348,26 @@ void main() {
       expect(onSegment.parameter, 1, reason: 'rollback is float-exact');
     });
 
+    test('slide on a segment stops at its endpoints instead of leaving '
+        'it', () {
+      final session =
+          DragSession.start(construction, onSegment, const Vec2(1, 0))!;
+      // Drag far past b: the point must stop on the endpoint, not slide
+      // onto the infinite carrier.
+      session.update(const Vec2(9, 2));
+      expect(onSegment.parameter, 4);
+      expect(onSegment.position, const Vec2(4, 0));
+
+      // Reverse past a: it stops at the other endpoint.
+      session.update(const Vec2(-3, -2));
+      expect(onSegment.parameter, 0);
+      expect(onSegment.position, const Vec2(0, 0));
+
+      final command = session.end()! as SetPointOnObjectParameterCommand;
+      expect(command.to, 0,
+          reason: 'the committed parameter is the clamped one');
+    });
+
     test('zero-motion gesture ends with no command', () {
       final session =
           DragSession.start(construction, onSegment, const Vec2(1, 0))!;

@@ -106,20 +106,24 @@ void main() {
   });
 
   test(
-      'locus3.json (parabola): the projective sweep covers the whole '
-      'carrier — arms run far past any view, core stays at figure scale',
-      () {
+      'locus3.json (parabola): a segment-hosted driver sweeps exactly the '
+      'segment — the parabola piece between the endpoint images', () {
     // E on square side BC, F = the perpendicular to AE at E crossing the
-    // carrier of the far side CD, G = midpoint(F, E) — analytically the
-    // parabola x = y²/4 (vertex at the world origin), diverging as E
-    // runs off the carrier. Failure history: before Phase 39f the baked
-    // window `[center ± halfSpan]` cut both arms ~1 view-width out —
-    // "stops early before infinity" — because a diverging trace is
-    // exactly what no finite infinity tail can complete.
+    // carrier of the far side CD, G = midpoint(F, E) — analytically on
+    // the parabola x = y²/4 (vertex at the world origin). History:
+    // before Phase 39f the baked window `[center ± halfSpan]` cut the
+    // arms ~1 view-width out; 39f swept the whole carrier projectively
+    // (E's host segment was still unclamped then, so E really roamed
+    // the infinite line and the full parabola appeared). Since bounded
+    // hosts confine constrained points to their drawn extent, E cannot
+    // leave BC and the sweep covers exactly the segment: G runs from
+    // the image of B, (1, −2), to the image of C, (1, 2), endpoints
+    // included. Hosting E on the *line* through B and C is the way to
+    // draw the full parabola.
     final locus = loadLocus('locus3.json', freeOut: <FreePoint>[]);
     final samples = locus.samples!;
     expect(samples, isNot(contains(null)),
-        reason: 'one gapless component — F exists for every E');
+        reason: 'one gapless component — F exists for every E on BC');
     final points = samples.cast<Vec2>();
     for (final p in points) {
       expect(
@@ -127,18 +131,15 @@ void main() {
         lessThan(1e-6 * (1 + p.x.abs())),
         reason: 'every sample lies on the parabola x = y²/4',
       );
+      expect(p.y, inInclusiveRange(-2 - 1e-9, 2 + 1e-9),
+          reason: 'nothing beyond the endpoint images');
     }
-    expect(points.map((p) => p.y).reduce(math.max), greaterThan(500),
-        reason: 'the upper arm runs far past any reasonable zoom');
-    expect(points.map((p) => p.y).reduce(math.min), lessThan(-500),
-        reason: 'the lower arm too');
-    final core = locus.coreSamples!;
-    expect(core, isNotEmpty);
-    for (final p in core) {
-      expect(p.norm, lessThan(100),
-          reason: 'the core slice stays at figure scale — viewport fit '
-              'and the label anchor must not chase the arms');
-    }
+    expect(points.first.distanceTo(const Vec2(1, -2)), lessThan(1e-6),
+        reason: 'the sweep starts exactly on the image of B');
+    expect(points.last.distanceTo(const Vec2(1, 2)), lessThan(1e-6),
+        reason: 'and ends exactly on the image of C');
+    expect(locus.coreSamples, hasLength(points.length),
+        reason: 'a bounded sweep has no far-out samples — all core');
   });
 
   test(
