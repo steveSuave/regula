@@ -1,0 +1,61 @@
+lib/domain/tools/drag_session.dart
+  s_794ee29d34e5a6::t_7a98ca9bf71c14 182-185
+  s_794ee29d34e5a6::t_ca408fb0334486 213-217,219-220
+test/domain/construction/objects/point_on_object_test.dart
+  s_794ee29d34e5a6::t_40493e6085bd82 9,11
+  s_794ee29d34e5a6::t_1b2a42ab39c20e 45-103
+test/domain/tools/drag_session_test.dart
+  s_794ee29d34e5a6::t_93bf04574c22d0 351-370
+lib/domain/construction/geo_object.dart
+  s_794ee29d34e5a6::t_47b11b9cd7f7a6 67-93
+test/domain/construction/objects/line_through_two_points_test.dart
+  s_794ee29d34e5a6::t_269157613713a0 17-25
+test/domain/construction/objects/locus_test.dart
+  s_794ee29d34e5a6::t_3faec52b1a819c 166-223
+  s_794ee29d34e5a6::t_d6902e6062f11b 15,17
+test/application/persistence/locus_fixture_regression_test.dart
+  s_794ee29d34e5a6::t_86b0667f68a90f 109-110,112-122,126,134-135,137-142
+docs/STATUS.md
+  s_794ee29d34e5a6::t_5fb1b12457e7d0 9-28
+lib/domain/construction/objects/locus.dart
+  s_794ee29d34e5a6::t_f26c0b39c6193d 581-586
+  s_794ee29d34e5a6::t_3754c5140d1eb0 294-297
+  s_794ee29d34e5a6::t_8fc4774b877710 30-37
+  s_794ee29d34e5a6::t_e685b9b742121e 171-195
+  s_794ee29d34e5a6::t_5cc98965015bdc 224,228,233
+  s_794ee29d34e5a6::t_3ea13b40eff0af 332-337,344,347
+  s_794ee29d34e5a6::t_33439e77c6071a 264-266
+  s_794ee29d34e5a6::t_8833f55b05eefa 614,618-641
+test/domain/construction/objects/segment_test.dart
+  s_794ee29d34e5a6::t_fff91248dd9c7e 25-45,48-49
+  s_794ee29d34e5a6::t_e5baad510b519a 46-47,50-56
+lib/domain/construction/objects/segment.dart
+  s_794ee29d34e5a6::t_de82a971bc7dc5 10-12
+  s_794ee29d34e5a6::t_8aa019eb658d89 36-47
+lib/domain/construction/objects/ray.dart
+  s_794ee29d34e5a6::t_cf6a611bf879b4 42-54
+  s_794ee29d34e5a6::t_94888b45c4a142 10-12
+lib/domain/construction/objects/point_on_object.dart
+  s_794ee29d34e5a6::t_1ee724ac47a192 20-26
+  s_794ee29d34e5a6::t_52bd2fef6212a8 51-52
+  s_794ee29d34e5a6::t_b1b000b4c639d7 88-89
+test/domain/construction/objects/ray_test.dart
+  s_794ee29d34e5a6::t_4c3ae5bf707f66 63
+  s_794ee29d34e5a6::t_dad6ad2c0dad44 21-49
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "7e1d8a1f62201680bd92cf799ebb31fbb553950f",
+  "prompts": {},
+  "sessions": {
+    "s_794ee29d34e5a6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "43d66e8d-e416-4a40-a00c-7a24789b9fec",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
