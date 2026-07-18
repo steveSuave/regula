@@ -90,7 +90,10 @@ class _ObjectTreePanelState extends ConsumerState<ObjectTreePanel> {
       }]!
           .add(object);
     }
-    final noRows = groups.values.every((objects) => objects.isEmpty);
+    final visibleGroups = [
+      for (final entry in groups.entries)
+        if (entry.value.isNotEmpty) entry,
+    ];
 
     return SizedBox(
       width: ObjectTreePanel.panelWidth,
@@ -122,7 +125,7 @@ class _ObjectTreePanelState extends ConsumerState<ObjectTreePanel> {
                   ),
                 ),
                 Expanded(
-                  child: noRows
+                  child: visibleGroups.isEmpty
                       ? Center(
                           child: Text(
                             construction.objects.isEmpty
@@ -136,21 +139,31 @@ class _ObjectTreePanelState extends ConsumerState<ObjectTreePanel> {
                       : ListView(
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           children: [
-                            for (final MapEntry(key: label, value: objects)
-                                in groups.entries)
-                              if (objects.isNotEmpty) ...[
-                                _GroupHeader(
-                                  label: label,
-                                  ids: [
-                                    for (final object in objects) object.id,
-                                  ],
+                            // A divider between groups (not above the
+                            // first) keeps the headers readable as
+                            // section breaks rather than rows.
+                            for (final (index, MapEntry(
+                                  key: label,
+                                  value: objects,
+                                )) in visibleGroups.indexed) ...[
+                              if (index > 0)
+                                const Divider(
+                                  height: 17,
+                                  indent: 12,
+                                  endIndent: 12,
                                 ),
-                                for (final object in objects)
-                                  _ObjectRow(
-                                    object: object,
-                                    selected: selectedIds.contains(object.id),
-                                  ),
-                              ],
+                              _GroupHeader(
+                                label: label,
+                                ids: [
+                                  for (final object in objects) object.id,
+                                ],
+                              ),
+                              for (final object in objects)
+                                _ObjectRow(
+                                  object: object,
+                                  selected: selectedIds.contains(object.id),
+                                ),
+                            ],
                           ],
                         ),
                 ),
@@ -195,9 +208,12 @@ class _GroupHeader extends ConsumerWidget {
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
           child: Text(
+            // Primary color + a heavier weight so headers read as
+            // section titles, not as just another (unnamed) row.
             label,
             style: theme.textTheme.labelLarge!.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+              color: theme.colorScheme.primary,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ),
