@@ -556,6 +556,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         ref.read(documentSettingsProvider.notifier).toggleAxes();
       case AppAction.toggleGrid:
         ref.read(documentSettingsProvider.notifier).toggleGrid();
+      case AppAction.toggleSnapToGrid:
+        ref.read(documentSettingsProvider.notifier).toggleSnapToGrid();
       case AppAction.nudgeLeft:
         _nudgeView(const Offset(-_nudgeStep, 0));
       case AppAction.nudgeRight:

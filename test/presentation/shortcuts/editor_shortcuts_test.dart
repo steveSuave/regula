@@ -414,6 +414,28 @@ void main() {
     expect(settings(), const DocumentSettings());
   });
 
+  testWidgets('Ctrl/⌘ ⇧ G toggles snap to grid without touching the grid', (
+    tester,
+  ) async {
+    await pumpEditor(tester);
+    DocumentSettings settings() => container.read(documentSettingsProvider);
+    expect(settings(), const DocumentSettings());
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    expect(settings(), const DocumentSettings(snapToGrid: true));
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
+    expect(settings(), const DocumentSettings());
+  });
+
   testWidgets('G leader chords reach constructions', (tester) async {
     await pumpEditor(tester);
     await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
