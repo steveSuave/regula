@@ -97,11 +97,13 @@ void main() {
       final position = tester.state<ScrollableState>(barScrollable).position;
       expect(position.maxScrollExtent, greaterThan(0));
 
-      // Scrolled-to buttons receive taps: activate the delete tool at
-      // the far end of the row.
+      // Scrolled-to buttons receive taps: open the hide/delete flyout at
+      // the far end of the row and activate the delete tool from it.
       await revealInBar(tester, Icons.delete_outline);
       await tester.tap(inAppBar(find.byIcon(Icons.delete_outline)));
-      await tester.pump();
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete objects'));
+      await tester.pumpAndSettle();
       expect(container.read(toolProvider).tool, isA<DeleteTool>());
 
       await revealInBar(tester, Icons.redo);

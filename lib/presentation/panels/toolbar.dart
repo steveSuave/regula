@@ -548,7 +548,7 @@ class _ToolGroup extends ConsumerWidget {
         for (final (label, pick, action) in items)
           PopupMenuItem(
             value: pick,
-            child: _ItemRow(
+            child: ToolMenuRow(
               label: label,
               display: action == null ? null : shortcutDisplayFor(action),
             ),
@@ -571,8 +571,10 @@ class _ToolGroup extends ConsumerWidget {
 /// A flyout row: label left, dimmed shortcut text right. The fixed width
 /// gives the trailing text something to align against — popup menus size
 /// to intrinsic width, under which `Spacer`/`Expanded` misbehave.
-class _ItemRow extends StatelessWidget {
-  const _ItemRow({required this.label, required this.display});
+/// Public because the app bar's hide/delete group (main.dart) renders
+/// its rows the same way.
+class ToolMenuRow extends StatelessWidget {
+  const ToolMenuRow({super.key, required this.label, required this.display});
 
   final String label;
   final String? display;

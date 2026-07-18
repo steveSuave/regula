@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,14 +16,15 @@ import 'package:regula/main.dart';
 import 'package:regula/presentation/canvas/geometry_canvas.dart';
 import '../wide_window.dart';
 
-/// The Phase 41 delete flows, all through the app-bar delete-tool
-/// button (the inspector's Delete button is gone): pressing it
-/// activates the tap-driven [DeleteTool] and deletes the current
-/// selection first, through the same cascade confirmation as the
-/// Del/Backspace shortcut.
+/// The Phase 41 delete flows, all through the app-bar hide/delete
+/// group's Delete item (the inspector's Delete button is gone):
+/// selecting it activates the tap-driven [DeleteTool] and deletes the
+/// current selection first, through the same cascade confirmation as
+/// the Del/Backspace shortcut. Deactivation follows the flyout-group
+/// precedent — double-click the group icon, or Esc.
 void main() {
   late ProviderContainer container;
-  final button = find.byKey(const ValueKey('delete-tool-button'));
+  final group = find.byKey(const ValueKey('hide-delete-group'));
 
   Future<void> pumpEditor(WidgetTester tester) async {
     useWideTestWindow(tester);
@@ -36,6 +38,13 @@ void main() {
     );
   }
 
+  Future<void> activateDelete(WidgetTester tester) async {
+    await tester.tap(group);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete objects'));
+    await tester.pumpAndSettle();
+  }
+
   FreePoint addPoint(String id, Vec2 position) {
     final point = FreePoint(id: id, position: position);
     container.read(constructionProvider).construction.add(point);
@@ -47,34 +56,44 @@ void main() {
 
   bool deleteActive() => container.read(toolProvider).tool is DeleteTool;
 
-  testWidgets('the button is there with nothing selected and toggles the '
-      'tool; toggling off touches nothing', (tester) async {
+  Color? groupIconColor(WidgetTester tester) =>
+      tester.widget<Icon>(find.byIcon(Icons.delete_outline)).color;
+
+  testWidgets('the Delete item activates the tool and tints the group '
+      'icon; double-clicking the icon deactivates and touches nothing',
+      (tester) async {
     await pumpEditor(tester);
     addPoint('a', Vec2.zero);
     await tester.pump();
 
-    expect(button, findsOneWidget);
-    expect(tester.widget<IconButton>(button).isSelected, isFalse);
+    expect(group, findsOneWidget);
+    final theme = Theme.of(tester.element(group));
+    expect(groupIconColor(tester), isNot(theme.colorScheme.primary));
 
-    await tester.tap(button);
-    await tester.pumpAndSettle();
+    await activateDelete(tester);
     expect(deleteActive(), isTrue);
-    expect(tester.widget<IconButton>(button).isSelected, isTrue);
+    expect(groupIconColor(tester), theme.colorScheme.primary);
     expect(find.byType(AlertDialog), findsNothing,
         reason: 'no selection, nothing to confirm or delete');
 
-    await tester.tap(button);
+    // Double-click the tinted group icon: the tool deactivates and the
+    // flyout must not open.
+    await tester.tap(group);
+    await tester.pump(kDoubleTapMinTime);
+    await tester.tap(group);
     await tester.pumpAndSettle();
     expect(deleteActive(), isFalse);
+    expect(find.text('Delete objects'), findsNothing,
+        reason: 'no menu opened');
+    expect(groupIconColor(tester), isNot(theme.colorScheme.primary));
     expect(has('a'), isTrue);
     expect(container.read(commandStackProvider).canUndo, isFalse,
-        reason: 'toggling the mode on and off is not an edit');
+        reason: 'entering and leaving the mode is not an edit');
   });
 
   testWidgets('Esc leaves delete mode', (tester) async {
     await pumpEditor(tester);
-    await tester.tap(button);
-    await tester.pumpAndSettle();
+    await activateDelete(tester);
     expect(deleteActive(), isTrue);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
@@ -89,8 +108,7 @@ void main() {
     container.read(selectionProvider.notifier).select('a');
     await tester.pump();
 
-    await tester.tap(button);
-    await tester.pumpAndSettle();
+    await activateDelete(tester);
 
     expect(find.byType(AlertDialog), findsNothing,
         reason: 'nothing beyond the selection is affected — no dialog');
@@ -121,8 +139,7 @@ void main() {
     container.read(selectionProvider.notifier).select('a');
     await tester.pump();
 
-    await tester.tap(button);
-    await tester.pumpAndSettle();
+    await activateDelete(tester);
 
     expect(find.byType(AlertDialog), findsOneWidget);
     expect(find.textContaining('base'), findsOneWidget,
@@ -150,8 +167,7 @@ void main() {
     container.read(selectionProvider.notifier).select('a');
     await tester.pump();
 
-    await tester.tap(button);
-    await tester.pumpAndSettle();
+    await activateDelete(tester);
     await tester.tap(find.byKey(const ValueKey('confirm-delete')));
     await tester.pumpAndSettle();
 
@@ -178,8 +194,7 @@ void main() {
     container.read(selectionProvider.notifier).selectMany(['a', 'b', 's']);
     await tester.pump();
 
-    await tester.tap(button);
-    await tester.pumpAndSettle();
+    await activateDelete(tester);
 
     expect(find.byType(AlertDialog), findsNothing,
         reason: 'the cascade reaches nothing beyond the selection');
@@ -194,8 +209,7 @@ void main() {
     container.read(selectionProvider.notifier).select('a');
     await tester.pump();
 
-    await tester.tap(button);
-    await tester.pumpAndSettle();
+    await activateDelete(tester);
     expect(has('a'), isFalse);
 
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));

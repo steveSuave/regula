@@ -389,19 +389,16 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     return deleteSelectionWithConfirmation(context, ref, objects);
   }
 
-  /// The app-bar delete button: toggles the tap-driven [DeleteTool].
-  /// Activating with a selection deletes it first (same confirmation
-  /// path as Del), then the tool stays active for tap-by-tap deleting —
-  /// a cancelled dialog keeps delete mode, since that's what the press
-  /// asked for. Activation goes first so a Phase 30b drag commit lands
-  /// on the undo stack before the selection's delete.
+  /// The hide/delete flyout's Delete item: activates the tap-driven
+  /// [DeleteTool]. Activating with a selection deletes it first (same
+  /// confirmation path as Del), then the tool stays active for
+  /// tap-by-tap deleting — a cancelled dialog keeps delete mode, since
+  /// that's what the press asked for. Activation goes first so a Phase
+  /// 30b drag commit lands on the undo stack before the selection's
+  /// delete. Leaving the mode follows the flyout precedent: double-click
+  /// the group icon, Esc or `V`.
   void _activateDeleteTool() {
-    final tools = ref.read(toolProvider.notifier);
-    if (ref.read(toolProvider).tool is DeleteTool) {
-      tools.deactivate();
-      return;
-    }
-    tools.activate(const DeleteTool());
+    ref.read(toolProvider.notifier).activate(const DeleteTool());
     _deleteSelectedObjects();
   }
 
@@ -421,6 +418,13 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     if (command != null) {
       ref.read(commandStackProvider.notifier).execute(command);
     }
+  }
+
+  /// Show/Hide (`Shift+H` and the hide/delete flyout): unlike Hide,
+  /// deliberately no act-on-selection step — toggling a mixed selection
+  /// is ambiguous.
+  void _activateShowHideTool() {
+    ref.read(toolProvider.notifier).activate(VisibilityTool.showHide());
   }
 
   Future<void> _activateSegmentRatioTool() async {
@@ -536,7 +540,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
       case AppAction.hideTool:
         _activateHideTool();
       case AppAction.showHideTool:
-        tools.activate(VisibilityTool.showHide());
+        _activateShowHideTool();
       case AppAction.toggleCheatSheet:
         setState(() => _showCheatSheet = !_showCheatSheet);
       case AppAction.zoomIn:
@@ -700,7 +704,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   Widget _appBarRow({
     required bool compactPanels,
     required bool hasSelection,
-    required bool isDeleteActive,
+    required bool hideDeleteActive,
     required UndoRedoState undoRedo,
   }) {
     return LayoutBuilder(
@@ -798,15 +802,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                       .read(themeModeProvider.notifier)
                       .toggle(Theme.of(context).brightness),
                 ),
-                IconButton(
-                  key: const ValueKey('delete-tool-button'),
-                  tooltip: isDeleteActive
-                      ? 'Exit delete (Esc)'
-                      : 'Delete objects',
-                  isSelected: isDeleteActive,
-                  icon: const Icon(Icons.delete_outline),
-                  onPressed: _activateDeleteTool,
-                ),
+                _hideDeleteGroup(active: hideDeleteActive),
                 IconButton(
                   tooltip: 'Undo',
                   icon: const Icon(Icons.undo),
@@ -826,6 +822,59 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  /// Hide, Show/Hide and Delete as one flyout group, visually matching
+  /// the [GeometryToolbar] groups: primary-tinted icon while one of its
+  /// tools is active, rows with shortcut hints, double-click to
+  /// deactivate. It lives here rather than in the toolbar because Hide
+  /// and Delete act on the current selection at activation, which the
+  /// toolbar's pure tool factories don't do.
+  Widget _hideDeleteGroup({required bool active}) {
+    const idleTooltip = 'Hide & delete: tap objects to hide, reveal or '
+        'delete them';
+    final button = PopupMenuButton<VoidCallback>(
+      key: const ValueKey('hide-delete-group'),
+      tooltip: active ? '$idleTooltip — double-click to deselect' : idleTooltip,
+      icon: Icon(
+        Icons.delete_outline,
+        color: active ? Theme.of(context).colorScheme.primary : null,
+      ),
+      onSelected: (action) => action(),
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          value: _activateHideTool,
+          child: ToolMenuRow(
+            label: 'Hide objects',
+            display: shortcutDisplayFor(AppAction.hideTool),
+          ),
+        ),
+        PopupMenuItem(
+          value: _activateShowHideTool,
+          child: ToolMenuRow(
+            label: 'Show or hide objects (hidden show dimmed)',
+            display: shortcutDisplayFor(AppAction.showHideTool),
+          ),
+        ),
+        PopupMenuItem(
+          value: _activateDeleteTool,
+          child: ToolMenuRow(
+            label: 'Delete objects',
+            display: shortcutDisplayFor(AppAction.deleteSelection),
+          ),
+        ),
+      ],
+    );
+    if (!active) {
+      return button;
+    }
+    // The toolbar's _ToolGroup reasoning: the double-tap recognizer is
+    // mounted only while active, so it delays the menu-opening tap only
+    // then.
+    return GestureDetector(
+      onDoubleTap: () => ref.read(toolProvider.notifier).deactivate(),
+      child: button,
     );
   }
 
@@ -877,8 +926,11 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         compactPanels && ref.watch(selectionProvider).isNotEmpty;
     // Narrow select: tool taps bump the provider's revision every input,
     // and the scaffold must not rebuild per tap.
-    final isDeleteActive =
-        ref.watch(toolProvider.select((state) => state.tool is DeleteTool));
+    final hideDeleteActive = ref.watch(
+      toolProvider.select(
+        (state) => state.tool is DeleteTool || state.tool is VisibilityTool,
+      ),
+    );
     final drawerWidth = math.min(
       AttributesInspector.panelWidth,
       MediaQuery.sizeOf(context).width * 0.85,
@@ -912,7 +964,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
           title: _appBarRow(
             compactPanels: compactPanels,
             hasSelection: hasSelection,
-            isDeleteActive: isDeleteActive,
+            hideDeleteActive: hideDeleteActive,
             undoRedo: undoRedo,
           ),
           // Non-empty actions suppress the end-drawer button Material
