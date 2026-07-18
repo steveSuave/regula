@@ -1,0 +1,19 @@
+docs/STATUS.md
+  s_6dc112363c91a1::t_b9a2c1b932a163 9-27
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "115b1580366e0fcffc515ca7787c93892b2bd6fc",
+  "prompts": {},
+  "sessions": {
+    "s_6dc112363c91a1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "98fe34b5-05fa-4589-865d-1e27689366b5",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
