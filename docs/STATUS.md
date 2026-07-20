@@ -6,6 +6,24 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 71 — 2026-07-20
+
+**Done**
+- Phase 52 (user request): foldable object-tree groups. Each group header grows a leading chevron (its own `IconButton` tap target, so folding never selects) that folds the group's rows away; the header and dividers stay, a trailing count stands in for the hidden rows, and select-by-kind (tap / shift-tap / long-press) keeps acting on the whole folded group.
+- Groups start folded (follow-up user request): a fresh panel is a compact per-kind overview and expanding is opting into detail. Expansion is view state like the search query — an `_expanded` set in the panel state, reset when the panel closes, never persisted.
+- An active search overrides folding — a match inside a folded group must not read as "no matches" — and disables the chevron while it's forcing everything open; clearing the query restores the folds.
+- Tests: default-folded overview / expand-refold / folded-header select / search-override cases; existing row-level tests now expand their group first through the chevron, the way the user does. 1216 green, analyze clean.
+
+**Next**
+- Phase 43 (viewport rotation) is the last queued phase.
+- `main` is ahead of `origin/main` — push when convenient.
+
+**Open questions / gotchas**
+- Folds don't persist across panel close/reopen (deliberate, matching the search query). If that grates in practice, the natural home for remembered folds is a UI-state provider, not the save format.
+- The chevron is disabled rather than hidden during search so the header layout doesn't shift; it shows the expanded glyph then, since the search forces every match visible.
+
+---
+
 ## Session 70 — 2026-07-20
 
 **Done**
