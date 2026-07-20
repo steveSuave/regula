@@ -62,6 +62,7 @@ import 'domain/tools/visibility_tool.dart';
 import 'presentation/canvas/canvas_viewport.dart';
 import 'presentation/canvas/fit_viewport.dart';
 import 'presentation/canvas/geometry_canvas.dart';
+import 'presentation/canvas/name_points_hint.dart';
 import 'presentation/canvas/region_pick_overlay.dart';
 import 'presentation/panels/attributes_inspector.dart';
 import 'presentation/panels/delete_selection.dart';
@@ -459,6 +460,14 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         .activate(AngleBySizeTool(newId: newObjectId, angle: angle));
   }
 
+  Future<void> _activateNamePointsTool() async {
+    final tool = await askNamePointsTool(context);
+    if (tool == null) {
+      return;
+    }
+    ref.read(toolProvider.notifier).activate(tool);
+  }
+
   Future<void> _activateFixedRadiusCircleTool() async {
     final radius = await askCircleRadius(context);
     if (radius == null) {
@@ -649,6 +658,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         tools.activate(TransformObjectTool.translate(newId: newObjectId));
       case AppAction.angleBySizeTool:
         _activateAngleBySizeTool();
+      case AppAction.namePointsTool:
+        _activateNamePointsTool();
       case AppAction.polygonTool:
         tools.activate(PolygonTool(newId: newObjectId));
       case AppAction.squareMacroTool:
@@ -1003,6 +1014,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                         fit: StackFit.expand,
                         children: [
                           GeometryCanvas(key: _canvasKey),
+                          const NamePointsHint(),
                           // Sits on top of (and exactly over) the canvas,
                           // so its local coordinates are canvas
                           // coordinates; opaque, so the canvas can't

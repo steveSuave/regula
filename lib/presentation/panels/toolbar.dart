@@ -36,6 +36,7 @@ import '../../domain/tools/isosceles_triangle_macro_tool.dart';
 import '../../domain/tools/kite_macro_tool.dart';
 import '../../domain/tools/locus_tool.dart';
 import '../../domain/tools/midpoint_tool.dart';
+import '../../domain/tools/name_points_tool.dart';
 import '../../domain/tools/parallelogram_macro_tool.dart';
 import '../../domain/tools/point_and_line_tool.dart';
 import '../../domain/tools/point_tool.dart';
@@ -130,6 +131,7 @@ class GeometryToolbar extends ConsumerWidget {
         tool is PointTool ||
         tool is IntersectionTool ||
         tool is TriangleCenterTool ||
+        tool is NamePointsTool ||
         (tool is TwoPointTool &&
             tool is! DistanceTool &&
             !_lineBuilders.contains(tool.build) &&
@@ -206,6 +208,8 @@ class GeometryToolbar extends ConsumerWidget {
           : FixedLengthSegmentTool(newId: newObjectId, length: length);
     }
 
+    Future<Tool?> namePointsPick() => askNamePointsTool(context);
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -237,6 +241,11 @@ class GeometryToolbar extends ConsumerWidget {
               'Circumcenter',
               _center(Circumcenter.new),
               AppAction.circumcenterTool,
+            ),
+            (
+              'Name points in sequence…',
+              namePointsPick,
+              AppAction.namePointsTool,
             ),
           ],
         ),
@@ -664,6 +673,19 @@ Future<int?> askPolygonSideCount(BuildContext context) =>
       builder: (context) => const _SideCountDialog(),
     );
 
+/// Asks for the Phase 53 naming sequence and returns the configured
+/// [NamePointsTool] — the shared path behind the Points flyout item and
+/// the `G M` shortcut. Null when cancelled. Unlike the numeric dialogs,
+/// invalid input (repeated characters, internal whitespace) keeps the
+/// dialog open with an inline error rather than reading as cancel: a
+/// word is deliberate enough input that silently dropping it would read
+/// as a broken tool.
+Future<NamePointsTool?> askNamePointsTool(BuildContext context) =>
+    showDialog<NamePointsTool>(
+      context: context,
+      builder: (context) => const _NamePointsDialog(),
+    );
+
 /// The dialog owns its [TextEditingController] so it outlives the exit
 /// animation (disposing right after `showDialog` returns crashes the
 /// still-rendering `TextField`).
@@ -798,6 +820,69 @@ class _LengthDialogState extends State<_LengthDialog> {
               Navigator.pop(context, _parseLength(_controller.text)),
           child: const Text('OK'),
         ),
+      ],
+    );
+  }
+}
+
+/// Naming-sequence sibling of [_RatioDialog] (same controller-lifetime
+/// reasoning), with inline validation instead of garbage-reads-as-cancel.
+class _NamePointsDialog extends StatefulWidget {
+  const _NamePointsDialog();
+
+  @override
+  State<_NamePointsDialog> createState() => _NamePointsDialogState();
+}
+
+class _NamePointsDialogState extends State<_NamePointsDialog> {
+  final _controller = TextEditingController();
+  String? _error;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final text = _controller.text.trim();
+    if (text.contains(RegExp(r'\s'))) {
+      setState(() => _error = 'No spaces — one name per character');
+      return;
+    }
+    if (text.split('').toSet().length != text.length) {
+      setState(() => _error =
+          'Each character may appear only once (names are unique)');
+      return;
+    }
+    Navigator.pop(context, NamePointsTool.fromInput(text));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Name points in sequence'),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        decoration: InputDecoration(
+          hintText: 'empty = A, B, C…; one letter = start there; '
+              'a word = one point per letter',
+          errorText: _error,
+        ),
+        onChanged: (_) {
+          if (_error != null) {
+            setState(() => _error = null);
+          }
+        },
+        onSubmitted: (_) => _submit(),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        TextButton(onPressed: _submit, child: const Text('OK')),
       ],
     );
   }
