@@ -108,6 +108,12 @@ void main() {
       actionOf(stroke(LogicalKeyboardKey.digit3)),
       AppAction.threePointCircleTool,
     );
+
+    stroke(LogicalKeyboardKey.keyG);
+    expect(
+      actionOf(stroke(LogicalKeyboardKey.keyM)),
+      AppAction.namePointsTool,
+    );
   });
 
   test('X leader chords reach the macros', () {
