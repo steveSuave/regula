@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/domain/construction/objects/arc.dart';
 import 'package:regula/domain/construction/objects/area_measurement.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/fixed_radius_circle.dart';
@@ -8,6 +9,7 @@ import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/polygon.dart';
+import 'package:regula/domain/construction/objects/sector.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/construction/objects/vertex_angle.dart';
 import 'package:regula/domain/math/vec2.dart';
@@ -49,6 +51,44 @@ void main() {
       final area = AreaMeasurement(id: 'ar', subject: circle);
       expect(area.value, closeTo(math.pi * 6.25, 1e-12));
       expect(area.anchor, const Vec2(1, 2));
+    });
+
+    test('sector subject: ½r²θ wedge area, centroid anchor', () {
+      final o = FreePoint(id: 'o', position: const Vec2(0, 0));
+      final s = FreePoint(id: 's', position: const Vec2(2, 0));
+      final e = FreePoint(id: 'e', position: const Vec2(0, 7));
+      final sector = Sector(id: 'sec', center: o, start: s, end: e);
+      final area = AreaMeasurement(id: 'ar', subject: sector);
+      expect(area.value, closeTo(math.pi, 1e-12),
+          reason: 'radius-2 quarter wedge: ½·4·π/2, not the full circle');
+      // Wedge centroid: (4r/(3θ))·sin(θ/2) along the bisector (π/4).
+      final d = 8 / (3 * math.pi / 2) * math.sin(math.pi / 4);
+      expect(
+        area.anchor!.closeTo(Vec2(d * math.sqrt1_2, d * math.sqrt1_2)),
+        isTrue,
+      );
+    });
+
+    test('arc subject: the circular segment its chord cuts off', () {
+      // Unit semicircle: segment area ½(π − sin π) = π/2, half the disk.
+      final s = FreePoint(id: 's', position: const Vec2(1, 0));
+      final v = FreePoint(id: 'v', position: const Vec2(0, 1));
+      final e = FreePoint(id: 'e', position: const Vec2(-1, 0));
+      final arc = Arc(id: 'arc', start: s, via: v, end: e);
+      final area = AreaMeasurement(id: 'ar', subject: arc);
+      expect(area.value, closeTo(math.pi / 2, 1e-12));
+      // Half-disk centroid: 4r/(3π) up the bisector.
+      expect(area.anchor!.closeTo(Vec2(0, 4 / (3 * math.pi))), isTrue);
+    });
+
+    test('a clockwise arc reports the same positive segment area', () {
+      final s = FreePoint(id: 's', position: const Vec2(-1, 0));
+      final v = FreePoint(id: 'v', position: const Vec2(0, 1));
+      final e = FreePoint(id: 'e', position: const Vec2(1, 0));
+      final arc = Arc(id: 'arc', start: s, via: v, end: e);
+      final area = AreaMeasurement(id: 'ar', subject: arc);
+      expect(area.value, closeTo(math.pi / 2, 1e-12));
+      expect(area.anchor!.closeTo(Vec2(0, 4 / (3 * math.pi))), isTrue);
     });
 
     test('recompute tracks the subject', () {
