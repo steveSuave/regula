@@ -6,6 +6,25 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 72 — 2026-07-21
+
+**Done**
+- Phase 53 (user request, C.a.R-inspired): sequential point-naming tool. Points-flyout row "Name points in sequence…" (`G M`) opens a one-field dialog: empty → alphabet from A, single Latin letter → alphabet from that offset (case picks the pool), a word → its characters one tap at a time. Each accepted tap is one `ChangeAttributesCommand` (`name` + `labelVisible: true`); non-point taps consume nothing.
+- Alphabet mode is stateless — each tap takes the first free name from the live used-name set via the new `nextNameFrom` allocator (round 0 scans start…Z, later rounds `A1…Z1, A2…` like `nextAutoName`), so used names are skipped and undo re-offers freed letters. String mode holds a cursor and *evicts* a clashing holder (`evictedName`, Phase 27 rule) in the same command; exhausted taps are ignored. Dialog validation (repeated chars / spaces) keeps it open with an inline error — a deliberate deviation from the numeric dialogs' garbage-reads-as-cancel.
+- `NamePointsHint` chip (new canvas overlay surface, bottom-left, `IgnorePointer`): shows "Next name: X" / "All letters assigned" while the tool is active — the sequence's only forward-looking feedback.
+- Tests: `nextNameFrom` group, `name_points_tool_test.dart` (both modes, skip/evict, exhaustion, re-tap, undo, reset), toolbar dialog cases, `G M` resolver, `name_points_flow_test.dart` (canvas taps + chip + one undo per tap). 1256 green, analyze clean. Web smoke on a fresh release build: **SMOKE PASS** (drive.js untouched). Ad-hoc Playwright: G M → "MID" spells the points, saved doc carries the names, alphabet re-tap renames M→A, one Ctrl+Z steps back one tap, zero console errors — **ADHOC PASS**.
+
+**Next**
+- Phase 43 (viewport rotation) is the last queued phase.
+- `main` is ahead of `origin/main` — push when convenient; `phase-53-name-points` is ready to merge.
+
+**Open questions / gotchas**
+- `resetInProgress()` fires on *every* undo/redo and restarts a partial naming string (the cursor is the one deviation from the back-to-initial-after-commit tool contract). Accepted for v1: eviction makes re-tapping in order idempotent and the hint chip shows the restart. If it grates, the fix is tracking letter→point assignments, not keeping the cursor across resets.
+- In alphabet mode a re-tap gives the point the *next* free letter and frees its old one for the following tap — the emergent single-rule behavior, test-pinned; any "ignore re-taps" nicety belongs in the UI layer.
+- Port 8321 had a leftover server from an earlier session; it serves `build/web` from disk so the fresh build was what got smoked (verified via Last-Modified).
+
+---
+
 ## Session 71 — 2026-07-20
 
 **Done**
