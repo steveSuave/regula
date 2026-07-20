@@ -49,6 +49,13 @@ abstract class ObjectAttributes with _$ObjectAttributes {
     /// it does not scale with zoom.
     @Default(0.0) double dashPeriod,
 
+    /// Number of equal-length tick marks (0–3) drawn as short strokes
+    /// perpendicular to the segment at its midpoint — the classic
+    /// congruence notation. Like stroke widths, tick geometry is in
+    /// logical pixels and does not scale with zoom. Segments only;
+    /// other kinds ignore it.
+    @Default(0) int tickMarks,
+
     /// Point radius in logical pixels (point kinds only).
     @Default(4.0) double pointSize,
 

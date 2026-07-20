@@ -257,14 +257,17 @@ void main() {
         id: 's',
         point1: b,
         point2: c,
-        attributes:
-            const ObjectAttributes(colorArgb: 0xFFE64A19, strokeWidth: 4),
+        attributes: const ObjectAttributes(
+          colorArgb: 0xFFE64A19,
+          strokeWidth: 4,
+          tickMarks: 2,
+        ),
       ))
       ..add(Segment(
         id: 'dash',
         point1: a,
         point2: c,
-        attributes: const ObjectAttributes(dashPeriod: 8),
+        attributes: const ObjectAttributes(dashPeriod: 8, tickMarks: 1),
       ))
       ..add(FreePoint(
         id: 'big',

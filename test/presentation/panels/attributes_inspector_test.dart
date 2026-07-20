@@ -356,6 +356,39 @@ void main() {
     expect(s.attributes.dashPeriod, 0.0);
   });
 
+  testWidgets('equal-marks selector: segments only, one command per tap, '
+      'undo restores no marks', (tester) async {
+    await pumpEditor(tester);
+    final a = addPoint('a', Vec2.zero);
+    final b = addPoint('b', const Vec2(4, 0));
+    final line = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
+    final s = Segment(id: 's', point1: a, point2: b);
+    container.read(constructionProvider).construction
+      ..add(line)
+      ..add(s);
+
+    container.read(selectionProvider.notifier).select('l');
+    await tester.pump();
+    expect(find.byKey(const ValueKey('tick-marks')), findsNothing,
+        reason: 'equal marks are congruence notation for segments alone');
+
+    container.read(selectionProvider.notifier).selectMany(['l', 's']);
+    await tester.pump();
+    final tickMarks = find.byKey(const ValueKey('tick-marks'));
+    expect(tickMarks, findsOneWidget);
+
+    await tester
+        .tap(find.descendant(of: tickMarks, matching: find.text('2')));
+    await tester.pump();
+    expect(s.attributes.tickMarks, 2);
+    expect(line.attributes.tickMarks, 0,
+        reason: 'the command covers only the segment slice');
+
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(s.attributes.tickMarks, 0);
+  });
+
   testWidgets('marker-radius selector: angles only, one command over the '
       'angle slice, undo restores the default', (tester) async {
     await pumpEditor(tester);

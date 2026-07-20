@@ -347,12 +347,15 @@ class GeometryPainter extends CustomPainter {
           paint..style = PaintingStyle.fill,
         );
       case Segment():
-        _drawStraight(
+        final start = viewport.worldToScreen(object.start!);
+        final end = viewport.worldToScreen(object.end!);
+        _drawStraight(canvas, start, end, paint, dashPeriod);
+        _drawTickMarks(
           canvas,
-          viewport.worldToScreen(object.start!),
-          viewport.worldToScreen(object.end!),
+          start,
+          end,
+          object.attributes.tickMarks,
           paint,
-          dashPeriod,
         );
       case Ray():
         final span = _clipSpan(object);
@@ -503,6 +506,40 @@ class GeometryPainter extends CustomPainter {
       object.attributes.lineClip == 0
           ? null
           : lineClipSpan(construction.objects, object);
+
+  /// Equal-length tick marks (congruence notation): [count] short
+  /// strokes perpendicular to the [from]→[to] stretch, centered as a
+  /// group on its midpoint. Screen-space geometry in logical pixels, so
+  /// zoom changes neither tick length nor spacing. Always solid — ticks
+  /// are notation, not object style — and painted with the object's
+  /// [paint], so the selection-halo pass widens them like the stroke.
+  /// A degenerate (coincident-endpoint) stretch has no perpendicular
+  /// and draws none.
+  void _drawTickMarks(
+    Canvas canvas,
+    Offset from,
+    Offset to,
+    int count,
+    Paint paint,
+  ) {
+    if (count <= 0) {
+      return;
+    }
+    final along = to - from;
+    final length = along.distance;
+    if (length < 1e-9) {
+      return;
+    }
+    const halfTick = 5.0;
+    const spacing = 5.0;
+    final unit = along / length;
+    final normal = Offset(-unit.dy, unit.dx) * halfTick;
+    final midpoint = (from + to) / 2;
+    for (var i = 0; i < count; i++) {
+      final center = midpoint + unit * ((i - (count - 1) / 2) * spacing);
+      canvas.drawLine(center - normal, center + normal, paint);
+    }
+  }
 
   /// One straight stroke — solid via `drawLine`, or rebuilt as a dashed
   /// path when [dashPeriod] > 0.

@@ -93,6 +93,7 @@ Construction buildKitchenSink() {
           dashPeriod: 8,
           labelFontSize: 16,
           showValue: true,
+          tickMarks: 2,
         ),
       ),
     )

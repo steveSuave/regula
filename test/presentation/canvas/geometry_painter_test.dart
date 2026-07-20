@@ -482,6 +482,105 @@ void main() {
         });
       });
     });
+
+    group('equal-mark ticks (Phase 51)', () {
+      const size = Size(800, 600);
+      const viewport = CanvasViewport(ViewportState());
+
+      Construction segmentScene(int tickMarks, {Vec2 end = const Vec2(40, 0)}) {
+        final construction = Construction();
+        final a = FreePoint(id: 'a', position: Vec2.zero);
+        final b = FreePoint(id: 'b', position: end);
+        construction
+          ..add(a)
+          ..add(b)
+          ..add(Segment(
+            id: 's',
+            point1: a,
+            point2: b,
+            attributes: ObjectAttributes(tickMarks: tickMarks),
+          ));
+        return construction;
+      }
+
+      test('tickMarks 0 draws the stroke alone', () {
+        final canvas = _LineRecordingCanvas();
+        painterFor(segmentScene(0)).paint(canvas, size);
+        expect(canvas.lines, hasLength(1));
+      });
+
+      test('two ticks: perpendicular, centered as a group on the midpoint',
+          () {
+        final canvas = _LineRecordingCanvas();
+        painterFor(segmentScene(2)).paint(canvas, size);
+        expect(canvas.lines, hasLength(3),
+            reason: 'the stroke plus two ticks');
+        final stroke = canvas.lines.first;
+        final segmentDirection = stroke.$2 - stroke.$1;
+        final screenMidpoint = (stroke.$1 + stroke.$2) / 2;
+        final ticks = canvas.lines.skip(1);
+        final tickCenters = <Offset>[];
+        for (final (p1, p2) in ticks) {
+          final tick = p2 - p1;
+          expect(tick.distance, closeTo(10, 1e-9),
+              reason: 'ticks are 10 logical px long');
+          expect(
+            tick.dx * segmentDirection.dx + tick.dy * segmentDirection.dy,
+            closeTo(0, 1e-6),
+            reason: 'ticks are perpendicular to the segment',
+          );
+          tickCenters.add((p1 + p2) / 2);
+        }
+        final groupCenter =
+            tickCenters.reduce((a, b) => a + b) / tickCenters.length.toDouble();
+        expect((groupCenter - screenMidpoint).distance, closeTo(0, 1e-6),
+            reason: 'the tick group is centered on the segment midpoint');
+        expect(
+          (tickCenters[0] - tickCenters[1]).distance,
+          closeTo(5, 1e-9),
+          reason: 'adjacent ticks sit 5 logical px apart',
+        );
+      });
+
+      test('one tick sits exactly on the midpoint', () {
+        final canvas = _LineRecordingCanvas();
+        painterFor(segmentScene(1)).paint(canvas, size);
+        expect(canvas.lines, hasLength(2));
+        final (p1, p2) = canvas.lines.last;
+        expect(
+          ((p1 + p2) / 2 - viewport.worldToScreen(const Vec2(20, 0))).distance,
+          closeTo(0, 1e-6),
+        );
+      });
+
+      test('a dashed segment still draws solid ticks', () {
+        final construction = Construction();
+        final a = FreePoint(id: 'a', position: Vec2.zero);
+        final b = FreePoint(id: 'b', position: const Vec2(40, 0));
+        construction
+          ..add(a)
+          ..add(b)
+          ..add(Segment(
+            id: 's',
+            point1: a,
+            point2: b,
+            attributes: const ObjectAttributes(tickMarks: 3, dashPeriod: 8),
+          ));
+        final canvas = _LineRecordingCanvas();
+        painterFor(construction).paint(canvas, size);
+        // The dashed stroke goes through drawPath, so drawLine records
+        // the ticks alone.
+        expect(canvas.lines, hasLength(3));
+      });
+
+      test('a degenerate segment draws no ticks', () {
+        final canvas = _LineRecordingCanvas();
+        painterFor(segmentScene(3, end: Vec2.zero)).paint(canvas, size);
+        expect(canvas.lines, isEmpty,
+            reason: 'a coincident-endpoint segment paints nothing — and '
+                'the tick guard must not divide by its zero length');
+      });
+    });
   });
 }
 
