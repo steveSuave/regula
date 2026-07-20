@@ -131,7 +131,6 @@ class GeometryToolbar extends ConsumerWidget {
         tool is PointTool ||
         tool is IntersectionTool ||
         tool is TriangleCenterTool ||
-        tool is NamePointsTool ||
         (tool is TwoPointTool &&
             tool is! DistanceTool &&
             !_lineBuilders.contains(tool.build) &&
@@ -208,8 +207,6 @@ class GeometryToolbar extends ConsumerWidget {
           : FixedLengthSegmentTool(newId: newObjectId, length: length);
     }
 
-    Future<Tool?> namePointsPick() => askNamePointsTool(context);
-
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -241,11 +238,6 @@ class GeometryToolbar extends ConsumerWidget {
               'Circumcenter',
               _center(Circumcenter.new),
               AppAction.circumcenterTool,
-            ),
-            (
-              'Name points in sequence…',
-              namePointsPick,
-              AppAction.namePointsTool,
             ),
           ],
         ),
@@ -498,7 +490,50 @@ class GeometryToolbar extends ConsumerWidget {
             ),
           ],
         ),
+        const _NamePointsButton(),
       ],
+    );
+  }
+}
+
+/// The Phase 53 name-points tool's own button, closing the tools
+/// cluster: a single-action tool doesn't earn a one-row flyout, and it
+/// doesn't belong under the hide/delete group's trash can. Tapping it
+/// opens the sequence dialog (tapping again while active re-arms with a
+/// fresh sequence — the flyout precedent); the icon tints while the
+/// tool is active and a double-click deselects, exactly like the
+/// groups.
+class _NamePointsButton extends ConsumerWidget {
+  const _NamePointsButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final active =
+        ref.watch(toolProvider.select((state) => state.tool is NamePointsTool));
+    final button = IconButton(
+      tooltip: active
+          ? 'Name points in sequence — double-click to deselect'
+          : 'Name points in sequence',
+      icon: Icon(
+        Icons.abc,
+        color: active ? Theme.of(context).colorScheme.primary : null,
+      ),
+      onPressed: () async {
+        final tool = await askNamePointsTool(context);
+        if (tool != null) {
+          ref.read(toolProvider.notifier).activate(tool);
+        }
+      },
+    );
+    if (!active) {
+      return button;
+    }
+    // Same reasoning as _ToolGroup: the double-tap recognizer only
+    // mounts while active, so it delays the dialog-opening tap only
+    // then.
+    return GestureDetector(
+      onDoubleTap: () => ref.read(toolProvider.notifier).deactivate(),
+      child: button,
     );
   }
 }
