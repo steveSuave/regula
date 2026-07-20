@@ -1,0 +1,42 @@
+docs/TODO.md
+  s_6f44d4816da1da::t_d6437db5e9971d 435-440
+docs/STATUS.md
+  s_6f44d4816da1da::t_3d9f2785eb60f8 9-26
+test/presentation/panels/object_tree_panel_test.dart
+  s_6f44d4816da1da::t_edccba7312a102 335
+  s_6f44d4816da1da::t_5f158bd35589f3 40-46
+  s_6f44d4816da1da::t_65e29a2ceda4ce 90-91
+  s_6f44d4816da1da::t_e31d57d7e0f8b7 269-270,282,284,288,297,300-306
+  s_6f44d4816da1da::t_61fca455a34efe 271-281,283,285-287,289-296,298-299,307-321,323-334,336-348
+  s_6f44d4816da1da::t_13adcf7f67ff54 109-110
+  s_6f44d4816da1da::t_3b9bcda5ef24fb 223
+  s_6f44d4816da1da::t_4b366f0e318b55 322
+  s_6f44d4816da1da::t_66f998f0b25a43 398-399,402,404,406-407
+  s_6f44d4816da1da::t_62c5a62904c99f 458
+  s_6f44d4816da1da::t_4b728174526f7a 194
+  s_6f44d4816da1da::t_be47b6a33709ee 255
+lib/presentation/panels/object_tree_panel.dart
+  s_6f44d4816da1da::t_b6441dd53d4733 215-221,223-228,232-233,238,243,252-283
+  s_6f44d4816da1da::t_efa30f4df66361 31-34
+  s_6f44d4816da1da::t_d1d317987ac7ca 55
+  s_6f44d4816da1da::t_8fceaac71756e1 51-54
+  s_6f44d4816da1da::t_038999116bd002 173-176,178-179,182-184,186,188-193
+  s_6f44d4816da1da::t_027f9a0e81677d 177,180-181,187
+  s_6f44d4816da1da::t_a51753519427d6 28-30,35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "6b214d5a6deefc2d01f1615c8992bd14ec516387",
+  "prompts": {},
+  "sessions": {
+    "s_6f44d4816da1da": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "aa618c90-4ad7-4701-a259-a0fb6ef7c936",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
