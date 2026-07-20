@@ -1,0 +1,59 @@
+test/presentation/goldens/object_kinds_golden_test.dart
+  s_57368974b90649::t_a05ea523e8deb0 20
+  s_57368974b90649::t_7934f689592354 518-520
+lib/presentation/panels/toolbar.dart
+  s_57368974b90649::t_e858ea065aff4d 134,136
+  s_57368974b90649::t_a4e0cd096305e0 29
+  s_57368974b90649::t_42412b40cb5d5a 476-477,481
+  s_57368974b90649::t_9494d05d5904be 165
+test/application/persistence/construction_codec_test.dart
+  s_57368974b90649::t_396b475953f7b8 25
+  s_57368974b90649::t_09baa47376eca4 107-114
+  s_57368974b90649::t_51948d78437a94 131-132
+  s_57368974b90649::t_830f0e0247bbe1 190-194
+test/domain/construction/objects/length_measurement_test.dart
+  s_57368974b90649::t_98e9c417257bc6 1-7,9-121
+  s_57368974b90649::t_450ebe686ab2a1 8
+test/presentation/shortcuts/editor_shortcuts_test.dart
+  s_57368974b90649::t_00be10715fce32 157
+  s_57368974b90649::t_036531e4540766 35
+lib/domain/construction/objects/length_measurement.dart
+  s_57368974b90649::t_f1e9b55bfacf0c 1-70
+lib/domain/tools/distance_tool.dart
+  s_57368974b90649::t_6d8d91187dc298 1-36
+lib/presentation/shortcuts/shortcut_table.dart
+  s_57368974b90649::t_4b35229f1770ae 567
+  s_57368974b90649::t_d2f34e9030bffc 574
+lib/application/persistence/construction_codec.dart
+  s_57368974b90649::t_8cde3bb2397d9c 468-474
+  s_57368974b90649::t_ff7f20b68f05a4 201
+  s_57368974b90649::t_a166462cc406e9 18
+lib/main.dart
+  s_57368974b90649::t_6f6139b89642f9 34
+  s_57368974b90649::t_addefbf8561c11 607
+test/domain/tools/distance_tool_test.dart
+  s_57368974b90649::t_e45be841561ed3 1-155
+lib/presentation/panels/object_kind_label.dart
+  s_57368974b90649::t_2ff8252007efd9 12
+  s_57368974b90649::t_2fa79d18bb8c16 64
+test/presentation/panels/toolbar_test.dart
+  s_57368974b90649::t_21aeca955748c5 102,104,109
+  s_57368974b90649::t_493cee301edd3f 115
+  s_57368974b90649::t_0df9ff9aa74bb2 8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "c1821c488dcc8b0db054033fb58531b9880e2f4a",
+  "prompts": {},
+  "sessions": {
+    "s_57368974b90649": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b7a7e5be-658a-4cbf-b40a-9830b516cef2",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
