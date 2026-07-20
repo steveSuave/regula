@@ -42,6 +42,9 @@ mixin _$ObjectAttributes {
  int get tickMarks;/// Point radius in logical pixels (point kinds only).
  double get pointSize;/// Angle-marker radius in logical pixels (angle kinds only). Like
 /// stroke widths, it does not scale with zoom.
+/// The default is the inspector's 'L' preset (Phase 54, user
+/// request — 20.0, the 'M' preset, until then); like the label
+/// size, documents carry the field explicitly.
  double get angleMarkerRadius;/// Fill opacity in [0, 1] for filled kinds (sectors and angle
 /// markers); null = unfilled.
  double? get fillAlpha;/// Cinderella-style display extent for line kinds (infinite lines and
@@ -259,7 +262,7 @@ return $default(_that.name,_that.colorArgb,_that.visible,_that.labelVisible,_tha
 @JsonSerializable()
 
 class _ObjectAttributes implements ObjectAttributes {
-  const _ObjectAttributes({this.name = '', this.colorArgb, this.visible = true, this.labelVisible = true, this.showValue = false, this.labelDx = 6.0, this.labelDy = -18.0, this.labelFontSize = 16.0, this.strokeWidth = 2.0, this.dashPeriod = 0.0, this.tickMarks = 0, this.pointSize = 4.0, this.angleMarkerRadius = 20.0, this.fillAlpha, this.lineClip = 0});
+  const _ObjectAttributes({this.name = '', this.colorArgb, this.visible = true, this.labelVisible = true, this.showValue = false, this.labelDx = 6.0, this.labelDy = -18.0, this.labelFontSize = 16.0, this.strokeWidth = 2.0, this.dashPeriod = 0.0, this.tickMarks = 0, this.pointSize = 4.0, this.angleMarkerRadius = 28.0, this.fillAlpha, this.lineClip = 0});
   factory _ObjectAttributes.fromJson(Map<String, dynamic> json) => _$ObjectAttributesFromJson(json);
 
 /// User-facing label, e.g. "A" or "circumcircle". Empty = unnamed.
@@ -301,6 +304,9 @@ class _ObjectAttributes implements ObjectAttributes {
 @override@JsonKey() final  double pointSize;
 /// Angle-marker radius in logical pixels (angle kinds only). Like
 /// stroke widths, it does not scale with zoom.
+/// The default is the inspector's 'L' preset (Phase 54, user
+/// request — 20.0, the 'M' preset, until then); like the label
+/// size, documents carry the field explicitly.
 @override@JsonKey() final  double angleMarkerRadius;
 /// Fill opacity in [0, 1] for filled kinds (sectors and angle
 /// markers); null = unfilled.

@@ -17,6 +17,7 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 - `phase-53-name-points` merged into `main` (fast-forward).
 - Phase 54 (user request): object labels are large by default — `ObjectAttributes.labelFontSize` default 12.0 → 16.0, the inspector's 'L' preset. Documents always serialize the field explicitly, so existing saves keep their sizes; only pre-Phase-28 saves (no field) ride the decode fallback up — cosmetic, no version bump. Six goldens regenerated (measures / measurements / decorations × light/dark; everything else byte-identical), inspector undo test re-pinned to 16. 1257 green, analyze clean, release-build **SMOKE PASS** (larger labels don't disturb drive.js's blob detection).
+- Phase 54 follow-up (user request): `angleMarkerRadius` default 20.0 → 28.0, also the 'L' preset. The two hit-tester wedge tests derived world geometry from "default radius 20 px" — they now pin 20 explicitly on their angles instead of leaning on the default. Angle-bearing goldens regenerated (angles / markers / measures × light/dark).
 
 **Next**
 - Phase 43 (viewport rotation) is the last queued phase.
