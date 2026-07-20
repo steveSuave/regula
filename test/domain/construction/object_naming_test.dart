@@ -85,6 +85,60 @@ void main() {
     });
   });
 
+  group('nextNameFrom', () {
+    test('a free start letter is returned as-is', () {
+      expect(nextNameFrom({}, 'M'), 'M');
+      expect(nextNameFrom({'A', 'B'}, 'M'), 'M');
+    });
+
+    test('used names are skipped', () {
+      expect(nextNameFrom({'M', 'N'}, 'M'), 'O');
+    });
+
+    test('wraps Z into the suffixed rounds', () {
+      expect(nextNameFrom({'Y', 'Z'}, 'Y'), 'A1');
+    });
+
+    test('suffixed rounds start at the pool start, not the start letter', () {
+      final used = <String>{
+        for (var i = 12; i < 26; i++) String.fromCharCode(0x41 + i), // M…Z
+      };
+      expect(nextNameFrom(used, 'M'), 'A1');
+    });
+
+    test('suffixed rounds skip used names too', () {
+      final used = <String>{
+        for (var i = 12; i < 26; i++) String.fromCharCode(0x41 + i), // M…Z
+        'A1',
+      };
+      expect(nextNameFrom(used, 'M'), 'B1');
+    });
+
+    test('a lowercase start letter walks the lowercase pool', () {
+      expect(nextNameFrom({}, 'm'), 'm');
+      expect(nextNameFrom({'m'}, 'm'), 'n');
+      expect(nextNameFrom({'y', 'z'}, 'y'), 'a1');
+    });
+
+    test('starting from A matches nextAutoName for points', () {
+      for (final used in [
+        <String>{},
+        {'A'},
+        {'A', 'C'},
+        {for (var i = 0; i < 26; i++) String.fromCharCode(0x41 + i)},
+      ]) {
+        expect(nextNameFrom(used, 'A'), nextAutoName(used, a));
+      }
+    });
+
+    test('rejects anything but a single Latin letter', () {
+      expect(() => nextNameFrom({}, '7'), throwsArgumentError);
+      expect(() => nextNameFrom({}, 'α'), throwsArgumentError);
+      expect(() => nextNameFrom({}, 'AB'), throwsArgumentError);
+      expect(() => nextNameFrom({}, ''), throwsArgumentError);
+    });
+  });
+
   group('evictedName', () {
     test('plain name gets the first numbered variant', () {
       expect(evictedName({'A'}, 'A'), 'A1');
