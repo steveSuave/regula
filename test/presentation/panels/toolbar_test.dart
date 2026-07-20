@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/application/providers/tool_provider.dart';
 import 'package:regula/domain/tools/angle_by_size_tool.dart';
 import 'package:regula/domain/tools/area_tool.dart';
+import 'package:regula/domain/tools/distance_tool.dart';
 import 'package:regula/domain/tools/equilateral_triangle_macro_tool.dart';
 import 'package:regula/domain/tools/fixed_length_segment_tool.dart';
 import 'package:regula/domain/tools/fixed_radius_circle_tool.dart';
@@ -98,20 +99,20 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.straighten));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Distance (two points)'));
+    await tester.tap(find.text('Distance (two points, or tap a circle / arc)'));
     await tester.pumpAndSettle();
-    expect(container.read(toolProvider).tool, isA<TwoPointTool>());
+    expect(container.read(toolProvider).tool, isA<DistanceTool>());
     expect(iconColor(tester, Icons.straighten), theme.colorScheme.primary);
     expect(
       iconColor(tester, Icons.control_point),
       isNot(theme.colorScheme.primary),
-      reason: 'buildDistance is claimed by Measure, not the Points catch-all',
+      reason: 'DistanceTool is claimed by Measure, not the Points catch-all',
     );
 
     await tester.tap(find.byIcon(Icons.straighten));
     await tester.pump(kDoubleTapTimeout);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Area (tap a polygon or circle)'));
+    await tester.tap(find.text('Area (tap a polygon, circle, sector or arc)'));
     await tester.pumpAndSettle();
     expect(container.read(toolProvider).tool, isA<AreaTool>());
     expect(iconColor(tester, Icons.straighten), theme.colorScheme.primary);

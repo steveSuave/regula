@@ -22,6 +22,7 @@ import 'package:regula/domain/construction/objects/fixed_radius_circle.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/incenter.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
+import 'package:regula/domain/construction/objects/length_measurement.dart';
 import 'package:regula/domain/construction/objects/line_angle.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/locus.dart';
@@ -103,6 +104,14 @@ Construction buildKitchenSink() {
 
   final perp = PerpendicularLine(id: 'perp', through: c, reference: lineAb);
   final circle = CircleCenterPoint(id: 'cc', center: a, onCircle: b);
+  final arc = Arc(id: 'arc', start: a, via: c, end: b);
+  final sector = Sector(
+    id: 'sec',
+    center: a,
+    start: b,
+    end: c,
+    attributes: const ObjectAttributes(fillAlpha: 0.25),
+  );
   construction
     ..add(perp)
     ..add(ParallelLine(id: 'par', through: c, reference: lineAb))
@@ -119,16 +128,8 @@ Construction buildKitchenSink() {
     ..add(
       CompassCircle(id: 'comp', radiusPoint1: a, radiusPoint2: b, center: c),
     )
-    ..add(Arc(id: 'arc', start: a, via: c, end: b))
-    ..add(
-      Sector(
-        id: 'sec',
-        center: a,
-        start: b,
-        end: c,
-        attributes: const ObjectAttributes(fillAlpha: 0.25),
-      ),
-    )
+    ..add(arc)
+    ..add(sector)
     ..add(
       VertexAngle(
         id: 'vang',
@@ -186,6 +187,11 @@ Construction buildKitchenSink() {
     // path round-trips each.
     ..add(AreaMeasurement(id: 'parea', subject: poly))
     ..add(AreaMeasurement(id: 'carea', subject: circle))
+    // All three circular subject shapes: circumference, arc length,
+    // sector perimeter.
+    ..add(LengthMeasurement(id: 'clen', subject: circle))
+    ..add(LengthMeasurement(id: 'alen', subject: arc))
+    ..add(LengthMeasurement(id: 'slen', subject: sector))
     ..add(ReflectedPoint(id: 'refl', point: c, mirror: lineAb))
     ..add(CentralReflectionPoint(id: 'crefl', point: c, center: a))
     ..add(RotatedPoint(id: 'rot', point: b, center: a, angle: 0.75))

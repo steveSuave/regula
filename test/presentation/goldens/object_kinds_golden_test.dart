@@ -17,6 +17,7 @@ import 'package:regula/domain/construction/objects/distance_measurement.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/incenter.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
+import 'package:regula/domain/construction/objects/length_measurement.dart';
 import 'package:regula/domain/construction/objects/line_angle.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/locus.dart';
@@ -514,7 +515,9 @@ void main() {
         subject: polygon,
         attributes: const ObjectAttributes(name: 'b'),
       ))
-      ..add(AreaMeasurement(id: 'carea', subject: circle));
+      ..add(AreaMeasurement(id: 'carea', subject: circle))
+      // '2πr ≈ 12.57' hanging from the top of the same circle's rim.
+      ..add(LengthMeasurement(id: 'clen', subject: circle));
     return construction;
   }
 

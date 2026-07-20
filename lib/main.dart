@@ -31,6 +31,7 @@ import 'domain/tools/angle_by_size_tool.dart';
 import 'domain/tools/angle_tool.dart';
 import 'domain/tools/area_tool.dart';
 import 'domain/tools/delete_tool.dart';
+import 'domain/tools/distance_tool.dart';
 import 'domain/tools/equilateral_triangle_macro_tool.dart';
 import 'domain/tools/fixed_length_segment_tool.dart';
 import 'domain/tools/fixed_radius_circle_tool.dart';
@@ -603,7 +604,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
       case AppAction.fixedLengthSegmentTool:
         _activateFixedLengthSegmentTool();
       case AppAction.distanceTool:
-        tools.activate(TwoPointTool(newId: newObjectId, build: buildDistance));
+        tools.activate(DistanceTool(newId: newObjectId));
       case AppAction.areaTool:
         tools.activate(AreaTool(newId: newObjectId));
       case AppAction.locusTool:

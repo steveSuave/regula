@@ -1,18 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/domain/commands/add_object_command.dart';
-import 'package:regula/domain/commands/macro_command.dart';
-import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/objects/area_measurement.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
-import 'package:regula/domain/construction/objects/distance_measurement.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/polygon.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/tools/area_tool.dart';
 import 'package:regula/domain/tools/tool.dart';
-import 'package:regula/domain/tools/two_point_tool.dart';
-import 'package:regula/presentation/panels/toolbar.dart' show buildDistance;
 
 void main() {
   var nextId = 0;
@@ -85,46 +80,6 @@ void main() {
         reason: 'an empty tap must not drop a free point',
       );
       expect(nextId, 0, reason: 'no ids consumed by ignored taps');
-    });
-  });
-
-  group('distance tool (TwoPointTool over buildDistance)', () {
-    test('two existing points commit one DistanceMeasurement', () {
-      final a = FreePoint(id: 'a', position: const Vec2(0, 0));
-      final b = FreePoint(id: 'b', position: const Vec2(3, 4));
-      final tool = TwoPointTool(newId: newId, build: buildDistance);
-      expect(tool.onInput(ToolInput(const Vec2(0, 0), hit: a)),
-          isA<ToolAccepted>());
-      final result = tool.onInput(ToolInput(const Vec2(3, 4), hit: b));
-      expect(result, isA<ToolCommitted>());
-      final command = (result as ToolCommitted).command;
-      expect(command, isA<AddObjectCommand>(),
-          reason: 'no new points → a bare add, no macro');
-      final distance =
-          (command as AddObjectCommand).object as DistanceMeasurement;
-      expect(distance.value, 5);
-      expect(distance.parents, [a, b]);
-    });
-
-    test('empty taps create the endpoints too, all in one undo unit', () {
-      final tool = TwoPointTool(newId: newId, build: buildDistance);
-      tool.onInput(const ToolInput(Vec2(0, 0)));
-      final result = tool.onInput(const ToolInput(Vec2(0, 2)));
-      expect(result, isA<ToolCommitted>());
-      final command = (result as ToolCommitted).command;
-      expect(command, isA<MacroCommand>());
-
-      final construction = Construction();
-      command.apply(construction);
-      final objects = construction.objects.toList();
-      expect(objects, hasLength(3));
-      expect(objects[0], isA<FreePoint>());
-      expect(objects[1], isA<FreePoint>());
-      expect(objects[2], isA<DistanceMeasurement>());
-      expect((objects[2] as DistanceMeasurement).value, 2);
-
-      command.undo(construction);
-      expect(construction.isEmpty, isTrue);
     });
   });
 }

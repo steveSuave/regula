@@ -9,6 +9,7 @@ import '../../domain/construction/objects/compass_circle.dart';
 import '../../domain/construction/objects/distance_measurement.dart';
 import '../../domain/construction/objects/incenter.dart';
 import '../../domain/construction/objects/intersection_point.dart';
+import '../../domain/construction/objects/length_measurement.dart';
 import '../../domain/construction/objects/line_angle.dart';
 import '../../domain/construction/objects/midpoint.dart';
 import '../../domain/construction/objects/orthocenter.dart';
@@ -60,6 +61,7 @@ String objectKindLabel(GeoObject object) => switch (object) {
       GeoPolygon() => 'Polygon',
       DistanceMeasurement() => 'Distance',
       AreaMeasurement() => 'Area',
+      LengthMeasurement() => 'Length',
       GeoMeasurement() => 'Measurement',
       GeoLocus() => 'Locus',
     };
