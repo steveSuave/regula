@@ -95,6 +95,12 @@ class AttributesInspector extends ConsumerWidget {
       for (final object in objects)
         if (object is Segment || object is GeoAngle) object,
     ];
+    // The kinds that carry equal-mark ticks (Phase 51): segments only —
+    // the classic congruence notation at the midpoint.
+    final tickables = [
+      for (final object in objects)
+        if (object is Segment) object,
+    ];
     // The kinds the lineClip modes apply to (Phase 44): lines and rays.
     // Segments are already their own clip and ignore the attribute.
     final clippables = [
@@ -212,6 +218,24 @@ class AttributesInspector extends ConsumerWidget {
                       ref,
                       dashables,
                       (attributes) => attributes.copyWith(dashPeriod: period),
+                    ),
+                  ),
+                ],
+                if (tickables.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  _PresetSelector(
+                    key: const ValueKey('tick-marks'),
+                    label: 'Equal marks',
+                    presets: _tickPresets,
+                    values: [
+                      for (final object in tickables)
+                        object.attributes.tickMarks.toDouble(),
+                    ],
+                    onChanged: (count) => _setForAll(
+                      ref,
+                      tickables,
+                      (attributes) =>
+                          attributes.copyWith(tickMarks: count.toInt()),
                     ),
                   ),
                 ],
@@ -577,6 +601,16 @@ const _radiusPresets = <(String, String, double)>[
   ('M', 'Medium', 20),
   ('L', 'Large', 28),
   ('XL', 'Extra large', 36),
+];
+
+/// The equal-mark tick-count presets (`ObjectAttributes.tickMarks`,
+/// carried as doubles for [_PresetSelector]), same single-character
+/// convention as [_dashPresets].
+const _tickPresets = <(String, String, double)>[
+  ('–', 'None', 0),
+  ('1', 'One tick', 1),
+  ('2', 'Two ticks', 2),
+  ('3', 'Three ticks', 3),
 ];
 
 /// The Phase 44 line-extent presets (`ObjectAttributes.lineClip`, carried

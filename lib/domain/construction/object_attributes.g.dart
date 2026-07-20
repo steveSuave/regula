@@ -18,6 +18,7 @@ _ObjectAttributes _$ObjectAttributesFromJson(Map<String, dynamic> json) =>
       labelFontSize: (json['labelFontSize'] as num?)?.toDouble() ?? 12.0,
       strokeWidth: (json['strokeWidth'] as num?)?.toDouble() ?? 2.0,
       dashPeriod: (json['dashPeriod'] as num?)?.toDouble() ?? 0.0,
+      tickMarks: (json['tickMarks'] as num?)?.toInt() ?? 0,
       pointSize: (json['pointSize'] as num?)?.toDouble() ?? 4.0,
       angleMarkerRadius:
           (json['angleMarkerRadius'] as num?)?.toDouble() ?? 20.0,
@@ -37,6 +38,7 @@ Map<String, dynamic> _$ObjectAttributesToJson(_ObjectAttributes instance) =>
       'labelFontSize': instance.labelFontSize,
       'strokeWidth': instance.strokeWidth,
       'dashPeriod': instance.dashPeriod,
+      'tickMarks': instance.tickMarks,
       'pointSize': instance.pointSize,
       'angleMarkerRadius': instance.angleMarkerRadius,
       'fillAlpha': instance.fillAlpha,

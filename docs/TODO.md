@@ -426,3 +426,9 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] `DistanceTool` (`domain/tools/distance_tool.dart`, replaces the `TwoPointTool`+`buildDistance` wiring in toolbar/main): two point taps measure distance as before; a *first* tap whose topmost hit is a `GeoCircle` commits a `LengthMeasurement` in one command — points still outrank curves, and second-tap curve gluing is untouched
 - [x] Codec: additive `LengthMeasurement` kind (no version bump); kind label 'Length'; menu/cheat-sheet rows reworded ('Distance (two points, or tap a circle / arc)', 'Area (tap a polygon, circle, sector or arc)')
 - [x] Tests: `length_measurement_test.dart` (all three subject shapes, cw arc, recompute, undefined/recover, rejects non-circular), sector/arc cases in `area_measurement_test.dart`, new `distance_tool_test.dart` (distance group moved out of `area_tool_test.dart`), kitchen-sink codec round-trip, golden scene gains the circumference label (1208 green, analyze clean)
+
+## Phase 51 — Equal-mark ticks on segments (user request)
+- [x] `ObjectAttributes.tickMarks` (`@Default(0) int`, 0–3): additive JSON field, no version bump; segments only, other kinds ignore it
+- [x] Painter: `_drawTickMarks` — short strokes perpendicular to the segment, centered as a group on its midpoint (10 px long, 5 px apart, logical pixels so zoom-invariant); solid regardless of `dashPeriod`, drawn with the object paint so the selection halo widens them too; degenerate segments guarded
+- [x] Inspector: 'Equal marks' `_PresetSelector` row (– / 1 / 2 / 3), segments-only slice, one command per tap
+- [x] Tests: painter tick geometry (perpendicular, group-centered, spacing, dashed stroke keeps solid ticks, degenerate skip), inspector row scoping + undo, kitchen-sink codec round-trip, decorations golden gains ticked segments (regenerated light+dark) — 1214 green, analyze clean

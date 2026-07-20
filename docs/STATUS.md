@@ -6,6 +6,23 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 70 — 2026-07-20
+
+**Done**
+- Phase 51 (user request): equal-length congruence ticks on segments. New `ObjectAttributes.tickMarks` (int, default 0, additive JSON field — no version bump): the painter draws that many short strokes perpendicular to the segment, centered as a group on its midpoint (10 px long, 5 px apart, logical pixels, zoom-invariant), always solid even on dashed segments, with the object's paint so the selection-halo pass widens them like the stroke.
+- Inspector: 'Equal marks' preset row (– / 1 / 2 / 3) via the existing `_PresetSelector`, offered only while a segment is selected and targeting the segment slice of a mixed selection.
+- Tests: painter tick geometry (perpendicularity, group centering, spacing, dashed-stroke case, degenerate-segment guard), inspector scoping + one-command-per-tap + undo, `tickMarks: 2` in the kitchen-sink codec round-trip, decorations golden scene gains two ticked segments (regenerated light+dark). 1214 green, analyze clean.
+
+**Next**
+- Phase 43 (viewport rotation) is the last queued phase.
+- `main` is ahead of `origin/main` — push when convenient.
+
+**Open questions / gotchas**
+- Ticks are segments-only by design; the natural extensions if asked are arc ticks (same notation for equal arcs, perpendicular to the rim at the arc midpoint) and per-side ticks on polygons — the attribute and painter helper generalize.
+- A degenerate (coincident-endpoint) segment paints nothing at all — the tick guard exists so the helper never divides by a zero screen length if that upstream skip ever changes.
+
+---
+
 ## Session 69 — 2026-07-20
 
 **Done**
