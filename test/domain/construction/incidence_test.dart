@@ -131,6 +131,31 @@ void main() {
       expect(structurallyIncident(bisector, otherCrossing), isFalse);
     });
 
+    test('derived: two-line bisector through its parents\' shared vertex', () {
+      // Two segments hanging off one endpoint: their crossing is the
+      // shared defining point itself, no IntersectionPoint anywhere.
+      final a = point('a', 0, 0);
+      final b = point('b', 4, 0);
+      final c = point('c', 0, 4);
+      final ab = Segment(id: 'ab', point1: a, point2: b);
+      final ac = Segment(id: 'ac', point1: a, point2: c);
+      final bisector = TwoLineBisectorLine(
+        id: 'bi',
+        line1: ab,
+        line2: ac,
+        branch: 0,
+      );
+
+      expect(structurallyIncident(bisector, a), isTrue);
+      expect(
+        structurallyIncident(bisector, b),
+        isFalse,
+        reason: 'b sits on one parent only',
+      );
+      final glued = PointOnObject(id: 'g', curve: ab, parameter: 0.5);
+      expect(structurallyIncident(bisector, glued), isFalse);
+    });
+
     test('derived: perpendicular bisector through the pair\'s midpoint', () {
       final a = point('a', 0, 0);
       final b = point('b', 4, 0);

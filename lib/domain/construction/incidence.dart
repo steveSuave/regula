@@ -73,15 +73,19 @@ List<GeoPoint> onCarrierDefiningPoints(GeoObject curve) => switch (curve) {
 /// by a construction theorem over parent ties — still zero epsilon.
 ///
 /// - Every branch of a `TwoLineBisectorLine` passes through the crossing
-///   of its two parent lines, so the `IntersectionPoint` of exactly
-///   those lines (either parent order) is on it.
+///   of its two parent lines, so any point incident on *both* parents is
+///   on it: distinct lines cross at most once (coincident parents leave
+///   the bisector undefined), so such a point *is* the crossing. Covers
+///   the `IntersectionPoint` of the pair and a defining point the
+///   parents share — two segments hanging off one vertex.
 /// - A `PerpendicularBisectorLine` passes through the midpoint of its
 ///   two parent points, so the `Midpoint` of exactly those points
 ///   (either order) is on it.
 bool _derivedIncident(GeoObject curve, GeoPoint point) =>
     switch ((curve, point)) {
-      (final TwoLineBisectorLine b, final IntersectionPoint x) =>
-        _samePair(x.curve1, x.curve2, b.line1, b.line2),
+      (final TwoLineBisectorLine b, _) =>
+        structurallyIncident(b.line1, point) &&
+            structurallyIncident(b.line2, point),
       (final PerpendicularBisectorLine b, final Midpoint m) =>
         _samePair(m.point1, m.point2, b.point1, b.point2),
       _ => false,

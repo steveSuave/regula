@@ -213,6 +213,32 @@ void main() {
       );
     });
 
+    test('bisector of two segments off one vertex reuses that vertex', () {
+      // User report (inter2.json): segments ab and ac share endpoint a,
+      // bi bisects their wedge — bi's only crossing with either segment
+      // *is* a itself, so intersecting bi with a parent must be refused,
+      // not stack a new point on a.
+      final a = FreePoint(id: 'a', position: Vec2.zero);
+      final b = FreePoint(id: 'b', position: const Vec2(4, 0));
+      final c = FreePoint(id: 'c', position: const Vec2(0, 4));
+      final ab = Segment(id: 'ab', point1: a, point2: b);
+      final ac = Segment(id: 'ac', point1: a, point2: c);
+      final bi = TwoLineBisectorLine(id: 'bi', line1: ab, line2: ac, branch: 0);
+      final objects = [a, b, c, ab, ac, bi];
+      final t = tool()
+        ..onInput(ToolInput(const Vec2(1, 1), hit: bi, objects: objects));
+
+      expect(
+        t.onInput(ToolInput(const Vec2(2, 0.1), hit: ab, objects: objects)),
+        isA<ToolIgnored>(),
+      );
+      expect(
+        t.onInput(ToolInput(const Vec2(0.1, 2), hit: ac, objects: objects)),
+        isA<ToolIgnored>(),
+        reason: 'the other parent is refused too',
+      );
+    });
+
     test('three-point bisector × arm segment reuses the vertex too', () {
       final a = FreePoint(id: 'a', position: Vec2.zero);
       final b = FreePoint(id: 'b', position: const Vec2(4, 0));
