@@ -446,3 +446,4 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] `G M` shortcut (`AppAction.namePointsTool`) through the same async pick as the menu row
 - [x] Hint chip on the canvas while the tool is active: `Next name: X` / exhausted message (`IgnorePointer`, bottom-left, watches tool revision + construction)
 - [x] Tests: `nextNameFrom` allocator group, `name_points_tool_test.dart` (both modes, skip/evict, exhaustion, re-tap, ignore non-points, undo, reset), toolbar dialog validate/activate/cancel, `G M` resolver, canvas flow (tap-tap → A, B, one undo per tap), hint chip states
+- [x] Follow-up (user feedback): out of the Points flyout — the tool gets its own `abc` app-bar button closing the tools cluster (after Measure), opening the dialog in one click; active tint + double-click deselect like the groups, `G M` unchanged, `pointsActive` no longer claims it

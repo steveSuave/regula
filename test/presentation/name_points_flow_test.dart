@@ -27,12 +27,10 @@ void main() {
     );
   }
 
-  /// Activates the tool through the flyout dialog with [input] typed
-  /// into the field ('' = just OK).
+  /// Activates the tool through its app-bar button's dialog with
+  /// [input] typed into the field ('' = just OK).
   Future<void> activate(WidgetTester tester, String input) async {
-    await tester.tap(find.byIcon(Icons.control_point));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Name points in sequence…'));
+    await tester.tap(find.byIcon(Icons.abc));
     await tester.pumpAndSettle();
     if (input.isNotEmpty) {
       await tester.enterText(find.byType(TextField), input);
