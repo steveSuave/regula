@@ -15,7 +15,7 @@ _ObjectAttributes _$ObjectAttributesFromJson(Map<String, dynamic> json) =>
       showValue: json['showValue'] as bool? ?? false,
       labelDx: (json['labelDx'] as num?)?.toDouble() ?? 6.0,
       labelDy: (json['labelDy'] as num?)?.toDouble() ?? -18.0,
-      labelFontSize: (json['labelFontSize'] as num?)?.toDouble() ?? 12.0,
+      labelFontSize: (json['labelFontSize'] as num?)?.toDouble() ?? 16.0,
       strokeWidth: (json['strokeWidth'] as num?)?.toDouble() ?? 2.0,
       dashPeriod: (json['dashPeriod'] as num?)?.toDouble() ?? 0.0,
       tickMarks: (json['tickMarks'] as num?)?.toInt() ?? 0,

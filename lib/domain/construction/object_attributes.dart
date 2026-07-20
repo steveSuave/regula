@@ -37,9 +37,11 @@ abstract class ObjectAttributes with _$ObjectAttributes {
     @Default(-18.0) double labelDy,
 
     /// Label font size in logical pixels; like stroke widths, it does
-    /// not scale with zoom. The default matches the pre-Phase-28 fixed
-    /// `label_layout.dart` constant.
-    @Default(12.0) double labelFontSize,
+    /// not scale with zoom. The default is the inspector's 'L' preset
+    /// (Phase 54, user request — 12.0, the pre-Phase-28 fixed constant,
+    /// until then); documents carry the field explicitly, so only
+    /// pre-Phase-28 saves ride the decode fallback up with it.
+    @Default(16.0) double labelFontSize,
 
     /// Stroke width in logical pixels (lines, circles, arcs).
     @Default(2.0) double strokeWidth,

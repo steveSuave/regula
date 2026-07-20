@@ -15,9 +15,12 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 - `NamePointsHint` chip (new canvas overlay surface, bottom-left, `IgnorePointer`): shows "Next name: X" / "All letters assigned" while the tool is active — the sequence's only forward-looking feedback.
 - Tests: `nextNameFrom` group, `name_points_tool_test.dart` (both modes, skip/evict, exhaustion, re-tap, undo, reset), toolbar dialog + button-tint + double-click-deselect cases, `G M` resolver, `name_points_flow_test.dart` (canvas taps + chip + one undo per tap). 1257 green, analyze clean. Web smoke re-run on a fresh release build after the placement move: **SMOKE PASS** (drive.js untouched). Ad-hoc Playwright: G M → "MID" spells the points, saved doc carries the names, alphabet re-tap renames M→A, one Ctrl+Z steps back one tap, zero console errors — **ADHOC PASS**.
 
+- `phase-53-name-points` merged into `main` (fast-forward).
+- Phase 54 (user request): object labels are large by default — `ObjectAttributes.labelFontSize` default 12.0 → 16.0, the inspector's 'L' preset. Documents always serialize the field explicitly, so existing saves keep their sizes; only pre-Phase-28 saves (no field) ride the decode fallback up — cosmetic, no version bump. Six goldens regenerated (measures / measurements / decorations × light/dark; everything else byte-identical), inspector undo test re-pinned to 16. 1257 green, analyze clean, release-build **SMOKE PASS** (larger labels don't disturb drive.js's blob detection).
+
 **Next**
 - Phase 43 (viewport rotation) is the last queued phase.
-- `main` is ahead of `origin/main` — push when convenient; `phase-53-name-points` is ready to merge.
+- `main` is ahead of `origin/main` — push when convenient.
 
 **Open questions / gotchas**
 - `resetInProgress()` fires on *every* undo/redo and restarts a partial naming string (the cursor is the one deviation from the back-to-initial-after-commit tool contract). Accepted for v1: eviction makes re-tapping in order idempotent and the hint chip shows the restart. If it grates, the fix is tracking letter→point assignments, not keeping the cursor across resets.

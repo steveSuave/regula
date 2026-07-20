@@ -447,3 +447,7 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] Hint chip on the canvas while the tool is active: `Next name: X` / exhausted message (`IgnorePointer`, bottom-left, watches tool revision + construction)
 - [x] Tests: `nextNameFrom` allocator group, `name_points_tool_test.dart` (both modes, skip/evict, exhaustion, re-tap, ignore non-points, undo, reset), toolbar dialog validate/activate/cancel, `G M` resolver, canvas flow (tap-tap → A, B, one undo per tap), hint chip states
 - [x] Follow-up (user feedback): out of the Points flyout — the tool gets its own `abc` app-bar button closing the tools cluster (after Measure), opening the dialog in one click; active tint + double-click deselect like the groups, `G M` unchanged, `pointsActive` no longer claims it
+
+## Phase 54 — Large object labels by default (user request)
+- [x] `ObjectAttributes.labelFontSize` default 12.0 → 16.0 (the inspector's 'L' preset): new objects label large; saved documents carry the field explicitly, so existing files keep their sizes (only pre-Phase-28 saves, which lack the field, ride the decode fallback up — cosmetic, no version bump)
+- [x] Regenerate whatever goldens render labels; tests green, analyze clean

@@ -26,8 +26,10 @@ mixin _$ObjectAttributes {
 /// its object). The defaults match the pre-Phase-17 fixed offset;
 /// label dragging clamps the magnitude, the fields themselves don't.
  double get labelDx; double get labelDy;/// Label font size in logical pixels; like stroke widths, it does
-/// not scale with zoom. The default matches the pre-Phase-28 fixed
-/// `label_layout.dart` constant.
+/// not scale with zoom. The default is the inspector's 'L' preset
+/// (Phase 54, user request — 12.0, the pre-Phase-28 fixed constant,
+/// until then); documents carry the field explicitly, so only
+/// pre-Phase-28 saves ride the decode fallback up with it.
  double get labelFontSize;/// Stroke width in logical pixels (lines, circles, arcs).
  double get strokeWidth;/// Dash period in logical pixels for stroked kinds: 0 = solid,
 /// > 0 = dashed with dash = gap = period / 2. Like stroke widths,
@@ -257,7 +259,7 @@ return $default(_that.name,_that.colorArgb,_that.visible,_that.labelVisible,_tha
 @JsonSerializable()
 
 class _ObjectAttributes implements ObjectAttributes {
-  const _ObjectAttributes({this.name = '', this.colorArgb, this.visible = true, this.labelVisible = true, this.showValue = false, this.labelDx = 6.0, this.labelDy = -18.0, this.labelFontSize = 12.0, this.strokeWidth = 2.0, this.dashPeriod = 0.0, this.tickMarks = 0, this.pointSize = 4.0, this.angleMarkerRadius = 20.0, this.fillAlpha, this.lineClip = 0});
+  const _ObjectAttributes({this.name = '', this.colorArgb, this.visible = true, this.labelVisible = true, this.showValue = false, this.labelDx = 6.0, this.labelDy = -18.0, this.labelFontSize = 16.0, this.strokeWidth = 2.0, this.dashPeriod = 0.0, this.tickMarks = 0, this.pointSize = 4.0, this.angleMarkerRadius = 20.0, this.fillAlpha, this.lineClip = 0});
   factory _ObjectAttributes.fromJson(Map<String, dynamic> json) => _$ObjectAttributesFromJson(json);
 
 /// User-facing label, e.g. "A" or "circumcircle". Empty = unnamed.
@@ -278,8 +280,10 @@ class _ObjectAttributes implements ObjectAttributes {
 @override@JsonKey() final  double labelDx;
 @override@JsonKey() final  double labelDy;
 /// Label font size in logical pixels; like stroke widths, it does
-/// not scale with zoom. The default matches the pre-Phase-28 fixed
-/// `label_layout.dart` constant.
+/// not scale with zoom. The default is the inspector's 'L' preset
+/// (Phase 54, user request — 12.0, the pre-Phase-28 fixed constant,
+/// until then); documents carry the field explicitly, so only
+/// pre-Phase-28 saves ride the decode fallback up with it.
 @override@JsonKey() final  double labelFontSize;
 /// Stroke width in logical pixels (lines, circles, arcs).
 @override@JsonKey() final  double strokeWidth;
