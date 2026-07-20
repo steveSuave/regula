@@ -6,6 +6,23 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 68 — 2026-07-20
+
+**Done**
+- Bug fix (user report, `inter2.json`): the Session 64 duplicate-intersection refusal didn't cover the two-line bisector when its parent segments *share a defining endpoint*. Segments a = AB, b = AC off vertex A, bisector of the wedge — intersecting the bisector with a parent still stacked a new point on A, because `_derivedIncident` only recognized an `IntersectionPoint` of exactly the parent pair as the crossing, and here no such point exists: the crossing *is* A.
+- Generalized the Phase 44b rule: a point [`structurallyIncident`] on **both** parent lines of a `TwoLineBisectorLine` is on the bisector — distinct lines cross at most once (coincident parents leave the bisector undefined), so such a point is the crossing. Recurses through the shared predicate, so the `IntersectionPoint` case, a shared defining endpoint, and deeper chains all count. Line clipping mode 2 inherits the improvement for free (a visible shared vertex now clips the bisector).
+- `inter2.json` kept verbatim in `test/fixtures/` with a codec-loaded regression replaying the taps that produced the stacked points (refused now; fails without the fix, stash-verified, along with new incidence + tool unit tests). 1193 green, analyze clean.
+
+**Next**
+- Phase 43 (viewport rotation) is the last queued phase.
+- `main` is ahead of `origin/main` — push when convenient.
+
+**Open questions / gotchas**
+- The three-point `AngleBisectorLine` needed no change: its vertex is already an on-carrier defining point, and the vertex-shared-with-a-segment-endpoint case was already covered.
+- The user's document still contains the stacked D and E from before the fix — the fix prevents creating new stacks, it doesn't delete existing ones.
+
+---
+
 ## Session 67 — 2026-07-18
 
 **Done**
