@@ -63,7 +63,10 @@ abstract class ObjectAttributes with _$ObjectAttributes {
 
     /// Angle-marker radius in logical pixels (angle kinds only). Like
     /// stroke widths, it does not scale with zoom.
-    @Default(20.0) double angleMarkerRadius,
+    /// The default is the inspector's 'L' preset (Phase 54, user
+    /// request — 20.0, the 'M' preset, until then); like the label
+    /// size, documents carry the field explicitly.
+    @Default(28.0) double angleMarkerRadius,
 
     /// Fill opacity in [0, 1] for filled kinds (sectors and angle
     /// markers); null = unfilled.

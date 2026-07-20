@@ -21,7 +21,7 @@ _ObjectAttributes _$ObjectAttributesFromJson(Map<String, dynamic> json) =>
       tickMarks: (json['tickMarks'] as num?)?.toInt() ?? 0,
       pointSize: (json['pointSize'] as num?)?.toDouble() ?? 4.0,
       angleMarkerRadius:
-          (json['angleMarkerRadius'] as num?)?.toDouble() ?? 20.0,
+          (json['angleMarkerRadius'] as num?)?.toDouble() ?? 28.0,
       fillAlpha: (json['fillAlpha'] as num?)?.toDouble(),
       lineClip: (json['lineClip'] as num?)?.toInt() ?? 0,
     );

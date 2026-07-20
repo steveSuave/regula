@@ -425,17 +425,18 @@ void main() {
       ),
     );
 
-    // 'L' also labels a dash preset — scope the tap to the radius row.
+    // 'XL' is scoped to the radius row anyway, matching the label-size
+    // test's precaution.
     await tester
-        .tap(find.descendant(of: markerRadius, matching: find.text('L')));
+        .tap(find.descendant(of: markerRadius, matching: find.text('XL')));
     await tester.pump();
-    expect(angle.attributes.angleMarkerRadius, 28.0);
-    expect(s.attributes.angleMarkerRadius, 20.0,
+    expect(angle.attributes.angleMarkerRadius, 36.0);
+    expect(s.attributes.angleMarkerRadius, 28.0,
         reason: 'the command covers only the angle slice');
 
     await tester.tap(find.byIcon(Icons.undo));
     await tester.pump();
-    expect(angle.attributes.angleMarkerRadius, 20.0);
+    expect(angle.attributes.angleMarkerRadius, 28.0);
   });
 
   testWidgets('extent selector: clippable lines only, one command over '

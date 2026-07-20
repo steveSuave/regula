@@ -196,14 +196,20 @@ void main() {
       final v = FreePoint(id: 'v', position: Vec2.zero, attributes: hidden);
       final b =
           FreePoint(id: 'b', position: const Vec2(0, 3), attributes: hidden);
-      final angle = VertexAngle(id: 'g', arm1: a, vertex: v, arm2: b);
+      final angle = VertexAngle(
+        id: 'g',
+        arm1: a,
+        vertex: v,
+        arm2: b,
+        attributes: const ObjectAttributes(angleMarkerRadius: 20),
+      );
       construction
         ..add(a)
         ..add(v)
         ..add(b)
         ..add(angle);
 
-      // Default marker radius 20 px at 0.1 world/px = 2 world units.
+      // Marker radius pinned to 20 px at 0.1 world/px = 2 world units.
       GeoObject? wedgeHit(Vec2 p) => tester
           .hitTest(construction.objects, p, threshold, worldPerPx: 0.1);
 
@@ -273,9 +279,15 @@ void main() {
         ..add(arm1)
         ..add(v)
         ..add(arm2)
-        ..add(VertexAngle(id: 'g', arm1: arm1, vertex: v, arm2: arm2));
+        ..add(VertexAngle(
+          id: 'g',
+          arm1: arm1,
+          vertex: v,
+          arm2: arm2,
+          attributes: const ObjectAttributes(angleMarkerRadius: 20),
+        ));
 
-      // Default marker radius 20 px at 0.1 world/px = 2 world units: the
+      // Marker radius pinned to 20 px at 0.1 world/px = 2 world units: the
       // tap sits on the marker arc, inside the polygon, away from points.
       final onWedge = tester.hitTest(
         construction.objects,
