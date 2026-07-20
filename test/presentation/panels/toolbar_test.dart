@@ -13,6 +13,7 @@ import 'package:regula/domain/tools/intersection_tool.dart';
 import 'package:regula/domain/tools/isosceles_trapezium_macro_tool.dart';
 import 'package:regula/domain/tools/isosceles_triangle_macro_tool.dart';
 import 'package:regula/domain/tools/kite_macro_tool.dart';
+import 'package:regula/domain/tools/name_points_tool.dart';
 import 'package:regula/domain/tools/polygon_tool.dart';
 import 'package:regula/domain/tools/random_shape_stamp_tool.dart';
 import 'package:regula/domain/tools/rectangle_macro_tool.dart';
@@ -494,6 +495,83 @@ void main() {
     await pickLinesRow('Polygon (tap vertices, tap the first again to close)');
     expect(container.read(toolProvider).tool, isA<PolygonTool>());
     expectLinesHighlight('Polygon');
+  });
+
+  group('name-points dialog (Phase 53)', () {
+    Future<void> openDialog(WidgetTester tester) async {
+      await tester.tap(find.byIcon(Icons.control_point));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Name points in sequence…'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('empty input activates the plain alphabet and highlights '
+        'Points', (tester) async {
+      await pumpEditor(tester);
+      await openDialog(tester);
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+
+      final tool = container.read(toolProvider).tool;
+      expect(tool, isA<NamePointsTool>());
+      expect((tool! as NamePointsTool).startLetter, 'A');
+      final theme = Theme.of(tester.element(find.byType(AppBar)));
+      expect(iconColor(tester, Icons.control_point), theme.colorScheme.primary);
+    });
+
+    testWidgets('a single letter starts the alphabet there, case respected',
+        (tester) async {
+      await pumpEditor(tester);
+      await openDialog(tester);
+      await tester.enterText(find.byType(TextField), 'm');
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+
+      final tool = container.read(toolProvider).tool;
+      expect((tool! as NamePointsTool).startLetter, 'm');
+    });
+
+    testWidgets('a word activates string mode', (tester) async {
+      await pumpEditor(tester);
+      await openDialog(tester);
+      await tester.enterText(find.byType(TextField), 'MID');
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+
+      final tool = container.read(toolProvider).tool;
+      expect((tool! as NamePointsTool).letters, 'MID');
+    });
+
+    testWidgets('repeated characters keep the dialog open with an inline '
+        'error; fixing the input clears it', (tester) async {
+      await pumpEditor(tester);
+      await openDialog(tester);
+      await tester.enterText(find.byType(TextField), 'MOM');
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('only once'), findsOneWidget);
+      expect(container.read(toolProvider).tool, isNull,
+          reason: 'invalid input must not activate anything');
+
+      await tester.enterText(find.byType(TextField), 'MID');
+      await tester.pump();
+      expect(find.textContaining('only once'), findsNothing,
+          reason: 'editing clears the error');
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+      expect(container.read(toolProvider).tool, isA<NamePointsTool>());
+    });
+
+    testWidgets('cancel leaves the current tool untouched', (tester) async {
+      await pumpEditor(tester);
+      await openDialog(tester);
+      await tester.enterText(find.byType(TextField), 'MID');
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      expect(container.read(toolProvider).tool, isNull);
+    });
   });
 
   testWidgets('flyout rows show their shortcut as trailing text',
