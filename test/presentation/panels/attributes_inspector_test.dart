@@ -550,9 +550,9 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.undo));
     await tester.pump();
-    expect(a.attributes.labelFontSize, 12.0);
-    expect(s.attributes.labelFontSize, 12.0);
-    expect(d.attributes.labelFontSize, 12.0);
+    expect(a.attributes.labelFontSize, 16.0);
+    expect(s.attributes.labelFontSize, 16.0);
+    expect(d.attributes.labelFontSize, 16.0);
     expect(container.read(commandStackProvider).canUndo, isFalse,
         reason: 'both updates rode a single command');
   });
