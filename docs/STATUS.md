@@ -6,6 +6,24 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 69 — 2026-07-20
+
+**Done**
+- Phase 50 (user request): the measure tools understand partial circles. New `LengthMeasurement` over one circular subject — circle circumference (2πr, anchored at the top of the rim), arc length (r·sweep, arc midpoint), sector perimeter (2r + r·sweep, rim midpoint; a wedge is a closed region, so both radii count). New `DistanceTool` subclasses `TwoPointTool`: a *first* tap whose topmost hit is a `GeoCircle` commits the length in one command; everything else (point taps, gluing, crossings, free points) is the unchanged two-point flow. Replaces the `buildDistance` tear-off wiring in toolbar/main.
+- `AreaMeasurement` no longer reports the whole parent circle for an `Arc`/`Sector` subject (both are `GeoCircle`s, so the area tool already accepted them — silently measuring πr² of the carrier): a sector now measures its wedge (½r²θ) and an arc the circular segment its chord cuts off (½r²(θ − sinθ)), each anchored at the true centroid on the extent bisector with guarded θ→0 limits.
+- Codec: additive `LengthMeasurement` kind, no version bump. Kind label 'Length'; menu/cheat-sheet rows reworded. Distance-tool tests moved out of `area_tool_test.dart` into a proper `distance_tool_test.dart`. Measurements golden scene gains the circumference label (regenerated light+dark). 1208 green, analyze clean.
+
+**Next**
+- Phase 43 (viewport rotation) is the last queued phase.
+- `main` is ahead of `origin/main` — push when convenient.
+
+**Open questions / gotchas**
+- Deliberate trade-off: a first distance-tool tap on a bare circle used to glue a `PointOnObject`; now it measures. Workaround: create the point first (point tool), then measure from it — points always outrank curves under the tap.
+- Sector "length" = full perimeter (2r + arc), not just the rim — draw an `Arc` to measure a rim alone. Polygon perimeter would be the natural next extension of `LengthMeasurement` if asked.
+- A sector's area anchor is the wedge centroid, so the area and (rim-anchored) length labels never stack; on a plain circle area sits at the center and circumference at the top of the rim.
+
+---
+
 ## Session 68 — 2026-07-20
 
 **Done**
