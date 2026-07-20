@@ -1,0 +1,25 @@
+lib/domain/construction/objects/area_measurement.dart
+  s_57368974b90649::t_276fea18a371b0 6-7,9-14
+  s_57368974b90649::t_6ea76987a50338 59-78
+test/domain/construction/objects/area_measurement_test.dart
+  s_57368974b90649::t_b9d1632a496e85 56-92
+  s_57368974b90649::t_6e78595a5c363b 4
+  s_57368974b90649::t_721e8b830788de 12
+  s_57368974b90649::t_470e1a43a81ccf 93
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "758d90535b20fea7ddc3ba042260f8c5487e8acf",
+  "prompts": {},
+  "sessions": {
+    "s_57368974b90649": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b7a7e5be-658a-4cbf-b40a-9830b516cef2",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
