@@ -32,6 +32,31 @@ String nextAutoName(Set<String> usedNames, GeoObject object) {
   }
 }
 
+/// First free name walking the Latin pool from [startLetter] (Phase 53,
+/// sequential point naming).
+///
+/// [startLetter] must be a single Latin letter; its case picks the pool.
+/// Round 0 scans from the start letter to the pool's end unsuffixed
+/// (`M … Z`), rounds ≥ 1 scan the *whole* pool with the numeric suffix
+/// (`A1 … Z1`, `A2 …`) — the same tail progression as [nextAutoName], so
+/// `nextNameFrom(used, 'A')` and a point's [nextAutoName] agree exactly.
+String nextNameFrom(Set<String> usedNames, String startLetter) {
+  final pool = _upperLatin.contains(startLetter)
+      ? _upperLatin
+      : _lowerLatin.contains(startLetter)
+          ? _lowerLatin
+          : throw ArgumentError.value(
+              startLetter, 'startLetter', 'must be a single Latin letter');
+  final start = pool.indexOf(startLetter);
+  for (var round = 0;; round++) {
+    final suffix = round == 0 ? '' : '$round';
+    for (var i = round == 0 ? start : 0; i < pool.length; i++) {
+      final candidate = '${pool[i]}$suffix';
+      if (!usedNames.contains(candidate)) return candidate;
+    }
+  }
+}
+
 /// The replacement name for an object evicted from [wanted] by a manual
 /// rename (Phase 27).
 ///
