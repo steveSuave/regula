@@ -432,3 +432,9 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] Painter: `_drawTickMarks` — short strokes perpendicular to the segment, centered as a group on its midpoint (10 px long, 5 px apart, logical pixels so zoom-invariant); solid regardless of `dashPeriod`, drawn with the object paint so the selection halo widens them too; degenerate segments guarded
 - [x] Inspector: 'Equal marks' `_PresetSelector` row (– / 1 / 2 / 3), segments-only slice, one command per tap
 - [x] Tests: painter tick geometry (perpendicular, group-centered, spacing, dashed stroke keeps solid ticks, degenerate skip), inspector row scoping + undo, kitchen-sink codec round-trip, decorations golden gains ticked segments (regenerated light+dark) — 1214 green, analyze clean
+
+## Phase 52 — Foldable object-tree groups (user request)
+- [x] Chevron on each group header (own `IconButton` tap target, `Collapse/Expand <kind>` tooltips) folds the group's rows; headers and dividers stay, a trailing count stands in for the hidden rows, select-by-kind (tap / shift-tap / long-press) keeps acting on the whole folded group
+- [x] Groups start folded — a fresh panel is a compact per-kind overview; expansion is per-group view state like the search query (`_expanded` set, gone when the panel closes, never persisted)
+- [x] An active search overrides folding (a match inside a folded group must not read as "no matches") and disables the chevron; clearing the query restores the folds
+- [x] Tests: default-folded overview + expand/refold + folded-header select + one-group-at-a-time, search-overrides-fold + disabled chevron + fold survives clearing; existing row-level tests expand their group first via the header chevron (1216 green, analyze clean)

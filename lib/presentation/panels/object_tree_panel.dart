@@ -25,6 +25,14 @@ import 'object_kind_label.dart';
 /// the header acts on the rows it is heading, always. The query is view
 /// state: it resets when the panel closes and is never persisted.
 ///
+/// Each group folds via the chevron on its header, hiding the rows but
+/// not the header — select-by-kind keeps working on a folded group, and
+/// a count takes the rows' place so the header still says what it hides.
+/// Groups start folded, so a fresh panel is a compact per-kind overview
+/// and expanding is opting into detail. An active search overrides
+/// folding (a match inside a folded group must not read as "no
+/// matches"); expansion is view state like the query.
+///
 /// Collapsing lives with the parent: the editor's app bar shows and
 /// hides the whole panel, so an empty construction here still renders
 /// (with a hint) rather than collapsing to nothing like the inspector.
@@ -39,6 +47,11 @@ class ObjectTreePanel extends ConsumerStatefulWidget {
 
 class _ObjectTreePanelState extends ConsumerState<ObjectTreePanel> {
   final TextEditingController _searchController = TextEditingController();
+
+  /// Labels of the groups the user has expanded — empty at first, so
+  /// every group starts folded. View state, like the search query: gone
+  /// when the panel closes.
+  final Set<String> _expanded = {};
 
   @override
   void dispose() {
@@ -157,12 +170,27 @@ class _ObjectTreePanelState extends ConsumerState<ObjectTreePanel> {
                                 ids: [
                                   for (final object in objects) object.id,
                                 ],
+                                // Search overrides folding: a matching row
+                                // hidden inside a folded group would read
+                                // as "no matches".
+                                folded: query.isEmpty &&
+                                    !_expanded.contains(label),
+                                onToggleFold: query.isEmpty
+                                    ? () => setState(() {
+                                          if (!_expanded.remove(label)) {
+                                            _expanded.add(label);
+                                          }
+                                        })
+                                    : null,
                               ),
-                              for (final object in objects)
-                                _ObjectRow(
-                                  object: object,
-                                  selected: selectedIds.contains(object.id),
-                                ),
+                              if (query.isNotEmpty ||
+                                  _expanded.contains(label))
+                                for (final object in objects)
+                                  _ObjectRow(
+                                    object: object,
+                                    selected:
+                                        selectedIds.contains(object.id),
+                                  ),
                             ],
                           ],
                         ),
@@ -184,20 +212,35 @@ class _ObjectTreePanelState extends ConsumerState<ObjectTreePanel> {
 /// shift. Union rather than the canvas long-press's toggle: headers
 /// select groups, the canvas toggles individuals. While a search query
 /// is active the ids are the filtered matches only.
+///
+/// The leading chevron folds the group's rows away; it is its own tap
+/// target so folding never selects. Selection keeps acting on the whole
+/// group while folded — the fold hides rows, it doesn't disown them —
+/// and a trailing count stands in for the hidden rows. [onToggleFold]
+/// is null while a search is active, disabling the chevron: the search
+/// already forces every match visible.
 class _GroupHeader extends ConsumerWidget {
-  const _GroupHeader({required this.label, required this.ids});
+  const _GroupHeader({
+    required this.label,
+    required this.ids,
+    required this.folded,
+    required this.onToggleFold,
+  });
 
   final String label;
   final List<String> ids;
+  final bool folded;
+  final VoidCallback? onToggleFold;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final lower = label.toLowerCase();
     void select({required bool additive}) => ref
         .read(selectionProvider.notifier)
         .selectMany(ids, additive: additive);
     return Tooltip(
-      message: 'Select all ${label.toLowerCase()}',
+      message: 'Select all $lower',
       child: InkWell(
         onTap: () =>
             select(additive: HardwareKeyboard.instance.isShiftPressed),
@@ -206,15 +249,38 @@ class _GroupHeader extends ConsumerWidget {
           select(additive: true);
         },
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-          child: Text(
-            // Primary color + a heavier weight so headers read as
-            // section titles, not as just another (unnamed) row.
-            label,
-            style: theme.textTheme.labelLarge!.copyWith(
-              color: theme.colorScheme.primary,
-              fontWeight: FontWeight.w600,
-            ),
+          padding: const EdgeInsets.fromLTRB(4, 4, 16, 0),
+          child: Row(
+            children: [
+              IconButton(
+                tooltip: folded ? 'Expand $lower' : 'Collapse $lower',
+                visualDensity: VisualDensity.compact,
+                iconSize: 18,
+                icon: Icon(
+                  folded ? Icons.chevron_right : Icons.expand_more,
+                  color: theme.colorScheme.primary,
+                ),
+                onPressed: onToggleFold,
+              ),
+              Expanded(
+                child: Text(
+                  // Primary color + a heavier weight so headers read as
+                  // section titles, not as just another (unnamed) row.
+                  label,
+                  style: theme.textTheme.labelLarge!.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              if (folded)
+                Text(
+                  '${ids.length}',
+                  style: theme.textTheme.labelMedium!.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+            ],
           ),
         ),
       ),
