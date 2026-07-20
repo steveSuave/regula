@@ -452,3 +452,5 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] `ObjectAttributes.labelFontSize` default 12.0 → 16.0 (the inspector's 'L' preset): new objects label large; saved documents carry the field explicitly, so existing files keep their sizes (only pre-Phase-28 saves, which lack the field, ride the decode fallback up — cosmetic, no version bump)
 - [x] Regenerate whatever goldens render labels; tests green, analyze clean
 - [x] Follow-up (user request): `angleMarkerRadius` default 20.0 → 28.0 (the 'L' preset) — same explicit-serialization story, hit-tester tests pin 20 explicitly, angle goldens regenerated
+- [x] Follow-up (user request): axis tick numbers 10 → 12 px (`_tickFontSize`, the canvas's smallest text), grid goldens regenerated
+- [x] Follow-up (user request): the axes/grid popup rows show their shortcuts as trailing text (`ToolMenuRow` + `shortcutDisplayFor`: ⇧X / ⇧G / Ctrl⌘⇧G) — the cheat sheet is no longer their only home
