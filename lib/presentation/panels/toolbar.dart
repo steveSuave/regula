@@ -11,7 +11,6 @@ import '../../domain/construction/objects/centroid.dart';
 import '../../domain/construction/objects/circle_center_point.dart';
 import '../../domain/construction/objects/circumcenter.dart';
 import '../../domain/construction/objects/compass_circle.dart';
-import '../../domain/construction/objects/distance_measurement.dart';
 import '../../domain/construction/objects/incenter.dart';
 import '../../domain/construction/objects/line_through_two_points.dart';
 import '../../domain/construction/objects/orthocenter.dart';
@@ -27,6 +26,7 @@ import '../../domain/tools/angle_bisector_tool.dart';
 import '../../domain/tools/angle_by_size_tool.dart';
 import '../../domain/tools/angle_tool.dart';
 import '../../domain/tools/area_tool.dart';
+import '../../domain/tools/distance_tool.dart';
 import '../../domain/tools/equilateral_triangle_macro_tool.dart';
 import '../../domain/tools/fixed_length_segment_tool.dart';
 import '../../domain/tools/fixed_radius_circle_tool.dart';
@@ -97,9 +97,6 @@ GeoObject buildArc(String id, GeoPoint a, GeoPoint b, GeoPoint c) =>
 GeoObject buildSector(String id, GeoPoint a, GeoPoint b, GeoPoint c) =>
     Sector(id: id, center: a, start: b, end: c);
 
-GeoObject buildDistance(String id, GeoPoint a, GeoPoint b) =>
-    DistanceMeasurement(id: id, point1: a, point2: b);
-
 const _lineBuilders = {
   buildLine,
   buildSegment,
@@ -134,9 +131,9 @@ class GeometryToolbar extends ConsumerWidget {
         tool is IntersectionTool ||
         tool is TriangleCenterTool ||
         (tool is TwoPointTool &&
+            tool is! DistanceTool &&
             !_lineBuilders.contains(tool.build) &&
-            tool.build != buildCircle &&
-            tool.build != buildDistance);
+            tool.build != buildCircle);
     final linesActive =
         tool is PolygonTool ||
         tool is PointAndLineTool ||
@@ -165,9 +162,7 @@ class GeometryToolbar extends ConsumerWidget {
         tool is RegularPolygonMacroTool ||
         tool is RandomShapeStampTool;
     final measureActive =
-        tool is AreaTool ||
-        tool is LocusTool ||
-        (tool is TwoPointTool && tool.build == buildDistance);
+        tool is AreaTool || tool is LocusTool || tool is DistanceTool;
 
     Future<Tool?> ratioPick() async {
       final build = await askRatioBuilder(context);
@@ -478,12 +473,12 @@ class GeometryToolbar extends ConsumerWidget {
           active: measureActive,
           items: [
             (
-              'Distance (two points)',
-              _twoPoint(buildDistance),
+              'Distance (two points, or tap a circle / arc)',
+              _pick(() => DistanceTool(newId: newObjectId)),
               AppAction.distanceTool,
             ),
             (
-              'Area (tap a polygon or circle)',
+              'Area (tap a polygon, circle, sector or arc)',
               _pick(() => AreaTool(newId: newObjectId)),
               AppAction.areaTool,
             ),

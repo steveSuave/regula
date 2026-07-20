@@ -32,6 +32,7 @@ import 'package:regula/domain/tools/angle_bisector_tool.dart';
 import 'package:regula/domain/tools/angle_by_size_tool.dart';
 import 'package:regula/domain/tools/angle_tool.dart';
 import 'package:regula/domain/tools/area_tool.dart';
+import 'package:regula/domain/tools/distance_tool.dart';
 import 'package:regula/domain/tools/equilateral_triangle_macro_tool.dart';
 import 'package:regula/domain/tools/fixed_length_segment_tool.dart';
 import 'package:regula/domain/tools/fixed_radius_circle_tool.dart';
@@ -53,7 +54,6 @@ import 'package:regula/domain/tools/two_point_tool.dart';
 import 'package:regula/domain/tools/visibility_tool.dart';
 import 'package:regula/main.dart';
 import 'package:regula/presentation/canvas/geometry_canvas.dart';
-import 'package:regula/presentation/panels/toolbar.dart' show buildDistance;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../wide_window.dart';
 
@@ -154,8 +154,7 @@ void main() {
   testWidgets('D measures a distance end to end', (tester) async {
     await pumpEditor(tester);
     await tester.sendKeyEvent(LogicalKeyboardKey.keyD);
-    expect(activeTool(), isA<TwoPointTool>());
-    expect((activeTool()! as TwoPointTool).build, buildDistance);
+    expect(activeTool(), isA<DistanceTool>());
 
     tapWorld(0, 0);
     tapWorld(3, 4);

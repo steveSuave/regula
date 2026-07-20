@@ -15,6 +15,7 @@ import '../../domain/construction/objects/fixed_radius_circle.dart';
 import '../../domain/construction/objects/free_point.dart';
 import '../../domain/construction/objects/incenter.dart';
 import '../../domain/construction/objects/intersection_point.dart';
+import '../../domain/construction/objects/length_measurement.dart';
 import '../../domain/construction/objects/line_angle.dart';
 import '../../domain/construction/objects/line_through_two_points.dart';
 import '../../domain/construction/objects/locus.dart';
@@ -197,6 +198,7 @@ Map<String, dynamic> _encodeObject(GeoObject object) {
     Polygon() => ('Polygon', const {}),
     DistanceMeasurement() => ('DistanceMeasurement', const {}),
     AreaMeasurement() => ('AreaMeasurement', const {}),
+    LengthMeasurement() => ('LengthMeasurement', const {}),
     Locus(:final sampleCount, :final center, :final halfSpan) => (
         'Locus',
         {'sampleCount': sampleCount, 'center': center, 'halfSpan': halfSpan}
@@ -459,6 +461,13 @@ GeoObject _decodeObject(Map<String, dynamic> json, Construction construction) {
     // business — its ArgumentError normalizes to FormatException in the
     // decode loop, the PointOnObject precedent.
     'AreaMeasurement' => AreaMeasurement(
+        id: id,
+        subject: any(0),
+        attributes: attributes,
+      ),
+    // Same normalization: a non-circular subject is the constructor's
+    // ArgumentError, surfaced as FormatException by the decode loop.
+    'LengthMeasurement' => LengthMeasurement(
         id: id,
         subject: any(0),
         attributes: attributes,

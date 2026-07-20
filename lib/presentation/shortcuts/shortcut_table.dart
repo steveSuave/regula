@@ -564,14 +564,14 @@ final List<ShortcutBinding> shortcutTable = [
   const ShortcutBinding(
     sequence: [KeyStroke(LogicalKeyboardKey.keyD)],
     action: AppAction.distanceTool,
-    label: 'Distance (two points)',
+    label: 'Distance (two points, or tap a circle / arc)',
     section: ShortcutSection.tools,
     display: 'D',
   ),
   const ShortcutBinding(
     sequence: [KeyStroke(LogicalKeyboardKey.keyD, shift: true)],
     action: AppAction.areaTool,
-    label: 'Area (tap a polygon or circle)',
+    label: 'Area (tap a polygon, circle, sector or arc)',
     section: ShortcutSection.tools,
     display: '⇧ D',
   ),
