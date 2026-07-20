@@ -48,7 +48,9 @@ class GeometryPainter extends CustomPainter {
   /// of its tick labels.
   static const double _gridStrokeWidth = 1;
   static const double _axisStrokeWidth = 1.5;
-  static const double _tickFontSize = 10;
+  // 12 rather than the original 10 (Phase 54): the smallest text on the
+  // canvas follows the larger-defaults pass.
+  static const double _tickFontSize = 12;
 
   /// Screen-px gap between an axis and its tick labels.
   static const double _tickLabelGap = 3;

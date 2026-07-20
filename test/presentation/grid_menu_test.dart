@@ -122,4 +122,16 @@ void main() {
       const DocumentSettings(showAxes: true, snapToGrid: true),
     );
   });
+
+  testWidgets('the rows show their shortcuts as trailing text, like the '
+      'tool flyouts', (tester) async {
+    await pumpEditor(tester);
+
+    await tester.tap(find.byIcon(Icons.grid_4x4));
+    await tester.pumpAndSettle();
+
+    expect(find.text('⇧ X'), findsOneWidget);
+    expect(find.text('⇧ G'), findsOneWidget);
+    expect(find.text('Ctrl/⌘ ⇧ G'), findsOneWidget);
+  });
 }

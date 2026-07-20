@@ -902,24 +902,36 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
       tooltip: 'Axes & grid',
       icon: const Icon(Icons.grid_4x4),
       onSelected: (action) => action(),
+      // The rows show their shortcuts like the tool flyouts do (Phase 17
+      // discoverability, extended here on user request) — the cheat
+      // sheet must not be the only place the grid keys appear.
       itemBuilder: (context) => [
         CheckedPopupMenuItem(
           checked: settings.showAxes,
           value: () =>
               ref.read(documentSettingsProvider.notifier).toggleAxes(),
-          child: const Text('Show axes'),
+          child: ToolMenuRow(
+            label: 'Show axes',
+            display: shortcutDisplayFor(AppAction.toggleAxes),
+          ),
         ),
         CheckedPopupMenuItem(
           checked: settings.showGrid,
           value: () =>
               ref.read(documentSettingsProvider.notifier).toggleGrid(),
-          child: const Text('Show grid'),
+          child: ToolMenuRow(
+            label: 'Show grid',
+            display: shortcutDisplayFor(AppAction.toggleGrid),
+          ),
         ),
         CheckedPopupMenuItem(
           checked: settings.snapToGrid,
           value: () =>
               ref.read(documentSettingsProvider.notifier).toggleSnapToGrid(),
-          child: const Text('Snap to grid'),
+          child: ToolMenuRow(
+            label: 'Snap to grid',
+            display: shortcutDisplayFor(AppAction.toggleSnapToGrid),
+          ),
         ),
       ],
     );
