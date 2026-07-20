@@ -1,0 +1,27 @@
+test/fixtures/inter2.json
+  s_67555b468ff59c::t_b6576ca4fc7be7 1-221
+test/domain/construction/incidence_test.dart
+  s_67555b468ff59c::t_3619dff32a300a 134-158
+test/domain/tools/intersection_tool_test.dart
+  s_67555b468ff59c::t_8f8cd07cd33d5c 216-241
+test/application/persistence/shared_vertex_bisector_fixture_regression_test.dart
+  s_67555b468ff59c::t_ef0df384cdc28f 1-50
+lib/domain/construction/incidence.dart
+  s_67555b468ff59c::t_251062e81fbec2 76-80,86-88
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "2698303dfacc42fbb45987b8af1b935bcae875b3",
+  "prompts": {},
+  "sessions": {
+    "s_67555b468ff59c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "24909d44-03bc-404b-95cd-c63623a9c75a",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
