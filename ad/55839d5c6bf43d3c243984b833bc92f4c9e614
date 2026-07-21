@@ -1,0 +1,23 @@
+lib/domain/math/expression.dart
+  s_87276865fb5cca::t_13f6149d6d70c1 1-441
+test/domain/math/expression_test.dart
+  s_87276865fb5cca::t_61ac2539fc595e 64-66
+  s_87276865fb5cca::t_a698cd85a62d97 1-63,67-201,203-297
+  s_87276865fb5cca::t_a9180053f4ee33 202
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "ad55839d5c6bf43d3c243984b833bc92f4c9e614",
+  "prompts": {},
+  "sessions": {
+    "s_87276865fb5cca": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "302eb02d-812e-4236-966e-4f9d7540bbdb",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
