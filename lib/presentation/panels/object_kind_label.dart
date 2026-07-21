@@ -63,5 +63,6 @@ String objectKindLabel(GeoObject object) => switch (object) {
       AreaMeasurement() => 'Area',
       LengthMeasurement() => 'Length',
       GeoMeasurement() => 'Measurement',
+      GeoText() => 'Text',
       GeoLocus() => 'Locus',
     };

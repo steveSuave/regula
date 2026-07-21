@@ -88,7 +88,7 @@ class CanvasHitTester {
         GeoLine() => 2,
         GeoLocus() => 2, // a locus is picked like the line it draws as
         GeoAngle() => 3,
-        GeoMeasurement() => 4,
+        GeoMeasurement() || GeoText() => 4,
         // Lowest: a polygon's interior hits at distance 0, so anything
         // drawn inside it must still win the tap.
         GeoPolygon() => 5,
@@ -158,6 +158,7 @@ class CanvasHitTester {
         // A measurement is its text, which is screen-sized like an angle
         // marker; the anchor stands in for it (cf. GeoAngle above).
         GeoMeasurement() => within(object.anchor!),
+        GeoText() => within(object.anchor),
         // Every recorded sample must be inside; an all-gap locus (no
         // drawn ink) can never be band-selected.
         GeoLocus() => _locusContained(object, within),
@@ -234,6 +235,7 @@ class CanvasHitTester {
         // handler additionally checks the text's labelScreenRect first,
         // so text dragged far from the anchor stays tappable.
         GeoMeasurement() => object.anchor!.distanceTo(point),
+        GeoText() => object.anchor.distanceTo(point),
         // A locus is its drawn polyline: the nearest of the consecutive
         // sample segments (gaps break the chain; isolated samples and an
         // all-gap locus are unreachable, matching the painter's ink).

@@ -199,7 +199,8 @@ class ToolNotifier extends _$ToolNotifier {
         final hideLabel = object is GeoLine ||
             object is GeoCircle ||
             object is GeoPolygon ||
-            object is GeoLocus;
+            object is GeoLocus ||
+            object is GeoText;
         object.attributes = object.attributes.copyWith(
           name: name,
           labelVisible: object.attributes.labelVisible && !hideLabel,

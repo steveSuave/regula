@@ -61,6 +61,12 @@ abstract class DragSession {
     if (target is GeoPoint && target is! FreePoint) {
       return null;
     }
+    // A text's free-point ancestors are the objects its expressions
+    // *reference* — body-dragging it would move the measured geometry.
+    // Repositioning a text is the label drag's job.
+    if (target is GeoText) {
+      return null;
+    }
     final points = target is CompassCircle
         ? freePointAncestors(target.center)
         : freePointAncestors(target);

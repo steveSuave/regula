@@ -39,6 +39,7 @@ Vec2 labelAnchor(GeoObject object) => switch (object) {
               .reduce((sum, vertex) => sum + vertex) /
           object.polygonVertices!.length.toDouble(),
       GeoMeasurement() => object.anchor!,
+      GeoText() => object.anchor,
       // Core samples, not the full trace: a diverging line-host arm
       // reaches astronomically far out — an anchor there is never
       // on-screen. All-gap core (defined ink only far out) falls back
