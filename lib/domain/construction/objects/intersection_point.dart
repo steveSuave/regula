@@ -114,6 +114,7 @@ class IntersectionPoint extends GeoPoint {
       case ((GeoPolygon(), _) || (_, GeoPolygon())):
       case ((GeoMeasurement(), _) || (_, GeoMeasurement())):
       case ((GeoLocus(), _) || (_, GeoLocus())):
+      case ((GeoText(), _) || (_, GeoText())):
         throw StateError('IntersectionPoint parents must be curves');
     }
   }

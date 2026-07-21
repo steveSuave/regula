@@ -11,6 +11,7 @@ import '../../domain/construction/objects/circle_center_point.dart';
 import '../../domain/construction/objects/circumcenter.dart';
 import '../../domain/construction/objects/compass_circle.dart';
 import '../../domain/construction/objects/distance_measurement.dart';
+import '../../domain/construction/objects/expression_text.dart';
 import '../../domain/construction/objects/fixed_radius_circle.dart';
 import '../../domain/construction/objects/free_point.dart';
 import '../../domain/construction/objects/incenter.dart';
@@ -197,6 +198,13 @@ Map<String, dynamic> _encodeObject(GeoObject object) {
     Sector() => ('Sector', const {}),
     Polygon() => ('Polygon', const {}),
     DistanceMeasurement() => ('DistanceMeasurement', const {}),
+    // Parents carry the expression references; decode re-binds them by
+    // zipping the content's referenceNames (unique, first-occurrence
+    // order — the TextTemplate contract) with the parents list.
+    ExpressionText(:final content, :final anchor) => (
+        'ExpressionText',
+        {'content': content, 'x': anchor.x, 'y': anchor.y}
+      ),
     AreaMeasurement() => ('AreaMeasurement', const {}),
     LengthMeasurement() => ('LengthMeasurement', const {}),
     Locus(:final sampleCount, :final center, :final halfSpan) => (
@@ -451,6 +459,19 @@ GeoObject _decodeObject(Map<String, dynamic> json, Construction construction) {
         vertices: [for (var i = 0; i < parents.length; i++) point(i)],
         attributes: attributes,
       ),
+    // A tampered file (parents not matching the content's references, or
+    // a text parent) is the constructor's ArgumentError, normalized to
+    // FormatException by the decode loop.
+    'ExpressionText' => ExpressionText(
+        id: id,
+        content: _stringParam(id, params, 'content'),
+        anchor: Vec2(
+          _doubleParam(id, params, 'x'),
+          _doubleParam(id, params, 'y'),
+        ),
+        references: parents,
+        attributes: attributes,
+      ),
     'DistanceMeasurement' => DistanceMeasurement(
         id: id,
         point1: point(0),
@@ -547,6 +568,14 @@ double _doubleParam(String id, Map<String, dynamic> params, String key) {
     throw FormatException('Object "$id": missing numeric param "$key"');
   }
   return value.toDouble();
+}
+
+String _stringParam(String id, Map<String, dynamic> params, String key) {
+  final value = params[key];
+  if (value is! String) {
+    throw FormatException('Object "$id": missing string param "$key"');
+  }
+  return value;
 }
 
 int _intParam(String id, Map<String, dynamic> params, String key) {

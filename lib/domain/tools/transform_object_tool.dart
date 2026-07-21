@@ -235,7 +235,7 @@ class TransformObjectTool implements ToolInputPreview {
         }
         return const ToolIgnored();
       case GeoCircle() || GeoAngle() || GeoPolygon() || GeoMeasurement() ||
-            GeoLocus():
+            GeoLocus() || GeoText():
         return const ToolIgnored();
       case null:
         final mirror = _pendingMirror;

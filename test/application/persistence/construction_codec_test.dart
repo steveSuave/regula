@@ -18,6 +18,7 @@ import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/circumcenter.dart';
 import 'package:regula/domain/construction/objects/compass_circle.dart';
 import 'package:regula/domain/construction/objects/distance_measurement.dart';
+import 'package:regula/domain/construction/objects/expression_text.dart';
 import 'package:regula/domain/construction/objects/fixed_radius_circle.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/incenter.dart';
@@ -196,7 +197,26 @@ Construction buildKitchenSink() {
     ..add(ReflectedPoint(id: 'refl', point: c, mirror: lineAb))
     ..add(CentralReflectionPoint(id: 'crefl', point: c, center: a))
     ..add(RotatedPoint(id: 'rot', point: b, center: a, angle: 0.75))
-    ..add(TranslatedPoint(id: 'trans', point: c, vectorFrom: a, vectorTo: b));
+    ..add(TranslatedPoint(id: 'trans', point: c, vectorFrom: a, vectorTo: b))
+    // One referencing text (parents re-bound positionally against the
+    // content's referenceNames on decode) and one static text (empty
+    // parents, pure literal).
+    ..add(
+      ExpressionText(
+        id: 'text',
+        content: 'AC = {dist(A, C)} u',
+        anchor: const Vec2(2, 5),
+        references: [a, c],
+      ),
+    )
+    ..add(
+      ExpressionText(
+        id: 'text2',
+        content: 'plain note',
+        anchor: const Vec2(-1, -2),
+        references: const [],
+      ),
+    );
   return construction;
 }
 
@@ -210,6 +230,7 @@ Object? geometryOf(GeoObject object) => switch (object) {
       GeoPolygon(:final polygonVertices) => polygonVertices,
       GeoMeasurement(:final value, :final anchor) => (value, anchor),
       GeoLocus(:final samples) => samples,
+      GeoText(:final renderedText, :final anchor) => (renderedText, anchor),
     };
 
 DecodedDocument roundTrip(
@@ -520,6 +541,36 @@ void main() {
             'id': 'poly',
             'type': 'Polygon',
             'parents': ['a', 'b'],
+          },
+        ])),
+        throwsFormatException,
+      );
+    });
+
+    test('rejects a text whose parents mismatch its references', () {
+      Map<String, dynamic> text(List<String> parents) => <String, dynamic>{
+            'id': 'txt',
+            'type': 'ExpressionText',
+            'parents': parents,
+            'params': <String, dynamic>{
+              'content': '{dist(A, B)}',
+              'x': 0.0,
+              'y': 0.0,
+            },
+          };
+      // Two references in the content, one parent in the (tampered) file.
+      expect(
+        () => decodeDocument(document([freePoint('a'), text(['a'])])),
+        throwsFormatException,
+      );
+      // Malformed slot expression.
+      expect(
+        () => decodeDocument(document([
+          <String, dynamic>{
+            'id': 'txt',
+            'type': 'ExpressionText',
+            'parents': const <String>[],
+            'params': <String, dynamic>{'content': '{1 +}', 'x': 0.0, 'y': 0.0},
           },
         ])),
         throwsFormatException,

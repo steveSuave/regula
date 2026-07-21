@@ -56,7 +56,7 @@ class PointOnObject extends GeoPoint {
           'Cannot project onto an undefined curve',
         ),
       GeoPoint() || GeoAngle() || GeoPolygon() || GeoMeasurement() ||
-      GeoLocus() =>
+      GeoLocus() || GeoText() =>
         throw ArgumentError(
           'PointOnObject requires a line or circle parent',
         ),
@@ -90,7 +90,7 @@ class PointOnObject extends GeoPoint {
       GeoCircle(:final circle) && final GeoCircle host =>
         circle?.pointAt(host.clampAngle(parameter)),
       GeoPoint() || GeoAngle() || GeoPolygon() || GeoMeasurement() ||
-      GeoLocus() =>
+      GeoLocus() || GeoText() =>
         throw StateError(
           'PointOnObject parent must be a curve',
         ),

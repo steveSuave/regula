@@ -547,7 +547,7 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
     // is a caption, not the object.
     var target = hit;
     for (final object in construction.objects.toList().reversed) {
-      if (object is! GeoMeasurement) {
+      if (object is! GeoMeasurement && object is! GeoText) {
         continue;
       }
       final rect = labelScreenRect(object, viewport);

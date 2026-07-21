@@ -19,7 +19,7 @@ String nextAutoName(Set<String> usedNames, GeoObject object) {
   final pool = switch (object) {
     GeoPoint() => _upperLatin,
     GeoLine() || GeoCircle() || GeoPolygon() || GeoMeasurement() ||
-    GeoLocus() =>
+    GeoLocus() || GeoText() =>
       _lowerLatin,
     GeoAngle() => _lowerGreek,
   };

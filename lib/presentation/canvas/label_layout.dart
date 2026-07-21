@@ -27,6 +27,7 @@ String? labelText(GeoObject object) {
       formatAngle(angle.measure),
     AreaMeasurement(:final value?) => formatArea(value),
     GeoMeasurement(:final value?) => formatLength(value),
+    GeoText(:final renderedText?) => renderedText,
     _ => null,
   };
   final name = attributes.labelVisible && attributes.name.isNotEmpty

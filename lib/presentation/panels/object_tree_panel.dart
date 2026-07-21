@@ -99,6 +99,7 @@ class _ObjectTreePanelState extends ConsumerState<ObjectTreePanel> {
         GeoAngle() => 'Angles',
         GeoPolygon() => 'Polygons',
         GeoMeasurement() => 'Measurements',
+        GeoText() => 'Texts',
         GeoLocus() => 'Loci',
       }]!
           .add(object);

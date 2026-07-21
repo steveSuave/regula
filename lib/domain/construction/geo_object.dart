@@ -8,7 +8,8 @@ import 'object_attributes.dart';
 ///
 /// The hierarchy is sealed at the *kind* level: every object is a
 /// [GeoPoint], a [GeoLine], a [GeoCircle], a [GeoAngle], a [GeoPolygon],
-/// a [GeoMeasurement] or a [GeoLocus], so kind-switches are exhaustive.
+/// a [GeoMeasurement], a [GeoLocus] or a [GeoText], so kind-switches are
+/// exhaustive.
 /// The kinds themselves are open — concrete objects
 /// (`FreePoint`, `Midpoint`, …) live one-per-file under `objects/`,
 /// which Dart's `sealed` would forbid on the root class directly.
@@ -174,6 +175,26 @@ abstract class GeoMeasurement extends GeoObject {
 
   @override
   bool get isDefined => value != null && anchor != null;
+}
+
+/// A text: user content displayed as canvas text at a fixed world
+/// [anchor] (the placing tap), with any `{…}` expression slots evaluated
+/// live against the referenced parents ([renderedText] carries the
+/// substituted result). Texts carry no drawable geometry and take part in
+/// no intersection math — like measurements, the text rides the label
+/// machinery. A text whose references go degenerate stays *defined*
+/// (undefined slots render as `?`): user-authored content must not vanish
+/// mid-drag.
+abstract class GeoText extends GeoObject {
+  GeoText({required super.id, super.attributes});
+
+  String? get renderedText;
+
+  /// World position the text hangs from. Fixed at creation.
+  Vec2 get anchor;
+
+  @override
+  bool get isDefined => renderedText != null;
 }
 
 /// A locus: the sampled trace of a point as a driver sweeps its host

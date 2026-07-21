@@ -137,7 +137,7 @@ DeclutterScene buildDeclutterScene(
             viewport.worldToScreen(vertex),
         ];
         chords([...points, points.first]);
-      case GeoMeasurement():
+      case GeoMeasurement() || GeoText():
         // Pure text — the label pass below is the whole object.
         break;
       case GeoLocus():
