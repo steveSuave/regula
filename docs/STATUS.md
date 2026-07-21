@@ -6,6 +6,25 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 75 — 2026-07-21
+
+**Done**
+- Phase 57 (user bug report, `parallelogram-double-point.json`): the parallelogram macro no longer stacks a duplicate on an existing point. The reported case is Varignon's theorem — macro over three side-midpoints of a quadrilateral lands its fourth corner *identically* (not approximately) on the fourth midpoint — so it was never a floating-point problem and no structural check could see it (different kind, different parents).
+- `lib/domain/tools/point_coincidence.dart`: `coincidentExistingPoint` decides "same point" probabilistically — tolerance screen at the current configuration, then the coincidence must survive 3 random perturbations of every mutable root (FreePoint positions + PointOnObject parameters) either point depends on, recomputing carriers construction-wide plus the candidate's private ancestor chain. Roots restored bit-exactly afterward. Any uncertainty (undefined under probe, out of tolerance) keeps the new point: a duplicate is clutter, a wrong merge corrupts drag semantics.
+- `MultiPointTool.dedupedDerivedPoint` (snapshot of `ToolInput.objects` per collected input) + `ParallelogramMacroTool` wiring: a reused corner drops the hidden parallels entirely, so the commit is just the 4 visible segments. Accidental coincidences (a stray free point parked exactly on the corner) still create the independent derived corner — pinned by test.
+- Tests: 8 helper cases (incl. bit-exact restoration and a verbatim replay of the reported file's geometry) + 2 macro-level cases. 1284 green, analyze clean.
+
+**Next**
+- Roll `dedupedDerivedPoint` out to the other corner-deriving macros (square, rectangle, rhombus, kite, trapeziums, triangles, regular polygon) — mechanical (one call + conditional scaffolding drop per corner) but each wants its own tests.
+- Phase 43 (viewport rotation) still queued; text tool expected.
+
+**Open questions / gotchas**
+- The probe mutates live `FreePoint.position` / `PointOnObject.parameter` directly (bypassing `Construction` so no listeners fire) and restores before returning — safe only because it runs synchronously inside commit; don't lift it anywhere async.
+- Probe recomputes skip angles/polygons/measurements/loci deliberately (nothing point-valued reads them; restoring carrier inputs bit-exactly means they were never stale — and `Locus.recompute` is too expensive to run 4×).
+- Tolerances: screen/survive at `1e-6·max(1,‖p‖)` relative, perturbation at `0.03·max(1,·)` — identical points agree to ~1e-12 relative, accidental ones separate by ~0.03, orders of magnitude on both sides. Don't tighten the perturbation "to be safe": too small and near-tangency (quadratic) separations dip under tolerance.
+
+---
+
 ## Session 74 — 2026-07-21
 
 **Done**
