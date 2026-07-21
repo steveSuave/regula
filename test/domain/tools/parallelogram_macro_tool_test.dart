@@ -3,6 +3,7 @@ import 'package:regula/domain/commands/macro_command.dart';
 import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
+import 'package:regula/domain/construction/objects/midpoint.dart';
 import 'package:regula/domain/construction/objects/parallel_line.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/math/vec2.dart';
@@ -89,6 +90,71 @@ void main() {
 
       construction.moveFreePoint(c.id, const Vec2(5, 2));
       expect(cornerD.position, const Vec2(1, 2));
+    });
+  });
+
+  group('derived corner dedup', () {
+    test('completing over three side-midpoints reuses the fourth midpoint',
+        () {
+      // The reported duplicate (Varignon): a quadrilateral with all four
+      // side midpoints, then the parallelogram macro over three of them —
+      // its fourth corner lands identically on the fourth midpoint.
+      final a = FreePoint(id: 'A', position: const Vec2(0, 0));
+      final b = FreePoint(id: 'B', position: const Vec2(6, 1));
+      final c = FreePoint(id: 'C', position: const Vec2(7, 5));
+      final d = FreePoint(id: 'D', position: const Vec2(1, 4));
+      final mAB = Midpoint(id: 'mAB', point1: a, point2: b);
+      final mBC = Midpoint(id: 'mBC', point1: b, point2: c);
+      final mCD = Midpoint(id: 'mCD', point1: c, point2: d);
+      final mDA = Midpoint(id: 'mDA', point1: d, point2: a);
+      final construction = Construction();
+      for (final object in [a, b, c, d, mAB, mBC, mCD, mDA]) {
+        construction.add(object);
+      }
+
+      ToolResult tap(Midpoint point) => tool.onInput(ToolInput(
+            point.position!,
+            hit: point,
+            objects: construction.objects,
+          ));
+      tap(mBC);
+      tap(mAB);
+      final result = tap(mDA) as ToolCommitted;
+      result.command.apply(construction);
+
+      expect(construction.objects.whereType<IntersectionPoint>(), isEmpty,
+          reason: 'the corner is the existing midpoint, not a new point');
+      expect(construction.objects.whereType<ParallelLine>(), isEmpty,
+          reason: 'scaffolding for a reused corner is not added');
+      final closing = construction.objects
+          .whereType<Segment>()
+          .where((s) => identical(s.point1, mCD) || identical(s.point2, mCD));
+      expect(closing, hasLength(2),
+          reason: 'both closing sides attach to the existing midpoint');
+
+      result.command.undo(construction);
+      expect(construction.length, 8,
+          reason: 'undo removes only what the macro added');
+    });
+
+    test('an accidentally coincident point keeps the derived corner', () {
+      final construction = Construction();
+      construction.add(FreePoint(id: 'stray', position: const Vec2(1, 2)));
+
+      ToolResult tap(Vec2 position) => tool.onInput(
+          ToolInput(position, objects: construction.objects));
+      tap(const Vec2(0, 0));
+      tap(const Vec2(4, 0));
+      final result = tap(const Vec2(5, 2)) as ToolCommitted;
+      result.command.apply(construction);
+
+      final corner =
+          construction.objects.whereType<IntersectionPoint>().single;
+      expect(corner.position, const Vec2(1, 2),
+          reason: 'the corner still lands on the stray point…');
+      expect(construction.objects.whereType<ParallelLine>(), hasLength(2),
+          reason: '…but stays independently derived: the coincidence does '
+              'not survive perturbation of the stray free point');
     });
   });
 }

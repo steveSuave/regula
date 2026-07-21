@@ -19,6 +19,12 @@ import 'multi_point_tool.dart';
 /// Collinear (or coincident) corners leave the two parallels parallel to
 /// each other, so D and the sides through it stay undefined until the
 /// degeneracy passes.
+///
+/// When the construction already contains a visible point identically
+/// coincident with D — the tapped points were three corners of an
+/// existing parallelogram, or three side-midpoints of a quadrilateral
+/// (Varignon) — that point is reused as the fourth corner and the hidden
+/// scaffolding is not added at all (see [dedupedDerivedPoint]).
 class ParallelogramMacroTool extends MultiPointTool {
   ParallelogramMacroTool({required super.newId});
 
@@ -52,15 +58,18 @@ class ParallelogramMacroTool extends MultiPointTool {
       curve2: parallelThroughA,
       branchIndex: 0,
     );
+    final corner = dedupedDerivedPoint(cornerD);
 
     return [
       sideAB,
       sideBC,
-      parallelThroughC,
-      parallelThroughA,
-      cornerD,
-      Segment(id: newId(), point1: c, point2: cornerD),
-      Segment(id: newId(), point1: cornerD, point2: a),
+      if (identical(corner, cornerD)) ...[
+        parallelThroughC,
+        parallelThroughA,
+        cornerD,
+      ],
+      Segment(id: newId(), point1: c, point2: corner),
+      Segment(id: newId(), point1: corner, point2: a),
     ];
   }
 }

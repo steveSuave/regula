@@ -3,6 +3,7 @@ import '../commands/command.dart';
 import '../commands/macro_command.dart';
 import '../construction/geo_object.dart';
 import '../math/vec2.dart';
+import 'point_coincidence.dart';
 import 'point_resolution.dart';
 import 'tool.dart';
 
@@ -52,6 +53,12 @@ abstract class MultiPointTool implements ToolInputPreview {
 
   final List<({GeoPoint point, bool isNew})> _collected = [];
 
+  /// The construction as of the latest collected input — the search space
+  /// for [dedupedDerivedPoint]. Stays empty for inputs built without
+  /// construction context (`ToolInput.objects` defaults to empty), which
+  /// degrades to never deduplicating.
+  List<GeoObject> _constructionObjects = const [];
+
   /// The points collected so far (up to `pointCount − 1` entries).
   /// Existing points track their live positions; new free points are not
   /// yet in the construction and sit where they were tapped.
@@ -96,6 +103,7 @@ abstract class MultiPointTool implements ToolInputPreview {
         input.hits.any((o) => o is GeoLine || o is GeoCircle)) {
       return null;
     }
+    _constructionObjects = List.of(input.objects);
     final vertex = resolvePoint(input, newId);
     if (!vertex.isNew &&
         _collected.any((v) => identical(v.point, vertex.point))) {
@@ -104,6 +112,17 @@ abstract class MultiPointTool implements ToolInputPreview {
     _collected.add(vertex);
     return vertex.point;
   }
+
+  /// The existing visible point [candidate] is identically coincident
+  /// with — verified under random perturbation of every mutable root, see
+  /// [coincidentExistingPoint] — or [candidate] itself. Macro tools run
+  /// their derived corners through this from [buildObjects], so
+  /// completing a shape over points that already determine it (three
+  /// side-midpoints of a quadrilateral, three corners of an existing
+  /// parallelogram) reuses the existing fourth point instead of stacking
+  /// an exact duplicate on top of it.
+  GeoPoint dedupedDerivedPoint(GeoPoint candidate) =>
+      coincidentExistingPoint(_constructionObjects, candidate) ?? candidate;
 
   /// Commits everything collected — new free points first, then
   /// [buildObjects] — as one undo unit, and resets the collection.
@@ -122,5 +141,8 @@ abstract class MultiPointTool implements ToolInputPreview {
   }
 
   @override
-  void reset() => _collected.clear();
+  void reset() {
+    _collected.clear();
+    _constructionObjects = const [];
+  }
 }
