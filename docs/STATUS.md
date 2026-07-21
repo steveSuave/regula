@@ -6,6 +6,27 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 76 — 2026-07-22
+
+**Done**
+- Phase 58 (user request, design agreed up front): the **combined text & calculation tool**. One `Text…` row (first in the Text & labels group, `G E`) — tap the canvas, type content in a dialog, get an `ExpressionText` on the canvas; `{…}` slots evaluate live (`perimeter = {dist(A,B)+dist(B,C)+dist(C,A)} cm`) and re-render as the referenced geometry drags. Tapping an existing text (its label rect counts) re-opens the dialog pre-filled and replaces it in one undo step.
+- Expression engine (`domain/math/expression.dart`, net-new): recursive-descent parser + evaluator. `+ − * / ^` (unary minus below `^`: `-2^2 = −4`), `pi`/`e`, sqrt/trig/abs/round/floor/ceil/min/max — trig in **degrees** so it composes with `angle()`. Typed math symbols (`× · ÷ −`) normalize at the tokenizer. Parse throws only `ExpressionFormatException`; evaluation never throws — anything unknown/degenerate/non-finite is null, rendered `?`.
+- Geometry binding (`construction/text_template.dart` + `text_evaluator.dart`): accessors `dist/len/angle/area/radius/perimeter/x/y` (len/area follow the Length/AreaMeasurement semantics for arcs/sectors) plus bare-name sugar (segment → length, measurement → value, angle → degrees). Function names and arities validate at parse time, so the dialog's inline errors are specific.
+- `GeoText` is the eighth sealed kind (`renderedText` + fixed `anchor`); `ExpressionText` binds names → instances once at creation (renames never break values; the source string goes stale until the next edit — accepted v1). Rides the label machinery wholesale: painter/hit-tester/label/declutter/fit/naming/tree/codec switch cases added, plus the three non-compiler-flagged sites (body drag disabled in `DragSession.start`, canvas label-rect tap loop, auto-namer `hideLabel` group). Codec type is additive — no version bump.
+- Tool seam: additive `ToolInput.text`; the canvas pre-gates `TextTool` like `DeleteTool` (dialog is presentation, tool stays pure), re-checks after the async gap, and the tool itself quietly `ToolIgnored`s stale references. Editing = delete + re-add under one `MacroCommand`, same id and attributes — texts are not referenceable, so the cascade is always just the text.
+- Tests: parser (incl. glados fuzz + random-AST round-trip), template, evaluator (incl. the bare-`e`-vs-`len(e)` pin), object recompute/cascade through a live `Construction`, codec round-trip + tampered-parents rejection, tool unit tests, end-to-end flow widget tests (create/cancel/validation-error/edit/undo, `G E`). 1377 green, analyze clean, web release build compiles.
+
+**Next**
+- Phase 43 (viewport rotation) remains the queued phase.
+- Text follow-ups if users ask: `MoveTextAnchorCommand` (anchor is immutable v1 — repositioning is the label drag, radially clamped to 40 px), named/referenceable calculations (dependency chains between texts), numeric integrals (the function registry is table-driven for exactly this).
+
+**Open questions / gotchas**
+- Renaming a referenced object does **not** rewrite a text's stored source string — values keep tracking (bound by instance), but the edit dialog shows the old name until re-resolved on OK. Rewriting source on rename needs an AST printer; deferred.
+- `pi` and `e` shadow bare references to objects so named (the lowercase auto-pool contains `e`); accessor arguments are always object names, so `len(e)` still reaches the object. Pinned by test.
+- Body-dragging a text is deliberately disabled: its free-point ancestors are the *referenced* geometry, and a rigid translate would move the figure. Don't "fix" the dead drag.
+
+---
+
 ## Session 75 — 2026-07-21
 
 **Done**
