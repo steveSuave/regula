@@ -499,12 +499,14 @@ void main() {
 
   group('name-points dialog (Phase 53)', () {
     Future<void> openDialog(WidgetTester tester) async {
-      await tester.tap(find.byIcon(Icons.abc));
+      await tester.tap(find.byIcon(Icons.text_fields));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Name points in sequence…'));
       await tester.pumpAndSettle();
     }
 
     testWidgets('empty input activates the plain alphabet and tints the '
-        'button — not the Points group', (tester) async {
+        'group — not the Points group', (tester) async {
       await pumpEditor(tester);
       await openDialog(tester);
       await tester.tap(find.text('OK'));
@@ -514,28 +516,31 @@ void main() {
       expect(tool, isA<NamePointsTool>());
       expect((tool! as NamePointsTool).startLetter, 'A');
       final theme = Theme.of(tester.element(find.byType(AppBar)));
-      expect(iconColor(tester, Icons.abc), theme.colorScheme.primary);
+      expect(iconColor(tester, Icons.text_fields), theme.colorScheme.primary);
       expect(
         iconColor(tester, Icons.control_point),
         isNot(theme.colorScheme.primary),
-        reason: 'the tool has its own button, not the Points catch-all',
+        reason: 'the tool lives in the text & labels group, not the '
+            'Points catch-all',
       );
     });
 
-    testWidgets('double-clicking the active button deselects without '
-        'reopening the dialog', (tester) async {
+    testWidgets('double-clicking the active group deselects without '
+        'opening the menu or the dialog', (tester) async {
       await pumpEditor(tester);
       await openDialog(tester);
       await tester.tap(find.text('OK'));
       await tester.pumpAndSettle();
       expect(container.read(toolProvider).tool, isA<NamePointsTool>());
 
-      await tester.tap(find.byIcon(Icons.abc));
+      await tester.tap(find.byIcon(Icons.text_fields));
       await tester.pump(kDoubleTapMinTime);
-      await tester.tap(find.byIcon(Icons.abc));
+      await tester.tap(find.byIcon(Icons.text_fields));
       await tester.pumpAndSettle();
 
       expect(container.read(toolProvider).tool, isNull);
+      expect(find.text('Name points in sequence…'), findsNothing,
+          reason: 'no menu opened');
       expect(find.text('OK'), findsNothing, reason: 'no dialog opened');
     });
 
