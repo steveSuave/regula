@@ -1,0 +1,70 @@
+lib/domain/tools/isosceles_trapezium_macro_tool.dart
+  s_f8f37025737182::t_9f21c1f82429a5 53,58-65
+lib/domain/tools/intersection_tool.dart
+  s_f8f37025737182::t_a616e5406ad39b 26-29
+  s_f8f37025737182::t_93ba17bad10f4f 71-75,77-85
+  s_f8f37025737182::t_69cf92d1252bde 6
+test/domain/tools/equilateral_triangle_macro_tool_test.dart
+  s_f8f37025737182::t_78eadf04b56f94 112-136
+test/domain/tools/regular_polygon_macro_tool_test.dart
+  s_f8f37025737182::t_35c2cdb5d1690b 111-137
+lib/domain/tools/equilateral_triangle_macro_tool.dart
+  s_f8f37025737182::t_faf59e3e5a1d10 13-16,27,33,35
+lib/domain/tools/right_trapezium_macro_tool.dart
+  s_f8f37025737182::t_da3aa02f589a24 54,59-65
+lib/domain/tools/angle_by_size_tool.dart
+  s_f8f37025737182::t_8385bb70f6e61e 29,35-38,43
+lib/domain/tools/square_macro_tool.dart
+  s_f8f37025737182::t_56233e4c539d61 29-33
+  s_f8f37025737182::t_7bf3a8a6027aa6 85-86,90-94
+test/domain/tools/midpoint_tool_test.dart
+  s_f8f37025737182::t_5c2d26a1cf704f 113-171
+lib/domain/tools/triangle_center_tool.dart
+  s_f8f37025737182::t_97463892a15021 18-22,33-41
+lib/domain/tools/regular_polygon_macro_tool.dart
+  s_f8f37025737182::t_31e350ab21d9ea 33-36,38-42,44-48,51
+test/domain/tools/square_macro_tool_test.dart
+  s_f8f37025737182::t_4b96ca533c92e9 143-173
+test/domain/tools/isosceles_trapezium_macro_tool_test.dart
+  s_f8f37025737182::t_92b0f53f224c12 117-146
+docs/TODO.md
+  s_f8f37025737182::t_3080e5652f27c8 473-474
+test/domain/tools/intersection_tool_test.dart
+  s_f8f37025737182::t_f5c2b9e3c7e951 10
+  s_f8f37025737182::t_7c6346ebd38600 358-389
+lib/domain/tools/multi_point_tool.dart
+  s_f8f37025737182::t_63040192c0623b 132-141,149-153
+  s_f8f37025737182::t_76154ab2bc9798 51-54
+test/domain/tools/right_trapezium_macro_tool_test.dart
+  s_f8f37025737182::t_bd15e5479802bb 124-153
+test/domain/tools/angle_by_size_tool_test.dart
+  s_f8f37025737182::t_63b6ee985c55b1 179-207
+test/domain/tools/triangle_center_tool_test.dart
+  s_f8f37025737182::t_8161a42f0a7873 8,10
+  s_f8f37025737182::t_16c90dd9d52d6a 150-205
+lib/domain/tools/kite_macro_tool.dart
+  s_f8f37025737182::t_fb6eaac19c0eda 44,49-51
+test/domain/tools/kite_macro_tool_test.dart
+  s_f8f37025737182::t_334aba7776cbe8 123-152
+lib/domain/tools/midpoint_tool.dart
+  s_f8f37025737182::t_8f7cea4f20f8f0 5,18-24,35-39,43-47
+  s_f8f37025737182::t_2f96965051aeda 48
+docs/STATUS.md
+  s_f8f37025737182::t_38270a2b7c513f 17-19,22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "99e564451f280831976cb143a4a8a1ab17c19d82",
+  "prompts": {},
+  "sessions": {
+    "s_f8f37025737182": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "baac3c82-42d4-4553-b797-fb0c18aef8f8",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
