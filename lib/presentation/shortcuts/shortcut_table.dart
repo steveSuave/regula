@@ -24,6 +24,7 @@ enum AppAction {
   zoomOut,
   zoomTo100,
   fitView,
+  declutterLabels,
   toggleAxes,
   toggleGrid,
   toggleSnapToGrid,
@@ -394,6 +395,13 @@ final List<ShortcutBinding> shortcutTable = [
     label: 'Fit construction to view',
     section: ShortcutSection.viewport,
     display: 'F',
+  ),
+  const ShortcutBinding(
+    sequence: [KeyStroke(LogicalKeyboardKey.keyF, shift: true)],
+    action: AppAction.declutterLabels,
+    label: 'Declutter labels — move overlapped labels clear',
+    section: ShortcutSection.viewport,
+    display: '⇧ F',
   ),
   // Shifted single strokes, so the bare G/X leaders stay chord-only:
   // single-stroke bindings resolve before leaders, and the leaders'

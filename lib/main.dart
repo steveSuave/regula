@@ -17,6 +17,7 @@ import 'application/providers/selection_provider.dart';
 import 'application/providers/theme_provider.dart';
 import 'application/providers/tool_provider.dart';
 import 'application/providers/viewport_provider.dart';
+import 'domain/commands/change_attributes_command.dart';
 import 'domain/construction/construction.dart';
 import 'domain/construction/geo_object.dart';
 import 'domain/construction/objects/centroid.dart';
@@ -62,6 +63,8 @@ import 'domain/tools/visibility_tool.dart';
 import 'presentation/canvas/canvas_viewport.dart';
 import 'presentation/canvas/fit_viewport.dart';
 import 'presentation/canvas/geometry_canvas.dart';
+import 'presentation/canvas/label_declutter.dart';
+import 'presentation/canvas/label_obstacles.dart';
 import 'presentation/canvas/name_points_hint.dart';
 import 'presentation/canvas/region_pick_overlay.dart';
 import 'presentation/panels/attributes_inspector.dart';
@@ -330,6 +333,39 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     }
   }
 
+  /// One-shot declutter (Phase 55): move every overlapped label to the
+  /// clearest nearby spot — one batch [ChangeAttributesCommand], so one
+  /// undo restores every label. Clean and manually-placed labels stay
+  /// put; nothing to move is a silent no-op (no undo-stack noise).
+  void _declutterLabels() {
+    final size = _canvasKey.currentContext?.size;
+    if (size == null) {
+      return;
+    }
+    final construction = ref.read(constructionProvider).construction;
+    final viewport = CanvasViewport(ref.read(viewportProvider));
+    final scene = buildDeclutterScene(construction, viewport, size);
+    final moved = declutterLabels(
+      labels: scene.labels,
+      rects: scene.rects,
+      capsules: scene.capsules,
+      canvas: Offset.zero & size,
+      maxOffset: GeometryCanvas.labelOffsetMaxPx,
+    );
+    if (moved.isEmpty) {
+      return;
+    }
+    ref.read(commandStackProvider.notifier).execute(
+          ChangeAttributesCommand({
+            for (final entry in moved.entries)
+              entry.key: construction.byId(entry.key)!.attributes.copyWith(
+                    labelDx: entry.value.dx,
+                    labelDy: entry.value.dy,
+                  ),
+          }),
+        );
+  }
+
   /// Zoom step per key press; scroll zoom is continuous, keys are not.
   static const double _keyZoomFactor = 1.2;
 
@@ -562,6 +598,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _zoomTo100();
       case AppAction.fitView:
         _fitConstruction();
+      case AppAction.declutterLabels:
+        _declutterLabels();
       case AppAction.toggleAxes:
         ref.read(documentSettingsProvider.notifier).toggleAxes();
       case AppAction.toggleGrid:
@@ -795,6 +833,11 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                   tooltip: 'Reset view (origin at 100 %)',
                   icon: const Icon(Icons.filter_center_focus),
                   onPressed: () => ref.read(viewportProvider.notifier).reset(),
+                ),
+                IconButton(
+                  tooltip: 'Declutter labels (⇧ F)',
+                  icon: const Icon(Icons.auto_fix_high),
+                  onPressed: _declutterLabels,
                 ),
                 _gridMenu(),
                 IconButton(
