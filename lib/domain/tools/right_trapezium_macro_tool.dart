@@ -51,15 +51,18 @@ class RightTrapeziumMacroTool extends MultiPointTool {
       curve2: parallelThroughC,
       branchIndex: 0,
     );
+    final corner = dedupedDerivedPoint(cornerD);
 
     return [
       sideAB,
       sideBC,
-      perpendicularA,
-      parallelThroughC,
-      cornerD,
-      Segment(id: newId(), point1: c, point2: cornerD),
-      Segment(id: newId(), point1: cornerD, point2: a),
+      if (identical(corner, cornerD)) ...[
+        perpendicularA,
+        parallelThroughC,
+        cornerD,
+      ],
+      Segment(id: newId(), point1: c, point2: corner),
+      Segment(id: newId(), point1: corner, point2: a),
     ];
   }
 }

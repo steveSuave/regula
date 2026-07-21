@@ -50,16 +50,19 @@ class IsoscelesTrapeziumMacroTool extends MultiPointTool {
       axis: axis,
       newId: newId,
     );
+    final corner = dedupedDerivedPoint(cornerD);
 
     return [
       sideAB,
       sideBC,
-      baseMidpoint,
-      axis,
-      ...scaffolding,
-      cornerD,
-      Segment(id: newId(), point1: c, point2: cornerD),
-      Segment(id: newId(), point1: cornerD, point2: a),
+      if (identical(corner, cornerD)) ...[
+        baseMidpoint,
+        axis,
+        ...scaffolding,
+        cornerD,
+      ],
+      Segment(id: newId(), point1: c, point2: corner),
+      Segment(id: newId(), point1: corner, point2: a),
     ];
   }
 }

@@ -48,7 +48,10 @@ abstract class MultiPointTool implements ToolInputPreview {
   /// The returned list must be in dependency order (an object only after
   /// its parents) — each is added with its own `AddObjectCommand`, in
   /// order. Single-object tools return a one-element list; macro tools
-  /// (square, …) return the whole shape, hidden scaffolding included.
+  /// (square, …) return the whole shape, hidden scaffolding included. An
+  /// *empty* list means the tool's whole product already exists (see
+  /// [dedupedDerivedPoint]) — [commitCollected] then refuses the
+  /// completing input instead of committing.
   List<GeoObject> buildObjects(List<GeoPoint> points);
 
   final List<({GeoPoint point, bool isNew})> _collected = [];
@@ -126,15 +129,28 @@ abstract class MultiPointTool implements ToolInputPreview {
 
   /// Commits everything collected — new free points first, then
   /// [buildObjects] — as one undo unit, and resets the collection.
-  ToolCommitted commitCollected() {
+  ///
+  /// A single-output tool whose whole product deduplicated away (an empty
+  /// [buildObjects] and no new points) refuses the completing input
+  /// instead — [ToolIgnored], with that last vertex dropped so the rest
+  /// of the collection stays armed — the `IntersectionTool` convention:
+  /// nothing is added and no empty undo unit is pushed. Only pure
+  /// point-collection flows can end up here (a deduplicated product means
+  /// every input was an existing point), so dropping the last *collected*
+  /// vertex is dropping the refused tap.
+  ToolResult commitCollected() {
     final vertices = List.of(_collected);
-    _collected.clear();
     final commands = <Command>[
       for (final v in vertices)
         if (v.isNew) AddObjectCommand(v.point),
       for (final object in buildObjects([for (final v in vertices) v.point]))
         AddObjectCommand(object),
     ];
+    if (commands.isEmpty) {
+      _collected.removeLast();
+      return const ToolIgnored();
+    }
+    _collected.clear();
     return ToolCommitted(
       commands.length == 1 ? commands.single : MacroCommand(commands),
     );

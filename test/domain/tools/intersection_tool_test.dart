@@ -7,6 +7,7 @@ import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
+import 'package:regula/domain/construction/objects/midpoint.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/construction/objects/two_line_bisector_line.dart';
 import 'package:regula/domain/construction/objects/vertex_angle.dart';
@@ -352,6 +353,38 @@ void main() {
         t.onInput(ToolInput(const Vec2(0, 2), hit: vertical)),
         isA<ToolAccepted>(),
         reason: 'after reset the next curve is the first input again',
+      );
+    });
+
+    test('a point on the crossing by theorem refuses the tap', () {
+      // The centroid, built as the crossing of two medians, sits on the
+      // *third* median too — by theorem, not by incident parents, so the
+      // structural check cannot see it; the numeric identity probe can.
+      final a = FreePoint(id: 'a', position: const Vec2(0, 0));
+      final b = FreePoint(id: 'b', position: const Vec2(6, 0));
+      final c = FreePoint(id: 'c', position: const Vec2(0, 6));
+      final midAB = Midpoint(id: 'mab', point1: a, point2: b);
+      final midBC = Midpoint(id: 'mbc', point1: b, point2: c);
+      final midAC = Midpoint(id: 'mac', point1: a, point2: c);
+      final median1 = Segment(id: 'm1', point1: a, point2: midBC);
+      final median2 = Segment(id: 'm2', point1: b, point2: midAC);
+      final median3 = Segment(id: 'm3', point1: c, point2: midAB);
+      final crossing = IntersectionPoint(
+        id: 'g',
+        curve1: median1,
+        curve2: median2,
+        branchIndex: 0,
+      );
+      final objects = <GeoObject>[
+        a, b, c, midAB, midBC, midAC, median1, median2, median3, crossing,
+      ];
+      final t = tool();
+
+      t.onInput(ToolInput(const Vec2(2, 2), hit: median2, objects: objects));
+      expect(
+        t.onInput(ToolInput(const Vec2(2, 2), hit: median3, objects: objects)),
+        isA<ToolIgnored>(),
+        reason: 'the medians crossing already occupies median2 ∩ median3',
       );
     });
   });

@@ -176,4 +176,33 @@ void main() {
       expect(tool.collectedVertices, hasLength(1));
     });
   });
+
+  group('rotated arm dedup', () {
+    test('laying the same angle off twice reuses the arm point', () {
+      final construction = Construction();
+      final arm = FreePoint(id: 'arm', position: const Vec2(2, 0));
+      final vertex = FreePoint(id: 'v', position: const Vec2(0, 0));
+      construction.add(arm);
+      construction.add(vertex);
+      final tool = toolFor(1);
+      ToolResult tap(FreePoint point) => tool.onInput(
+          ToolInput(point.position, hit: point, objects: construction.objects));
+
+      tap(arm);
+      (tap(vertex) as ToolCommitted).command.apply(construction);
+      final rotated = construction.objects.whereType<RotatedPoint>().single;
+
+      tap(arm);
+      (tap(vertex) as ToolCommitted).command.apply(construction);
+
+      expect(
+          construction.objects.whereType<RotatedPoint>().single, same(rotated),
+          reason: 'the rotated arm point is reused, not stacked');
+      final markers = construction.objects.whereType<VertexAngle>().toList();
+      expect(markers, hasLength(2),
+          reason: 'the marker itself is still added');
+      expect(identical(markers[1].arm2, rotated), isTrue,
+          reason: 'the second marker is wired to the existing arm point');
+    });
+  });
 }

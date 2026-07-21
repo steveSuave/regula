@@ -121,4 +121,34 @@ void main() {
       expect(cornerD(construction).position, const Vec2(0, 2));
     });
   });
+
+  group('derived corner dedup', () {
+    test('re-stamping over the same corners reuses the derived corner', () {
+      final construction = Construction();
+      final a = FreePoint(id: 'A', position: const Vec2(0, 0));
+      final b = FreePoint(id: 'B', position: const Vec2(4, 0));
+      final c = FreePoint(id: 'C', position: const Vec2(2, 2));
+      for (final point in [a, b, c]) {
+        construction.add(point);
+      }
+      ToolResult tap(FreePoint point) => tool.onInput(
+          ToolInput(point.position, hit: point, objects: construction.objects));
+
+      tap(a);
+      tap(b);
+      (tap(c) as ToolCommitted).command.apply(construction);
+      expect(
+          construction.objects.whereType<IntersectionPoint>(), hasLength(1));
+      final before = construction.length;
+
+      tap(a);
+      tap(b);
+      (tap(c) as ToolCommitted).command.apply(construction);
+
+      expect(construction.objects.whereType<IntersectionPoint>(), hasLength(1),
+          reason: 'the corner is reused, its scaffolding skipped');
+      expect(construction.length, before + 4,
+          reason: 'only the four side segments are re-added');
+    });
+  });
 }

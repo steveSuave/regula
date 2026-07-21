@@ -14,9 +14,12 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 - `MultiPointTool.dedupedDerivedPoint` (snapshot of `ToolInput.objects` per collected input) + `ParallelogramMacroTool` wiring: a reused corner drops the hidden parallels entirely, so the commit is just the 4 visible segments. Accidental coincidences (a stray free point parked exactly on the corner) still create the independent derived corner — pinned by test.
 - Tests: 8 helper cases (incl. bit-exact restoration and a verbatim replay of the reported file's geometry) + 2 macro-level cases. 1284 green, analyze clean.
 
+- Rollout (same session, user request "fix it everywhere possible"): every tool that derives a point which can pre-exist now dedups — square (both corners), kite, right/isosceles trapezium, equilateral triangle, regular polygon (chained vertices continue from whichever instance survived), midpoint tool (either order + circle-center on a center-point circle), triangle centers, angle-by-size (marker still added, wired to the reused arm), intersection tool (numeric refusal atop its structural check). `commitCollected` now returns `ToolResult`: an all-deduped product refuses the completing tap (`ToolIgnored`, last vertex dropped, rest stays armed — the IntersectionTool convention; ToolIgnored skips the revision bump, and un-cleared collection means no stale preview). 12 new tests (double-stamp per macro; medians-crossing-as-centroid for both centroid and intersection tools), 1297 green.
+- NOT wired, deliberately: rectangle/rhombus D, trapezium D, right/isosceles triangle third corner, fixed-length B — each depends on a `PointOnObject` parameter created in the same commit, a fresh DOF no existing point can identically track, so dedup provably can never fire there. Don't "complete" the rollout with dead code.
+
 **Next**
-- Roll `dedupedDerivedPoint` out to the other corner-deriving macros (square, rectangle, rhombus, kite, trapeziums, triangles, regular polygon) — mechanical (one call + conditional scaffolding drop per corner) but each wants its own tests.
 - Phase 43 (viewport rotation) still queued; text tool expected.
+- Duplicate *segments* (re-stamping also re-adds sides over existing ones) are the analogous next cleanup if users hit it — points were the reported problem.
 
 **Open questions / gotchas**
 - The probe mutates live `FreePoint.position` / `PointOnObject.parameter` directly (bypassing `Construction` so no listeners fire) and restores before returning — safe only because it runs synchronously inside commit; don't lift it anywhere async.

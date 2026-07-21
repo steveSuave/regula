@@ -41,15 +41,14 @@ class KiteMacroTool extends MultiPointTool {
       axis: diagonalAC,
       newId: newId,
     );
+    final corner = dedupedDerivedPoint(cornerD);
 
     return [
-      diagonalAC,
       sideAB,
       sideBC,
-      ...scaffolding,
-      cornerD,
-      Segment(id: newId(), point1: c, point2: cornerD),
-      Segment(id: newId(), point1: cornerD, point2: a),
+      if (identical(corner, cornerD)) ...[diagonalAC, ...scaffolding, cornerD],
+      Segment(id: newId(), point1: c, point2: corner),
+      Segment(id: newId(), point1: corner, point2: a),
     ];
   }
 }

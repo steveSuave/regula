@@ -30,18 +30,25 @@ class RegularPolygonMacroTool extends MultiPointTool {
   List<GeoObject> buildObjects(List<GeoPoint> points) {
     final vertices = <GeoPoint>[points[0], points[1]];
     final turn = 2 * math.pi / sideCount - math.pi;
+    // Each derived vertex dedups independently ([dedupedDerivedPoint]) so
+    // re-stamping over an existing polygon's two vertices reuses the whole
+    // ring; the chain continues from whichever instance survived.
+    final created = <GeoPoint>[];
     for (var k = 2; k < sideCount; k++) {
-      vertices.add(
-        RotatedPoint(
-          id: newId(),
-          point: vertices[k - 2],
-          center: vertices[k - 1],
-          angle: turn,
-        ),
+      final candidate = RotatedPoint(
+        id: newId(),
+        point: vertices[k - 2],
+        center: vertices[k - 1],
+        angle: turn,
       );
+      final vertex = dedupedDerivedPoint(candidate);
+      if (identical(vertex, candidate)) {
+        created.add(candidate);
+      }
+      vertices.add(vertex);
     }
     return [
-      ...vertices.skip(2),
+      ...created,
       for (var k = 0; k < sideCount; k++)
         Segment(
           id: newId(),

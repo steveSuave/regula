@@ -109,4 +109,29 @@ void main() {
       expectEquilateral(construction);
     });
   });
+
+  group('derived apex dedup', () {
+    test('re-stamping over the same corners reuses the apex', () {
+      final construction = Construction();
+      final a = FreePoint(id: 'A', position: const Vec2(0, 0));
+      final b = FreePoint(id: 'B', position: const Vec2(2, 0));
+      construction.add(a);
+      construction.add(b);
+      ToolResult tap(FreePoint point) => tool.onInput(
+          ToolInput(point.position, hit: point, objects: construction.objects));
+
+      tap(a);
+      (tap(b) as ToolCommitted).command.apply(construction);
+      final apex = construction.objects.whereType<RotatedPoint>().single;
+      final before = construction.length;
+
+      tap(a);
+      (tap(b) as ToolCommitted).command.apply(construction);
+
+      expect(construction.objects.whereType<RotatedPoint>().single, same(apex),
+          reason: 'the apex is reused, not stacked');
+      expect(construction.length, before + 3,
+          reason: 'only the three side segments are re-added');
+    });
+  });
 }

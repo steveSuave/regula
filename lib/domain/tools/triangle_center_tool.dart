@@ -15,6 +15,11 @@ typedef TriangleCenterBuilder = TriangleCenterPoint Function({
 /// Collects three vertices, then emits one triangle center. Input
 /// handling (existing points vs new free points, single undo unit,
 /// preview markers) is [MultiPointTool]'s.
+///
+/// A center that already exists identically — the same tool run twice on
+/// the triangle, or a manually constructed equivalent like the crossing
+/// of two medians standing in for the centroid — refuses the completing
+/// tap instead of stacking a duplicate ([dedupedDerivedPoint]).
 class TriangleCenterTool extends MultiPointTool {
   TriangleCenterTool({required super.newId, required this.buildCenter});
 
@@ -25,12 +30,13 @@ class TriangleCenterTool extends MultiPointTool {
   int get pointCount => 3;
 
   @override
-  List<GeoObject> buildObjects(List<GeoPoint> points) => [
-        buildCenter(
-          id: newId(),
-          vertex1: points[0],
-          vertex2: points[1],
-          vertex3: points[2],
-        ),
-      ];
+  List<GeoObject> buildObjects(List<GeoPoint> points) {
+    final center = buildCenter(
+      id: newId(),
+      vertex1: points[0],
+      vertex2: points[1],
+      vertex3: points[2],
+    );
+    return [if (identical(dedupedDerivedPoint(center), center)) center];
+  }
 }
