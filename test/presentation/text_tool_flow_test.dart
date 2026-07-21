@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/application/providers/command_stack_provider.dart';
 import 'package:regula/application/providers/construction_provider.dart';
+import 'package:regula/application/providers/tool_provider.dart';
 import 'package:regula/domain/construction/geo_object.dart';
 import 'package:regula/domain/construction/object_attributes.dart';
 import 'package:regula/domain/construction/objects/expression_text.dart';
@@ -185,6 +186,38 @@ void main() {
           .whereType<GeoText>(),
       isEmpty,
     );
+  });
+
+  testWidgets('dragging a text body moves its anchor freely — no 40 px clamp',
+      (tester) async {
+    await pumpEditor(tester);
+    await activate(tester);
+    await tapWorld(tester, const Offset(250, 100));
+    await submitContent(tester, 'movable note');
+    final text = soleText();
+    expect(text.anchor, const Vec2(250, -100));
+
+    // Back to move/select mode; grab inside the text and drag far.
+    container.read(toolProvider.notifier).deactivate();
+    await tester.pump();
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+    await tester.dragFrom(
+      origin + const Offset(255, 95),
+      const Offset(200, 150),
+    );
+    await tester.pumpAndSettle();
+
+    expect(text.anchor, const Vec2(450, -250),
+        reason: 'anchor rides the full drag delta, unclamped');
+    expect(text.attributes.labelDx, 0,
+        reason: 'the caption offset is untouched — the anchor moved');
+    expect(text.attributes.labelDy, 0);
+    expect(text.renderedText, 'movable note');
+
+    // One undo step for the whole gesture.
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(text.anchor, const Vec2(250, -100));
   });
 
   testWidgets('G E activates the tool and tints the group icon',

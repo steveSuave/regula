@@ -3,6 +3,7 @@ import 'dart:collection';
 import '../math/vec2.dart';
 import 'geo_object.dart';
 import 'object_attributes.dart';
+import 'objects/expression_text.dart';
 import 'objects/free_point.dart';
 import 'objects/point_on_object.dart';
 
@@ -78,6 +79,22 @@ class Construction {
     }
     object.position = position;
     _recomputeDependentsOf(id);
+    _notify();
+  }
+
+  /// Moves the text [id]'s world anchor to [anchor] and notifies.
+  ///
+  /// The text sibling of [moveFreePoint] — the anchor is pure placement,
+  /// so nothing recomputes: a text's rendered value reads its *parents*,
+  /// never its own position, and texts are not referenceable, so they
+  /// have no dependents. Throws [ArgumentError] when [id] is not an
+  /// [ExpressionText].
+  void moveTextAnchor(String id, Vec2 anchor) {
+    final object = _objects[id];
+    if (object is! ExpressionText) {
+      throw ArgumentError('$id is not an ExpressionText in this construction');
+    }
+    object.anchor = anchor;
     _notify();
   }
 

@@ -15,15 +15,16 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 - `GeoText` is the eighth sealed kind (`renderedText` + fixed `anchor`); `ExpressionText` binds names → instances once at creation (renames never break values; the source string goes stale until the next edit — accepted v1). Rides the label machinery wholesale: painter/hit-tester/label/declutter/fit/naming/tree/codec switch cases added, plus the three non-compiler-flagged sites (body drag disabled in `DragSession.start`, canvas label-rect tap loop, auto-namer `hideLabel` group). Codec type is additive — no version bump.
 - Tool seam: additive `ToolInput.text`; the canvas pre-gates `TextTool` like `DeleteTool` (dialog is presentation, tool stays pure), re-checks after the async gap, and the tool itself quietly `ToolIgnored`s stale references. Editing = delete + re-add under one `MacroCommand`, same id and attributes — texts are not referenceable, so the cascade is always just the text.
 - Tests: parser (incl. glados fuzz + random-AST round-trip), template, evaluator (incl. the bare-`e`-vs-`len(e)` pin), object recompute/cascade through a live `Construction`, codec round-trip + tampered-parents rejection, tool unit tests, end-to-end flow widget tests (create/cancel/validation-error/edit/undo, `G E`). 1377 green, analyze clean, web release build compiles.
+- Follow-up (same session, user feedback: "dragging seems weird — why only a small radius?"): the v1 label-drag repositioning and its 40 px caption clamp are gone for texts. Body-dragging a text now moves its **world anchor** freely — mutable `ExpressionText.anchor`, `Construction.moveTextAnchor` (no dependents to recompute: texts aren't referenceable), `MoveTextAnchorCommand` (one per gesture, the free-point contract), `_TextAnchorDragSession` (total-delta preview, rollback on end/cancel, no grid snap — annotation, not geometry), and the canvas label loop routes `GeoText` grabs to the body drag. Referenced geometry provably stays put; caption offsets untouched. +7 tests, 1384 green.
 
 **Next**
 - Phase 43 (viewport rotation) remains the queued phase.
-- Text follow-ups if users ask: `MoveTextAnchorCommand` (anchor is immutable v1 — repositioning is the label drag, radially clamped to 40 px), named/referenceable calculations (dependency chains between texts), numeric integrals (the function registry is table-driven for exactly this).
+- Text follow-ups if users ask: named/referenceable calculations (dependency chains between texts), numeric integrals (the function registry is table-driven for exactly this).
 
 **Open questions / gotchas**
 - Renaming a referenced object does **not** rewrite a text's stored source string — values keep tracking (bound by instance), but the edit dialog shows the old name until re-resolved on OK. Rewriting source on rename needs an AST printer; deferred.
 - `pi` and `e` shadow bare references to objects so named (the lowercase auto-pool contains `e`); accessor arguments are always object names, so `len(e)` still reaches the object. Pinned by test.
-- Body-dragging a text is deliberately disabled: its free-point ancestors are the *referenced* geometry, and a rigid translate would move the figure. Don't "fix" the dead drag.
+- A text's body drag moves its **anchor**, not its free-point ancestors — those are the *referenced* geometry, and a rigid translate would move the figure. Don't "simplify" `_TextAnchorDragSession` into the translate path.
 
 ---
 

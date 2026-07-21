@@ -190,7 +190,9 @@ abstract class GeoText extends GeoObject {
 
   String? get renderedText;
 
-  /// World position the text hangs from. Fixed at creation.
+  /// World position the text hangs from. Set at creation; moved only by
+  /// `MoveTextAnchorCommand` (body-dragging a text repositions the text
+  /// itself — never the geometry its expressions reference).
   Vec2 get anchor;
 
   @override
