@@ -2,11 +2,13 @@ import 'dart:math' as math;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/domain/commands/move_free_point_command.dart';
+import 'package:regula/domain/commands/move_text_anchor_command.dart';
 import 'package:regula/domain/commands/set_point_on_object_parameter_command.dart';
 import 'package:regula/domain/commands/translate_objects_command.dart';
 import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/compass_circle.dart';
+import 'package:regula/domain/construction/objects/expression_text.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
@@ -39,6 +41,65 @@ void main() {
   group('DragSession.start', () {
     test('refuses derived points', () {
       expect(DragSession.start(construction, midpoint, Vec2.zero), isNull);
+    });
+
+    test('a text drags its own anchor, never the referenced geometry', () {
+      final text = ExpressionText(
+        id: 't',
+        content: '{dist(A, B)}',
+        anchor: const Vec2(10, 10),
+        references: [a, b],
+      );
+      construction.add(text);
+
+      final session =
+          DragSession.start(construction, text, const Vec2(11, 10))!;
+      session.update(const Vec2(211, 60)); // way past any 40 px clamp
+      expect(text.anchor, const Vec2(210, 60),
+          reason: 'anchor rides the pointer delta, unclamped');
+      expect(a.position, Vec2.zero);
+      expect(b.position, const Vec2(4, 0));
+
+      final command = session.end()! as MoveTextAnchorCommand;
+      expect(text.anchor, const Vec2(10, 10),
+          reason: 'end rolls the preview back');
+      expect(command.textId, 't');
+      expect(command.from, const Vec2(10, 10));
+      expect(command.to, const Vec2(210, 60));
+
+      command.apply(construction);
+      expect(text.anchor, const Vec2(210, 60));
+      command.undo(construction);
+      expect(text.anchor, const Vec2(10, 10));
+    });
+
+    test('a text drag that ends where it started returns null', () {
+      final text = ExpressionText(
+        id: 't',
+        content: 'note',
+        anchor: const Vec2(1, 1),
+        references: const [],
+      );
+      construction.add(text);
+      final session = DragSession.start(construction, text, Vec2.zero)!;
+      session.update(const Vec2(3, 3));
+      session.update(Vec2.zero);
+      expect(session.end(), isNull);
+      expect(text.anchor, const Vec2(1, 1));
+    });
+
+    test('cancelling a text drag restores the anchor', () {
+      final text = ExpressionText(
+        id: 't',
+        content: 'note',
+        anchor: const Vec2(1, 1),
+        references: const [],
+      );
+      construction.add(text);
+      final session = DragSession.start(construction, text, Vec2.zero)!;
+      session.update(const Vec2(50, 50));
+      session.cancel();
+      expect(text.anchor, const Vec2(1, 1));
     });
 
     test('accepts free points and derived non-points', () {

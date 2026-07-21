@@ -355,6 +355,14 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
           !rect.inflate(GeometryCanvas.labelGrabSlackPx).contains(screen)) {
         continue;
       }
+      // A text's label *is* its body: grabbing it anywhere moves the
+      // world anchor (free placement, no radial clamp) instead of the
+      // caption offset — captions ride another object's anchor, a text
+      // owns its own.
+      if (object is GeoText) {
+        ref.read(toolProvider.notifier).startDrag(object, world);
+        return;
+      }
       setState(() {
         _labelDrag = _LabelDrag(
           id: object.id,

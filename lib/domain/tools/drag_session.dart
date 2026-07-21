@@ -2,12 +2,14 @@ import 'dart:math' as math;
 
 import '../commands/command.dart';
 import '../commands/move_free_point_command.dart';
+import '../commands/move_text_anchor_command.dart';
 import '../commands/set_point_on_object_parameter_command.dart';
 import '../commands/translate_objects_command.dart';
 import '../construction/construction.dart';
 import '../construction/free_point_ancestors.dart';
 import '../construction/geo_object.dart';
 import '../construction/objects/compass_circle.dart';
+import '../construction/objects/expression_text.dart';
 import '../construction/objects/free_point.dart';
 import '../construction/objects/point_on_object.dart';
 import '../math/grid_snap.dart';
@@ -34,6 +36,9 @@ import '../math/vec2.dart';
 /// - a [CompassCircle] drags by translating only its *center's* free
 ///   ancestors: the radius is a measurement of two other points, not part
 ///   of the rigid body, so those points stay put;
+/// - an [ExpressionText] moves its own world anchor →
+///   [MoveTextAnchorCommand]: its free-point ancestors are the geometry
+///   its expressions *reference*, which must stay put;
 /// - any other object drags as a rigid translation of its free-point
 ///   ancestors → [TranslateObjectsCommand]: grab a circle's rim and the
 ///   whole circle moves because its defining points do.
@@ -62,8 +67,11 @@ abstract class DragSession {
       return null;
     }
     // A text's free-point ancestors are the objects its expressions
-    // *reference* — body-dragging it would move the measured geometry.
-    // Repositioning a text is the label drag's job.
+    // *reference* — rigidly translating it would move the measured
+    // geometry. Instead the text moves its own anchor, freely.
+    if (target is ExpressionText) {
+      return _TextAnchorDragSession(construction, target, grabStart);
+    }
     if (target is GeoText) {
       return null;
     }
@@ -174,6 +182,57 @@ class _TranslateDragSession implements DragSession {
       if (_construction.contains(id)) {
         _construction.moveFreePoint(id, _startPositions[id]!);
       }
+    }
+  }
+}
+
+/// An [ExpressionText] moving its own world anchor — free placement, no
+/// radial clamp (the clamp belongs to *captions* riding another object's
+/// anchor; a text's body is the object). Grid snap is deliberately not
+/// consulted: a text is annotation beside the figure, not geometry on it.
+class _TextAnchorDragSession implements DragSession {
+  _TextAnchorDragSession(this._construction, ExpressionText text, this._grabStart)
+      : _textId = text.id,
+        _startAnchor = text.anchor;
+
+  final Construction _construction;
+  final String _textId;
+  final Vec2 _startAnchor;
+  final Vec2 _grabStart;
+
+  Vec2 _delta = Vec2.zero;
+
+  @override
+  void update(Vec2 pointer) {
+    // Total-delta form like the rigid translate: the anchor rides the
+    // pointer's motion regardless of frame timing, and the grab point
+    // within the text stays under the finger.
+    _delta = pointer - _grabStart;
+    _construction.moveTextAnchor(_textId, _startAnchor + _delta);
+  }
+
+  @override
+  Command? end() {
+    final delta = _delta;
+    _rollback();
+    if (delta == Vec2.zero) {
+      return null;
+    }
+    return MoveTextAnchorCommand(
+      textId: _textId,
+      from: _startAnchor,
+      to: _startAnchor + delta,
+    );
+  }
+
+  @override
+  void cancel() => _rollback();
+
+  /// Restores the start anchor verbatim (float-exact, like the command).
+  /// Skipped if the text vanished under the session.
+  void _rollback() {
+    if (_construction.contains(_textId)) {
+      _construction.moveTextAnchor(_textId, _startAnchor);
     }
   }
 }

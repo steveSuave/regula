@@ -42,8 +42,11 @@ class ExpressionText extends GeoText {
   /// The raw template, `{…}` slots included.
   final String content;
 
+  /// Mutable, but only via `Construction.moveTextAnchor` — one
+  /// `MoveTextAnchorCommand` per drag gesture, previews excepted (the
+  /// free-point contract).
   @override
-  final Vec2 anchor;
+  Vec2 anchor;
 
   final TextTemplate _template;
   final List<GeoObject> _references;
