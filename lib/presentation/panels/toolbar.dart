@@ -678,6 +678,24 @@ Future<NamePointsTool?> askNamePointsTool(BuildContext context) =>
       builder: (context) => const _NamePointsDialog(),
     );
 
+/// Asks for a text's content (Phase 58) — the shared path behind the
+/// Text & labels row and the `G E` shortcut, for both creating and
+/// editing ([initial] pre-fills the field). [validate] returns an error
+/// message or null; like the naming dialog, invalid input keeps the
+/// dialog open with the inline error rather than reading as cancel —
+/// a typed expression is deliberate enough that silently dropping it
+/// would read as a broken tool. Empty input reads as cancel.
+Future<String?> askTextContent(
+  BuildContext context, {
+  String? initial,
+  required String? Function(String content) validate,
+}) =>
+    showDialog<String>(
+      context: context,
+      builder: (context) =>
+          _TextContentDialog(initial: initial, validate: validate),
+    );
+
 /// The dialog owns its [TextEditingController] so it outlives the exit
 /// animation (disposing right after `showDialog` returns crashes the
 /// still-rendering `TextField`).
@@ -819,6 +837,73 @@ class _LengthDialogState extends State<_LengthDialog> {
 
 /// Naming-sequence sibling of [_RatioDialog] (same controller-lifetime
 /// reasoning), with inline validation instead of garbage-reads-as-cancel.
+class _TextContentDialog extends StatefulWidget {
+  const _TextContentDialog({required this.initial, required this.validate});
+
+  final String? initial;
+  final String? Function(String content) validate;
+
+  @override
+  State<_TextContentDialog> createState() => _TextContentDialogState();
+}
+
+class _TextContentDialogState extends State<_TextContentDialog> {
+  late final _controller = TextEditingController(text: widget.initial);
+  String? _error;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final content = _controller.text;
+    if (content.trim().isEmpty) {
+      Navigator.pop(context);
+      return;
+    }
+    final error = widget.validate(content);
+    if (error != null) {
+      setState(() => _error = error);
+      return;
+    }
+    Navigator.pop(context, content);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Text'),
+      content: TextField(
+        key: const ValueKey('text-content-field'),
+        controller: _controller,
+        autofocus: true,
+        minLines: 1,
+        maxLines: 4,
+        decoration: InputDecoration(
+          hintText: 'Wrap live calculations in braces — '
+              'e.g. AB = {dist(A, B)}',
+          errorText: _error,
+        ),
+        onChanged: (_) {
+          if (_error != null) {
+            setState(() => _error = null);
+          }
+        },
+        onSubmitted: (_) => _submit(),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        TextButton(onPressed: _submit, child: const Text('OK')),
+      ],
+    );
+  }
+}
+
 class _NamePointsDialog extends StatefulWidget {
   const _NamePointsDialog();
 
