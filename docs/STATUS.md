@@ -6,6 +6,26 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 73 — 2026-07-21
+
+**Done**
+- Phase 55 (user request): a one-shot **Declutter labels** action — wand button in the app bar after Reset view, `⇧ F` — that moves every overlapped label (names, values, measurements) to the clearest nearby spot. One batch `ChangeAttributesCommand` rewriting `labelDx`/`labelDy` for the moved objects only, so a single undo restores every label; nothing to move is a silent no-op.
+- `label_declutter.dart` (pure `dart:ui`, no Flutter framework): greedy insertion-order solver. Scene primitives `Capsule` / `RectObstacle` / `LabelBox`; scoring = label-on-label 4× area + ink 2× (own ink at half weight) + off-canvas 8×; ~50 candidates per label (current, default, 16 directions × 3 gaps with the box *beside* the anchor), radially clamped to the manual drag's `labelOffsetMaxPx` 40 (user-confirmed choice: stay in the drag radius, least-bad in dense spots rather than far-away labels). Keep/move thresholds (8 px² each) so clean labels and deliberate manual placements never churn.
+- Capsule overlap deliberately deviates from naive clipped-length × width: it multiplies the clipped centerline by a penetration depth read off the span's midpoint, so the *default* placement grazing its own stroke edge-on scores ~0 — otherwise every clean segment label would move.
+- `label_obstacles.dart`: `buildDeclutterScene` mirrors `GeometryPainter._drawObject` per kind (point dots → rects; segments/rays/lines honoring `lineClip` → capsules; circles/arcs/sectors/loci → chord runs; polygons → edges; angle markers → square edges or ≤ 30°-step spokes + rim so the reflex side stays free; measurements label-only). Label rects come from `labelScreenRect`, so the solver can't disagree with the painter. Offsets persist as the existing additive JSON fields — no format bump.
+- Tests: 12 solver + 4 builder cases (see TODO). 1274 green, analyze clean.
+- Ad-hoc Playwright smoke on the fresh release build (8321 server reused): segment A→B via `S`, `G M` + Enter renames the endpoints (allocator freed/reused letters → bottom point ends up **C** with its label lying across the stroke), `⇧ F` moved C's offset (6,−18) → (20,−9.5) leaving the clean labels alone, one Ctrl+Z restored all three saved-doc offsets exactly, zero console errors — **ADHOC PASS** (screenshot-verified: label clear of the stroke).
+
+**Next**
+- Phase 43 (viewport rotation) is the last queued phase.
+- Possible declutter follow-ups if requested: leader lines for dense areas (would relax the 40 px radius), auto-declutter after transforms.
+
+**Open questions / gotchas**
+- The segment tool auto-names new endpoints; `G M` alphabet mode then *re-allocates* (a tap frees the old letter for the next tap) — surprised the smoke script, which asserted on A/B while the points ended up C/A. Emergent from the Phase 53 single-rule allocator, already test-pinned there.
+- Declutter scores against the *current viewport*: offsets are screen-px and zoom-independent, so a layout decluttered when zoomed-out may overlap again after zooming — by design (press `⇧ F` again); nothing re-solves automatically.
+
+---
+
 ## Session 72 — 2026-07-21
 
 **Done**
