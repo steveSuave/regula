@@ -55,6 +55,7 @@ import 'domain/tools/right_trapezium_macro_tool.dart';
 import 'domain/tools/right_triangle_macro_tool.dart';
 import 'domain/tools/square_macro_tool.dart';
 import 'domain/tools/tangent_tool.dart';
+import 'domain/tools/text_tool.dart';
 import 'domain/tools/three_point_tool.dart';
 import 'domain/tools/transform_object_tool.dart';
 import 'domain/tools/trapezium_macro_tool.dart';
@@ -699,6 +700,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _activateAngleBySizeTool();
       case AppAction.namePointsTool:
         _activateNamePointsTool();
+      case AppAction.textTool:
+        tools.activate(TextTool(newId: newObjectId));
       case AppAction.polygonTool:
         tools.activate(PolygonTool(newId: newObjectId));
       case AppAction.squareMacroTool:
@@ -758,7 +761,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   Widget _appBarRow({
     required bool compactPanels,
     required bool hasSelection,
-    required bool namePointsActive,
+    required bool textLabelsActive,
     required bool hideDeleteActive,
     required UndoRedoState undoRedo,
   }) {
@@ -826,7 +829,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                   ],
                 ),
                 const GeometryToolbar(),
-                _textLabelsGroup(active: namePointsActive),
+                _textLabelsGroup(active: textLabelsActive),
                 IconButton(
                   tooltip: 'Fit construction to view',
                   icon: const Icon(Icons.fit_screen),
@@ -890,7 +893,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   /// Declutter is a one-shot action, not a mode — its row fires
   /// immediately and never tints the icon.
   Widget _textLabelsGroup({required bool active}) {
-    const idleTooltip = 'Text & labels: name points, declutter labels';
+    const idleTooltip =
+        'Text & labels: text with calculations, name points, declutter';
     final button = PopupMenuButton<VoidCallback>(
       key: const ValueKey('text-labels-group'),
       tooltip: active ? '$idleTooltip — double-click to deselect' : idleTooltip,
@@ -900,6 +904,15 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
       ),
       onSelected: (action) => action(),
       itemBuilder: (context) => [
+        PopupMenuItem(
+          value: () => ref
+              .read(toolProvider.notifier)
+              .activate(TextTool(newId: newObjectId)),
+          child: ToolMenuRow(
+            label: 'Text… (wrap calculations in {braces})',
+            display: shortcutDisplayFor(AppAction.textTool),
+          ),
+        ),
         PopupMenuItem(
           value: _activateNamePointsTool,
           child: ToolMenuRow(
@@ -1040,8 +1053,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         compactPanels && ref.watch(selectionProvider).isNotEmpty;
     // Narrow selects: tool taps bump the provider's revision every input,
     // and the scaffold must not rebuild per tap.
-    final namePointsActive = ref.watch(
-      toolProvider.select((state) => state.tool is NamePointsTool),
+    final textLabelsActive = ref.watch(
+      toolProvider.select(
+        (state) => state.tool is NamePointsTool || state.tool is TextTool,
+      ),
     );
     final hideDeleteActive = ref.watch(
       toolProvider.select(
@@ -1081,7 +1096,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
           title: _appBarRow(
             compactPanels: compactPanels,
             hasSelection: hasSelection,
-            namePointsActive: namePointsActive,
+            textLabelsActive: textLabelsActive,
             hideDeleteActive: hideDeleteActive,
             undoRedo: undoRedo,
           ),

@@ -67,6 +67,7 @@ enum AppAction {
   translateByVectorTool,
   angleBySizeTool,
   namePointsTool,
+  textTool,
   // Shape macros behind the X leader.
   polygonTool,
   squareMacroTool,
@@ -656,6 +657,12 @@ final List<ShortcutBinding> shortcutTable = [
     AppAction.namePointsTool,
     'Name points in sequence…',
     'G M',
+  ),
+  _g(
+    LogicalKeyboardKey.keyE,
+    AppAction.textTool,
+    'Text with live calculations…',
+    'G E',
   ),
   // ── X leader: shape macros ───────────────────────────────────────
   _x(

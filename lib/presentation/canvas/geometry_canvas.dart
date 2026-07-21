@@ -13,11 +13,16 @@ import '../../application/providers/tool_provider.dart';
 import '../../application/providers/viewport_provider.dart';
 import '../../domain/commands/change_attributes_command.dart';
 import '../../domain/construction/geo_object.dart';
+import '../../domain/construction/objects/expression_text.dart';
+import '../../domain/construction/text_evaluator.dart';
+import '../../domain/construction/text_template.dart';
 import '../../domain/math/vec2.dart';
 import '../../domain/tools/delete_tool.dart';
+import '../../domain/tools/text_tool.dart';
 import '../../domain/tools/tool.dart';
 import '../../domain/tools/visibility_tool.dart';
 import '../panels/delete_selection.dart';
+import '../panels/toolbar.dart' show askTextContent;
 import '../theme/app_theme.dart';
 import 'canvas_hit_tester.dart';
 import 'canvas_viewport.dart';
@@ -493,6 +498,67 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
     ref.read(toolProvider.notifier).handleInput(input);
   }
 
+  /// One text-tool tap: resolve the edit target (a hit text, or the
+  /// topmost text whose label rect contains the tap — a text's body is
+  /// its screen-sized label, draggable far from the world anchor), ask
+  /// for content, then dispatch a *fresh* [ToolInput] through the tool
+  /// funnel. The re-checks after the async gap keep a cancelled dialog —
+  /// or a construction that lost the target while the dialog was up —
+  /// from committing anything; the tool re-validates references itself
+  /// and quietly ignores stale ones.
+  Future<void> _tapText(
+    WidgetRef ref,
+    CanvasViewport viewport,
+    Offset screen,
+    ToolInput input,
+  ) async {
+    final construction = ref.read(constructionProvider).construction;
+    var target = input.hit is GeoText ? input.hit as GeoText? : null;
+    if (target == null) {
+      for (final object in construction.objects.toList().reversed) {
+        if (object is! GeoText) {
+          continue;
+        }
+        final rect = labelScreenRect(object, viewport);
+        if (rect != null &&
+            rect.inflate(GeometryCanvas.labelGrabSlackPx).contains(screen)) {
+          target = object;
+          break;
+        }
+      }
+    }
+    String? validate(String content) {
+      try {
+        bindReferences(
+          TextTemplate.parse(content).referenceNames,
+          ref.read(constructionProvider).construction.objects,
+        );
+        return null;
+      } on FormatException catch (e) {
+        return e.message;
+      }
+    }
+
+    final content = await askTextContent(
+      context,
+      initial: target is ExpressionText ? target.content : null,
+      validate: validate,
+    );
+    if (content == null || !mounted) {
+      return;
+    }
+    final fresh = ref.read(constructionProvider).construction;
+    if (target != null && !fresh.contains(target.id)) {
+      return;
+    }
+    ref.read(toolProvider.notifier).handleInput(ToolInput(
+          input.position,
+          hit: target,
+          objects: fresh.objects,
+          text: content,
+        ));
+  }
+
   void _handleTap(
     WidgetRef ref,
     CanvasViewport viewport,
@@ -534,6 +600,13 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
         if (hit != null) {
           _tapDelete(ref, hit, input);
         }
+        return;
+      }
+      if (tool is TextTool) {
+        // The content dialog is a presentation concern too (the
+        // DeleteTool precedent): collect the string here, then dispatch
+        // a fresh ToolInput carrying it through the normal funnel.
+        _tapText(ref, viewport, screen, input);
         return;
       }
       ref.read(toolProvider.notifier).handleInput(input);

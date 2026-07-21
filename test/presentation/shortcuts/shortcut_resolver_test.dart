@@ -114,6 +114,12 @@ void main() {
       actionOf(stroke(LogicalKeyboardKey.keyM)),
       AppAction.namePointsTool,
     );
+
+    stroke(LogicalKeyboardKey.keyG);
+    expect(
+      actionOf(stroke(LogicalKeyboardKey.keyE)),
+      AppAction.textTool,
+    );
   });
 
   test('X leader chords reach the macros', () {
