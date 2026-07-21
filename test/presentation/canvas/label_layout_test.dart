@@ -3,6 +3,7 @@ import 'package:regula/application/providers/viewport_provider.dart';
 import 'package:regula/domain/construction/object_attributes.dart';
 import 'package:regula/domain/construction/objects/area_measurement.dart';
 import 'package:regula/domain/construction/objects/distance_measurement.dart';
+import 'package:regula/domain/construction/objects/expression_text.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/polygon.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
@@ -108,6 +109,18 @@ void main() {
         '5.00',
         reason: 'labelVisible off hides only the name part',
       );
+    });
+
+    test('a text renders its content only — the name never composes', () {
+      final text = ExpressionText(
+        id: 't',
+        content: 'AB = 5.00 cm',
+        anchor: Vec2.zero,
+        references: const [],
+        attributes: const ObjectAttributes(name: 'a', labelVisible: true),
+      );
+      expect(labelText(text), 'AB = 5.00 cm',
+          reason: 'prefixing the name would read as a bogus equation chain');
     });
 
     test('an area measurement formats through formatArea', () {

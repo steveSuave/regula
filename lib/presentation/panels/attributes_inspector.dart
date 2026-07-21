@@ -63,9 +63,15 @@ class AttributesInspector extends ConsumerWidget {
       for (final object in objects)
         if (object is GeoPoint) object,
     ];
+    // Measurements and texts are pure label text — the label pass reads
+    // font size and color only, so the stroke rows would be silent
+    // no-ops on them (the dash-for-angles reasoning below).
     final strokes = [
       for (final object in objects)
-        if (object is! GeoPoint) object,
+        if (object is! GeoPoint &&
+            object is! GeoMeasurement &&
+            object is! GeoText)
+          object,
     ];
     // Angle markers deliberately never dash (Phase 17), so the dash row
     // targets the strokes that do — showing it for an angle-only
@@ -100,6 +106,13 @@ class AttributesInspector extends ConsumerWidget {
     final tickables = [
       for (final object in objects)
         if (object is Segment) object,
+    ];
+    // A text never composes `name = content` (its content is the whole
+    // on-canvas presence — see labelText), so the show-label toggle
+    // would be a silent no-op on a text-only selection.
+    final labelables = [
+      for (final object in objects)
+        if (object is! GeoText) object,
     ];
     // The kinds the lineClip modes apply to (Phase 44): lines and rays.
     // Segments are already their own clip and ignore the attribute.
@@ -151,18 +164,20 @@ class AttributesInspector extends ConsumerWidget {
                     (attributes) => attributes.copyWith(visible: value),
                   ),
                 ),
-                _AttributeToggle(
-                  label: 'Show label',
-                  values: [
-                    for (final object in objects)
-                      object.attributes.labelVisible,
-                  ],
-                  onChanged: (value) => _setForAll(
-                    ref,
-                    objects,
-                    (attributes) => attributes.copyWith(labelVisible: value),
+                if (labelables.isNotEmpty)
+                  _AttributeToggle(
+                    label: 'Show label',
+                    values: [
+                      for (final object in labelables)
+                        object.attributes.labelVisible,
+                    ],
+                    onChanged: (value) => _setForAll(
+                      ref,
+                      labelables,
+                      (attributes) =>
+                          attributes.copyWith(labelVisible: value),
+                    ),
                   ),
-                ),
                 if (measurables.isNotEmpty)
                   _AttributeToggle(
                     label: 'Show value',
