@@ -1,0 +1,76 @@
+test/domain/construction/text_template_test.dart
+  s_87276865fb5cca::t_de6254bb82f094 2,4-117
+  s_87276865fb5cca::t_836fd6c55776fa 1,3
+lib/domain/construction/object_naming.dart
+  s_87276865fb5cca::t_ec0d148c890016 22
+lib/presentation/canvas/label_obstacles.dart
+  s_87276865fb5cca::t_b2029647794780 140
+test/domain/construction/text_evaluator_test.dart
+  s_87276865fb5cca::t_cdf4728a6d1bc0 94-103,105,107-108
+  s_87276865fb5cca::t_b640769705f23f 1-9,12-43,46-93,104,106,109-175
+  s_87276865fb5cca::t_ae75fbd3e22bd5 10-11
+  s_87276865fb5cca::t_72323ef1cba86e 44-45
+lib/domain/construction/text_template.dart
+  s_87276865fb5cca::t_c3dc8935ad730c 1-179
+lib/domain/construction/objects/point_on_object.dart
+  s_87276865fb5cca::t_ec0d148c890016 59,93
+test/domain/construction/objects/expression_text_test.dart
+  s_87276865fb5cca::t_d21c9d88e0703b 1-221
+lib/domain/construction/geo_object.dart
+  s_87276865fb5cca::t_7f480142ef4416 180-199
+  s_87276865fb5cca::t_8db1a74089e148 11-12
+lib/presentation/canvas/label_anchor.dart
+  s_87276865fb5cca::t_b2029647794780 42
+lib/domain/construction/text_evaluator.dart
+  s_87276865fb5cca::t_c225a475becf3b 63
+  s_87276865fb5cca::t_9ceb7592f03f8c 1-62,64-150
+lib/presentation/panels/object_tree_panel.dart
+  s_87276865fb5cca::t_b2029647794780 102
+lib/application/persistence/construction_codec.dart
+  s_87276865fb5cca::t_dfbb52c4bae70a 14,201-207,462-474,573-578
+  s_87276865fb5cca::t_ad1bb128f5e39f 579-580
+lib/domain/tools/drag_session.dart
+  s_87276865fb5cca::t_c56489f21bc145 64-69
+lib/presentation/canvas/geometry_canvas.dart
+  s_87276865fb5cca::t_c56489f21bc145 550
+lib/presentation/canvas/canvas_hit_tester.dart
+  s_87276865fb5cca::t_284001ce349384 91,161,238
+lib/domain/tools/point_and_line_tool.dart
+  s_87276865fb5cca::t_2908ddd3dc884f 63
+test/application/persistence/construction_codec_test.dart
+  s_87276865fb5cca::t_adae615f0d38c0 21
+  s_87276865fb5cca::t_6788c41b52c2bb 200-219,233
+  s_87276865fb5cca::t_55f5ddade23b59 550-579
+lib/domain/tools/transform_object_tool.dart
+  s_87276865fb5cca::t_2908ddd3dc884f 238
+lib/domain/construction/objects/expression_text.dart
+  s_87276865fb5cca::t_5bd071b2e8b56f 1-64
+lib/presentation/panels/object_kind_label.dart
+  s_87276865fb5cca::t_b2029647794780 66
+lib/presentation/canvas/geometry_painter.dart
+  s_87276865fb5cca::t_b2029647794780 426-429
+lib/presentation/canvas/label_layout.dart
+  s_87276865fb5cca::t_b2029647794780 30
+lib/presentation/canvas/fit_viewport.dart
+  s_87276865fb5cca::t_b2029647794780 51-52
+lib/application/providers/tool_provider.dart
+  s_87276865fb5cca::t_c56489f21bc145 202-203
+lib/domain/construction/objects/intersection_point.dart
+  s_87276865fb5cca::t_2908ddd3dc884f 117
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "90c84b44678a739cdfcb155207890a5662fe967f",
+  "prompts": {},
+  "sessions": {
+    "s_87276865fb5cca": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "302eb02d-812e-4236-966e-4f9d7540bbdb",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
