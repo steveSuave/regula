@@ -18,7 +18,15 @@ import 'measure_format.dart';
 /// are deliberately *not* consulted — callers already gate on them, and
 /// the painter's show-hidden mode paints labels this helper must still
 /// compose.
+///
+/// Texts (Phase 58) opt out of the composition entirely: their rendered
+/// content is user prose that may itself contain `=`, so prefixing the
+/// auto-name would read as a bogus equation chain (`a = AB = 5.00`). A
+/// text's name lives in the tree and inspector only.
 String? labelText(GeoObject object) {
+  if (object case GeoText(:final renderedText)) {
+    return renderedText;
+  }
   final attributes = object.attributes;
   final value = switch (object) {
     Segment(:final start?, :final end?) when attributes.showValue =>
@@ -27,7 +35,6 @@ String? labelText(GeoObject object) {
       formatAngle(angle.measure),
     AreaMeasurement(:final value?) => formatArea(value),
     GeoMeasurement(:final value?) => formatLength(value),
-    GeoText(:final renderedText?) => renderedText,
     _ => null,
   };
   final name = attributes.labelVisible && attributes.name.isNotEmpty

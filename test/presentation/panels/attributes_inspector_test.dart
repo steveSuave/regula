@@ -8,6 +8,7 @@ import 'package:regula/domain/construction/object_attributes.dart';
 import 'package:regula/domain/construction/objects/arc.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/distance_measurement.dart';
+import 'package:regula/domain/construction/objects/expression_text.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/perpendicular_line.dart';
@@ -42,6 +43,47 @@ void main() {
     container.read(constructionProvider).construction.add(point);
     return point;
   }
+
+  testWidgets(
+      'texts and measurements hide the stroke rows; texts also hide '
+      'the dead show-label toggle', (tester) async {
+    await pumpEditor(tester);
+    final a = addPoint('a', Vec2.zero);
+    final b = addPoint('b', const Vec2(3, 4));
+    container.read(constructionProvider).construction
+      ..add(ExpressionText(
+        id: 't',
+        content: 'note',
+        anchor: const Vec2(1, 1),
+        references: const [],
+      ))
+      ..add(DistanceMeasurement(id: 'd', point1: a, point2: b));
+
+    container.read(selectionProvider.notifier).select('t');
+    await tester.pump();
+    expect(find.text('Text'), findsOneWidget);
+    expect(find.byKey(const ValueKey('stroke-width')), findsNothing,
+        reason: 'a text is pure label — stroke width is a silent no-op');
+    expect(find.byKey(const ValueKey('dash-style')), findsNothing);
+    expect(find.widgetWithText(CheckboxListTile, 'Show label'), findsNothing,
+        reason: 'a text never composes name = content');
+    expect(find.widgetWithText(CheckboxListTile, 'Visible'), findsOneWidget);
+
+    container.read(selectionProvider.notifier).select('d');
+    await tester.pump();
+    expect(find.byKey(const ValueKey('stroke-width')), findsNothing,
+        reason: 'measurements are pure label text too');
+    expect(find.byKey(const ValueKey('dash-style')), findsNothing);
+    expect(find.widgetWithText(CheckboxListTile, 'Show label'), findsOneWidget,
+        reason: 'a measurement still composes name = value');
+
+    // A mixed selection brings the stroke rows back for the segment.
+    container.read(constructionProvider).construction
+        .add(Segment(id: 's', point1: a, point2: b));
+    container.read(selectionProvider.notifier).selectMany(['t', 's']);
+    await tester.pump();
+    expect(find.byKey(const ValueKey('stroke-width')), findsOneWidget);
+  });
 
   testWidgets('collapsed while the selection is empty', (tester) async {
     await pumpEditor(tester);
