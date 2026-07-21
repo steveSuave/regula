@@ -6,6 +6,25 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 74 — 2026-07-21
+
+**Done**
+- Phase 56 (user request): name-points and declutter regrouped under one **Text & labels** app-bar flyout (`Icons.text_fields`, right after the toolbar cluster). Rows show their shortcuts (`G M`, `⇧ F`) via `ToolMenuRow`; the icon tints primary while the naming tool is active and a double-click deselects — the `_hideDeleteGroup` construction verbatim. Declutter is the group's one-shot row (fires immediately, never tints); naming re-opens the dialog. The standalone `abc` toolbar button and the wand view-cluster button are gone — each action keeps exactly one home, and the group is the declared landing spot for the anticipated text and calculation tools.
+- Rationale (discussed with the user first): both actions operate on the drawing's *text* — semantically one concern — and grouping now, at two rows, avoids moving buttons again when the text tool lands. If declutter turns out to be pressed constantly mid-session rather than as a finishing touch, the fix is auto-declutter-after-transform, not un-grouping.
+- Tests re-routed: `toolbar_test.dart` name-points group opens the dialog via menu row and pins the tint on `Icons.text_fields` (plus double-click must open neither menu nor dialog); `name_points_flow_test.dart` activates through the group. 1274 green, analyze clean.
+- Ad-hoc Playwright smoke on a fresh release build: menu screenshot shows both rows with shortcut hints; clicking the declutter *row* moved overlapped label A (6,−18) → (20,−9.5), left clean B, one Ctrl+Z restored both, zero console errors — **ADHOC PASS**. drive.js untouched (it indexes File from the left and theme/delete from the right; the group sits between).
+
+**Next**
+- Phase 43 (viewport rotation) is the last queued phase.
+- User expects a **text tool** and possibly a **calculation tool** soon — both belong in this group when they arrive.
+- `main` is ahead of `origin/main` — push when convenient.
+
+**Open questions / gotchas**
+- `_activateNamePointsTool` is `Future<void> Function()` fed into `PopupMenuButton<VoidCallback>` — valid Dart (void-returning function types accept any return), and the dialog opens fine after the menu closes; don't "fix" it into an awaited call inside `onSelected`.
+- The leftover 8321 server from Session 72/73 was finally killed this session; smoke runs start their own or reuse knowingly.
+
+---
+
 ## Session 73 — 2026-07-21
 
 **Done**
