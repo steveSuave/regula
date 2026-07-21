@@ -1,0 +1,23 @@
+lib/presentation/canvas/label_obstacles.dart
+  s_6ba45cd0a57462::t_59f9edbe94cfde 11,28-32,72,88,133,136-137,168-172,181-182,205-239,242-274
+  s_6ba45cd0a57462::t_af80f36eac0b2e 1-10,12-27,33-71,73-87,89-132,134-135,138-167,173-180,183-204,240-241,275
+test/presentation/canvas/label_obstacles_test.dart
+  s_6ba45cd0a57462::t_49c9be0236eecf 1-2
+  s_6ba45cd0a57462::t_be9d29d0274316 3-119
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "b9691cf91781589527edccb90701042253a1ca93",
+  "prompts": {},
+  "sessions": {
+    "s_6ba45cd0a57462": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c198460a-f5f0-48c6-89a2-4557a1892e12",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
