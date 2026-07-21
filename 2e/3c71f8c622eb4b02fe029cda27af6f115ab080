@@ -1,0 +1,33 @@
+lib/presentation/panels/attributes_inspector.dart
+  s_87276865fb5cca::t_c19068561e7fac 66-68,71-74,110-116,167-179
+test/presentation/canvas/label_layout_test.dart
+  s_87276865fb5cca::t_910720d4c2d3c9 6,114-123
+  s_87276865fb5cca::t_12bca8cc26593e 124-125
+lib/presentation/canvas/label_layout.dart
+  s_87276865fb5cca::t_b94224ca0ea546 21-25,27-29
+test/presentation/panels/attributes_inspector_test.dart
+  s_87276865fb5cca::t_910720d4c2d3c9 11,47-86
+  s_87276865fb5cca::t_fb88ba808b34fc 87
+docs/PLAN.md
+  s_87276865fb5cca::t_4938dbdf73eebf 56,104
+docs/STATUS.md
+  s_87276865fb5cca::t_6bf0d12b23afaf 18
+docs/TODO.md
+  s_87276865fb5cca::t_773c49b2d4fd54 484
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "2e3c71f8c622eb4b02fe029cda27af6f115ab080",
+  "prompts": {},
+  "sessions": {
+    "s_87276865fb5cca": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "302eb02d-812e-4236-966e-4f9d7540bbdb",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
