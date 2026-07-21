@@ -1,0 +1,23 @@
+lib/presentation/canvas/label_declutter.dart
+  s_6ba45cd0a57462::t_27bf6d8096027c 1-54,58-70,72-76,78-83,85-90,135,140-203,205-266
+  s_6ba45cd0a57462::t_a7a89f5c213ab0 55-57,71,77,84,91-134,136-139
+  s_6ba45cd0a57462::t_ed370e866889a9 204
+test/presentation/canvas/label_declutter_test.dart
+  s_6ba45cd0a57462::t_0cc18499368c6b 1-182
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "7c4ffd112c3feb3b4f8c487ead91239b93e9272a",
+  "prompts": {},
+  "sessions": {
+    "s_6ba45cd0a57462": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c198460a-f5f0-48c6-89a2-4557a1892e12",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
