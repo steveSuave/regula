@@ -110,4 +110,63 @@ void main() {
       expect(midpoint.parents, [p, glued]);
     });
   });
+
+  group('dedup refusals', () {
+    test('a midpoint that already exists refuses the completing tap', () {
+      final construction = Construction();
+      final a = FreePoint(id: 'a', position: const Vec2(0, 0));
+      final b = FreePoint(id: 'b', position: const Vec2(4, 2));
+      construction.add(a);
+      construction.add(b);
+      final t = tool();
+      ToolResult tap(FreePoint point) => t.onInput(
+          ToolInput(point.position, hit: point, objects: construction.objects));
+
+      tap(a);
+      (tap(b) as ToolCommitted).command.apply(construction);
+      expect(construction.objects.whereType<Midpoint>(), hasLength(1));
+
+      tap(a);
+      expect(tap(b), isA<ToolIgnored>(),
+          reason: 'the identical midpoint already exists');
+      expect(t.collectedVertices, hasLength(1),
+          reason: 'the refused tap is dropped, the first stays armed');
+      expect(construction.objects.whereType<Midpoint>(), hasLength(1));
+    });
+
+    test('the reversed pair is the same midpoint and is refused too', () {
+      final construction = Construction();
+      final a = FreePoint(id: 'a', position: const Vec2(0, 0));
+      final b = FreePoint(id: 'b', position: const Vec2(4, 2));
+      construction.add(a);
+      construction.add(b);
+      final t = tool();
+      ToolResult tap(FreePoint point) => t.onInput(
+          ToolInput(point.position, hit: point, objects: construction.objects));
+
+      tap(a);
+      (tap(b) as ToolCommitted).command.apply(construction);
+      tap(b);
+      expect(tap(a), isA<ToolIgnored>(),
+          reason: 'Midpoint(b, a) is numerically identical to Midpoint(a, b)');
+      expect(construction.objects.whereType<Midpoint>(), hasLength(1));
+    });
+
+    test('a circle drawn on its center point refuses the center tap', () {
+      final construction = Construction();
+      final center = FreePoint(id: 'c', position: const Vec2(1, 1));
+      final rim = FreePoint(id: 'r', position: const Vec2(4, 1));
+      final circle = CircleCenterPoint(id: 'k', center: center, onCircle: rim);
+      for (final object in [center, rim, circle]) {
+        construction.add(object);
+      }
+
+      final result = tool().onInput(ToolInput(const Vec2(4, 1.1),
+          hit: circle, objects: construction.objects));
+
+      expect(result, isA<ToolIgnored>(),
+          reason: 'the center point is already there');
+      expect(construction.objects.whereType<CircleCenter>(), isEmpty);
+    });
+  });
 }

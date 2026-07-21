@@ -26,6 +26,11 @@ import 'multi_point_tool.dart';
 ///
 /// Coincident corner positions leave every derived object undefined until
 /// the points separate again, like any other degenerate construction.
+///
+/// Each derived corner runs through [dedupedDerivedPoint]: a visible
+/// existing point identically coincident with it (stamping the square
+/// over the same two corners again) is reused, and that corner's hidden
+/// scaffolding is not added.
 class SquareMacroTool extends MultiPointTool {
   SquareMacroTool({required super.newId});
 
@@ -77,18 +82,16 @@ class SquareMacroTool extends MultiPointTool {
       curve2: circleA,
       branchIndex: 1,
     );
+    final c = dedupedDerivedPoint(cornerC);
+    final d = dedupedDerivedPoint(cornerD);
 
     return [
       sideAB,
-      perpB,
-      circleB,
-      cornerC,
-      perpA,
-      circleA,
-      cornerD,
-      Segment(id: newId(), point1: b, point2: cornerC),
-      Segment(id: newId(), point1: cornerC, point2: cornerD),
-      Segment(id: newId(), point1: cornerD, point2: a),
+      if (identical(c, cornerC)) ...[perpB, circleB, cornerC],
+      if (identical(d, cornerD)) ...[perpA, circleA, cornerD],
+      Segment(id: newId(), point1: b, point2: c),
+      Segment(id: newId(), point1: c, point2: d),
+      Segment(id: newId(), point1: d, point2: a),
     ];
   }
 }

@@ -140,4 +140,35 @@ void main() {
       expect(tool.collectedVertices, hasLength(1));
     });
   });
+
+  group('derived corner dedup', () {
+    test('re-stamping over the same corners reuses both derived corners', () {
+      final construction = Construction();
+      final a = FreePoint(id: 'A', position: const Vec2(0, 0));
+      final b = FreePoint(id: 'B', position: const Vec2(4, 0));
+      construction.add(a);
+      construction.add(b);
+      ToolResult tap(FreePoint point) => tool.onInput(
+          ToolInput(point.position, hit: point, objects: construction.objects));
+
+      tap(a);
+      (tap(b) as ToolCommitted).command.apply(construction);
+      final corners =
+          construction.objects.whereType<IntersectionPoint>().toList();
+      expect(corners, hasLength(2));
+      final before = construction.length;
+
+      tap(a);
+      (tap(b) as ToolCommitted).command.apply(construction);
+
+      expect(construction.length, before + 4,
+          reason: 'only the four side segments are re-added');
+      expect(construction.objects.whereType<IntersectionPoint>().toList(),
+          corners,
+          reason: 'both corners are reused, none stacked');
+      expect(construction.objects.whereType<PerpendicularLine>(), hasLength(2),
+          reason: 'reused corners bring no new scaffolding');
+      expect(construction.objects.whereType<CompassCircle>(), hasLength(2));
+    });
+  });
 }

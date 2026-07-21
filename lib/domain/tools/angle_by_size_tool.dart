@@ -26,17 +26,21 @@ class AngleBySizeTool extends MultiPointTool {
   List<GeoObject> buildObjects(List<GeoPoint> points) {
     final arm = points[0];
     final vertex = points[1];
-    final rotated = RotatedPoint(
+    final candidate = RotatedPoint(
       id: newId(),
       point: arm,
       center: vertex,
       angle: angle,
     );
+    // A visible existing point identically on the rotated arm (the same
+    // angle laid off twice) is reused — the marker is still added, wired
+    // to it, but no duplicate arm point stacks up.
+    final rotated = dedupedDerivedPoint(candidate);
     // VertexAngle sweeps CCW from arm1 to arm2, so a clockwise rotation
     // swaps the arm order — the marker then measures |angle| on the side
     // the new arm landed instead of the 2π complement.
     return [
-      rotated,
+      if (identical(rotated, candidate)) candidate,
       if (angle >= 0)
         VertexAngle(id: newId(), arm1: arm, vertex: vertex, arm2: rotated)
       else

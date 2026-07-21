@@ -3,6 +3,7 @@ import '../construction/geo_object.dart';
 import '../construction/incidence.dart';
 import '../construction/objects/intersection_point.dart';
 import '../math/vec2.dart';
+import 'point_coincidence.dart';
 import 'point_resolution.dart';
 import 'tool.dart';
 
@@ -22,7 +23,10 @@ import 'tool.dart';
 /// instead of stacking a duplicate on it, like the transform tool's
 /// duplicate image (Phase 40); the collected curve stays armed. A
 /// two-branch pair dedups per branch: an existing point on the other
-/// branch doesn't block this one.
+/// branch doesn't block this one. A point occupying the crossing by
+/// *theorem* rather than by incident parents (a centroid at the third
+/// median's crossing) is caught by the numeric identity probe
+/// ([coincidentExistingPoint]) and refused the same way.
 ///
 /// Like `AngleTool`'s two-line mode, nothing is created on other taps:
 /// both inputs must
@@ -64,17 +68,21 @@ class IntersectionTool implements ToolInputPreview {
     if (_existingIntersection(input.objects, first, hit, index)) {
       return const ToolIgnored();
     }
-    _first = null;
-    return ToolCommitted(
-      AddObjectCommand(
-        IntersectionPoint(
-          curve1: first,
-          curve2: hit,
-          branchIndex: index,
-          id: newId(),
-        ),
-      ),
+    final candidate = IntersectionPoint(
+      curve1: first,
+      curve2: hit,
+      branchIndex: index,
+      id: newId(),
     );
+    // The structural check above misses points that sit on the crossing
+    // by *theorem* rather than by incident parents — a centroid built as
+    // two medians' intersection occupies the third median's crossings
+    // too. The numeric identity probe catches those; same refusal.
+    if (coincidentExistingPoint(input.objects, candidate) != null) {
+      return const ToolIgnored();
+    }
+    _first = null;
+    return ToolCommitted(AddObjectCommand(candidate));
   }
 
   /// Whether a visible, defined point in [objects] already occupies

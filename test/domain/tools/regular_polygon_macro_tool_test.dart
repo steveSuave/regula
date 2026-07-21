@@ -108,4 +108,31 @@ void main() {
       );
     });
   });
+
+  group('derived vertex dedup', () {
+    test('re-stamping a hexagon over the same corners reuses the ring', () {
+      final construction = Construction();
+      final a = FreePoint(id: 'A', position: const Vec2(0, 0));
+      final b = FreePoint(id: 'B', position: const Vec2(2, 0));
+      construction.add(a);
+      construction.add(b);
+      final tool = toolFor(6);
+      ToolResult tap(FreePoint point) => tool.onInput(
+          ToolInput(point.position, hit: point, objects: construction.objects));
+
+      tap(a);
+      (tap(b) as ToolCommitted).command.apply(construction);
+      final ring = construction.objects.whereType<RotatedPoint>().toList();
+      expect(ring, hasLength(4));
+      final before = construction.length;
+
+      tap(a);
+      (tap(b) as ToolCommitted).command.apply(construction);
+
+      expect(construction.objects.whereType<RotatedPoint>().toList(), ring,
+          reason: 'every chained vertex is reused, none stacked');
+      expect(construction.length, before + 6,
+          reason: 'only the six side segments are re-added');
+    });
+  });
 }

@@ -5,7 +5,9 @@ import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/objects/centroid.dart';
 import 'package:regula/domain/construction/objects/circumcenter.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
+import 'package:regula/domain/construction/objects/midpoint.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/tools/tool.dart';
@@ -143,6 +145,62 @@ void main() {
       result.command.apply(construction);
       final center = construction.objects.last as Circumcenter;
       expect(center.position!.closeTo(const Vec2(2, 1.5)), isTrue);
+    });
+  });
+
+  group('dedup refusals', () {
+    late Construction construction;
+    late FreePoint a;
+    late FreePoint b;
+    late FreePoint c;
+
+    setUp(() {
+      construction = Construction();
+      a = FreePoint(id: 'a', position: const Vec2(0, 0));
+      b = FreePoint(id: 'b', position: const Vec2(6, 0));
+      c = FreePoint(id: 'c', position: const Vec2(0, 6));
+      for (final point in [a, b, c]) {
+        construction.add(point);
+      }
+    });
+
+    ToolResult tap(TriangleCenterTool t, FreePoint point) => t.onInput(
+        ToolInput(point.position, hit: point, objects: construction.objects));
+
+    test('the same center twice refuses the completing tap', () {
+      tap(tool, a);
+      tap(tool, b);
+      (tap(tool, c) as ToolCommitted).command.apply(construction);
+      expect(construction.objects.whereType<Centroid>(), hasLength(1));
+
+      tap(tool, a);
+      tap(tool, b);
+      expect(tap(tool, c), isA<ToolIgnored>(),
+          reason: 'the identical centroid already exists');
+      expect(construction.objects.whereType<Centroid>(), hasLength(1));
+    });
+
+    test('a manually built medians crossing stands in for the centroid', () {
+      final midBC = Midpoint(id: 'mbc', point1: b, point2: c);
+      final midAC = Midpoint(id: 'mac', point1: a, point2: c);
+      final median1 = LineThroughTwoPoints(id: 'm1', point1: a, point2: midBC);
+      final median2 = LineThroughTwoPoints(id: 'm2', point1: b, point2: midAC);
+      final crossing = IntersectionPoint(
+        id: 'g',
+        curve1: median1,
+        curve2: median2,
+        branchIndex: 0,
+      );
+      for (final object in [midBC, midAC, median1, median2, crossing]) {
+        construction.add(object);
+      }
+
+      tap(tool, a);
+      tap(tool, b);
+      expect(tap(tool, c), isA<ToolIgnored>(),
+          reason: 'the medians crossing IS the centroid, by theorem — no '
+              'structural check can see it, the identity probe does');
+      expect(construction.objects.whereType<Centroid>(), isEmpty);
     });
   });
 }
