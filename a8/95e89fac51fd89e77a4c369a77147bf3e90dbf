@@ -1,0 +1,25 @@
+docs/EXPRESSIONS.md
+  s_87276865fb5cca::t_8b8df391889f7d 1-95
+docs/PLAN.md
+  s_87276865fb5cca::t_677a34c3a887fb 67
+docs/STATUS.md
+  s_87276865fb5cca::t_b7b690bab361f4 18
+docs/TODO.md
+  s_87276865fb5cca::t_86275d7b05f0e8 484
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "a895e89fac51fd89e77a4c369a77147bf3e90dbf",
+  "prompts": {},
+  "sessions": {
+    "s_87276865fb5cca": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "302eb02d-812e-4236-966e-4f9d7540bbdb",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
