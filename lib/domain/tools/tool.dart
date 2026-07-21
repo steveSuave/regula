@@ -25,7 +25,10 @@ import '../math/vec2.dart';
 /// rung, so snapping to an existing point / curve / crossing always wins.
 /// [viewExtent] is the visible world width (Phase 39), 0 when the caller
 /// has no viewport — the locus tool bakes a line-host sampling window
-/// from it. The defaults (`const []`, `0`) make a bare
+/// from it. [text] carries dialog-entered content (Phase 58): the text
+/// tool's canvas pre-gate collects the string *before* dispatching, so
+/// the tool stays pure — a null [text] tells it the input wasn't meant
+/// for it. The defaults (`const []`, `0`, `null`) make a bare
 /// `ToolInput(pos, hit: x)` behave exactly as before the fields existed.
 class ToolInput {
   const ToolInput(
@@ -36,6 +39,7 @@ class ToolInput {
     this.objects = const [],
     this.gridSnapStep = 0,
     this.viewExtent = 0,
+    this.text,
   });
 
   final Vec2 position;
@@ -45,6 +49,7 @@ class ToolInput {
   final Iterable<GeoObject> objects;
   final double gridSnapStep;
   final double viewExtent;
+  final String? text;
 
   /// Every in-threshold candidate, best first: [hit] (when non-null)
   /// followed by [extraHits].
