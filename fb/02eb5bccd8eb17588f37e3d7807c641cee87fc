@@ -1,0 +1,35 @@
+test/domain/tools/parallelogram_macro_tool_test.dart
+  s_f8f37025737182::t_a25a7cc9c73417 6
+  s_f8f37025737182::t_77e7259af11558 95-159
+lib/domain/tools/point_coincidence.dart
+  s_f8f37025737182::t_63d6998885419f 1-177
+lib/domain/tools/parallelogram_macro_tool.dart
+  s_f8f37025737182::t_ef2d6254f19caa 22-27
+  s_f8f37025737182::t_a89feb89834c92 61,66-72
+test/domain/tools/point_coincidence_test.dart
+  s_f8f37025737182::t_25f88d9e14b428 203-249
+  s_f8f37025737182::t_e2c2a694c00652 1-163,167-168,171-202,250-264
+  s_f8f37025737182::t_2196c18f4bf02b 164-166,169-170
+lib/domain/tools/multi_point_tool.dart
+  s_f8f37025737182::t_55219625a5dbf0 106
+  s_f8f37025737182::t_7fb58a2507c2c7 56-61
+  s_f8f37025737182::t_57b1a2e78e9bed 144-147
+  s_f8f37025737182::t_72d28d31102bb2 6
+  s_f8f37025737182::t_1ff9a9da73dd8a 116-126
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "fb02eb5bccd8eb17588f37e3d7807c641cee87fc",
+  "prompts": {},
+  "sessions": {
+    "s_f8f37025737182": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "baac3c82-42d4-4553-b797-fb0c18aef8f8",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
