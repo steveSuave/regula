@@ -465,3 +465,9 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] `_textLabelsGroup` in `main.dart` (built like `_hideDeleteGroup`): one `Icons.text_fields` popup after the toolbar cluster holding the name-points row (opens the sequence dialog, `G M`) and the declutter row (one-shot, `⇧ F`); rows show their shortcuts via `ToolMenuRow`; primary tint + double-click deselect while the naming tool is active; the group is the future home for the planned text and calculation tools
 - [x] The standalone `abc` toolbar button (`_NamePointsButton`) and the wand view-cluster button removed — one home each, shortcuts unchanged
 - [x] Tests re-routed through the group menu (toolbar dialog cases, name-points canvas flow) — 1274 green, analyze clean
+
+## Phase 57 — Derived-point dedup for macro corners (user bug report)
+- [x] `point_coincidence.dart`: `coincidentExistingPoint(objects, candidate)` — probabilistic identity check: screen existing visible points within a relative tolerance of the candidate, then verify the coincidence survives 3 random perturbations of every mutable root (free-point positions, glued-point parameters) either side depends on; restore bit-exactly; all uncertainty resolves to "keep the new point"
+- [x] `MultiPointTool.dedupedDerivedPoint` hook (construction snapshot captured per collected input); `ParallelogramMacroTool` reuses an identically-coincident existing point as its fourth corner and skips the hidden scaffolding
+- [x] Tests: Varignon reuse, accidental free-point / glued-point coincidences rejected, invisible points skipped, undefined candidate, bit-exact restoration, replay of the reported `parallelogram-double-point.json` geometry — 1284 green, analyze clean
+- [ ] Roll `dedupedDerivedPoint` out to the other corner-deriving macros (square, rectangle, rhombus, kite, trapeziums, triangles, regular polygon) — same call pattern, each needs its conditional scaffolding drop + tests
