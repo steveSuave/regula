@@ -42,6 +42,7 @@ import 'domain/tools/isosceles_triangle_macro_tool.dart';
 import 'domain/tools/kite_macro_tool.dart';
 import 'domain/tools/locus_tool.dart';
 import 'domain/tools/midpoint_tool.dart';
+import 'domain/tools/name_points_tool.dart';
 import 'domain/tools/parallelogram_macro_tool.dart';
 import 'domain/tools/point_and_line_tool.dart';
 import 'domain/tools/point_tool.dart';
@@ -757,6 +758,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   Widget _appBarRow({
     required bool compactPanels,
     required bool hasSelection,
+    required bool namePointsActive,
     required bool hideDeleteActive,
     required UndoRedoState undoRedo,
   }) {
@@ -824,6 +826,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                   ],
                 ),
                 const GeometryToolbar(),
+                _textLabelsGroup(active: namePointsActive),
                 IconButton(
                   tooltip: 'Fit construction to view',
                   icon: const Icon(Icons.fit_screen),
@@ -833,11 +836,6 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                   tooltip: 'Reset view (origin at 100 %)',
                   icon: const Icon(Icons.filter_center_focus),
                   onPressed: () => ref.read(viewportProvider.notifier).reset(),
-                ),
-                IconButton(
-                  tooltip: 'Declutter labels (⇧ F)',
-                  icon: const Icon(Icons.auto_fix_high),
-                  onPressed: _declutterLabels,
                 ),
                 _gridMenu(),
                 IconButton(
@@ -880,6 +878,52 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  /// Name-points and declutter as one text-and-labels flyout group (user
+  /// request): both act on the drawing's text — one writes names, the
+  /// other moves overlapped labels clear — and the group leaves room for
+  /// the planned text and calculation tools. Built like
+  /// [_hideDeleteGroup]: primary-tinted icon while the naming tool is
+  /// active, rows with shortcut hints, double-click to deactivate.
+  /// Declutter is a one-shot action, not a mode — its row fires
+  /// immediately and never tints the icon.
+  Widget _textLabelsGroup({required bool active}) {
+    const idleTooltip = 'Text & labels: name points, declutter labels';
+    final button = PopupMenuButton<VoidCallback>(
+      key: const ValueKey('text-labels-group'),
+      tooltip: active ? '$idleTooltip — double-click to deselect' : idleTooltip,
+      icon: Icon(
+        Icons.text_fields,
+        color: active ? Theme.of(context).colorScheme.primary : null,
+      ),
+      onSelected: (action) => action(),
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          value: _activateNamePointsTool,
+          child: ToolMenuRow(
+            label: 'Name points in sequence…',
+            display: shortcutDisplayFor(AppAction.namePointsTool),
+          ),
+        ),
+        PopupMenuItem(
+          value: _declutterLabels,
+          child: ToolMenuRow(
+            label: 'Declutter labels (move overlapped labels clear)',
+            display: shortcutDisplayFor(AppAction.declutterLabels),
+          ),
+        ),
+      ],
+    );
+    if (!active) {
+      return button;
+    }
+    // Same reasoning as _ToolGroup: the double-tap recognizer is mounted
+    // only while active, so it delays the menu-opening tap only then.
+    return GestureDetector(
+      onDoubleTap: () => ref.read(toolProvider.notifier).deactivate(),
+      child: button,
     );
   }
 
@@ -994,8 +1038,11 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     // never auto-opens); a docked inspector is already visible.
     final hasSelection =
         compactPanels && ref.watch(selectionProvider).isNotEmpty;
-    // Narrow select: tool taps bump the provider's revision every input,
+    // Narrow selects: tool taps bump the provider's revision every input,
     // and the scaffold must not rebuild per tap.
+    final namePointsActive = ref.watch(
+      toolProvider.select((state) => state.tool is NamePointsTool),
+    );
     final hideDeleteActive = ref.watch(
       toolProvider.select(
         (state) => state.tool is DeleteTool || state.tool is VisibilityTool,
@@ -1034,6 +1081,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
           title: _appBarRow(
             compactPanels: compactPanels,
             hasSelection: hasSelection,
+            namePointsActive: namePointsActive,
             hideDeleteActive: hideDeleteActive,
             undoRedo: undoRedo,
           ),

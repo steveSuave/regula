@@ -27,10 +27,12 @@ void main() {
     );
   }
 
-  /// Activates the tool through its app-bar button's dialog with
+  /// Activates the tool through the text-and-labels group's dialog with
   /// [input] typed into the field ('' = just OK).
   Future<void> activate(WidgetTester tester, String input) async {
-    await tester.tap(find.byIcon(Icons.abc));
+    await tester.tap(find.byIcon(Icons.text_fields));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Name points in sequence…'));
     await tester.pumpAndSettle();
     if (input.isNotEmpty) {
       await tester.enterText(find.byType(TextField), input);
