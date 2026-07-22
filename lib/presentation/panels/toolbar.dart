@@ -415,11 +415,6 @@ class GeometryToolbar extends ConsumerWidget {
               AppAction.rightTriangleMacroTool,
             ),
             (
-              'Regular polygon (two corners)…',
-              regularPolygonPick,
-              AppAction.regularPolygonMacroTool,
-            ),
-            (
               'Random triangle (one tap)',
               _pick(
                 () => RandomShapeStampTool(
@@ -478,6 +473,11 @@ class GeometryToolbar extends ConsumerWidget {
               'Kite (apex, side corner, apex)',
               _pick(() => KiteMacroTool(newId: newObjectId)),
               AppAction.kiteMacroTool,
+            ),
+            (
+              'Regular polygon (two corners)…',
+              regularPolygonPick,
+              AppAction.regularPolygonMacroTool,
             ),
           ],
         ),
