@@ -20,6 +20,9 @@ class PointTool implements Tool {
   final String Function() newId;
 
   @override
+  bool get hasPartialInput => false;
+
+  @override
   ToolResult onInput(ToolInput input) {
     final resolved = resolvePoint(input, newId);
     if (!resolved.isNew) {

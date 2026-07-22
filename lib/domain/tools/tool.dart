@@ -97,6 +97,14 @@ class ToolIgnored extends ToolResult {
 abstract interface class Tool {
   ToolResult onInput(ToolInput input);
 
+  /// Whether the tool holds partially-collected input — i.e. [reset]
+  /// would discard something. Drives two-stage cancel (Phase 59): Esc and
+  /// undo consume the pending input first (tool stays active), and only
+  /// act at app level — deactivate / pop the stack — when this is false.
+  /// Single-shot tools are always false; progress state that isn't
+  /// awaiting completion (a naming cursor) doesn't count.
+  bool get hasPartialInput;
+
   /// Discards any partially-collected input. Must be safe to call at any
   /// time, including when nothing is collected.
   void reset();

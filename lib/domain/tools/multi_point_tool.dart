@@ -72,6 +72,9 @@ abstract class MultiPointTool implements ToolInputPreview {
   /// yet, so they keep the dot+ring marker; reused existing points are
   /// haloed via [previewObjectIds] instead.
   @override
+  bool get hasPartialInput => _collected.isNotEmpty;
+
+  @override
   List<Vec2> get previewPositions =>
       [for (final v in _collected) if (v.isNew) ?v.point.position];
 

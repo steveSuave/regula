@@ -129,6 +129,10 @@ class TransformObjectTool implements ToolInputPreview {
   /// — a free transformee, or a param tap's glued/crossing snap); every
   /// consumed existing object is haloed via [previewObjectIds].
   @override
+  bool get hasPartialInput =>
+      _point != null || _source != null || _mirror != null || _params.isNotEmpty;
+
+  @override
   List<Vec2> get previewPositions => [
         if (_pointIsNew) ?_point?.position,
         for (final p in _params)

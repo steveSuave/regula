@@ -33,6 +33,9 @@ class TangentTool implements ToolInputPreview {
   /// isn't in the construction yet); a consumed existing point or circle
   /// is haloed instead.
   @override
+  bool get hasPartialInput => _point != null || _circle != null;
+
+  @override
   List<Vec2> get previewPositions => [if (_pointIsNew) ?_point?.position];
 
   @override

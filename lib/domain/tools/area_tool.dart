@@ -16,6 +16,9 @@ class AreaTool implements Tool {
   final String Function() newId;
 
   @override
+  bool get hasPartialInput => false;
+
+  @override
   ToolResult onInput(ToolInput input) {
     final subject = input.hits
         .where((object) => object is GeoPolygon || object is GeoCircle)

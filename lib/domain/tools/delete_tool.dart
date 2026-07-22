@@ -20,6 +20,9 @@ class DeleteTool implements Tool {
   const DeleteTool();
 
   @override
+  bool get hasPartialInput => false;
+
+  @override
   ToolResult onInput(ToolInput input) {
     final hit = input.hit;
     if (hit == null) {

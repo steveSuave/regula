@@ -144,10 +144,10 @@ void main() {
     stroke(LogicalKeyboardKey.keyG);
     expect(stroke(LogicalKeyboardKey.escape), isA<ShortcutSwallowed>());
     expect(resolver.hasPendingLeader, isFalse);
-    // Esc is back to being the move/select binding afterwards.
+    // Esc is back to being the cancel binding afterwards.
     expect(
       actionOf(stroke(LogicalKeyboardKey.escape)),
-      AppAction.returnToMoveSelect,
+      AppAction.cancelOrReturnToMoveSelect,
     );
   });
 

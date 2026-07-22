@@ -31,6 +31,9 @@ class TextTool implements Tool {
   final String Function() newId;
 
   @override
+  bool get hasPartialInput => false;
+
+  @override
   ToolResult onInput(ToolInput input) {
     final content = input.text;
     if (content == null || content.trim().isEmpty) {

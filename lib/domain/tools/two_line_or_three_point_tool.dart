@@ -49,6 +49,9 @@ abstract class TwoLineOrThreePointTool implements ToolInputPreview {
   final List<({GeoPoint point, bool isNew})> _points = [];
 
   @override
+  bool get hasPartialInput => _line1 != null || _points.isNotEmpty;
+
+  @override
   List<Vec2> get previewPositions => [
         for (final p in _points)
           if (p.isNew) ?p.point.position,

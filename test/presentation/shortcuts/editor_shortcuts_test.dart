@@ -117,6 +117,43 @@ void main() {
     expect(activeTool(), isNull);
   });
 
+  testWidgets('Esc and undo are two-stage while a tool holds pending input',
+      (tester) async {
+    await pumpEditor(tester);
+    buildSmallConstruction();
+    final construction = container.read(constructionProvider).construction;
+
+    // Undo first consumes the pending point, only then pops the stack.
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyM);
+    tapWorld(10, 10);
+    expect(activeTool()!.hasPartialInput, isTrue);
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    expect(activeTool(), isA<TwoPointTool>(),
+        reason: 'the tool survives the first undo');
+    expect(activeTool()!.hasPartialInput, isFalse);
+    expect(construction.length, 3, reason: 'the stack was not touched');
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    expect(construction.length, 2, reason: 'the second undo pops the stack');
+
+    // Esc likewise: pending input first, move/select second.
+    tapWorld(10, 10);
+    expect(activeTool()!.hasPartialInput, isTrue);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    expect(activeTool(), isA<TwoPointTool>(),
+        reason: 'the first Esc only clears the pending point');
+    expect(activeTool()!.hasPartialInput, isFalse);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    expect(activeTool(), isNull, reason: 'the second Esc leaves the tool');
+  });
+
   testWidgets('B activates the two-mode angle bisector tool',
       (tester) async {
     await pumpEditor(tester);

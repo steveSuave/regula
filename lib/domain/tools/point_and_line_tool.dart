@@ -40,6 +40,9 @@ class PointAndLineTool implements ToolInputPreview {
   /// Only a *new* free point gets a marker (it isn't in the construction
   /// yet); a consumed existing point or line is haloed instead.
   @override
+  bool get hasPartialInput => _point != null || _line != null;
+
+  @override
   List<Vec2> get previewPositions =>
       [if (_pointIsNew) ?_point?.position];
 

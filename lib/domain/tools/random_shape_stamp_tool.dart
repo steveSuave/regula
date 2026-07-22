@@ -63,6 +63,9 @@ class RandomShapeStampTool implements Tool {
   static const _minGap = 0.25;
 
   @override
+  bool get hasPartialInput => false;
+
+  @override
   ToolResult onInput(ToolInput input) {
     final radius = input.snapThreshold > 0 ? input.snapThreshold * 10 : 80.0;
     final List<Vec2> offsets;

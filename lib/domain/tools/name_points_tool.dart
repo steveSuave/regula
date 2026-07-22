@@ -72,6 +72,12 @@ class NamePointsTool implements Tool {
     return _cursor < letters.length ? letters[_cursor] : null;
   }
 
+  /// The naming cursor is sequence progress, not input awaiting
+  /// completion — every tap commits by itself, so two-stage cancel has
+  /// nothing to consume here.
+  @override
+  bool get hasPartialInput => false;
+
   @override
   ToolResult onInput(ToolInput input) {
     final hit = input.hit;
