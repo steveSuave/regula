@@ -32,6 +32,9 @@ class _StubTool implements Tool {
   int resets = 0;
 
   @override
+  bool get hasPartialInput => false;
+
+  @override
   ToolResult onInput(ToolInput input) => results[inputs++];
 
   @override

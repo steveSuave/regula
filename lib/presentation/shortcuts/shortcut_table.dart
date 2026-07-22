@@ -6,6 +6,10 @@ import 'package:flutter/services.dart';
 /// silently doing nothing.
 enum AppAction {
   // Selection / app level.
+  // Esc: two-stage — consumes the active tool's pending input first,
+  // returns to move/select only once the tool is idle. V is the direct
+  // switch ([returnToMoveSelect]) regardless of pending input.
+  cancelOrReturnToMoveSelect,
   returnToMoveSelect,
   deleteSelection,
   undo,
@@ -215,8 +219,8 @@ final List<ShortcutBinding> shortcutTable = [
   // ── Selection / app level ────────────────────────────────────────
   const ShortcutBinding(
     sequence: [KeyStroke(LogicalKeyboardKey.escape)],
-    action: AppAction.returnToMoveSelect,
-    label: 'Cancel tool, back to move/select',
+    action: AppAction.cancelOrReturnToMoveSelect,
+    label: 'Cancel pending input, then back to move/select',
     section: ShortcutSection.appLevel,
     display: 'Esc',
   ),

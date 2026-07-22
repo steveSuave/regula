@@ -543,7 +543,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     // export dialog, every other shortcut is swallowed (activating a tool
     // or opening a file mid-pick would fight the overlay).
     if (_pickingExportRegion) {
-      if (action == AppAction.returnToMoveSelect) {
+      if (action == AppAction.cancelOrReturnToMoveSelect ||
+          action == AppAction.returnToMoveSelect) {
         setState(() => _pickingExportRegion = false);
         _exportPng();
       }
@@ -554,18 +555,33 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     // shortcut (it is a reference card, after all) also executes.
     if (_showCheatSheet && action != AppAction.toggleCheatSheet) {
       setState(() => _showCheatSheet = false);
-      if (action == AppAction.returnToMoveSelect) {
+      if (action == AppAction.cancelOrReturnToMoveSelect ||
+          action == AppAction.returnToMoveSelect) {
         return;
       }
     }
     final tools = ref.read(toolProvider.notifier);
+    // Two-stage cancel (Phase 59): while the active tool holds
+    // partially-collected input, Esc and undo consume *that* first — the
+    // tool stays active, the stack stays untouched — and only act at app
+    // level on a second press. V stays a direct switch to move/select.
+    final toolMidCollection =
+        ref.read(toolProvider).tool?.hasPartialInput ?? false;
     switch (action) {
+      case AppAction.cancelOrReturnToMoveSelect:
+        if (toolMidCollection) {
+          tools.resetInProgress();
+        } else {
+          tools.deactivate();
+        }
       case AppAction.returnToMoveSelect:
         tools.deactivate();
       case AppAction.deleteSelection:
         _deleteSelectedObjects();
       case AppAction.undo:
-        if (ref.read(commandStackProvider).canUndo) {
+        if (toolMidCollection) {
+          tools.resetInProgress();
+        } else if (ref.read(commandStackProvider).canUndo) {
           ref.read(commandStackProvider.notifier).undo();
         }
       case AppAction.redo:

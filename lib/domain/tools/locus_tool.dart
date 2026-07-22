@@ -27,6 +27,9 @@ class LocusTool implements Tool, ToolInputPreview {
   PointOnObject? _driver;
 
   @override
+  bool get hasPartialInput => _driver != null;
+
+  @override
   List<Vec2> get previewPositions => const [];
 
   @override

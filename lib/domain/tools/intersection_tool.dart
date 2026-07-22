@@ -42,6 +42,9 @@ class IntersectionTool implements ToolInputPreview {
   GeoObject? _first;
 
   @override
+  bool get hasPartialInput => _first != null;
+
+  @override
   List<Vec2> get previewPositions => const [];
 
   @override

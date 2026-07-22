@@ -6,6 +6,22 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 78 — 2026-07-22
+
+**Done**
+- Phase 59 (user request): **two-stage cancel mid-tool**. With a multi-input tool armed (midpoint after its first tap), there was no way to drop just the pending input — undo also popped the last committed command, Esc also left the tool. Now Esc and Ctrl+Z both consume the pending input first (tool stays active, previews clear, stack untouched) and only act at app level — deactivate / undo — on a second press.
+- Mechanism: new `Tool.hasPartialInput` getter (true exactly while `reset()` would discard collected input; implemented across the hierarchy, single-shot tools hardwire false), consulted in `main.dart`'s `_handleShortcut` before `resetInProgress()` vs the old behavior. Esc got its own `AppAction.cancelOrReturnToMoveSelect` so `V` remains a *direct* switch to move/select — the two keys shared an action before.
+- Tests: `has_partial_input_test.dart` (lifecycle across `MultiPointTool` / `TwoLineOrThreePointTool` / slot tools / single-shot), an end-to-end widget test of both two-stage flows, resolver expectation updated. 1394 green, analyze clean.
+
+**Next**
+- Phase 43 (viewport rotation) remains the queued phase.
+- Touch has no Esc: a cancel-pending gesture for mobile (re-tapping the active tool's own toolbar button was floated) is the natural follow-up if users ask.
+
+**Open questions / gotchas**
+- A toolbar/menu undo (not the shortcut) still goes straight to the stack — the command-stack listener clears pending input as collateral, the pre-Phase-59 behavior. Deliberate for now; route it through the same two-stage check if it ever grates.
+
+---
+
 ## Session 77 — 2026-07-22
 
 **Done**
