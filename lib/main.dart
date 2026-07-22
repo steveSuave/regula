@@ -536,6 +536,17 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         .activate(RegularPolygonMacroTool(newId: newObjectId, sideCount: sides));
   }
 
+  /// The one undo entry point — the Ctrl/⌘ Z shortcut and the app-bar
+  /// button both land here. Two-stage (Phase 59): pending tool input is
+  /// consumed first; the stack pops only once the tool is idle.
+  void _undo() {
+    if (ref.read(toolProvider).tool?.hasPartialInput ?? false) {
+      ref.read(toolProvider.notifier).resetInProgress();
+    } else if (ref.read(commandStackProvider).canUndo) {
+      ref.read(commandStackProvider.notifier).undo();
+    }
+  }
+
   /// The one exhaustive [AppAction] switch — a binding added to the
   /// table without behaviour here fails to compile.
   void _handleShortcut(AppAction action) {
@@ -579,11 +590,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
       case AppAction.deleteSelection:
         _deleteSelectedObjects();
       case AppAction.undo:
-        if (toolMidCollection) {
-          tools.resetInProgress();
-        } else if (ref.read(commandStackProvider).canUndo) {
-          ref.read(commandStackProvider.notifier).undo();
-        }
+        _undo();
       case AppAction.redo:
         if (ref.read(commandStackProvider).canRedo) {
           ref.read(commandStackProvider.notifier).redo();
@@ -780,6 +787,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     required bool textLabelsActive,
     required bool hideDeleteActive,
     required UndoRedoState undoRedo,
+    required bool toolMidCollection,
   }) {
     return LayoutBuilder(
       builder: (context, constraints) => SingleChildScrollView(
@@ -881,9 +889,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                 IconButton(
                   tooltip: 'Undo',
                   icon: const Icon(Icons.undo),
-                  onPressed: undoRedo.canUndo
-                      ? () => ref.read(commandStackProvider.notifier).undo()
-                      : null,
+                  // Enabled while a tool holds pending input even on an
+                  // empty stack — the two-stage first press has work to do.
+                  onPressed:
+                      undoRedo.canUndo || toolMidCollection ? _undo : null,
                 ),
                 IconButton(
                   tooltip: 'Redo',
@@ -1079,6 +1088,11 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         (state) => state.tool is DeleteTool || state.tool is VisibilityTool,
       ),
     );
+    // Flips only when a tool arms/disarms, not per collected input, so
+    // the scaffold still doesn't rebuild per tap.
+    final toolMidCollection = ref.watch(
+      toolProvider.select((state) => state.tool?.hasPartialInput ?? false),
+    );
     final drawerWidth = math.min(
       AttributesInspector.panelWidth,
       MediaQuery.sizeOf(context).width * 0.85,
@@ -1115,6 +1129,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
             textLabelsActive: textLabelsActive,
             hideDeleteActive: hideDeleteActive,
             undoRedo: undoRedo,
+            toolMidCollection: toolMidCollection,
           ),
           // Non-empty actions suppress the end-drawer button Material
           // injects when `endDrawer` is set — the inspector drawer opens

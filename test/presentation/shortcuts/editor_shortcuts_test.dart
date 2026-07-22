@@ -154,6 +154,48 @@ void main() {
     expect(activeTool(), isNull, reason: 'the second Esc leaves the tool');
   });
 
+  testWidgets('the app-bar undo button is two-stage like Ctrl+Z',
+      (tester) async {
+    await pumpEditor(tester);
+    buildSmallConstruction();
+    final construction = container.read(constructionProvider).construction;
+    final undoButton = find.byTooltip('Undo');
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyM);
+    tapWorld(10, 10);
+    await tester.pump();
+
+    await tester.tap(undoButton);
+    await tester.pump();
+    expect(activeTool(), isA<TwoPointTool>(),
+        reason: 'the first press only clears the pending point');
+    expect(activeTool()!.hasPartialInput, isFalse);
+    expect(construction.length, 3, reason: 'the stack was not touched');
+
+    await tester.tap(undoButton);
+    await tester.pump();
+    expect(construction.length, 2, reason: 'the second press pops the stack');
+  });
+
+  testWidgets('the undo button enables for pending input on an empty stack',
+      (tester) async {
+    await pumpEditor(tester);
+    final undoButton = find.widgetWithIcon(IconButton, Icons.undo);
+    IconButton button() => tester.widget<IconButton>(undoButton);
+    expect(button().onPressed, isNull, reason: 'nothing to undo or consume');
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyM);
+    tapWorld(10, 10);
+    await tester.pump();
+    expect(button().onPressed, isNotNull,
+        reason: 'a pending point is consumable even with an empty stack');
+
+    await tester.tap(undoButton);
+    await tester.pump();
+    expect(activeTool()!.hasPartialInput, isFalse);
+    expect(button().onPressed, isNull, reason: 'nothing left to consume');
+  });
+
   testWidgets('B activates the two-mode angle bisector tool',
       (tester) async {
     await pumpEditor(tester);
