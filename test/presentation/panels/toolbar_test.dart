@@ -599,6 +599,34 @@ void main() {
     });
   });
 
+  testWidgets('the Move button is highlighted while no tool is active and '
+      'a single tap deactivates the active tool — the touch-friendly '
+      'alternative to double-tap/Esc', (tester) async {
+    await pumpEditor(tester);
+    final theme = Theme.of(tester.element(find.byType(AppBar)));
+
+    // Move/select is the default mode: only the Move button is tinted.
+    expect(iconColor(tester, Icons.near_me), theme.colorScheme.primary);
+
+    await tester.tap(find.byIcon(Icons.control_point));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Point'));
+    await tester.pumpAndSettle();
+    expect(container.read(toolProvider).tool, isNotNull);
+    expect(iconColor(tester, Icons.near_me), isNot(theme.colorScheme.primary));
+    expect(iconColor(tester, Icons.control_point), theme.colorScheme.primary);
+
+    // One tap — no double-tap, no Esc — returns to move/select.
+    await tester.tap(find.byIcon(Icons.near_me));
+    await tester.pumpAndSettle();
+    expect(container.read(toolProvider).tool, isNull);
+    expect(iconColor(tester, Icons.near_me), theme.colorScheme.primary);
+    expect(
+      iconColor(tester, Icons.control_point),
+      isNot(theme.colorScheme.primary),
+    );
+  });
+
   testWidgets('flyout rows show their shortcut as trailing text',
       (tester) async {
     await pumpEditor(tester);

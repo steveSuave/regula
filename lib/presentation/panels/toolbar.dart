@@ -111,10 +111,13 @@ const _circleBuilders = {
   buildSector,
 };
 
-/// The tool palette (PLAN "Toolbar / tool palette"): five flyout groups —
-/// Points, Lines, Circles, Angles, Macros; Transform arrives with Phase
-/// 15. The active tool's group icon is highlighted; double-clicking the
-/// highlighted icon deactivates the tool (Esc and `V` also work).
+/// The tool palette (PLAN "Toolbar / tool palette"): a Move/select
+/// button followed by the flyout groups — Points, Lines, Circles,
+/// Angles, Transform, Macros, Measure. The active tool's group icon is
+/// highlighted; the Move button deactivates it (highlighted while no
+/// tool is active — Esc, `V` and double-clicking the highlighted group
+/// icon also work, but a one-tap button is the only comfortable path on
+/// touch, where there is no Esc key and a double tap fights the flyout).
 class GeometryToolbar extends ConsumerWidget {
   const GeometryToolbar({super.key});
 
@@ -207,9 +210,19 @@ class GeometryToolbar extends ConsumerWidget {
           : FixedLengthSegmentTool(newId: newObjectId, length: length);
     }
 
+    final moveActive = tool == null;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
+        IconButton(
+          key: const ValueKey('move-select-button'),
+          tooltip: 'Move & select: drag points, tap to select (Esc or V)',
+          icon: Icon(
+            Icons.near_me,
+            color: moveActive ? Theme.of(context).colorScheme.primary : null,
+          ),
+          onPressed: () => ref.read(toolProvider.notifier).deactivate(),
+        ),
         _ToolGroup(
           icon: Icons.control_point,
           tooltip: 'Points: free, derived and constrained points',
