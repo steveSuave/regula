@@ -12,13 +12,14 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 - Phase 59 (user request): **two-stage cancel mid-tool**. With a multi-input tool armed (midpoint after its first tap), there was no way to drop just the pending input — undo also popped the last committed command, Esc also left the tool. Now Esc and Ctrl+Z both consume the pending input first (tool stays active, previews clear, stack untouched) and only act at app level — deactivate / undo — on a second press.
 - Mechanism: new `Tool.hasPartialInput` getter (true exactly while `reset()` would discard collected input; implemented across the hierarchy, single-shot tools hardwire false), consulted in `main.dart`'s `_handleShortcut` before `resetInProgress()` vs the old behavior. Esc got its own `AppAction.cancelOrReturnToMoveSelect` so `V` remains a *direct* switch to move/select — the two keys shared an action before.
 - Tests: `has_partial_input_test.dart` (lifecycle across `MultiPointTool` / `TwoLineOrThreePointTool` / slot tools / single-shot), an end-to-end widget test of both two-stage flows, resolver expectation updated. 1394 green, analyze clean.
+- Follow-up (same session, user request): the app-bar undo **button** now two-stages exactly like the shortcut — both land in one `_undo()` funnel. The button enables while a tool holds pending input even on an empty stack (the first press has work to do), via a narrow `hasPartialInput` select that flips only on arm/disarm, so the scaffold still doesn't rebuild per collected tap. The old canvas test pinning the one-press collateral behavior updated to the two-press contract. 1396 green.
 
 **Next**
 - Phase 43 (viewport rotation) remains the queued phase.
 - Touch has no Esc: a cancel-pending gesture for mobile (re-tapping the active tool's own toolbar button was floated) is the natural follow-up if users ask.
 
 **Open questions / gotchas**
-- A toolbar/menu undo (not the shortcut) still goes straight to the stack — the command-stack listener clears pending input as collateral, the pre-Phase-59 behavior. Deliberate for now; route it through the same two-stage check if it ever grates.
+- (resolved same session, see follow-up above) The toolbar undo button initially went straight to the stack; it now shares the shortcut's two-stage funnel.
 
 ---
 

@@ -457,7 +457,7 @@ void main() {
     expect(objectCount(), 0, reason: 'the whole trapezium is one undo unit');
   });
 
-  testWidgets('undo mid-collection clears collected input, not an exception',
+  testWidgets('undo mid-collection consumes the collected input first',
       (tester) async {
     await pumpEditor(tester);
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
@@ -471,13 +471,19 @@ void main() {
     await tester.pump();
     expect(objectCount(), 1);
 
-    // Collect it as a centroid vertex, then undo it away.
+    // Collect it as a centroid vertex, then undo twice (Phase 59): the
+    // first press only drops the pending vertex, the second pops the
+    // stack.
     await tester.tap(find.byIcon(Icons.control_point));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Centroid'));
     await tester.pumpAndSettle();
     await tester.tapAt(origin + const Offset(100, 100));
     await tester.pump();
+    await tester.tap(find.byIcon(Icons.undo));
+    await tester.pump();
+    expect(objectCount(), 1, reason: 'the stack was not touched');
+
     await tester.tap(find.byIcon(Icons.undo));
     await tester.pump();
     expect(objectCount(), 0);
