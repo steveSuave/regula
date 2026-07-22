@@ -6,6 +6,21 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 77 — 2026-07-22
+
+**Done**
+- User request: a dedicated **Move/select button** leads the toolbar (`Icons.near_me` cursor arrow, key `move-select-button`) — one tap calls `toolProvider.deactivate()`. On touch there is no Esc key and the double-tap-to-deselect gesture is clumsy (it fights the flyout's opening tap), so this is the primary mobile path back to move mode, GeoGebra-style.
+- The button is primary-tinted exactly while `tool == null` — the highlight is derivable state, so Esc, `V`, and double-clicking an active group highlight it automatically with no new wiring. Tooltip carries the keys (`Esc or V`) since the button has no flyout rows to show them in.
+- +1 widget test (highlight swap tool↔move, one-tap deactivation). 1387 green, analyze clean.
+
+**Next**
+- Phase 43 (viewport rotation) remains the queued phase.
+
+**Open questions / gotchas**
+- The double-tap-to-deselect affordance on group icons stays — desktop users may have the habit — but the Move button is now the advertised path; if double-tap's gesture-arena delay on the active group's opening tap ever annoys, it can be dropped without losing deselect.
+
+---
+
 ## Session 76 — 2026-07-22
 
 **Done**
