@@ -1,0 +1,79 @@
+lib/domain/tools/text_tool.dart
+  s_a60f1083a16d70::t_f6ae8dff0b398f 34-35
+  s_a60f1083a16d70::t_319173ae16b91b 33
+test/presentation/shortcuts/shortcut_resolver_test.dart
+  s_a60f1083a16d70::t_e5dbc2f968b901 147,150
+lib/domain/tools/tool.dart
+  s_a60f1083a16d70::t_48170d4e5df040 100-107
+lib/domain/tools/area_tool.dart
+  s_a60f1083a16d70::t_e4426b13693320 19-20
+  s_a60f1083a16d70::t_057f916f9ce752 18
+docs/STATUS.md
+  s_a60f1083a16d70::t_b00804fcc578d1 9-24
+lib/domain/tools/locus_tool.dart
+  s_a60f1083a16d70::t_58e195ac56d21d 30-31
+  s_a60f1083a16d70::t_699f143913c8ff 29
+lib/main.dart
+  s_a60f1083a16d70::t_a6bf640f76782d 568-569,572-576,582-584
+  s_a60f1083a16d70::t_094ec6bcd459ca 546-547,558-559,564-567,571
+lib/domain/tools/two_line_or_three_point_tool.dart
+  s_a60f1083a16d70::t_cf35e910031f0d 52-53
+  s_a60f1083a16d70::t_858345101579a6 51
+docs/TODO.md
+  s_a60f1083a16d70::t_865e5fceab008a 487-492
+lib/domain/tools/multi_point_tool.dart
+  s_a60f1083a16d70::t_96a61caa4f6f85 75-76
+  s_a60f1083a16d70::t_65e65fc22145a5 74
+lib/domain/tools/delete_tool.dart
+  s_a60f1083a16d70::t_c7b5be57292ded 23-24
+  s_a60f1083a16d70::t_56bb2d417ecc02 22
+lib/domain/tools/visibility_tool.dart
+  s_a60f1083a16d70::t_ead7e53ca5fa9b 49-50
+  s_a60f1083a16d70::t_41cf5c172d16b7 48
+test/domain/tools/has_partial_input_test.dart
+  s_a60f1083a16d70::t_c0b00cca39a8d0 1-93
+lib/domain/tools/point_and_line_tool.dart
+  s_a60f1083a16d70::t_3ac8df0a28592f 43-44
+  s_a60f1083a16d70::t_e5ea5f432bebbb 42
+lib/domain/tools/random_shape_stamp_tool.dart
+  s_a60f1083a16d70::t_61c15a977b819a 66-67
+  s_a60f1083a16d70::t_beaa4eb0d2106c 65
+test/application/providers/tool_provider_test.dart
+  s_a60f1083a16d70::t_1edc2e2579a865 35-36
+  s_a60f1083a16d70::t_66fceb388e2bce 34
+lib/domain/tools/tangent_tool.dart
+  s_a60f1083a16d70::t_fe1013bdf4cd1a 36-37
+  s_a60f1083a16d70::t_de2044a16b0c0e 35
+lib/domain/tools/point_tool.dart
+  s_a60f1083a16d70::t_3c40519267ccce 23-24
+  s_a60f1083a16d70::t_34fc40d134532e 22
+lib/domain/tools/name_points_tool.dart
+  s_a60f1083a16d70::t_00aac9e6508c1b 75-80
+lib/domain/tools/transform_object_tool.dart
+  s_a60f1083a16d70::t_f74198f70c4834 132-134
+  s_a60f1083a16d70::t_3a53fc2231274f 131
+lib/domain/tools/intersection_tool.dart
+  s_a60f1083a16d70::t_067cb7089cd9ca 45-46
+  s_a60f1083a16d70::t_7373d1bc04569e 44
+lib/presentation/shortcuts/shortcut_table.dart
+  s_a60f1083a16d70::t_6fd09f4c5100fe 9-12
+  s_a60f1083a16d70::t_882338f58df696 222-223
+test/presentation/shortcuts/editor_shortcuts_test.dart
+  s_a60f1083a16d70::t_59a980b5189051 120-156
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "23370889117e492eeba13ea133d0b139330de113",
+  "prompts": {},
+  "sessions": {
+    "s_a60f1083a16d70": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3b1d49a8-e00a-4ff5-b4b2-254ace9cf8e3",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
