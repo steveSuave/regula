@@ -85,6 +85,7 @@ class _ObjectTreePanelState extends ConsumerState<ObjectTreePanel> {
       'Angles': [],
       'Polygons': [],
       'Measurements': [],
+      'Texts': [],
       'Loci': [],
     };
     for (final object in construction.objects) {
