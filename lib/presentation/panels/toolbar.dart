@@ -575,9 +575,12 @@ class _ToolGroup extends ConsumerWidget {
   }
 }
 
-/// A flyout row: label left, dimmed shortcut text right. The fixed width
-/// gives the trailing text something to align against — popup menus size
-/// to intrinsic width, under which `Spacer`/`Expanded` misbehave.
+/// A flyout row: tool name left, dimmed shortcut text right, and — when
+/// [label] carries a parenthesized explanation ("Ray (origin, then
+/// direction)") — that explanation on a smaller dimmed second line under
+/// the name. The fixed width gives the trailing text something to align
+/// against — popup menus size to intrinsic width, under which
+/// `Spacer`/`Expanded` misbehave.
 /// Public because the app bar's hide/delete group (main.dart) renders
 /// its rows the same way.
 class ToolMenuRow extends StatelessWidget {
@@ -586,23 +589,44 @@ class ToolMenuRow extends StatelessWidget {
   final String label;
   final String? display;
 
+  /// "Name (explanation)" with an optional trailing "…" (dialog tools):
+  /// group 1 the name, group 2 the explanation, group 3 the ellipsis,
+  /// which stays on the name line.
+  static final _explained = RegExp(r'^(.*?)\s*\((.*)\)(…?)$');
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final match = _explained.firstMatch(label);
+    final name = match == null ? label : '${match[1]}${match[3]}';
+    final explanation = match?[2];
     return SizedBox(
       width: 280,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Flexible(child: Text(label)),
-          if (display != null)
-            Padding(
-              padding: const EdgeInsets.only(left: 16),
-              child: Text(
-                display!,
-                style: theme.textTheme.labelSmall!.copyWith(
-                  color: theme.colorScheme.outline,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Flexible(child: Text(name)),
+              if (display != null)
+                Padding(
+                  padding: const EdgeInsets.only(left: 16),
+                  child: Text(
+                    display!,
+                    style: theme.textTheme.labelSmall!.copyWith(
+                      color: theme.colorScheme.outline,
+                    ),
+                  ),
                 ),
+            ],
+          ),
+          if (explanation != null)
+            Text(
+              explanation,
+              style: theme.textTheme.bodySmall!.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
         ],

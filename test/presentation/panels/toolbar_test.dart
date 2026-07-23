@@ -100,7 +100,7 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.straighten));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Distance (two points, or tap a circle / arc)'));
+    await tester.tap(find.text('Distance'));
     await tester.pumpAndSettle();
     expect(container.read(toolProvider).tool, isA<DistanceTool>());
     expect(iconColor(tester, Icons.straighten), theme.colorScheme.primary);
@@ -113,7 +113,7 @@ void main() {
     await tester.tap(find.byIcon(Icons.straighten));
     await tester.pump(kDoubleTapTimeout);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Area (tap a polygon, circle, sector or arc)'));
+    await tester.tap(find.text('Area'));
     await tester.pumpAndSettle();
     expect(container.read(toolProvider).tool, isA<AreaTool>());
     expect(iconColor(tester, Icons.straighten), theme.colorScheme.primary);
@@ -162,17 +162,17 @@ void main() {
       'and highlights the group', (tester) async {
     await pumpEditor(tester);
     final rows = {
-      'Rectangle (two corners, then height)': RectangleMacroTool,
-      'Rhombus (two corners, then direction)': RhombusMacroTool,
-      'Isosceles trapezium (base, then a top corner)':
+      'Rectangle': RectangleMacroTool,
+      'Rhombus': RhombusMacroTool,
+      'Isosceles trapezium':
           IsoscelesTrapeziumMacroTool,
-      'Right trapezium (base, then the far corner)': RightTrapeziumMacroTool,
-      'Kite (apex, side corner, apex)': KiteMacroTool,
-      'Equilateral triangle (two corners)': EquilateralTriangleMacroTool,
-      'Isosceles triangle (base, then apex)': IsoscelesTriangleMacroTool,
-      'Right triangle (base, then height)': RightTriangleMacroTool,
-      'Random triangle (one tap)': RandomShapeStampTool,
-      'Random quadrilateral (one tap)': RandomShapeStampTool,
+      'Right trapezium': RightTrapeziumMacroTool,
+      'Kite': KiteMacroTool,
+      'Equilateral triangle': EquilateralTriangleMacroTool,
+      'Isosceles triangle': IsoscelesTriangleMacroTool,
+      'Right triangle': RightTriangleMacroTool,
+      'Random triangle': RandomShapeStampTool,
+      'Random quadrilateral': RandomShapeStampTool,
     };
     final theme = Theme.of(tester.element(find.byType(AppBar)));
 
@@ -234,7 +234,7 @@ void main() {
       );
     }
 
-    await pickTransform('Reflect about line (object and line)');
+    await pickTransform('Reflect about line');
     final reflectTool = container.read(toolProvider).tool;
     expect(reflectTool, isA<TransformObjectTool>());
     expect(
@@ -243,7 +243,7 @@ void main() {
     );
     expectTransformHighlight('Reflect about line');
 
-    await pickTransform('Reflect about point (object, then center)');
+    await pickTransform('Reflect about point');
     final centralTool = container.read(toolProvider).tool;
     expect(centralTool, isA<TransformObjectTool>());
     expect(
@@ -252,7 +252,7 @@ void main() {
     );
     expectTransformHighlight('Reflect about point');
 
-    await pickTransform('Translate by vector (object, then tail, tip)');
+    await pickTransform('Translate by vector');
     final translateTool = container.read(toolProvider).tool;
     expect(translateTool, isA<TransformObjectTool>());
     expect(
@@ -268,7 +268,7 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.flip));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Rotate around point (object, then center)…'));
+    await tester.tap(find.text('Rotate around point…'));
     await tester.pumpAndSettle();
     expect(find.text('Rotation angle'), findsOneWidget);
 
@@ -278,7 +278,7 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.flip));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Rotate around point (object, then center)…'));
+    await tester.tap(find.text('Rotate around point…'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), '90');
     await tester.tap(find.text('OK'));
@@ -300,11 +300,11 @@ void main() {
       await tester.pumpAndSettle();
       // Last Scrollable: the open flyout, not the scrollable app bar.
       await tester.scrollUntilVisible(
-        find.text('Regular polygon (two corners)…'),
+        find.text('Regular polygon…'),
         50,
         scrollable: find.byType(Scrollable).last,
       );
-      await tester.tap(find.text('Regular polygon (two corners)…'));
+      await tester.tap(find.text('Regular polygon…'));
       await tester.pumpAndSettle();
     }
 
@@ -341,7 +341,7 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.square_foot));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Angle by given size (arm, then vertex)…'));
+    await tester.tap(find.text('Angle by given size…'));
     await tester.pumpAndSettle();
     expect(find.text('Angle size'), findsOneWidget);
 
@@ -351,7 +351,7 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.square_foot));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Angle by given size (arm, then vertex)…'));
+    await tester.tap(find.text('Angle by given size…'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), '60');
     await tester.tap(find.text('OK'));
@@ -380,7 +380,7 @@ void main() {
     Future<void> pickCircleByRadius() async {
       await tester.tap(find.byIcon(Icons.circle_outlined));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Circle by radius (tap the center)…'));
+      await tester.tap(find.text('Circle by radius…'));
       await tester.pumpAndSettle();
     }
 
@@ -427,7 +427,7 @@ void main() {
     await tester.tap(find.byIcon(Icons.timeline));
     await tester.pumpAndSettle();
     await tester.tap(
-      find.text('Segment with given length (endpoint, then direction)…'),
+      find.text('Segment with given length…'),
     );
     await tester.pumpAndSettle();
     expect(find.text('Segment length'), findsOneWidget);
@@ -488,11 +488,11 @@ void main() {
     expect(container.read(toolProvider).tool, isA<TwoPointTool>());
     expectLinesHighlight('Perpendicular bisector');
 
-    await pickLinesRow('Tangents from point (point and circle)');
+    await pickLinesRow('Tangents from point');
     expect(container.read(toolProvider).tool, isA<TangentTool>());
     expectLinesHighlight('Tangents from point');
 
-    await pickLinesRow('Polygon (tap vertices, tap the first again to close)');
+    await pickLinesRow('Polygon');
     expect(container.read(toolProvider).tool, isA<PolygonTool>());
     expectLinesHighlight('Polygon');
   });
@@ -640,7 +640,7 @@ void main() {
     expect(find.text('Perpendicular line'), findsOneWidget);
     expect(find.text('T'), findsOneWidget);
     expect(
-      find.text('Angle bisector (two lines, or arm/vertex/arm)'),
+      find.text('Angle bisector'),
       findsOneWidget,
     );
     expect(find.text('B'), findsOneWidget);

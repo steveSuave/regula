@@ -6,6 +6,20 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 79 — 2026-07-23
+
+**Done**
+- User request: tool flyout rows now render their parenthesized explanation ("Ray (origin, then direction)") as a **second, smaller dimmed line under the tool name** instead of inline. Done centrally in `ToolMenuRow` (toolbar.dart): a regex splits the existing `Name (explanation)…` label convention — no call-site changes, so main.dart's Text/Hide-Delete/grid groups got the treatment for free. The trailing `…` of dialog tools stays on the name line; explanation uses `bodySmall` + `onSurfaceVariant`.
+- Tests that tapped full labels updated to tap the name-only first line (toolbar_test, geometry_canvas_test). 1397 green, analyze clean.
+
+**Next**
+- Phase 43 (viewport rotation) remains the queued phase.
+
+**Open questions / gotchas**
+- The label strings still carry the parentheses as the source of truth; `ToolMenuRow` is the only splitter. If a future label needs literal parens in the *name*, the convention breaks — restructure `ToolItem` to separate name/description fields then.
+
+---
+
 ## Session 78 — 2026-07-22
 
 **Done**

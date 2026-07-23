@@ -335,7 +335,7 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.crop_square));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Square (two adjacent corners)'));
+    await tester.tap(find.text('Square'));
     await tester.pumpAndSettle();
 
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
@@ -379,7 +379,7 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.crop_square));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Parallelogram (three corners)'));
+    await tester.tap(find.text('Parallelogram'));
     await tester.pumpAndSettle();
 
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
@@ -420,7 +420,7 @@ void main() {
     await tester.tap(find.byIcon(Icons.crop_square));
     await tester.pumpAndSettle();
     final trapeziumItem =
-        find.text('Trapezium (three corners, then the 4th)');
+        find.text('Trapezium');
     await tester.ensureVisible(trapeziumItem);
     await tester.pumpAndSettle();
     await tester.tap(trapeziumItem);
@@ -586,7 +586,7 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.timeline));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Angle bisector (two lines, or arm/vertex/arm)'));
+    await tester.tap(find.text('Angle bisector'));
     await tester.pumpAndSettle();
 
     await tester.tapAt(origin + const Offset(300, 100)); // arm
@@ -623,7 +623,7 @@ void main() {
     await tester.tap(find.byIcon(Icons.timeline));
     await tester.pumpAndSettle();
     await tester
-        .tap(find.text('Angle bisector (two lines, or arm/vertex/arm)'));
+        .tap(find.text('Angle bisector'));
     await tester.pumpAndSettle();
 
     // Mid-segment taps, away from every endpoint.
@@ -747,7 +747,7 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.circle_outlined));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Compass (radius points, then center)'));
+    await tester.tap(find.text('Compass'));
     await tester.pumpAndSettle();
 
     await tester.tapAt(origin + const Offset(100, 100));
@@ -780,7 +780,7 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.timeline));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Ray (origin, then direction)'));
+    await tester.tap(find.text('Ray'));
     await tester.pumpAndSettle();
 
     await tester.tapAt(origin + const Offset(100, 100));
@@ -801,7 +801,7 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.circle_outlined));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Arc (start, via, end)'));
+    await tester.tap(find.text('Arc'));
     await tester.pumpAndSettle();
 
     await tester.tapAt(origin + const Offset(100, 100)); // start
@@ -838,7 +838,7 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.circle_outlined));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Sector (center, rim, then angle)'));
+    await tester.tap(find.text('Sector'));
     await tester.pumpAndSettle();
 
     await tester.tapAt(origin + const Offset(200, 200)); // center
@@ -875,7 +875,7 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.square_foot));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Angle (two lines, or arm/vertex/arm)'));
+    await tester.tap(find.text('Angle'));
     await tester.pumpAndSettle();
 
     // The merged AngleTool — the angles icon must light up, not the
@@ -934,7 +934,7 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.square_foot));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Angle (two lines, or arm/vertex/arm)'));
+    await tester.tap(find.text('Angle'));
     await tester.pumpAndSettle();
 
     await tester.tapAt(origin + const Offset(200, 100)); // horizontal line
@@ -1406,7 +1406,7 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.circle_outlined));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Compass (radius points, then center)'));
+    await tester.tap(find.text('Compass'));
     await tester.pumpAndSettle();
     await tester.tapAt(origin + const Offset(100, 100)); // radius point 1
     await tester.pump();
@@ -2058,7 +2058,7 @@ void main() {
     // A circle with center (150, 150) and rim (200, 150) — radius 50.
     await tester.tap(find.byIcon(Icons.circle_outlined));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Circle (center, then rim)'));
+    await tester.tap(find.text('Circle'));
     await tester.pumpAndSettle();
     await tester.tapAt(origin + const Offset(150, 150));
     await tester.pump();
