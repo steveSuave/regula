@@ -7,6 +7,7 @@ import 'package:regula/application/providers/construction_provider.dart';
 import 'package:regula/application/providers/selection_provider.dart';
 import 'package:regula/application/providers/tool_provider.dart';
 import 'package:regula/domain/construction/object_attributes.dart';
+import 'package:regula/domain/construction/objects/expression_text.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/math/vec2.dart';
@@ -93,6 +94,27 @@ void main() {
     expect(find.descendant(of: tree, matching: find.text('A')),
         findsOneWidget);
     expect(find.descendant(of: tree, matching: find.text('Segment')),
+        findsOneWidget);
+  });
+
+  testWidgets('text objects land in a Texts group (regression: missing '
+      'bucket threw and greyed the panel)', (tester) async {
+    await pumpEditor(tester);
+    container.read(constructionProvider).construction.add(
+          ExpressionText(
+            id: 't',
+            content: 'note',
+            anchor: Vec2.zero,
+            references: const [],
+          ),
+        );
+    await openTree(tester);
+
+    final tree = find.byType(ObjectTreePanel);
+    expect(find.descendant(of: tree, matching: find.text('Texts')),
+        findsOneWidget);
+    await expandGroup(tester, 'texts');
+    expect(find.descendant(of: tree, matching: find.text('Text')),
         findsOneWidget);
   });
 
