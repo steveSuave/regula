@@ -541,6 +541,8 @@ class _ToolGroup extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final button = PopupMenuButton<ToolPick>(
       tooltip: active ? '$tooltip — double-click to deselect' : tooltip,
+      // Skip the default grow-and-fade so the flyout is readable at once.
+      popUpAnimationStyle: AnimationStyle.noAnimation,
       icon: Icon(
         icon,
         color: active ? Theme.of(context).colorScheme.primary : null,

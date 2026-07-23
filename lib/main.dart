@@ -831,6 +831,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                   ),
                 PopupMenuButton<Future<void> Function()>(
                   tooltip: 'File: new, open, save',
+                  popUpAnimationStyle: AnimationStyle.noAnimation,
                   icon: const Icon(Icons.folder_outlined),
                   onSelected: (action) => action(),
                   itemBuilder: (context) => [
@@ -923,6 +924,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     final button = PopupMenuButton<VoidCallback>(
       key: const ValueKey('text-labels-group'),
       tooltip: active ? '$idleTooltip — double-click to deselect' : idleTooltip,
+      popUpAnimationStyle: AnimationStyle.noAnimation,
       icon: Icon(
         Icons.text_fields,
         color: active ? Theme.of(context).colorScheme.primary : null,
@@ -977,6 +979,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     final button = PopupMenuButton<VoidCallback>(
       key: const ValueKey('hide-delete-group'),
       tooltip: active ? '$idleTooltip — double-click to deselect' : idleTooltip,
+      popUpAnimationStyle: AnimationStyle.noAnimation,
       icon: Icon(
         Icons.delete_outline,
         color: active ? Theme.of(context).colorScheme.primary : null,
@@ -1025,6 +1028,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     final settings = ref.watch(documentSettingsProvider);
     return PopupMenuButton<VoidCallback>(
       tooltip: 'Axes & grid',
+      popUpAnimationStyle: AnimationStyle.noAnimation,
       icon: const Icon(Icons.grid_4x4),
       onSelected: (action) => action(),
       // The rows show their shortcuts like the tool flyouts do (Phase 17
