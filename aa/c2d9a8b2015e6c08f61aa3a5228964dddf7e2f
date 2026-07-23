@@ -1,0 +1,27 @@
+docs/STATUS.md
+  s_f33a578957e9ac::t_b84eb2ec8b713e 9-22
+lib/presentation/panels/toolbar.dart
+  s_f33a578957e9ac::t_3de6148f67f53e 578-583,592-596,600-602,605-607,609-621,623-629
+test/presentation/panels/toolbar_test.dart
+  s_f33a578957e9ac::t_a9f09a29b3f636 271,281,303,307,344,354,383,430
+  s_f33a578957e9ac::t_129a9d480e676d 165-167,169-175,237,246,255,491,495
+  s_f33a578957e9ac::t_c62ad44c20ec78 103,116,643
+test/presentation/canvas/geometry_canvas_test.dart
+  s_f33a578957e9ac::t_c62ad44c20ec78 338,382,423,589,626,750,783,804,841,878,937,1409,2061
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "aac2d9a8b2015e6c08f61aa3a5228964dddf7e2f",
+  "prompts": {},
+  "sessions": {
+    "s_f33a578957e9ac": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e8461eea-8b11-49d5-8daa-cea88160601b",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
