@@ -1156,6 +1156,39 @@ void main() {
     expect(selection(), isEmpty);
   });
 
+  testWidgets('under view rotation the band selects what is visually '
+      'inside it, not its corners\' world box', (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+    const state = ViewportState(rotation: math.pi / 4);
+    container.read(viewportProvider.notifier).set(state);
+    await tester.pump();
+
+    // One point on the band's screen strip, one 80 px below it — the
+    // second is outside the band on screen but *inside* the world rect
+    // its two drag corners span, which a world-rect test would take.
+    const viewport = CanvasViewport(state);
+    final construction = container.read(constructionProvider).construction;
+    construction
+      ..add(FreePoint(
+        id: 'inside',
+        position: viewport.screenToWorld(const Offset(200, 120)),
+      ))
+      ..add(FreePoint(
+        id: 'below',
+        position: viewport.screenToWorld(const Offset(200, 200)),
+      ));
+    await tester.pump();
+
+    final band = await tester.startGesture(origin + const Offset(100, 100));
+    await band.moveTo(origin + const Offset(300, 140));
+    await tester.pump();
+    await band.up();
+    await tester.pump();
+
+    expect(container.read(selectionProvider), {'inside'});
+  });
+
   testWidgets('shift rubber band adds to the selection instead of replacing',
       (tester) async {
     await pumpEditor(tester);

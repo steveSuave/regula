@@ -487,10 +487,23 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
       _bandAnchor = null;
     });
     final construction = ref.read(constructionProvider).construction;
-    final banded = const CanvasHitTester().objectsInRect(
+    // Containment is a screen-space predicate (Phase 43): under view
+    // rotation the band's screen rect maps to a rotated world quad, so
+    // "inside the band" must be judged where the band actually is —
+    // inclusive on all edges, like the world-rect test always was. The
+    // band frame's +x direction lies at world angle −rotation.
+    bool within(Vec2 world) {
+      final screen = viewport.worldToScreen(world);
+      return screen.dx >= band.left &&
+          screen.dx <= band.right &&
+          screen.dy >= band.top &&
+          screen.dy <= band.bottom;
+    }
+
+    final banded = const CanvasHitTester().objectsContainedIn(
       construction.objects,
-      viewport.screenToWorld(band.topLeft),
-      viewport.screenToWorld(band.bottomRight),
+      within,
+      cardinalAngle: -viewport.state.rotation,
     );
     ref.read(selectionProvider.notifier).selectMany(
           [for (final object in banded) object.id],
