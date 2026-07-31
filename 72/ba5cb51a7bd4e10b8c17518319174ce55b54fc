@@ -1,0 +1,27 @@
+docs/STATUS.md
+  s_494df3a4063193::t_ba221e60e9c943 9-22
+lib/application/persistence/file_io.dart
+  s_494df3a4063193::t_e3488fc3b92db9 73
+  s_494df3a4063193::t_58c9627c8023e3 12-14,18-19
+  s_494df3a4063193::t_b7cf4494a1d7a7 16-17,20
+  s_494df3a4063193::t_bb823774c1367d 42
+test/presentation/file_menu_test.dart
+  s_494df3a4063193::t_7f5208848e0350 70
+  s_494df3a4063193::t_65c4dd1486c849 130
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.19",
+  "base_commit_sha": "72ba5cb51a7bd4e10b8c17518319174ce55b54fc",
+  "prompts": {},
+  "sessions": {
+    "s_494df3a4063193": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "94f9ea11-573f-4003-8d44-79a00bd1f085",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
