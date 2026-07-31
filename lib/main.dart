@@ -403,6 +403,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
             world: viewport.screenToWorld(center),
             focal: center,
             scale: 1,
+            rotation: viewport.state.rotation,
           ),
         );
   }

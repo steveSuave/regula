@@ -288,6 +288,7 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
       final current = CanvasViewport(ref.read(viewportProvider));
       _nav = _NavBaseline(
         startScale: current.state.scale,
+        startRotation: current.state.rotation,
         fixedWorld: current.screenToWorld(details.localFocalPoint),
       );
       return;
@@ -312,6 +313,7 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
             world: nav.fixedWorld,
             focal: details.localFocalPoint,
             scale: nav.startScale * details.scale,
+            rotation: nav.startRotation,
           ),
         );
   }
@@ -682,11 +684,17 @@ class _LabelDrag {
 }
 
 /// Fixed reference frame of one viewport-navigation gesture: the scale
-/// at gesture start and the world point under the starting focal point.
+/// and rotation at gesture start and the world point under the starting
+/// focal point.
 class _NavBaseline {
-  const _NavBaseline({required this.startScale, required this.fixedWorld});
+  const _NavBaseline({
+    required this.startScale,
+    required this.startRotation,
+    required this.fixedWorld,
+  });
 
   final double startScale;
+  final double startRotation;
   final Vec2 fixedWorld;
 }
 
