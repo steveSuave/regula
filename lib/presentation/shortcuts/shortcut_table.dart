@@ -809,4 +809,9 @@ const List<GestureRow> gestureRows = [
     label: 'Zoom about the cursor (touch or trackpad)',
     section: ShortcutSection.viewport,
   ),
+  GestureRow(
+    display: 'Two-finger twist',
+    label: 'Rotate the view (touch; releasing near level snaps straight)',
+    section: ShortcutSection.viewport,
+  ),
 ];
