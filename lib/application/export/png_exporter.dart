@@ -41,14 +41,16 @@ ExportFraming? fitConstructionFraming(
 }
 
 /// Frames a user-dragged [region] of the canvas (screen coordinates):
-/// same scale, pan moved so the region's top-left corner becomes the
-/// output origin — what's inside the marquee is exactly what exports.
+/// same scale and view rotation, pan moved so the region's top-left
+/// corner becomes the output origin — what's inside the marquee is
+/// exactly what exports, at the angle the user sees it.
 ExportFraming regionFraming(ViewportState viewport, ui.Rect region) {
   final transform = CanvasViewport(viewport);
   return (
     viewport: ViewportState(
       pan: transform.screenToWorld(region.topLeft),
       scale: viewport.scale,
+      rotation: viewport.rotation,
     ),
     logicalSize: region.size,
   );
