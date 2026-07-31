@@ -29,6 +29,7 @@ import 'canvas_viewport.dart';
 import 'geometry_painter.dart';
 import 'grid_layout.dart';
 import 'label_layout.dart';
+import 'twist_gate.dart';
 
 /// The drawing surface: hosts the [GeometryPainter] and turns taps into
 /// [ToolInput]s for the active tool — or, with no tool active
@@ -288,7 +289,12 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
       final current = CanvasViewport(ref.read(viewportProvider));
       _nav = _NavBaseline(
         startScale: current.state.scale,
+        startRotation: current.state.rotation,
         fixedWorld: current.screenToWorld(details.localFocalPoint),
+        // Twist is touch-only v1 (PLAN, Phase 43): a trackpad's reported
+        // rotation would spin the canvas with no way to bind it back on
+        // desktop, so only finger gestures may rotate.
+        twist: _firstDownKind == PointerDeviceKind.touch ? TwistGate() : null,
       );
       return;
     }
@@ -304,14 +310,20 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
       _panUpdate(viewport, details.localFocalPoint);
       return;
     }
-    // Zoom and pan in one solve: the world point under the baseline focal
-    // stays glued to the (possibly moving) focal. details.scale == 1 for
-    // a single-pointer space-drag, which reduces this to a pure pan.
+    // Zoom, pan and twist in one solve: the world point under the
+    // baseline focal stays glued to the (possibly moving) focal.
+    // details.scale == 1 for a single-pointer space-drag, which reduces
+    // this to a pure pan. The recognizer reports rotation
+    // positive-clockwise (screen y-down); the view state is
+    // positive-counterclockwise, hence the negation.
+    nav.lastFocal = details.localFocalPoint;
     ref.read(viewportProvider.notifier).set(
           CanvasViewport.pinning(
             world: nav.fixedWorld,
             focal: details.localFocalPoint,
             scale: nav.startScale * details.scale,
+            rotation: nav.startRotation -
+                (nav.twist?.applied(details.rotation) ?? 0),
           ),
         );
   }
@@ -321,10 +333,12 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
   /// drag interrupted that way is cancelled, never committed: the user
   /// pivoted to navigation, and committing a half-band would surprise.
   void _scaleEnd(CanvasViewport viewport, ScaleEndDetails details) {
-    if (_nav != null) {
+    final nav = _nav;
+    if (nav != null) {
       _nav = null;
       if (details.pointerCount == 0) {
         _navLatched = false;
+        _settleRotation(nav);
       }
       return;
     }
@@ -333,6 +347,34 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
       return;
     }
     _panEnd(viewport);
+  }
+
+  /// End-of-navigation settle: normalize the view angle and snap a
+  /// nearly-level release back to exactly 0 — about the gesture's last
+  /// focal point, so the content pivots in place instead of swinging
+  /// around the canvas origin.
+  void _settleRotation(_NavBaseline nav) {
+    final current = ref.read(viewportProvider);
+    final settled = TwistGate.settled(current.rotation);
+    if (settled == current.rotation) {
+      return;
+    }
+    final focal = nav.lastFocal;
+    final viewport = CanvasViewport(current);
+    ref.read(viewportProvider.notifier).set(
+          focal == null
+              ? ViewportState(
+                  pan: current.pan,
+                  scale: current.scale,
+                  rotation: settled,
+                )
+              : CanvasViewport.pinning(
+                  world: viewport.screenToWorld(focal),
+                  focal: focal,
+                  scale: current.scale,
+                  rotation: settled,
+                ),
+        );
   }
 
   /// A drag in move/select mode: starting over a label moves the label,
@@ -445,10 +487,23 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
       _bandAnchor = null;
     });
     final construction = ref.read(constructionProvider).construction;
-    final banded = const CanvasHitTester().objectsInRect(
+    // Containment is a screen-space predicate (Phase 43): under view
+    // rotation the band's screen rect maps to a rotated world quad, so
+    // "inside the band" must be judged where the band actually is —
+    // inclusive on all edges, like the world-rect test always was. The
+    // band frame's +x direction lies at world angle −rotation.
+    bool within(Vec2 world) {
+      final screen = viewport.worldToScreen(world);
+      return screen.dx >= band.left &&
+          screen.dx <= band.right &&
+          screen.dy >= band.top &&
+          screen.dy <= band.bottom;
+    }
+
+    final banded = const CanvasHitTester().objectsContainedIn(
       construction.objects,
-      viewport.screenToWorld(band.topLeft),
-      viewport.screenToWorld(band.bottomRight),
+      within,
+      cardinalAngle: -viewport.state.rotation,
     );
     ref.read(selectionProvider.notifier).selectMany(
           [for (final object in banded) object.id],
@@ -681,13 +736,24 @@ class _LabelDrag {
   }
 }
 
-/// Fixed reference frame of one viewport-navigation gesture: the scale
-/// at gesture start and the world point under the starting focal point.
+/// Reference frame of one viewport-navigation gesture: the scale and
+/// rotation at gesture start, the world point under the starting focal
+/// point, the twist gate (null while twisting is unavailable — non-touch
+/// pointers), and the last focal seen — the pivot for the end-of-gesture
+/// rotation settle.
 class _NavBaseline {
-  const _NavBaseline({required this.startScale, required this.fixedWorld});
+  _NavBaseline({
+    required this.startScale,
+    required this.startRotation,
+    required this.fixedWorld,
+    this.twist,
+  });
 
   final double startScale;
+  final double startRotation;
   final Vec2 fixedWorld;
+  final TwistGate? twist;
+  Offset? lastFocal;
 }
 
 /// The in-progress rubber band: a hairline outline over a translucent

@@ -6,6 +6,27 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 82 — 2026-07-31
+
+**Done**
+- **Phase 43 — viewport rotation (two-finger twist), complete.** Five commits on `phase-43-viewport-rotation`, merged to `main`:
+  1. `ViewportState.rotation` (radians, CCW on screen) + generalized `CanvasViewport` transforms — rotation composes in the y-up frame *before* the flip, so `pan` keeps its world-point-at-origin meaning; `pinning` gains the term; `zoomedAbout`/`pannedByScreen`/`panBy`/`zoomBy`/nav-baseline preserve it; Reset and File > New clear it, zoom-to-100 % keeps it, Fit emits 0.
+  2. Twist gesture: pure `TwistGate` per navigation gesture — arms past 0.1 rad with a rebaseline (no jump), settles a release within 2° back to exactly 0 (normalized to (−π, π], about the last focal). Touch-only v1, gated on the Listener's first-pointer kind. **Gotcha found by test: Flutter's `details.rotation` is a raw atan2 difference that leaps by 2π when the finger line crosses ±π — the gate unwraps successive samples.**
+  3. Painter: new `worldToScreenAngle`/`worldToScreenDirection` helpers replace the bare `-angle` negations (arcs, sectors, angle markers, right-angle square); grid/axes/ticks become world segments over the visible world quad's AABB — at rotation 0 this reduces exactly to the old lines, all 24 pre-43 goldens byte-identical. Infinite lines/rays were already screen-space-safe; labels stay upright.
+  4. Band select: `objectsContainedIn(within, cardinalAngle:)` — screen-space inclusive containment, circle extremes along the band frame's cardinals (−rotation).
+  5. Persistence + export: additive `rotation` viewport key (absent → 0, no bump); current-view *and region* framings carry rotation, fit exports unrotated. Rotated-scene golden ×2 themes; twist cheat-sheet gesture row.
+- 1442 tests green (26 goldens included), analyze clean.
+
+**Next**
+- No queued phase. Candidate follow-ups: a desktop binding for rotation (explicitly out of v1 scope), web smoke re-run on a release build if any pixel-level doubt arises (widget + golden coverage was deemed sufficient — drive.js has no touch-twist driver).
+
+**Open questions / gotchas**
+- `TwistGate` rebaselines at arming, so twisting deliberately and hand-twisting back to the exact start leaves ~0.1 rad of view angle (inside the snap only if within 2°). Accepted trade-off vs. a visible 5.7° jump at arming.
+- The rotation snap-back pivots about the gesture's last focal; a nav gesture that never updated (down-up with no move) settles about the canvas origin instead — harmless, nothing rotated.
+- `_branchExtremes`' cardinal set is *not* symmetric in the sign of the frame angle ({−θ + kπ/2} ≠ {θ + kπ/2}); the canvas passes `−viewport.state.rotation` — don't "simplify" the sign away.
+
+---
+
 ## Session 81 — 2026-07-31
 
 **Done**

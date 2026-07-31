@@ -1156,6 +1156,39 @@ void main() {
     expect(selection(), isEmpty);
   });
 
+  testWidgets('under view rotation the band selects what is visually '
+      'inside it, not its corners\' world box', (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+    const state = ViewportState(rotation: math.pi / 4);
+    container.read(viewportProvider.notifier).set(state);
+    await tester.pump();
+
+    // One point on the band's screen strip, one 80 px below it — the
+    // second is outside the band on screen but *inside* the world rect
+    // its two drag corners span, which a world-rect test would take.
+    const viewport = CanvasViewport(state);
+    final construction = container.read(constructionProvider).construction;
+    construction
+      ..add(FreePoint(
+        id: 'inside',
+        position: viewport.screenToWorld(const Offset(200, 120)),
+      ))
+      ..add(FreePoint(
+        id: 'below',
+        position: viewport.screenToWorld(const Offset(200, 200)),
+      ));
+    await tester.pump();
+
+    final band = await tester.startGesture(origin + const Offset(100, 100));
+    await band.moveTo(origin + const Offset(300, 140));
+    await tester.pump();
+    await band.up();
+    await tester.pump();
+
+    expect(container.read(selectionProvider), {'inside'});
+  });
+
   testWidgets('shift rubber band adds to the selection instead of replacing',
       (tester) async {
     await pumpEditor(tester);
@@ -1669,6 +1702,104 @@ void main() {
     expect(container.read(selectionProvider), isEmpty,
         reason: 'a pinch must not open a rubber band');
     expect(objectCount(), 0);
+  });
+
+  testWidgets('two-finger twist rotates the view counterclockwise, '
+      'pinning the focal point', (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+    final center = tester.getCenter(find.byType(GeometryCanvas));
+    final fixedWorld =
+        const CanvasViewport(ViewportState()).screenToWorld(center - origin);
+
+    // Fingers 100 px above/below the center walking a quarter circle
+    // counterclockwise on screen (decreasing screen angle φ — screen y
+    // is down, so increasing φ would be visually clockwise).
+    Offset finger(double phi) =>
+        center + Offset(100 * math.cos(phi), 100 * math.sin(phi));
+    final g1 = await tester.createGesture();
+    await g1.down(finger(-math.pi / 2));
+    final g2 = await tester.createGesture();
+    await g2.down(finger(math.pi / 2));
+    await tester.pump();
+    const steps = 12;
+    for (var step = 1; step <= steps; step++) {
+      final delta = -(math.pi / 2) * step / steps;
+      await g1.moveTo(finger(-math.pi / 2 + delta));
+      await g2.moveTo(finger(math.pi / 2 + delta));
+      await tester.pump();
+    }
+    await g1.up();
+    await g2.up();
+    await tester.pump();
+
+    final after = CanvasViewport(container.read(viewportProvider));
+    // A quarter turn minus what arming rebaselined away (~0.1 rad plus
+    // recognizer slop): solidly positive (counterclockwise), short of π/2.
+    expect(after.state.rotation, greaterThan(1.0));
+    expect(after.state.rotation, lessThanOrEqualTo(math.pi / 2 + 0.01));
+    expect(after.state.scale, closeTo(1, 0.01),
+        reason: 'fingers kept their span — a twist must not zoom');
+    final focalAfter = after.worldToScreen(fixedWorld);
+    expect((focalAfter - (center - origin)).distance, lessThan(10),
+        reason: 'the world point between the fingers must stay put');
+    expect(container.read(selectionProvider), isEmpty,
+        reason: 'a twist must not open a rubber band');
+    expect(objectCount(), 0);
+  });
+
+  testWidgets('a small twist never arms — plain pinches cannot drift '
+      'the angle', (tester) async {
+    await pumpEditor(tester);
+    final center = tester.getCenter(find.byType(GeometryCanvas));
+
+    // ~4.6° total (0.08 rad), below the 0.1 rad arming threshold, walked
+    // in steps like a wobbly pinch would.
+    Offset finger(double phi) =>
+        center + Offset(100 * math.cos(phi), 100 * math.sin(phi));
+    final g1 = await tester.createGesture();
+    await g1.down(finger(-math.pi / 2));
+    final g2 = await tester.createGesture();
+    await g2.down(finger(math.pi / 2));
+    await tester.pump();
+    for (var step = 1; step <= 4; step++) {
+      final delta = -0.08 * step / 4;
+      await g1.moveTo(finger(-math.pi / 2 + delta));
+      await g2.moveTo(finger(math.pi / 2 + delta));
+      await tester.pump();
+    }
+    await g1.up();
+    await g2.up();
+    await tester.pump();
+
+    expect(container.read(viewportProvider).rotation, 0,
+        reason: 'an unarmed twist must leave the view exactly level');
+  });
+
+  testWidgets('mouse pointers never twist — rotation is touch-only',
+      (tester) async {
+    await pumpEditor(tester);
+    final center = tester.getCenter(find.byType(GeometryCanvas));
+
+    Offset finger(double phi) =>
+        center + Offset(100 * math.cos(phi), 100 * math.sin(phi));
+    final g1 = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await g1.down(finger(-math.pi / 2));
+    final g2 = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await g2.down(finger(math.pi / 2));
+    await tester.pump();
+    const steps = 12;
+    for (var step = 1; step <= steps; step++) {
+      final delta = -(math.pi / 2) * step / steps;
+      await g1.moveTo(finger(-math.pi / 2 + delta));
+      await g2.moveTo(finger(math.pi / 2 + delta));
+      await tester.pump();
+    }
+    await g1.up();
+    await g2.up();
+    await tester.pump();
+
+    expect(container.read(viewportProvider).rotation, 0);
   });
 
   testWidgets('two-finger drag pans without zooming or banding',

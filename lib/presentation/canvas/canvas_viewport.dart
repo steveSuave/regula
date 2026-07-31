@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui';
 
 import '../../application/providers/viewport_provider.dart';
@@ -16,6 +17,11 @@ import '../../domain/math/vec2.dart';
 ///   only place the flip happens — painter and hit tester stay flip-free.
 /// - `state.pan` is the world-space point at the canvas origin (top-left);
 ///   `state.scale` is screen pixels per world unit.
+/// - `state.rotation` rotates the content about the canvas origin,
+///   positive = counterclockwise on screen (Phase 43). The rotation is
+///   applied in the y-up frame *before* the flip, so `pan` keeps its
+///   meaning at any angle (the origin is the rotation's fixed point).
+///   Rotation preserves lengths, so the length helpers carry no term.
 class CanvasViewport {
   const CanvasViewport(this.state);
 
@@ -37,50 +43,98 @@ class CanvasViewport {
     if (newScale == state.scale) {
       return state;
     }
-    return pinning(world: screenToWorld(focal), focal: focal, scale: newScale);
+    return pinning(
+      world: screenToWorld(focal),
+      focal: focal,
+      scale: newScale,
+      rotation: state.rotation,
+    );
   }
 
   /// The state after shifting the content by [delta] screen pixels
   /// (y-down, like a pointer delta): content follows a rightward/downward
   /// delta, so the world point at the canvas origin moves the other way.
-  /// Backs viewport nudging; scale is untouched.
+  /// Backs viewport nudging; scale and rotation are untouched.
   ViewportState pannedByScreen(Offset delta) => ViewportState(
-        pan: Vec2(
-          state.pan.x - delta.dx / state.scale,
-          state.pan.y + delta.dy / state.scale,
-        ),
+        // The new origin world point is whatever currently sits delta
+        // *before* the origin — valid at any rotation, since
+        // screenToWorld already folds the angle in.
+        pan: screenToWorld(-delta),
         scale: state.scale,
+        rotation: state.rotation,
       );
 
-  /// The state with [scale] (clamped) whose pan puts the [world] point at
-  /// the [focal] screen point — the shared solve behind scroll zoom and
-  /// the pinch/pan gesture, where the anchor world point must track a
-  /// moving focal.
+  /// The state with [scale] (clamped) and [rotation] whose pan puts the
+  /// [world] point at the [focal] screen point — the shared solve behind
+  /// scroll zoom and the pinch/pan gesture, where the anchor world point
+  /// must track a moving focal.
   static ViewportState pinning({
     required Vec2 world,
     required Offset focal,
     required double scale,
+    double rotation = 0,
   }) {
     final clamped = scale.clamp(minScale, maxScale).toDouble();
-    // Solve screenToWorld(focal) == world for pan.
+    // Solve screenToWorld(focal) == world for pan: pan = world − R(−θ)·f,
+    // where f is the focal in y-up world units.
+    final fx = focal.dx / clamped;
+    final fy = -focal.dy / clamped;
+    final c = math.cos(rotation);
+    final s = math.sin(rotation);
     return ViewportState(
       pan: Vec2(
-        world.x - focal.dx / clamped,
-        world.y + focal.dy / clamped,
+        world.x - (fx * c + fy * s),
+        world.y - (fy * c - fx * s),
       ),
       scale: clamped,
+      rotation: rotation,
     );
   }
 
-  Offset worldToScreen(Vec2 world) => Offset(
-        (world.x - state.pan.x) * state.scale,
-        (state.pan.y - world.y) * state.scale,
-      );
+  Offset worldToScreen(Vec2 world) {
+    final dx = world.x - state.pan.x;
+    final dy = world.y - state.pan.y;
+    final c = math.cos(state.rotation);
+    final s = math.sin(state.rotation);
+    // Rotate by +θ in the y-up frame, then scale and flip. At θ = 0 the
+    // products reduce exactly to the pre-rotation transform.
+    return Offset(
+      (dx * c - dy * s) * state.scale,
+      -(dx * s + dy * c) * state.scale,
+    );
+  }
 
-  Vec2 screenToWorld(Offset screen) => Vec2(
-        state.pan.x + screen.dx / state.scale,
-        state.pan.y - screen.dy / state.scale,
-      );
+  Vec2 screenToWorld(Offset screen) {
+    final rx = screen.dx / state.scale;
+    final ry = -screen.dy / state.scale;
+    final c = math.cos(state.rotation);
+    final s = math.sin(state.rotation);
+    // Unflip and unscale, then rotate by −θ back into world axes.
+    return Vec2(
+      state.pan.x + rx * c + ry * s,
+      state.pan.y + ry * c - rx * s,
+    );
+  }
+
+  /// Screen-space polar angle of the world-space polar angle
+  /// [worldAngle]: the view rotation composes in, then the y-flip negates
+  /// — `worldToScreen(c + r·(cos α, sin α))` lands at screen angle
+  /// `worldToScreenAngle(α)` from `worldToScreen(c)`. Angle *sweeps*
+  /// (differences) only negate; the rotation term cancels.
+  double worldToScreenAngle(double worldAngle) =>
+      -(worldAngle + state.rotation);
+
+  /// Screen-space image of the world-space direction [direction]
+  /// (rotated, y-flipped, *not* scaled — a unit world direction stays a
+  /// unit screen direction).
+  Offset worldToScreenDirection(Vec2 direction) {
+    final c = math.cos(state.rotation);
+    final s = math.sin(state.rotation);
+    return Offset(
+      direction.x * c - direction.y * s,
+      -(direction.x * s + direction.y * c),
+    );
+  }
 
   /// Screen pixels covered by [worldLength] world units.
   double worldToScreenLength(double worldLength) =>

@@ -77,6 +77,7 @@ Map<String, dynamic> encodeDocument(
     'viewport': <String, dynamic>{
       'pan': [viewport.pan.x, viewport.pan.y],
       'scale': viewport.scale,
+      'rotation': viewport.rotation,
     },
     // Additive keys (absent → false on decode), so pre-36/45 apps ignore
     // them and pre-36/45 files need no version bump.
@@ -631,8 +632,18 @@ ViewportState _decodeViewport(Object? json) {
   if (scale is! num || scale <= 0 || !scale.isFinite) {
     throw const FormatException('Invalid "viewport" scale');
   }
+  // Additive Phase 43 key: files saved before view rotation existed have
+  // no "rotation" and read as level — no version bump.
+  final rotation = json['rotation'];
+  if (rotation is! num?) {
+    throw const FormatException('Invalid "viewport" rotation');
+  }
+  if (rotation != null && !rotation.isFinite) {
+    throw const FormatException('Invalid "viewport" rotation');
+  }
   return ViewportState(
     pan: Vec2((pan[0] as num).toDouble(), (pan[1] as num).toDouble()),
     scale: scale.toDouble(),
+    rotation: rotation?.toDouble() ?? 0,
   );
 }
