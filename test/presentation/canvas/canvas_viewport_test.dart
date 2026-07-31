@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/application/providers/viewport_provider.dart';
 import 'package:regula/domain/math/vec2.dart';
@@ -106,6 +108,120 @@ void main() {
         expect(roundTrip.closeTo(world), isTrue,
             reason: '$world did not survive the round trip: $roundTrip');
       }
+    });
+  });
+
+  group('CanvasViewport rotation', () {
+    test('positive rotation turns content counterclockwise on screen', () {
+      // A quarter turn about the canvas origin (pan = world origin):
+      // "right of origin" must land "above origin" — screen y negative.
+      final viewport =
+          CanvasViewport(ViewportState(rotation: math.pi / 2));
+
+      final right = viewport.worldToScreen(const Vec2(1, 0));
+      expect(right.dx, closeTo(0, 1e-12));
+      expect(right.dy, closeTo(-1, 1e-12));
+
+      final up = viewport.worldToScreen(const Vec2(0, 1));
+      expect(up.dx, closeTo(-1, 1e-12));
+      expect(up.dy, closeTo(0, 1e-12));
+    });
+
+    test('pan stays the world point at the canvas origin at any angle', () {
+      for (final rotation in [0.3, -1.2, math.pi, 5.0]) {
+        final viewport = CanvasViewport(
+          ViewportState(pan: const Vec2(10, 20), scale: 2, rotation: rotation),
+        );
+        final origin = viewport.worldToScreen(const Vec2(10, 20));
+        expect(origin.dx, closeTo(0, 1e-12),
+            reason: 'rotation $rotation moved the origin');
+        expect(origin.dy, closeTo(0, 1e-12),
+            reason: 'rotation $rotation moved the origin');
+      }
+    });
+
+    test('screenToWorld inverts worldToScreen at non-zero rotation', () {
+      const points = [Vec2.zero, Vec2(1, 1), Vec2(-3.25, 12), Vec2(100, -0.5)];
+      for (final rotation in [0.1, -0.7, math.pi / 3, 2.9, -math.pi]) {
+        final viewport = CanvasViewport(
+          ViewportState(pan: const Vec2(-4, 7.5), scale: 2.5, rotation: rotation),
+        );
+        for (final world in points) {
+          final roundTrip =
+              viewport.screenToWorld(viewport.worldToScreen(world));
+          expect(roundTrip.closeTo(world), isTrue,
+              reason: '$world at rotation $rotation did not survive the '
+                  'round trip: $roundTrip');
+        }
+      }
+    });
+
+    test('rotation preserves screen distances, so length helpers hold', () {
+      final viewport = CanvasViewport(
+        const ViewportState(pan: Vec2(3, -2), scale: 2.5, rotation: 0.8),
+      );
+      const a = Vec2(1, 4);
+      const b = Vec2(-2, 0);
+
+      final screenDistance =
+          (viewport.worldToScreen(a) - viewport.worldToScreen(b)).distance;
+      expect(
+        screenDistance,
+        closeTo(viewport.worldToScreenLength((a - b).norm), 1e-9),
+        reason: 'a rotated view must not change on-screen lengths',
+      );
+    });
+
+    test('pinning honours rotation and still pins the world point', () {
+      const world = Vec2(6, -3);
+      const focal = Offset(200, 150);
+      for (final rotation in [0.0, 0.4, -2.1, math.pi / 2]) {
+        final state = CanvasViewport.pinning(
+          world: world,
+          focal: focal,
+          scale: 2,
+          rotation: rotation,
+        );
+        expect(state.rotation, rotation);
+        final pinned = CanvasViewport(state).screenToWorld(focal);
+        expect(pinned.closeTo(world), isTrue,
+            reason: 'rotation $rotation: focal resolves to $pinned, '
+                'not $world');
+      }
+    });
+
+    test('zoomedAbout preserves rotation and the focal pin', () {
+      final viewport = CanvasViewport(
+        const ViewportState(pan: Vec2(-4, 7.5), scale: 2.5, rotation: 1.1),
+      );
+      const focal = Offset(320, 240);
+      final fixedWorld = viewport.screenToWorld(focal);
+
+      final zoomed = CanvasViewport(viewport.zoomedAbout(focal, 1.5));
+      expect(zoomed.state.rotation, 1.1);
+      expect(zoomed.state.scale, closeTo(3.75, 1e-12));
+      final focalAfter = zoomed.worldToScreen(fixedWorld);
+      expect(focalAfter.dx, closeTo(focal.dx, 1e-9));
+      expect(focalAfter.dy, closeTo(focal.dy, 1e-9));
+    });
+
+    test('pannedByScreen shifts content by the delta at non-zero rotation',
+        () {
+      final viewport = CanvasViewport(
+        const ViewportState(pan: Vec2(10, -5), scale: 2, rotation: -0.6),
+      );
+      const world = Vec2(12, -8);
+      final before = viewport.worldToScreen(world);
+
+      final panned =
+          CanvasViewport(viewport.pannedByScreen(const Offset(30, -14)));
+      expect(panned.state.scale, 2);
+      expect(panned.state.rotation, -0.6);
+      final after = panned.worldToScreen(world);
+      expect(after.dx - before.dx, closeTo(30, 1e-9),
+          reason: 'content must follow the screen delta at any angle');
+      expect(after.dy - before.dy, closeTo(-14, 1e-9),
+          reason: 'content must follow the screen delta at any angle');
     });
   });
 }
