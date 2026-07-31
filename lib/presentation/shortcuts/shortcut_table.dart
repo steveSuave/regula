@@ -800,6 +800,11 @@ const List<GestureRow> gestureRows = [
     section: ShortcutSection.viewport,
   ),
   GestureRow(
+    display: 'Alt/Option + scroll',
+    label: 'Rotate about the cursor (near level snaps straight)',
+    section: ShortcutSection.viewport,
+  ),
+  GestureRow(
     display: 'Two-finger drag',
     label: 'Pan (touch)',
     section: ShortcutSection.viewport,

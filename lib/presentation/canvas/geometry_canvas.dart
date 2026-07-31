@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart';
@@ -75,6 +76,18 @@ class GeometryCanvas extends ConsumerStatefulWidget {
   /// exactly reversible (+dy then −dy lands back on the same scale).
   static const double scrollZoomPerPixel = 0.002;
 
+  /// Rotation per scrolled pixel for Alt/Option + scroll (Phase 43b):
+  /// one mouse-wheel notch (~100 px) turns ~17°, a trackpad two-finger
+  /// swipe rotates continuously. Linear and unclamped — rotation has no
+  /// bounds to pin, unlike zoom.
+  static const double scrollRotatePerPixel = 0.003;
+
+  /// Wheel streams have no end event, so the touch snap-back's trigger
+  /// is mirrored in time instead: this long after the last Alt+scroll
+  /// rotate, the view settles (normalize, and snap level when within
+  /// [TwistGate.snapThreshold]).
+  static const Duration wheelRotateSettleDelay = Duration(milliseconds: 250);
+
   @override
   ConsumerState<GeometryCanvas> createState() => _GeometryCanvasState();
 }
@@ -126,6 +139,16 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
   /// threshold for drags, whose recognizer details don't carry a kind.
   PointerDeviceKind? _firstDownKind;
 
+  /// Active trackpad pan-zoom pointers (native desktop; the web engine
+  /// never synthesizes them). A pan-zoom carries real rotation data, so
+  /// while one is active the twist gate mounts like it does for touch.
+  int _panZoomPointers = 0;
+
+  /// Pending end-of-wheel-rotation settle (Phase 43b): rescheduled on
+  /// every Alt+scroll rotate event, cancelled when a navigation gesture
+  /// takes over.
+  Timer? _wheelRotateSettle;
+
   /// In-progress label drag; null when none. Like the band, this is
   /// local widget state — the construction is untouched until the one
   /// [ChangeAttributesCommand] commits on release (cancel just drops it).
@@ -143,6 +166,9 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
       onPointerDown: _handlePointerDown,
       onPointerUp: _handlePointerLift,
       onPointerCancel: _handlePointerCancelled,
+      onPointerPanZoomStart: (_) => _panZoomPointers += 1,
+      onPointerPanZoomEnd: (_) =>
+          _panZoomPointers = math.max(0, _panZoomPointers - 1),
       onPointerSignal: _handlePointerSignal,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
@@ -226,7 +252,25 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
           final scroll = event as PointerScrollEvent;
           final viewport = CanvasViewport(ref.read(viewportProvider));
           final keyboard = HardwareKeyboard.instance;
-          if (keyboard.isControlPressed || keyboard.isMetaPressed) {
+          if (keyboard.isAltPressed) {
+            // Alt/Option + scroll rotates about the cursor (Phase 43b) —
+            // the desktop stand-in for the touch twist, since browsers
+            // never expose a trackpad rotate gesture. Scroll-up turns
+            // counterclockwise, mirroring scroll-up-zooms-in. (Shift
+            // can't be the modifier: browsers turn Shift+wheel into
+            // horizontal deltas.)
+            ref.read(viewportProvider.notifier).set(
+                  CanvasViewport.pinning(
+                    world: viewport.screenToWorld(scroll.localPosition),
+                    focal: scroll.localPosition,
+                    scale: viewport.state.scale,
+                    rotation: viewport.state.rotation -
+                        scroll.scrollDelta.dy *
+                            GeometryCanvas.scrollRotatePerPixel,
+                  ),
+                );
+            _scheduleWheelRotateSettle(scroll.localPosition);
+          } else if (keyboard.isControlPressed || keyboard.isMetaPressed) {
             final factor = math.exp(
               -scroll.scrollDelta.dy * GeometryCanvas.scrollZoomPerPixel,
             );
@@ -250,6 +294,21 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
 
   bool get _spaceHeld => HardwareKeyboard.instance.logicalKeysPressed
       .contains(LogicalKeyboardKey.space);
+
+  @override
+  void dispose() {
+    _wheelRotateSettle?.cancel();
+    super.dispose();
+  }
+
+  void _scheduleWheelRotateSettle(Offset focal) {
+    _wheelRotateSettle?.cancel();
+    _wheelRotateSettle = Timer(GeometryCanvas.wheelRotateSettleDelay, () {
+      if (mounted) {
+        _settleRotationAbout(focal);
+      }
+    });
+  }
 
   void _handlePointerDown(PointerDownEvent event) {
     _downPointers += 1;
@@ -286,15 +345,22 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
   void _scaleStart(CanvasViewport viewport, ScaleStartDetails details) {
     if (details.pointerCount >= 2 || _navLatched || _spaceHeld) {
       _navLatched = true;
+      // A pending wheel-rotation settle must not fire mid-gesture and
+      // fight the baseline solve.
+      _wheelRotateSettle?.cancel();
       final current = CanvasViewport(ref.read(viewportProvider));
       _nav = _NavBaseline(
         startScale: current.state.scale,
         startRotation: current.state.rotation,
         fixedWorld: current.screenToWorld(details.localFocalPoint),
-        // Twist is touch-only v1 (PLAN, Phase 43): a trackpad's reported
-        // rotation would spin the canvas with no way to bind it back on
-        // desktop, so only finger gestures may rotate.
-        twist: _firstDownKind == PointerDeviceKind.touch ? TwistGate() : null,
+        // Twist mounts for gestures that carry real rotation data:
+        // touch (Phase 43) and native trackpad pan-zoom (Phase 43b —
+        // macOS folds the trackpad rotate gesture into PointerPanZoom).
+        // Two *mouse* pointers stay inert.
+        twist: _firstDownKind == PointerDeviceKind.touch ||
+                _panZoomPointers > 0
+            ? TwistGate()
+            : null,
       );
       return;
     }
@@ -338,7 +404,7 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
       _nav = null;
       if (details.pointerCount == 0) {
         _navLatched = false;
-        _settleRotation(nav);
+        _settleRotationAbout(nav.lastFocal);
       }
       return;
     }
@@ -349,17 +415,17 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas> {
     _panEnd(viewport);
   }
 
-  /// End-of-navigation settle: normalize the view angle and snap a
-  /// nearly-level release back to exactly 0 — about the gesture's last
-  /// focal point, so the content pivots in place instead of swinging
-  /// around the canvas origin.
-  void _settleRotation(_NavBaseline nav) {
+  /// End-of-rotation settle, shared by the touch twist (on gesture end)
+  /// and Alt+scroll (after the wheel quiet period): normalize the view
+  /// angle and snap a nearly-level state back to exactly 0 — about
+  /// [focal], so the content pivots in place instead of swinging around
+  /// the canvas origin.
+  void _settleRotationAbout(Offset? focal) {
     final current = ref.read(viewportProvider);
     final settled = TwistGate.settled(current.rotation);
     if (settled == current.rotation) {
       return;
     }
-    final focal = nav.lastFocal;
     final viewport = CanvasViewport(current);
     ref.read(viewportProvider.notifier).set(
           focal == null

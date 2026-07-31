@@ -69,6 +69,7 @@ import 'presentation/canvas/label_declutter.dart';
 import 'presentation/canvas/label_obstacles.dart';
 import 'presentation/canvas/name_points_hint.dart';
 import 'presentation/canvas/region_pick_overlay.dart';
+import 'presentation/canvas/twist_gate.dart';
 import 'presentation/panels/attributes_inspector.dart';
 import 'presentation/panels/delete_selection.dart';
 import 'presentation/panels/export_dialog.dart';
@@ -866,6 +867,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                   icon: const Icon(Icons.filter_center_focus),
                   onPressed: () => ref.read(viewportProvider.notifier).reset(),
                 ),
+                _compassButton(),
                 _gridMenu(),
                 IconButton(
                   tooltip: 'Keyboard shortcuts (?)',
@@ -909,6 +911,57 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         ),
       ),
     );
+  }
+
+  /// The compass (Phase 43b): mounted only while the view is rotated —
+  /// it doubles as the "you are rotated" indicator, and clicking it
+  /// levels the view about the canvas center, keeping pan and zoom
+  /// (Reset/Fit both move the view; this is the way back to straight
+  /// that doesn't). The needle turns with the content, pointing where
+  /// world-up points on screen.
+  ///
+  /// Its own [Consumer] over a rotation select, so twist frames rebuild
+  /// this one button instead of the whole screen — and the conditional
+  /// mount means a level view renders the exact pre-43b icon row.
+  Widget _compassButton() {
+    return Consumer(
+      builder: (context, ref, _) {
+        final rotation =
+            ref.watch(viewportProvider.select((state) => state.rotation));
+        if (rotation == 0) {
+          return const SizedBox.shrink();
+        }
+        final degrees =
+            (normalizeAngle(rotation) * 180 / math.pi).round();
+        return IconButton(
+          key: const ValueKey('compass-button'),
+          tooltip: 'Straighten the view ($degrees°)',
+          // Screen angles are clockwise-positive; world-up on screen sits
+          // at −rotation from straight up.
+          icon: Transform.rotate(
+            angle: -rotation,
+            child: const Icon(Icons.navigation_outlined),
+          ),
+          onPressed: _levelView,
+        );
+      },
+    );
+  }
+
+  /// Back to a level view: rotation to 0, the world point at the canvas
+  /// center stays put, scale untouched.
+  void _levelView() {
+    final current = ref.read(viewportProvider);
+    final center = _canvasCenter;
+    ref.read(viewportProvider.notifier).set(
+          center == null
+              ? ViewportState(pan: current.pan, scale: current.scale)
+              : CanvasViewport.pinning(
+                  world: CanvasViewport(current).screenToWorld(center),
+                  focal: center,
+                  scale: current.scale,
+                ),
+        );
   }
 
   /// Name-points and declutter as one text-and-labels flyout group (user
