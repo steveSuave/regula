@@ -338,9 +338,28 @@ void main() {
     });
 
     test('preserves the viewport snapshot', () {
-      const viewport = ViewportState(pan: Vec2(-3.5, 7.25), scale: 2.5);
+      const viewport = ViewportState(
+        pan: Vec2(-3.5, 7.25),
+        scale: 2.5,
+        rotation: 0.65,
+      );
       final decoded = roundTrip(buildKitchenSink(), viewport: viewport);
       expect(decoded.viewport, viewport);
+    });
+
+    test('a viewport without a rotation key reads as level (pre-43 files)',
+        () {
+      final json = encodeDocument(
+        Construction(),
+        viewport: const ViewportState(pan: Vec2(1, 2), scale: 2),
+      );
+      (json['viewport'] as Map<String, dynamic>).remove('rotation');
+      final decoded = decodeDocument(json);
+      expect(
+        decoded.viewport,
+        const ViewportState(pan: Vec2(1, 2), scale: 2),
+      );
+      expect(decoded.viewport.rotation, 0);
     });
 
     test('preserves the document settings snapshot', () {
@@ -629,6 +648,18 @@ void main() {
           'viewport': <String, dynamic>{
             'pan': [0, 0],
             'scale': 0,
+          },
+          'objects': <Object?>[],
+        }),
+        throwsFormatException,
+      );
+      expect(
+        () => decodeDocument(<String, dynamic>{
+          'version': 1,
+          'viewport': <String, dynamic>{
+            'pan': [0, 0],
+            'scale': 1,
+            'rotation': 'sideways',
           },
           'objects': <Object?>[],
         }),

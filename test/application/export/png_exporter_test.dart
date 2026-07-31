@@ -8,6 +8,7 @@ import 'package:regula/domain/construction/object_attributes.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/presentation/canvas/canvas_viewport.dart';
 
 const red = ui.Color(0xFFFF0000);
 const white = ui.Color(0xFFFFFFFF);
@@ -267,6 +268,35 @@ void main() {
       expect(framing.viewport.scale, 1);
       expect(framing.viewport.pan, const Vec2(8, -18));
       expect(framing.logicalSize, const ui.Size(6, 6));
+    });
+
+    test('framings under view rotation: current and region carry it, '
+        'fit exports unrotated', () {
+      const rotated = ViewportState(pan: Vec2(3, 7), scale: 2, rotation: 0.6);
+
+      final current = currentViewFraming(rotated, const ui.Size(100, 50));
+      expect(current.viewport.rotation, 0.6);
+
+      final region = regionFraming(
+        rotated,
+        const ui.Rect.fromLTWH(8, 18, 6, 6),
+      );
+      expect(region.viewport.rotation, 0.6);
+      expect(region.viewport.scale, 2);
+      // The pan solve holds at any angle: the marquee corner's world
+      // point must sit at the output origin.
+      final corner = CanvasViewport(region.viewport)
+          .worldToScreen(CanvasViewport(rotated)
+              .screenToWorld(const ui.Offset(8, 18)));
+      expect(corner.dx, closeTo(0, 1e-9));
+      expect(corner.dy, closeTo(0, 1e-9));
+
+      final fit = fitConstructionFraming(
+        pointScene().objects,
+        const ui.Size(100, 50),
+      );
+      expect(fit!.viewport.rotation, 0,
+          reason: 'fit framing always exports level');
     });
 
     test('regionFraming exports exactly the marquee contents', () async {
