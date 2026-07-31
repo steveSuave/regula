@@ -6,6 +6,20 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 81 — 2026-07-31
+
+**Done**
+- User request: construction files now use a **`.rgl` extension** instead of `.json`. Content is unchanged (still plain indented JSON); only the dialogs changed in `file_io.dart`: save offers `construction.rgl` and allows only `rgl`; open accepts both `rgl` and `json` so pre-rename files stay openable (`_saveExtensions` / `_openExtensions` split).
+- Updated the two filename references in `file_menu_test.dart`. 1411 green, analyze clean.
+
+**Next**
+- Phase 43 (viewport rotation) remains the queued phase.
+
+**Open questions / gotchas**
+- No OS file-type registration was added for `.rgl` — double-clicking a file won't launch the app; open-from-dialog only.
+
+---
+
 ## Session 80 — 2026-07-31
 
 **Done**

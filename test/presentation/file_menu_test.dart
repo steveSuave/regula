@@ -67,7 +67,7 @@ class _FakeFilePicker extends FilePickerPlatform {
 
 FilePickerResult _fileWithBytes(List<int> bytes) => FilePickerResult([
       PlatformFile(
-        name: 'construction.json',
+        name: 'construction.rgl',
         size: bytes.length,
         bytes: Uint8List.fromList(bytes),
       ),
@@ -127,7 +127,7 @@ void main() {
 
     await tapFileMenu(tester, 'Save…');
 
-    expect(picker.savedFileName, 'construction.json');
+    expect(picker.savedFileName, 'construction.rgl');
     final saved = decodeDocument(
       jsonDecode(utf8.decode(picker.savedBytes!)) as Map<String, dynamic>,
     );

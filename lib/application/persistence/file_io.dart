@@ -9,11 +9,15 @@ import '../providers/viewport_provider.dart';
 import 'construction_codec.dart';
 
 /// File name offered by the save dialog (and used verbatim by the web
-/// download). Plain `.json` — the format is ordinary JSON and this keeps
-/// the file openable everywhere without OS file-type registration.
-const String defaultConstructionFileName = 'construction.json';
+/// download). `.rgl` is regula's own extension; the content is still
+/// ordinary JSON.
+const String defaultConstructionFileName = 'construction.rgl';
 
-const List<String> _allowedExtensions = ['json'];
+const List<String> _saveExtensions = ['rgl'];
+
+/// `json` stays accepted on open so files saved before the `.rgl` rename
+/// remain openable.
+const List<String> _openExtensions = ['rgl', 'json'];
 
 /// Serializes [construction] + [viewport] + [settings] and hands the bytes
 /// to the platform's save dialog (a download on the web). Completes when
@@ -35,7 +39,7 @@ Future<void> saveConstructionFile(
     dialogTitle: 'Save construction',
     fileName: defaultConstructionFileName,
     type: FileType.custom,
-    allowedExtensions: _allowedExtensions,
+    allowedExtensions: _saveExtensions,
     bytes: bytes,
   );
 }
@@ -66,7 +70,7 @@ Future<DecodedDocument?> openConstructionFile() async {
   final result = await FilePicker.pickFiles(
     dialogTitle: 'Open construction',
     type: FileType.custom,
-    allowedExtensions: _allowedExtensions,
+    allowedExtensions: _openExtensions,
     withData: true,
   );
   if (result == null || result.files.isEmpty) {
