@@ -6,6 +6,26 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 83 — 2026-07-31
+
+**Done**
+- **Phase 43b — desktop rotation bindings** (user feedback: "make trackpad work, ideally also for web"), on `phase-43b-desktop-rotation`, merged to `main`. PLAN updated first with the key finding: browsers never expose the trackpad rotate gesture (only Safari's non-standard `GestureEvent`), so web rotation must be a synthetic binding.
+- **Alt/Option + scroll rotates about the cursor** — linear 0.003 rad/px (≈17°/notch) through the same pointer-signal plumbing as Ctrl-zoom, so mouse wheels and trackpad two-finger swipes both drive it. Shift was rejected as the modifier: browsers convert Shift+wheel to horizontal deltas.
+- **Quiet-period settle**: wheel streams have no end event, so 250 ms after the last rotate event the shared `TwistGate.settled` snap runs about the last cursor position (`_settleRotationAbout(focal)` extracted from the touch path; timer cancelled on new events, nav-gesture start, dispose).
+- **Compass chip**: app-bar button mounted only while rotated (own `Consumer` over a rotation select — twist frames rebuild one button, not the screen; conditional mount keeps drive.js icon indexing intact at level view), needle turns with the content, tooltip shows signed degrees, click levels about the canvas center keeping pan/zoom — the previously-missing way back to straight without Reset/Fit.
+- **Native trackpad twist** (macOS, non-shipping): the `TwistGate` also mounts while a `Listener` pan-zoom pointer is active. The widget test via `TestGesture.panZoom*` confirmed the recognizer counts a pan-zoom as two pointers and folds its rotation into `details.rotation` — no nav-entry changes needed.
+- Cheat-sheet `Alt/Option + scroll` gesture row. 1446 tests green (26 goldens), analyze clean.
+
+**Next**
+- No queued phase.
+
+**Open questions / gotchas**
+- Alt+scroll on Firefox/Linux natively means history-nav; the web engine's `preventDefault` on canvas wheel events should suppress it — verify in the next real-browser smoke run.
+- The wheel settle is time-based (250 ms), so a very slow continuous Alt+scroll near level can snap mid-stream between notches; harmless (the next notch re-rotates from 0) but worth knowing.
+- A fix rode along: Session 82's TODO edit had accidentally swallowed the "## Phase 44 — Line clipping modes" header, folding 44's items into 43b's section; restored.
+
+---
+
 ## Session 82 — 2026-07-31
 
 **Done**

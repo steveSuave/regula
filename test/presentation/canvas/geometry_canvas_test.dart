@@ -1665,6 +1665,121 @@ void main() {
     expect(objectCount(), 0);
   });
 
+  testWidgets('Alt+scroll rotates about the cursor without zooming; a '
+      'deliberate angle survives the quiet period', (tester) async {
+    await pumpEditor(tester);
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+    final cursor = origin + const Offset(240, 180);
+    final fixedWorld =
+        const CanvasViewport(ViewportState()).screenToWorld(cursor - origin);
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+    final pointer = TestPointer(1, PointerDeviceKind.mouse);
+    pointer.hover(cursor);
+    await tester.sendEventToBinding(pointer.scroll(const Offset(0, -100)));
+    await tester.pump();
+    await tester.sendEventToBinding(pointer.scroll(const Offset(0, -100)));
+    await tester.pump();
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+
+    final after = CanvasViewport(container.read(viewportProvider));
+    expect(after.state.rotation, closeTo(0.6, 1e-9),
+        reason: 'scroll-up must turn counterclockwise at 0.003 rad/px');
+    expect(after.state.scale, 1, reason: 'Alt+scroll never zooms');
+    final focalAfter = after.worldToScreen(fixedWorld);
+    expect(focalAfter.dx, closeTo(cursor.dx - origin.dx, 1e-6),
+        reason: 'the world point under the cursor must not move');
+    expect(focalAfter.dy, closeTo(cursor.dy - origin.dy, 1e-6),
+        reason: 'the world point under the cursor must not move');
+
+    // Quiet period passes: 0.6 rad is a deliberate angle, no snap.
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(container.read(viewportProvider).rotation, closeTo(0.6, 1e-9));
+    expect(objectCount(), 0);
+  });
+
+  testWidgets('a nearly-level Alt+scroll snaps straight after the wheel '
+      'quiet period', (tester) async {
+    await pumpEditor(tester);
+    final cursor = tester.getCenter(find.byType(GeometryCanvas));
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+    final pointer = TestPointer(1, PointerDeviceKind.mouse);
+    pointer.hover(cursor);
+    // 10 px → 0.03 rad ≈ 1.7°, inside the 2° snap.
+    await tester.sendEventToBinding(pointer.scroll(const Offset(0, -10)));
+    await tester.pump();
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+
+    expect(container.read(viewportProvider).rotation, closeTo(0.03, 1e-9),
+        reason: 'the angle applies immediately, snap comes later');
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(container.read(viewportProvider).rotation, 0,
+        reason: 'close enough to straight is straight');
+  });
+
+  testWidgets('a trackpad pan-zoom twist rotates the view (native '
+      'desktop path)', (tester) async {
+    await pumpEditor(tester);
+    final center = tester.getCenter(find.byType(GeometryCanvas));
+
+    final gesture =
+        await tester.createGesture(kind: PointerDeviceKind.trackpad);
+    await gesture.panZoomStart(center);
+    await tester.pump();
+    // Cumulative rotation samples like macOS reports them: clockwise-
+    // positive on screen, so a negative stream turns the view CCW.
+    for (var step = 1; step <= 5; step++) {
+      await gesture.panZoomUpdate(center, rotation: -0.1 * step);
+      await tester.pump();
+    }
+    await gesture.panZoomEnd();
+    await tester.pump();
+
+    final state = container.read(viewportProvider);
+    expect(state.rotation, greaterThan(0.2),
+        reason: 'pan-zoom rotation must reach the twist gate');
+    expect(state.rotation, lessThanOrEqualTo(0.5));
+    expect(state.scale, closeTo(1, 1e-9));
+    expect(container.read(selectionProvider), isEmpty);
+    expect(objectCount(), 0);
+  });
+
+  testWidgets('the compass appears only while rotated and levels the '
+      'view about the canvas center', (tester) async {
+    await pumpEditor(tester);
+    const compass = ValueKey('compass-button');
+    expect(find.byKey(compass), findsNothing,
+        reason: 'a level view shows no compass');
+
+    const rotated =
+        ViewportState(pan: Vec2(3, 4), scale: 2, rotation: 0.5);
+    container.read(viewportProvider.notifier).set(rotated);
+    await tester.pump();
+    expect(find.byKey(compass), findsOneWidget);
+
+    final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+    final centerLocal =
+        tester.getCenter(find.byType(GeometryCanvas)) - origin;
+    final centerWorld =
+        const CanvasViewport(rotated).screenToWorld(centerLocal);
+
+    await tester.tap(find.byKey(compass));
+    await tester.pump();
+
+    final leveled = container.read(viewportProvider);
+    expect(leveled.rotation, 0);
+    expect(leveled.scale, 2, reason: 'leveling never rezooms');
+    final centerAfter =
+        CanvasViewport(leveled).worldToScreen(centerWorld);
+    expect(centerAfter.dx, closeTo(centerLocal.dx, 1e-6),
+        reason: 'the view pivots about the canvas center');
+    expect(centerAfter.dy, closeTo(centerLocal.dy, 1e-6),
+        reason: 'the view pivots about the canvas center');
+    expect(find.byKey(compass), findsNothing,
+        reason: 'level again — the compass retires');
+  });
+
   testWidgets('pinch zooms about the fingers, and never rubber-bands',
       (tester) async {
     await pumpEditor(tester);
