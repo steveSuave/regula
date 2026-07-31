@@ -124,19 +124,40 @@ class CanvasHitTester {
     final maxX = math.max(corner1.x, corner2.x);
     final minY = math.min(corner1.y, corner2.y);
     final maxY = math.max(corner1.y, corner2.y);
-    bool within(Vec2 p) =>
-        p.x >= minX && p.x <= maxX && p.y >= minY && p.y <= maxY;
-
-    return [
-      for (final object in objects)
-        if (object.attributes.visible &&
-            object.isDefined &&
-            _containedIn(object, within))
-          object,
-    ];
+    return objectsContainedIn(
+      objects,
+      (p) => p.x >= minX && p.x <= maxX && p.y >= minY && p.y <= maxY,
+    );
   }
 
-  bool _containedIn(GeoObject object, bool Function(Vec2) within) =>
+  /// The visible, defined objects wholly inside the rectangular region
+  /// given by [within] — the general band-selection predicate.
+  ///
+  /// [within] takes world points; the region must be a rectangle in
+  /// *some* frame, and [cardinalAngle] is the world polar angle of that
+  /// frame's +x direction. Under view rotation (Phase 43) the canvas
+  /// passes the screen-space band — `Rect.contains ∘ worldToScreen`,
+  /// which in world space is a rotated quad — with `−rotation` as the
+  /// frame angle: circle and arc containment tests the branch extremes
+  /// along the *band's* axes, where the true touching points lie.
+  List<GeoObject> objectsContainedIn(
+    Iterable<GeoObject> objects,
+    bool Function(Vec2) within, {
+    double cardinalAngle = 0,
+  }) =>
+      [
+        for (final object in objects)
+          if (object.attributes.visible &&
+              object.isDefined &&
+              _containedIn(object, within, cardinalAngle))
+            object,
+      ];
+
+  bool _containedIn(
+    GeoObject object,
+    bool Function(Vec2) within,
+    double cardinalAngle,
+  ) =>
       switch (object) {
         GeoPoint() => within(object.position!),
         Segment() => within(object.start!) && within(object.end!),
@@ -144,14 +165,20 @@ class CanvasHitTester {
             object.circle!,
             object.containsAngle,
             [object.startPosition!, object.endPosition!],
+            cardinalAngle,
           ).every(within),
         Sector() => _branchExtremes(
             object.circle!,
             object.containsAngle,
             [object.circle!.center, object.startRim!, object.endRim!],
+            cardinalAngle,
           ).every(within),
-        GeoCircle() =>
-          _branchExtremes(object.circle!, (_) => true, const []).every(within),
+        GeoCircle() => _branchExtremes(
+            object.circle!,
+            (_) => true,
+            const [],
+            cardinalAngle,
+          ).every(within),
         GeoLine() => false, // infinite (rays included): never contained
         GeoAngle() => within(object.angle!.vertex),
         GeoPolygon() => object.polygonVertices!.every(within),
@@ -170,17 +197,19 @@ class CanvasHitTester {
   }
 
   /// The points bounding a carrier-circle branch: the [seeds] (endpoints,
-  /// and for a sector its center) plus each cardinal-direction extreme of
-  /// the carrier that lies on the branch. Their combined bounding box is
-  /// the branch's exact bounding box.
+  /// and for a sector its center) plus each extreme of the carrier along
+  /// the region frame's cardinal directions — [cardinalAngle] + k·π/2 —
+  /// that lies on the branch. Their combined bounding box *in that frame*
+  /// is the branch's exact bounding box.
   Iterable<Vec2> _branchExtremes(
     CircleEq circle,
     bool Function(double) containsAngle,
     List<Vec2> seeds,
+    double cardinalAngle,
   ) sync* {
     yield* seeds;
     for (var k = 0; k < 4; k++) {
-      final angle = k * math.pi / 2;
+      final angle = cardinalAngle + k * math.pi / 2;
       if (containsAngle(angle)) {
         yield circle.center +
             Vec2(math.cos(angle), math.sin(angle)) * circle.radius;

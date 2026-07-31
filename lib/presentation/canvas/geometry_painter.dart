@@ -201,27 +201,39 @@ class GeometryPainter extends CustomPainter {
   /// and fit never see them.
   void _drawBackground(Canvas canvas, Size size) {
     final step = gridStep(viewport.state.scale);
-    // Visible world range; the viewport flips y, so the y extremes swap.
-    final topLeft = viewport.screenToWorld(Offset.zero);
-    final bottomRight = viewport.screenToWorld(
-      Offset(size.width, size.height),
-    );
+    // Grid and axes are world-space (Phase 43 decision): under view
+    // rotation they rotate with the content, staying glued to the world
+    // axes. The visible world region is then a rotated quad — cover its
+    // axis-aligned bounding box (at rotation 0 this reduces exactly to
+    // the two screen corners); the canvas clips the overhang.
+    final corners = [
+      viewport.screenToWorld(Offset.zero),
+      viewport.screenToWorld(Offset(size.width, 0)),
+      viewport.screenToWorld(Offset(0, size.height)),
+      viewport.screenToWorld(Offset(size.width, size.height)),
+    ];
+    final minX = corners.map((c) => c.x).reduce(math.min);
+    final maxX = corners.map((c) => c.x).reduce(math.max);
+    final minY = corners.map((c) => c.y).reduce(math.min);
+    final maxY = corners.map((c) => c.y).reduce(math.max);
 
     if (showGrid) {
       final grid = Paint()
         ..color = gridColor
         ..strokeWidth = _gridStrokeWidth;
-      for (var i = (topLeft.x / step).ceil();
-          i * step <= bottomRight.x;
-          i++) {
-        final x = viewport.worldToScreen(Vec2(i * step, 0)).dx;
-        canvas.drawLine(Offset(x, 0), Offset(x, size.height), grid);
+      for (var i = (minX / step).ceil(); i * step <= maxX; i++) {
+        canvas.drawLine(
+          viewport.worldToScreen(Vec2(i * step, maxY)),
+          viewport.worldToScreen(Vec2(i * step, minY)),
+          grid,
+        );
       }
-      for (var i = (bottomRight.y / step).ceil();
-          i * step <= topLeft.y;
-          i++) {
-        final y = viewport.worldToScreen(Vec2(0, i * step)).dy;
-        canvas.drawLine(Offset(0, y), Offset(size.width, y), grid);
+      for (var i = (minY / step).ceil(); i * step <= maxY; i++) {
+        canvas.drawLine(
+          viewport.worldToScreen(Vec2(minX, i * step)),
+          viewport.worldToScreen(Vec2(maxX, i * step)),
+          grid,
+        );
       }
     }
 
@@ -229,20 +241,19 @@ class GeometryPainter extends CustomPainter {
       final axis = Paint()
         ..color = axisColor
         ..strokeWidth = _axisStrokeWidth;
-      final origin = viewport.worldToScreen(Vec2.zero);
-      final xAxisVisible = origin.dy >= 0 && origin.dy <= size.height;
-      final yAxisVisible = origin.dx >= 0 && origin.dx <= size.width;
+      final xAxisVisible = minY <= 0 && 0 <= maxY;
+      final yAxisVisible = minX <= 0 && 0 <= maxX;
       if (xAxisVisible) {
         canvas.drawLine(
-          Offset(0, origin.dy),
-          Offset(size.width, origin.dy),
+          viewport.worldToScreen(Vec2(minX, 0)),
+          viewport.worldToScreen(Vec2(maxX, 0)),
           axis,
         );
       }
       if (yAxisVisible) {
         canvas.drawLine(
-          Offset(origin.dx, 0),
-          Offset(origin.dx, size.height),
+          viewport.worldToScreen(Vec2(0, maxY)),
+          viewport.worldToScreen(Vec2(0, minY)),
           axis,
         );
       }
@@ -250,9 +261,10 @@ class GeometryPainter extends CustomPainter {
         canvas,
         size,
         step,
-        origin,
-        topLeft: topLeft,
-        bottomRight: bottomRight,
+        minX: minX,
+        maxX: maxX,
+        minY: minY,
+        maxY: maxY,
         xAxisVisible: xAxisVisible,
         yAxisVisible: yAxisVisible,
       );
@@ -260,16 +272,18 @@ class GeometryPainter extends CustomPainter {
   }
 
   /// Tick labels at every grid multiple along the visible axes: x labels
-  /// below the x-axis, y labels left of the y-axis, and a single `0` in
-  /// the origin's lower-left quadrant instead of one per axis. Labels
-  /// ride their axis — an off-screen axis shows none.
+  /// below their tick, y labels left of theirs, and a single `0` in the
+  /// origin's lower-left quadrant instead of one per axis. Labels ride
+  /// their axis — an off-screen axis shows none — and stay screen-upright
+  /// at any view rotation (only the tick anchors transform).
   void _drawTickLabels(
     Canvas canvas,
     Size size,
-    double step,
-    Offset origin, {
-    required Vec2 topLeft,
-    required Vec2 bottomRight,
+    double step, {
+    required double minX,
+    required double maxX,
+    required double minY,
+    required double maxY,
     required bool xAxisVisible,
     required bool yAxisVisible,
   }) {
@@ -286,38 +300,37 @@ class GeometryPainter extends CustomPainter {
     }
 
     if (xAxisVisible) {
-      for (var i = (topLeft.x / step).ceil();
-          i * step <= bottomRight.x;
-          i++) {
+      for (var i = (minX / step).ceil(); i * step <= maxX; i++) {
         if (i == 0) {
           continue;
         }
-        final x = viewport.worldToScreen(Vec2(i * step, 0)).dx;
+        final tick = viewport.worldToScreen(Vec2(i * step, 0));
         paintLabel(
           formatTick(i * step),
-          (textSize) =>
-              Offset(x - textSize.width / 2, origin.dy + _tickLabelGap),
+          (textSize) => Offset(
+            tick.dx - textSize.width / 2,
+            tick.dy + _tickLabelGap,
+          ),
         );
       }
     }
     if (yAxisVisible) {
-      for (var i = (bottomRight.y / step).ceil();
-          i * step <= topLeft.y;
-          i++) {
+      for (var i = (minY / step).ceil(); i * step <= maxY; i++) {
         if (i == 0) {
           continue;
         }
-        final y = viewport.worldToScreen(Vec2(0, i * step)).dy;
+        final tick = viewport.worldToScreen(Vec2(0, i * step));
         paintLabel(
           formatTick(i * step),
           (textSize) => Offset(
-            origin.dx - textSize.width - _tickLabelGap,
-            y - textSize.height / 2,
+            tick.dx - textSize.width - _tickLabelGap,
+            tick.dy - textSize.height / 2,
           ),
         );
       }
     }
     if (xAxisVisible && yAxisVisible) {
+      final origin = viewport.worldToScreen(Vec2.zero);
       paintLabel(
         '0',
         (textSize) => Offset(
@@ -612,7 +625,9 @@ class GeometryPainter extends CustomPainter {
   /// Draws the branch of a circle carrier given by a start angle and a
   /// signed sweep — an arc, or with [closeToCenter] a sector's pie wedge
   /// (the two radii close the outline). World angles are counter-clockwise
-  /// with y up; the viewport flips y, so both angles negate on screen.
+  /// with y up; `worldToScreenAngle` folds in the view rotation and the
+  /// y-flip. Sweeps only negate — the rotation term cancels in the
+  /// difference.
   void _drawCarrierBranch(
     Canvas canvas,
     Size size,
@@ -640,21 +655,22 @@ class GeometryPainter extends CustomPainter {
       return;
     }
     final rect = Rect.fromCircle(center: center, radius: radius);
+    final screenStart = viewport.worldToScreenAngle(startAngle);
     if (dashPeriod > 0) {
-      // The same screen-angle negation as the solid branch below; with
+      // The same screen-angle mapping as the solid branch below; with
       // [closeToCenter] the path walks center → arc start → arc → back,
       // so the radii dash too.
       final path = Path();
       if (closeToCenter) {
         path.moveTo(center.dx, center.dy);
       }
-      path.arcTo(rect, -startAngle, -sweep, !closeToCenter);
+      path.arcTo(rect, screenStart, -sweep, !closeToCenter);
       if (closeToCenter) {
         path.close();
       }
       canvas.drawPath(dashPath(path, dashPeriod), paint);
     } else {
-      canvas.drawArc(rect, -startAngle, -sweep, closeToCenter, paint);
+      canvas.drawArc(rect, screenStart, -sweep, closeToCenter, paint);
     }
   }
 
@@ -717,7 +733,7 @@ class GeometryPainter extends CustomPainter {
       size: size,
       margin: paint.strokeWidth + 1,
     );
-    final screenStart = -startAngle;
+    final screenStart = viewport.worldToScreenAngle(startAngle);
     final screenSweep = -sweep;
     final path = Path();
     if (window != null) {
@@ -758,7 +774,7 @@ class GeometryPainter extends CustomPainter {
               size,
               center,
               radius,
-              -object.startAngle!,
+              viewport.worldToScreenAngle(object.startAngle!),
               -object.sweep!,
             ),
             fill,
@@ -767,7 +783,7 @@ class GeometryPainter extends CustomPainter {
           final rect = Rect.fromCircle(center: center, radius: radius);
           canvas.drawArc(
             rect,
-            -object.startAngle!,
+            viewport.worldToScreenAngle(object.startAngle!),
             -object.sweep!,
             true,
             fill,
@@ -905,7 +921,7 @@ class GeometryPainter extends CustomPainter {
     );
     canvas.drawArc(
       rect,
-      -angle.startDirection.angle,
+      viewport.worldToScreenAngle(angle.startDirection.angle),
       -angle.sweep,
       true,
       paint,
@@ -920,8 +936,9 @@ class GeometryPainter extends CustomPainter {
     final side = 0.7 * object.attributes.angleMarkerRadius;
     final d1 = angle.startDirection;
     final d2 = d1.rotated(angle.sweep);
-    // World directions are y-up; the screen flips y.
-    Offset corner(Vec2 d) => vertex + Offset(d.x, -d.y) * side;
+    // World directions rotate with the view, then the screen flips y.
+    Offset corner(Vec2 d) =>
+        vertex + viewport.worldToScreenDirection(d) * side;
     final c1 = corner(d1);
     final c12 = corner(d1 + d2);
     final c2 = corner(d2);

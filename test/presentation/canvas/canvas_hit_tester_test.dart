@@ -1,4 +1,8 @@
+import 'dart:math' as math;
+import 'dart:ui';
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/application/providers/viewport_provider.dart';
 import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/geo_object.dart';
 import 'package:regula/domain/construction/object_attributes.dart';
@@ -15,6 +19,7 @@ import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/construction/objects/vertex_angle.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/presentation/canvas/canvas_hit_tester.dart';
+import 'package:regula/presentation/canvas/canvas_viewport.dart';
 
 void main() {
   const tester = CanvasHitTester();
@@ -592,6 +597,75 @@ void main() {
         inRect(construction, const Vec2(-2, -2), const Vec2(2, 2)),
         ['a', 'b'],
       );
+    });
+  });
+
+  group('objectsContainedIn under a rotated frame (Phase 43)', () {
+    // A screen band at view rotation θ: the same predicate the canvas
+    // builds — inclusive containment of worldToScreen in the band rect —
+    // with the band frame's +x direction at world angle −θ.
+    const rotation = math.pi / 4;
+    const viewport = CanvasViewport(ViewportState(rotation: rotation));
+    // A thin horizontal screen strip: 100 px long, 20 px tall. In world
+    // space that is a 45°-rotated strip through the origin.
+    const band = Rect.fromLTRB(0, -10, 100, 10);
+    bool within(Vec2 world) {
+      final screen = viewport.worldToScreen(world);
+      return screen.dx >= band.left &&
+          screen.dx <= band.right &&
+          screen.dy >= band.top &&
+          screen.dy <= band.bottom;
+    }
+
+    List<String> banded(Construction construction) => [
+          for (final object in tester.objectsContainedIn(
+            construction.objects,
+            within,
+            cardinalAngle: -rotation,
+          ))
+            object.id,
+        ];
+
+    test('a point is judged by the band, not the band corners\' world '
+        'bounds', () {
+      final construction = Construction()
+        ..add(FreePoint(
+          id: 'in',
+          position: viewport.screenToWorld(const Offset(50, 0)),
+        ))
+        // 40 px off the strip on screen — outside the band, but well
+        // inside the axis-aligned world box its corners span, which is
+        // what a world-rect test would wrongly use.
+        ..add(FreePoint(
+          id: 'out',
+          position: viewport.screenToWorld(const Offset(50, 40)),
+        ));
+
+      expect(banded(construction), ['in']);
+    });
+
+    test('circle extremes are measured along the band\'s own axes', () {
+      Construction circleOfRadius(double radius) {
+        final construction = Construction();
+        final centerWorld = viewport.screenToWorld(const Offset(50, 0));
+        final center = FreePoint(id: 'c', position: centerWorld);
+        final rim = FreePoint(
+          id: 'r',
+          position: centerWorld + Vec2(radius, 0),
+        );
+        return construction
+          ..add(center)
+          ..add(rim)
+          ..add(CircleCenterPoint(id: 'k', center: center, onCircle: rim));
+      }
+
+      expect(banded(circleOfRadius(9.5)), contains('k'),
+          reason: 'a 9.5-radius disc fits the 20-px strip');
+      // The touching points lie along the band's normal — at *world*
+      // cardinals the extremes sit only ~7.4 px off-axis and would
+      // wrongly pass.
+      expect(banded(circleOfRadius(10.5)), isNot(contains('k')),
+          reason: 'a 10.5-radius disc pokes through both strip edges');
     });
   });
 
