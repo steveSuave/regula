@@ -205,6 +205,41 @@ void main() {
       expect(focalAfter.dy, closeTo(focal.dy, 1e-9));
     });
 
+    test('worldToScreenAngle matches where worldToScreen puts rim points',
+        () {
+      final viewport = CanvasViewport(
+        const ViewportState(pan: Vec2(2, 1), scale: 3, rotation: 0.9),
+      );
+      const center = Vec2(5, -1);
+      const radius = 2.0;
+      final centerScreen = viewport.worldToScreen(center);
+      for (final worldAngle in [0.0, 1.0, -2.4, math.pi]) {
+        final rim = viewport.worldToScreen(center +
+            Vec2(math.cos(worldAngle), math.sin(worldAngle)) * radius);
+        final screenAngle = viewport.worldToScreenAngle(worldAngle);
+        final expected = centerScreen +
+            Offset(math.cos(screenAngle), math.sin(screenAngle)) *
+                viewport.worldToScreenLength(radius);
+        expect((rim - expected).distance, lessThan(1e-9),
+            reason: 'world angle $worldAngle: rim point and screen angle '
+                'disagree');
+      }
+    });
+
+    test('worldToScreenDirection rotates and flips, preserving length', () {
+      final viewport = CanvasViewport(
+        const ViewportState(scale: 4, rotation: math.pi / 2),
+      );
+      // At a quarter turn CCW, world +x shows as screen up, world +y as
+      // screen left; scale never applies to directions.
+      final xImage = viewport.worldToScreenDirection(const Vec2(1, 0));
+      expect(xImage.dx, closeTo(0, 1e-12));
+      expect(xImage.dy, closeTo(-1, 1e-12));
+      final yImage = viewport.worldToScreenDirection(const Vec2(0, 1));
+      expect(yImage.dx, closeTo(-1, 1e-12));
+      expect(yImage.dy, closeTo(0, 1e-12));
+    });
+
     test('pannedByScreen shifts content by the delta at non-zero rotation',
         () {
       final viewport = CanvasViewport(

@@ -116,6 +116,26 @@ class CanvasViewport {
     );
   }
 
+  /// Screen-space polar angle of the world-space polar angle
+  /// [worldAngle]: the view rotation composes in, then the y-flip negates
+  /// — `worldToScreen(c + r·(cos α, sin α))` lands at screen angle
+  /// `worldToScreenAngle(α)` from `worldToScreen(c)`. Angle *sweeps*
+  /// (differences) only negate; the rotation term cancels.
+  double worldToScreenAngle(double worldAngle) =>
+      -(worldAngle + state.rotation);
+
+  /// Screen-space image of the world-space direction [direction]
+  /// (rotated, y-flipped, *not* scaled — a unit world direction stays a
+  /// unit screen direction).
+  Offset worldToScreenDirection(Vec2 direction) {
+    final c = math.cos(state.rotation);
+    final s = math.sin(state.rotation);
+    return Offset(
+      direction.x * c - direction.y * s,
+      -(direction.x * s + direction.y * c),
+    );
+  }
+
   /// Screen pixels covered by [worldLength] world units.
   double worldToScreenLength(double worldLength) =>
       worldLength * state.scale;
