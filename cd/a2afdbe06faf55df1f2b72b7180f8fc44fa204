@@ -1,0 +1,47 @@
+docs/PLAN.md
+  s_b094040ccec154::t_35ab7bb022e15a 110
+  s_b094040ccec154::t_a9bebb0ef7b2b6 349
+lib/presentation/canvas/geometry_canvas.dart
+  s_b094040ccec154::t_95d5cf2df02a5b 418-423
+  s_b094040ccec154::t_3577a21ab85bcd 1
+  s_b094040ccec154::t_ac49eb8a28e7b8 79-90
+  s_b094040ccec154::t_38572eedacd2d3 142-151
+  s_b094040ccec154::t_34f85430140dbd 298-312
+  s_b094040ccec154::t_c54ed9c810d310 348-350,356-363
+  s_b094040ccec154::t_52d2de80b9183e 169-171
+  s_b094040ccec154::t_1ac943858bcde0 407
+  s_b094040ccec154::t_172f34aecbbba6 255-273
+lib/presentation/shortcuts/shortcut_table.dart
+  s_b094040ccec154::t_c50663e7c5ea2e 803-806
+  s_b094040ccec154::t_08804535ddfa4b 802
+test/presentation/canvas/geometry_canvas_test.dart
+  s_b094040ccec154::t_290c444c6a07e0 1668-1782
+lib/main.dart
+  s_b094040ccec154::t_3e704baaf44e13 916-937,939-966
+  s_b094040ccec154::t_ace234156b6902 72
+  s_b094040ccec154::t_858742e018e7b7 938
+  s_b094040ccec154::t_fd12a035c1325d 870
+docs/STATUS.md
+  s_b094040ccec154::t_3941c3c94cb9fc 9-28
+docs/TODO.md
+  s_b094040ccec154::t_6b358c8ccf75b7 384
+  s_b094040ccec154::t_b41c228768eff4 383
+  s_b094040ccec154::t_7fc8435ebb245b 377
+  s_b094040ccec154::t_859887b10b36f7 378-382
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.19",
+  "base_commit_sha": "cda2afdbe06faf55df1f2b72b7180f8fc44fa204",
+  "prompts": {},
+  "sessions": {
+    "s_b094040ccec154": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d76a4977-5667-4ca9-a08e-7b189bd5dc48",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
