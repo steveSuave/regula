@@ -1,0 +1,30 @@
+lib/presentation/canvas/canvas_viewport.dart
+  s_b094040ccec154::t_b8f423178d3aab 119-138
+lib/presentation/canvas/geometry_painter.dart
+  s_b094040ccec154::t_517d56083f1a04 275-278,282-286,303,307,310-313,318,322,326-327,333
+  s_b094040ccec154::t_07deace7b6a9c7 924
+  s_b094040ccec154::t_7aa0475afc83d8 628-630
+  s_b094040ccec154::t_b8033a7991f187 658,660,667,673
+  s_b094040ccec154::t_8ac636f69859cb 204-218,224-229,231-236,244-245,248-249,255-256,264-267
+  s_b094040ccec154::t_0143688f43a8c9 736
+  s_b094040ccec154::t_380728939b8c15 777,786
+  s_b094040ccec154::t_7fadca163d566b 939-941
+test/presentation/canvas/canvas_viewport_test.dart
+  s_b094040ccec154::t_7e52763a02db0e 208-242
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.19",
+  "base_commit_sha": "e5ccf785f78420eb5eb1d8efc6b62ac57a327e18",
+  "prompts": {},
+  "sessions": {
+    "s_b094040ccec154": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d76a4977-5667-4ca9-a08e-7b189bd5dc48",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
