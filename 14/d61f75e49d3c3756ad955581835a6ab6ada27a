@@ -1,0 +1,39 @@
+test/presentation/canvas/large_radius_arc_test.dart
+  s_0d34c99c8c16be::t_8a61b86ef4d3ad 31-32,34-35,41-50
+  s_0d34c99c8c16be::t_e617cb516cd234 1-30,33,36-40,51-102,106-114,116-117,119-184
+  s_0d34c99c8c16be::t_ac6b9f2c399efe 115,118
+  s_0d34c99c8c16be::t_377fb09094b0a6 103-105
+lib/presentation/canvas/geometry_painter.dart
+  s_0d34c99c8c16be::t_50c399dc687683 661-743
+  s_0d34c99c8c16be::t_ef61f51f0e8f9c 21
+  s_0d34c99c8c16be::t_95160ea009872c 415-417
+  s_0d34c99c8c16be::t_9f0e55043d7ad0 796-886
+  s_0d34c99c8c16be::t_fb65b5f78b0c40 161
+  s_0d34c99c8c16be::t_9ed3b1912397cf 393,403
+  s_0d34c99c8c16be::t_3a5fb9843002cf 618,627-642
+  s_0d34c99c8c16be::t_52d10ea4a1e5ef 749,753-775,780-786
+test/presentation/canvas/geometry_painter_test.dart
+  s_0d34c99c8c16be::t_148e739eae9dfc 236-269
+lib/presentation/canvas/large_radius_arc.dart
+  s_0d34c99c8c16be::t_a2e20b5ce9d64d 50-52
+  s_0d34c99c8c16be::t_df38fa1a7119dd 1-49,53-60,66-75,80-113
+  s_0d34c99c8c16be::t_8b983877731ec5 61-65,76-79
+docs/STATUS.md
+  s_0d34c99c8c16be::t_c32d8fdb2f20fc 9-24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.19",
+  "base_commit_sha": "14d61f75e49d3c3756ad955581835a6ab6ada27a",
+  "prompts": {},
+  "sessions": {
+    "s_0d34c99c8c16be": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "79d0e434-0b46-44ee-8617-da97ece90c45",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
