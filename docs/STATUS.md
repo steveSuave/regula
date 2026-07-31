@@ -6,6 +6,22 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 80 — 2026-07-31
+
+**Done**
+- Bug fix (user report): **circles vanished on phones at high zoom** while part of the rim should still be on screen. Cause: the painter handed `drawCircle`/`drawArc` the full screen-space radius; past a few thousand px, mobile GPU backends (Impeller / fp16 paths) silently drop circle-oval primitives — desktop tolerates it, so it only showed on mobile. Straight lines never had the problem (the infinite-line far-endpoint strategy relies on that).
+- Fix: new `large_radius_arc.dart` — past `largeRadiusThreshold` (2048 px) circles/arcs/sectors are drawn as sampled polylines covering only the angular window that can reach the canvas (tangent-cone bound from the padded canvas's bounding circle), so every vertex stays near the viewport. Sagitta ≤ 0.05 px, capped at 4096 segments. Stroke, dash, halo, sector radii and fills all routed; a viewport deep inside a huge disc fills the whole canvas rect, a fully off-screen circle draws nothing.
+- Tests: `large_radius_arc_test.dart` (window cases incl. rim-far-but-center-near, overlap wraparound/negative sweep, sagitta walk) + painter smoke test at 500k px radius over four pan regimes. 1411 green, analyze clean.
+
+**Next**
+- Phase 43 (viewport rotation) remains the queued phase.
+
+**Open questions / gotchas**
+- The huge-radius sector stroke draws disjoint contours (arc pieces + two radii), so its dash phase differs from the small-radius closed walk — invisible at these sizes.
+- `arcWindowOverlap` returns pieces in the *arc's* frame (not the window's) — the sector fill walk depends on that ordering; don't "simplify" it back.
+
+---
+
 ## Session 79 — 2026-07-23
 
 **Done**

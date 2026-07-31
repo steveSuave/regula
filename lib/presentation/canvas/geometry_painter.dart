@@ -18,6 +18,7 @@ import 'dash_path.dart';
 import 'grid_layout.dart';
 import 'label_anchor.dart';
 import 'label_layout.dart';
+import 'large_radius_arc.dart';
 
 /// Paints the construction in insertion order (first added = bottom).
 ///
@@ -157,6 +158,7 @@ class GeometryPainter extends CustomPainter {
       if (fillAlpha != null) {
         _drawFill(
           canvas,
+          size,
           object,
           Paint()
             ..color = baseColor.withValues(alpha: fillAlpha * dim)
@@ -388,6 +390,7 @@ class GeometryPainter extends CustomPainter {
       case Arc():
         _drawCarrierBranch(
           canvas,
+          size,
           object.circle!,
           object.startAngle!,
           object.sweep!,
@@ -397,6 +400,7 @@ class GeometryPainter extends CustomPainter {
       case Sector():
         _drawCarrierBranch(
           canvas,
+          size,
           object.circle!,
           object.startAngle!,
           object.sweep!,
@@ -408,7 +412,9 @@ class GeometryPainter extends CustomPainter {
         final circle = object.circle!;
         final center = viewport.worldToScreen(circle.center);
         final radius = viewport.worldToScreenLength(circle.radius);
-        if (dashPeriod > 0) {
+        if (radius > largeRadiusThreshold) {
+          _drawLargeCircleRim(canvas, size, center, radius, paint, dashPeriod);
+        } else if (dashPeriod > 0) {
           final rim = Path()
             ..addOval(Rect.fromCircle(center: center, radius: radius));
           canvas.drawPath(dashPath(rim, dashPeriod), paint);
@@ -609,6 +615,7 @@ class GeometryPainter extends CustomPainter {
   /// with y up; the viewport flips y, so both angles negate on screen.
   void _drawCarrierBranch(
     Canvas canvas,
+    Size size,
     CircleEq circle,
     double startAngle,
     double sweep,
@@ -617,10 +624,22 @@ class GeometryPainter extends CustomPainter {
     double dashPeriod = 0,
   }) {
     final center = viewport.worldToScreen(circle.center);
-    final rect = Rect.fromCircle(
-      center: center,
-      radius: viewport.worldToScreenLength(circle.radius),
-    );
+    final radius = viewport.worldToScreenLength(circle.radius);
+    if (radius > largeRadiusThreshold) {
+      _drawLargeCarrierBranch(
+        canvas,
+        size,
+        center,
+        radius,
+        startAngle,
+        sweep,
+        paint,
+        closeToCenter: closeToCenter,
+        dashPeriod: dashPeriod,
+      );
+      return;
+    }
+    final rect = Rect.fromCircle(center: center, radius: radius);
     if (dashPeriod > 0) {
       // The same screen-angle negation as the solid branch below; with
       // [closeToCenter] the path walks center → arc start → arc → back,
@@ -639,29 +658,132 @@ class GeometryPainter extends CustomPainter {
     }
   }
 
+  /// The rim of a screen-space circle too large for `drawCircle` (see
+  /// [largeRadiusThreshold]): only the arc that can reach the canvas,
+  /// sampled into a polyline so every vertex stays near the viewport.
+  void _drawLargeCircleRim(
+    Canvas canvas,
+    Size size,
+    Offset center,
+    double radius,
+    Paint paint,
+    double dashPeriod,
+  ) {
+    final window = visibleAngularWindow(
+      center: center,
+      radius: radius,
+      size: size,
+      margin: paint.strokeWidth + 1,
+    );
+    if (window == null) {
+      return;
+    }
+    final path = Path();
+    if (window.halfWidth >= math.pi - 1e-9) {
+      addSampledArc(path, center, radius, 0, 2 * math.pi);
+      path.close();
+    } else {
+      addSampledArc(
+        path,
+        center,
+        radius,
+        window.center - window.halfWidth,
+        window.center + window.halfWidth,
+      );
+    }
+    canvas.drawPath(dashPeriod > 0 ? dashPath(path, dashPeriod) : path, paint);
+  }
+
+  /// [_drawCarrierBranch]'s fallback past [largeRadiusThreshold]: the
+  /// arc's stretches inside the visible window as sampled polylines,
+  /// plus — for a sector — the two straight radii, whose far endpoints
+  /// rasterize fine (same contract as infinite lines). The sector's
+  /// outline becomes disjoint contours here, so its dash phase differs
+  /// from the small-radius closed walk; invisible at these sizes.
+  void _drawLargeCarrierBranch(
+    Canvas canvas,
+    Size size,
+    Offset center,
+    double radius,
+    double startAngle,
+    double sweep,
+    Paint paint, {
+    required bool closeToCenter,
+    required double dashPeriod,
+  }) {
+    final window = visibleAngularWindow(
+      center: center,
+      radius: radius,
+      size: size,
+      margin: paint.strokeWidth + 1,
+    );
+    final screenStart = -startAngle;
+    final screenSweep = -sweep;
+    final path = Path();
+    if (window != null) {
+      for (final piece in arcWindowOverlap(
+        start: screenStart,
+        sweep: screenSweep,
+        window: window,
+      )) {
+        addSampledArc(path, center, radius, piece.start, piece.end);
+      }
+    }
+    if (closeToCenter) {
+      for (final angle in [screenStart, screenStart + screenSweep]) {
+        final rim =
+            center + Offset(math.cos(angle), math.sin(angle)) * radius;
+        path
+          ..moveTo(center.dx, center.dy)
+          ..lineTo(rim.dx, rim.dy);
+      }
+    }
+    canvas.drawPath(dashPeriod > 0 ? dashPath(path, dashPeriod) : path, paint);
+  }
+
   /// Fills the interior of a fillable kind — a sector's pie wedge, an
   /// angle marker's wedge/square, a polygon's region, or a full circle's
   /// disc — with [fill], drawn under the stroke pass. Other kinds have no
   /// filled form and are skipped; an arc's fill shape is ambiguous
   /// (wedge? circular segment?), so arcs deliberately don't fill.
-  void _drawFill(Canvas canvas, GeoObject object, Paint fill) {
+  void _drawFill(Canvas canvas, Size size, GeoObject object, Paint fill) {
     switch (object) {
       case Sector():
         final circle = object.circle!;
-        final rect = Rect.fromCircle(
-          center: viewport.worldToScreen(circle.center),
-          radius: viewport.worldToScreenLength(circle.radius),
-        );
-        canvas.drawArc(rect, -object.startAngle!, -object.sweep!, true, fill);
+        final center = viewport.worldToScreen(circle.center);
+        final radius = viewport.worldToScreenLength(circle.radius);
+        if (radius > largeRadiusThreshold) {
+          canvas.drawPath(
+            _largeSectorFillPath(
+              size,
+              center,
+              radius,
+              -object.startAngle!,
+              -object.sweep!,
+            ),
+            fill,
+          );
+        } else {
+          final rect = Rect.fromCircle(center: center, radius: radius);
+          canvas.drawArc(
+            rect,
+            -object.startAngle!,
+            -object.sweep!,
+            true,
+            fill,
+          );
+        }
       case Arc():
         break;
       case GeoCircle():
         final circle = object.circle!;
-        canvas.drawCircle(
-          viewport.worldToScreen(circle.center),
-          viewport.worldToScreenLength(circle.radius),
-          fill,
-        );
+        final center = viewport.worldToScreen(circle.center);
+        final radius = viewport.worldToScreenLength(circle.radius);
+        if (radius > largeRadiusThreshold) {
+          _drawLargeCircleFill(canvas, size, center, radius, fill);
+        } else {
+          canvas.drawCircle(center, radius, fill);
+        }
       case GeoAngle():
         _drawAngleMarker(canvas, object, fill);
       case GeoPolygon():
@@ -669,6 +791,97 @@ class GeometryPainter extends CustomPainter {
       default:
         break;
     }
+  }
+
+  /// Fills the visible part of a disc too large for `drawCircle`: the
+  /// whole canvas when the viewport sits inside the disc, nothing when
+  /// it sits outside, otherwise the pie slice over the visible window —
+  /// within the canvas clip that is exactly the disc's visible region
+  /// (every canvas point of the disc lies inside the tangent cone the
+  /// window comes from).
+  void _drawLargeCircleFill(
+    Canvas canvas,
+    Size size,
+    Offset center,
+    double radius,
+    Paint fill,
+  ) {
+    final window = visibleAngularWindow(
+      center: center,
+      radius: radius,
+      size: size,
+      margin: 1,
+    );
+    if (window == null) {
+      final dist = (size.center(Offset.zero) - center).distance;
+      if (radius > dist) {
+        canvas.drawRect(Offset.zero & size, fill);
+      }
+      return;
+    }
+    final path = Path();
+    if (window.halfWidth >= math.pi - 1e-9) {
+      addSampledArc(path, center, radius, 0, 2 * math.pi);
+    } else {
+      addSampledArc(
+        path,
+        center,
+        radius,
+        window.center - window.halfWidth,
+        window.center + window.halfWidth,
+      );
+      path.lineTo(center.dx, center.dy);
+    }
+    path.close();
+    canvas.drawPath(path, fill);
+  }
+
+  /// A huge sector's pie wedge as a fillable polygon: center → rim walk
+  /// → close, with the rim sampled densely only inside the visible
+  /// window and bridged by straight chords elsewhere. Chords stay inside
+  /// the disc and every on-screen wedge point has its rim angle inside
+  /// the window, so within the canvas clip the polygon fills the same
+  /// pixels as the true wedge.
+  Path _largeSectorFillPath(
+    Size size,
+    Offset center,
+    double radius,
+    double screenStart,
+    double screenSweep,
+  ) {
+    final a = screenSweep >= 0 ? screenStart : screenStart + screenSweep;
+    final b = a + screenSweep.abs();
+    final window = visibleAngularWindow(
+      center: center,
+      radius: radius,
+      size: size,
+      margin: 1,
+    );
+    Offset rim(double angle) =>
+        center + Offset(math.cos(angle), math.sin(angle)) * radius;
+    final path = Path()..moveTo(center.dx, center.dy);
+    final start = rim(a);
+    path.lineTo(start.dx, start.dy);
+    if (window != null) {
+      for (final piece in arcWindowOverlap(
+        start: a,
+        sweep: b - a,
+        window: window,
+      )) {
+        addSampledArc(
+          path,
+          center,
+          radius,
+          piece.start,
+          piece.end,
+          startWithMove: false,
+        );
+      }
+    }
+    final end = rim(b);
+    path.lineTo(end.dx, end.dy);
+    path.close();
+    return path;
   }
 
   /// Draws an angle as a small wedge at its vertex, opening from the
