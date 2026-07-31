@@ -1,0 +1,27 @@
+test/presentation/goldens/object_kinds_golden_test.dart
+  s_b094040ccec154::t_ea5471d0e71725 685-735
+lib/presentation/shortcuts/shortcut_table.dart
+  s_b094040ccec154::t_a4fca01a0b32bb 812-816
+docs/STATUS.md
+  s_b094040ccec154::t_03e7d8ab778d48 18
+  s_b094040ccec154::t_b8bb82cdcffb5d 9-17,19-29
+docs/TODO.md
+  s_b094040ccec154::t_9b3cf0e2718c4a 370-374
+  s_b094040ccec154::t_c19b1c40620fb5 375
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.19",
+  "base_commit_sha": "d1094184e0ac66d7782bef7b69ffaa42b8f0f7e7",
+  "prompts": {},
+  "sessions": {
+    "s_b094040ccec154": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d76a4977-5667-4ca9-a08e-7b189bd5dc48",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
