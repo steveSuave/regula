@@ -233,6 +233,40 @@ void main() {
       paintOnce(painterFor(construction, showGrid: true));
     });
 
+    test('paints huge-screen-radius circles, arcs and sectors without '
+        'throwing', () {
+      // World radius 10000 at scale 50 → 500k px on screen, far past
+      // largeRadiusThreshold: the sampled-polyline fallback runs. Dashed
+      // + filled + selected + named exercises every branch of it.
+      const styled = ObjectAttributes(name: 'k', fillAlpha: 0.2, dashPeriod: 8);
+      final construction = Construction();
+      final a = FreePoint(id: 'a', position: Vec2.zero);
+      final b = FreePoint(id: 'b', position: const Vec2(10000, 0));
+      final c = FreePoint(id: 'c', position: const Vec2(0, 10000));
+      construction
+        ..add(a)
+        ..add(b)
+        ..add(c)
+        ..add(CircleCenterPoint(
+            id: 'k', center: a, onCircle: b, attributes: styled))
+        ..add(Arc(id: 'arc', start: b, via: c, end: a))
+        ..add(Sector(id: 'w', center: a, start: b, end: c,
+            attributes: const ObjectAttributes(fillAlpha: 0.2)));
+
+      for (final pan in const [
+        Vec2(9990, 3), // rim crosses the canvas
+        Vec2(5000, 0), // viewport deep inside the disc
+        Vec2(30000, 0), // circle fully off screen
+        Vec2.zero, // center on canvas, rim far away
+      ]) {
+        paintOnce(painterFor(
+          construction,
+          selectedIds: const {'k', 'arc', 'w'},
+          viewport: CanvasViewport(ViewportState(pan: pan, scale: 50)),
+        ));
+      }
+    });
+
     test('shouldRepaint keys on showAxes and showGrid', () {
       final construction = Construction()
         ..add(FreePoint(id: 'a', position: Vec2.zero));
