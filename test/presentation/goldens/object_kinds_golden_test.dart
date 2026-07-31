@@ -682,6 +682,57 @@ void main() {
       );
     });
 
+    // Phase 43: the grid scene's machinery under a rotated view (0.5 rad
+    // CCW) plus the other rotation-sensitive paths — grid and axes rotate
+    // with the content, the right-angle square and filled sector follow
+    // their world geometry, the infinite line crosses the frame at the
+    // rotated slope, and the point label stays screen-upright.
+    testWidgets('rotated scene — $themeName', (tester) async {
+      final construction = Construction();
+      final a = FreePoint(
+        id: 'a',
+        position: const Vec2(-3, -2),
+        attributes: const ObjectAttributes(name: 'A'),
+      );
+      final b = FreePoint(id: 'b', position: const Vec2(4, 3));
+      final vertex = FreePoint(id: 'vx', position: const Vec2(2, -2));
+      final arm1 = FreePoint(id: 'm1', position: const Vec2(4, -2));
+      final arm2 = FreePoint(id: 'm2', position: const Vec2(2, 0));
+      final center = FreePoint(id: 'k', position: const Vec2(-4, 2));
+      final rim = FreePoint(id: 'rim', position: const Vec2(-2, 2));
+      final secEnd = FreePoint(id: 'se', position: const Vec2(-4, 4));
+      construction
+        ..add(a)
+        ..add(b)
+        ..add(vertex)
+        ..add(arm1)
+        ..add(arm2)
+        ..add(center)
+        ..add(rim)
+        ..add(secEnd)
+        ..add(LineThroughTwoPoints(id: 'l', point1: a, point2: b))
+        ..add(Segment(id: 's', point1: vertex, point2: arm1))
+        // Perpendicular arms → the automatic right-angle square.
+        ..add(VertexAngle(id: 'ra', arm1: arm1, vertex: vertex, arm2: arm2))
+        ..add(Sector(
+          id: 'sec',
+          center: center,
+          start: rim,
+          end: secEnd,
+          attributes: const ObjectAttributes(fillAlpha: 0.25),
+        ));
+      await expectSceneGolden(
+        tester,
+        construction: construction,
+        theme: theme,
+        golden: 'rotated_$themeName',
+        showAxes: true,
+        showGrid: true,
+        viewport:
+            const ViewportState(pan: Vec2(-8, 6), scale: 40, rotation: 0.5),
+      );
+    });
+
     // Phase 36: axes + grid behind a small construction. A fixed viewport
     // (origin centered, 40 px per unit → step 2 grid, tick labels at even
     // integers) keeps the background layer deterministic instead of
