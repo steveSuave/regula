@@ -1,0 +1,37 @@
+test/presentation/canvas/label_layout_test.dart
+  s_923d091f471712::t_a044b5e4fa4a77 188-230
+lib/application/providers/tool_provider.dart
+  s_923d091f471712::t_fd47f940d7e606 209,213-215
+  s_923d091f471712::t_176cbd8592df79 185-187
+docs/TODO.md
+  s_923d091f471712::t_03083a6cd9dd61 517-522
+lib/presentation/canvas/geometry_painter.dart
+  s_923d091f471712::t_b408393b5d6f21 584
+  s_923d091f471712::t_c0cd8ce531c661 28
+  s_923d091f471712::t_913570423a2844 603-606
+lib/presentation/canvas/label_layout.dart
+  s_923d091f471712::t_c3deb299ba1382 112
+  s_923d091f471712::t_c910ed9c76dbdd 49-85,87
+test/application/providers/tool_provider_test.dart
+  s_923d091f471712::t_ac26f62465e44d 319-321
+lib/presentation/canvas/label_obstacles.dart
+  s_923d091f471712::t_a948474a7098d2 148-151,155-159,161
+docs/STATUS.md
+  s_923d091f471712::t_f6be56c75b3c9b 15-17,24-25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.19",
+  "base_commit_sha": "e18ff841f4ea85f331c3ae9f5229a3b36c8f3b15",
+  "prompts": {},
+  "sessions": {
+    "s_923d091f471712": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9b1a44d2-bb1d-49d7-b1ef-3e26c8f4df47",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
