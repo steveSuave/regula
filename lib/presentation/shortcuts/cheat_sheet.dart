@@ -87,13 +87,14 @@ class _SectionColumn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // Bindings first, then the display-only pointer-gesture rows.
+    // Bindings first, then the display-only rows (pointer gestures,
+    // text-calculation syntax).
     final rows = [
       for (final binding in shortcutTable)
         if (binding.section == section && binding.showInCheatSheet)
           (binding.display, binding.label),
-      for (final gesture in gestureRows)
-        if (gesture.section == section) (gesture.display, gesture.label),
+      for (final info in infoRows)
+        if (info.section == section) (info.display, info.label),
     ];
     return SizedBox(
       width: 330,

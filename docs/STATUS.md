@@ -6,6 +6,22 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 87 — 2026-08-01
+
+**Done**
+- **Phase 64 — cheat sheet documents the text-calculation language** (user request), on `phase-64-cheat-sheet-text-calc`. New `ShortcutSection.textCalc` ("Text calculations (G E, then {…})") rendered from display-only rows: the `{…}` slot idea with an example, the eight geometry accessors, bare-name sugar, operators (pasted `×·÷` included), the numeric functions (trig in degrees), `pi`/`e` shadowing, and the `?` undefined marker.
+- `GestureRow`/`gestureRows` generalized to `InfoRow`/`infoRows` — the display-only row concept now covers gestures *and* language reference, no new render path in `cheat_sheet.dart`.
+- Tests: the existing every-section render loop picks the new section up automatically; a spot check finds `dist(A, B)`; a new registry pin walks `objectFunctionNames` / `numericFunctionNames` / `constantNames` and asserts each is mentioned in the section, so adding an accessor without documenting it fails the suite. 1454 green, analyze clean.
+
+**Next**
+- Candidate cheat-sheet gaps spotted while in there (not yet done, need user's pick): canvas move/select gestures are undocumented — shift-tap toggle, empty-canvas rubber-band (shift adds), long-press as touch shift-tap, label dragging (40 px leash) and text body drags; numeric dialogs accepting fractions (`5/2`); double-tap on the active toolbar tool deactivating it.
+
+**Open questions / gotchas**
+- The registry pin is substring-based (`contains`) — cheap and adequate as a "did you mention it" tripwire, not a semantic check.
+- Two rows now display `?` (app-level toggle, undefined marker) — fine, different sections; no test counts `?` occurrences.
+
+---
+
 ## Session 86 — 2026-08-01
 
 **Done**

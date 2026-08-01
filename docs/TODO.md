@@ -520,3 +520,8 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] All three placement sites agree through the helper: painter `_drawLabel`, `labelScreenRect` (label-drag hit rect), declutter scene `LabelBox.anchor` (recovered as `rect.topLeft − offset`)
 - [x] Fresh angles bake `labelDx/labelDy: 0` in the auto-name funnel — the bisector base already places the text, the generic (6, −18) nudge would skew it
 - [x] Tests: bisector centering + marker clearance + radius-tracking + nudge-still-applies units; funnel test extended with the zero offset; `measures` goldens regenerated (value text no longer overlaps the right-angle square) — 1453 green, analyze clean
+
+## Phase 64 — Cheat sheet documents the text-calculation language (user request)
+- [x] `ShortcutSection.textCalc` ("Text calculations (G E, then {…})") + display-only rows for the `{…}` slot syntax: the eight geometry accessors (`dist`, `len`, `angle`, `area`, `perimeter`, `radius`, `x`, `y`), bare-name sugar, operators (incl. pasted `×·÷`), the numeric functions (trig in degrees), `pi`/`e` shadowing, and the `?` undefined marker
+- [x] `GestureRow` generalized to `InfoRow` — display-only cheat-sheet rows are no longer gesture-specific
+- [x] Tests: sheet renders the new section (`dist(A, B)` spot check rides the existing every-section loop); a registry pin asserts every `objectFunctionNames` / `numericFunctionNames` / `constantNames` entry is mentioned in the section — 1454 green, analyze clean
