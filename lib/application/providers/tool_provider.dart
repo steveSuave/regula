@@ -180,7 +180,9 @@ class ToolNotifier extends _$ToolNotifier {
   /// Only unnamed, *visible* objects are named — hidden macro scaffolding
   /// burns no letters. Lines and circles are named but get
   /// `labelVisible: false`: the name shows in the tree/inspector, not on
-  /// the canvas, until the user reveals it.
+  /// the canvas, until the user reveals it. Angles additionally get
+  /// `showValue: true`, so a fresh angle reads as its measure (`47.3°`)
+  /// rather than its name (user request).
   void _autoNameNewObjects(Command command) {
     final construction = ref.read(constructionProvider).construction;
     final used = <String>{
@@ -200,10 +202,12 @@ class ToolNotifier extends _$ToolNotifier {
             object is GeoCircle ||
             object is GeoPolygon ||
             object is GeoLocus ||
-            object is GeoText;
+            object is GeoText ||
+            object is GeoAngle;
         object.attributes = object.attributes.copyWith(
           name: name,
           labelVisible: object.attributes.labelVisible && !hideLabel,
+          showValue: object.attributes.showValue || object is GeoAngle,
         );
       case MacroCommand(:final commands):
         for (final child in commands) {

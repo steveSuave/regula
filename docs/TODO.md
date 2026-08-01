@@ -510,3 +510,7 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] `visibleWorldBounds` / `fittedViewport` gain optional `rotation`: bounds in the view frame (contributions rotated by +θ, circle disc = rotated center ± r), state via `CanvasViewport.pinning` (reduces exactly to the old solve at θ = 0); `_fitConstruction` passes the live angle; PNG fit framing untouched (default 0)
 - [x] Compass chip slightly smaller: 30 px needle, 12/8 padding, `labelMedium` readout
 - [x] Tests: rotated-fit units (horizontal pair at π/2 scales by height, contents on screen and centered under the returned state, rotation carried, θ = 0 identical to before); fit widget test wanders off *rotated* and expects the angle kept; Reset still restores the default state
+
+## Phase 62 — Angles show value, not name, by default (user request)
+- [x] `_nameObjectsIn` (tool_provider): `GeoAngle` joins the `hideLabel` group (name lives in tree/inspector) and gets `showValue: true` at auto-name time — a fresh angle's label reads `47.3°`, per-object toggles in the inspector unchanged, existing saves untouched (attributes are baked into the object, not re-derived)
+- [x] Test: new angle named `α` with `labelVisible` false / `showValue` true through the commit funnel — 1450 green, analyze clean
