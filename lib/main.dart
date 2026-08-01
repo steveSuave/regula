@@ -330,6 +330,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     final fitted = fittedViewport(
       ref.read(constructionProvider).construction.objects,
       size,
+      // Fit frames, the compass levels (Phase 61): keep the view angle.
+      rotation: ref.read(viewportProvider).rotation,
     );
     if (fitted != null) {
       ref.read(viewportProvider.notifier).set(fitted);
@@ -950,8 +952,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                 onTap: _levelView,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
+                    horizontal: 12,
+                    vertical: 8,
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -962,13 +964,13 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                         angle: -rotation,
                         child: Icon(
                           Icons.navigation_outlined,
-                          size: 36,
+                          size: 30,
                           color: scheme.primary,
                         ),
                       ),
                       Text(
                         '$degrees°',
-                        style: Theme.of(context).textTheme.labelLarge,
+                        style: Theme.of(context).textTheme.labelMedium,
                       ),
                     ],
                   ),
