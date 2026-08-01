@@ -6,6 +6,23 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 85 — 2026-08-01
+
+**Done**
+- **Phase 61 — rotation-preserving Fit + compass size tweak** (user feedback on 60/43), on `phase-61-rotation-preserving-fit`. PLAN updated first with the decided triad: **compass** levels without moving, **Fit** frames without leveling, **Reset** stays the full home (origin / 100 % / level) — user asked "same for Reset?", answered no: zoom-to-100 % already keeps the angle, Reset's role is the canonical view.
+- `visibleWorldBounds` / `fittedViewport` gain optional `rotation`: bounds are taken in the rotated view frame (`include` rotates contributions by +θ; a circle's disc rotates as its *center* ± r — rotating box corners would misplace the box), the state comes from `CanvasViewport.pinning` (bounds center → canvas center), which reduces exactly to the old pan solve at θ = 0 (cos 0 / sin 0 are exact). `_fitConstruction` passes the live angle; PNG export's fit framing still exports unrotated (default 0).
+- Compass chip slimmed on feedback ("slightly smaller"): needle 36 → 30 px, padding 14/10 → 12/8, readout labelLarge → labelMedium.
+- Tests: 3 new fit units (π/2 pair scales by canvas height, arbitrary angle centers the extremes on canvas, rotated disc keeps the 60 × 60 box) + the fit/reset widget test wanders off rotated and pins the kept angle; the final Reset assertion now also proves Reset clears rotation. 1449 green (26 goldens), analyze clean.
+
+**Next**
+- No queued phase.
+
+**Open questions / gotchas**
+- Fit under rotation frames the *rotated* AABB of the world AABB contributions per kind — for long diagonal constructions this is tighter than fitting the world box, not looser; no known caveat.
+- Memory nuance recorded: the large-visual-defaults preference is about content, not chrome (36 px chip icon was too big, 30 px settled).
+
+---
+
 ## Session 84 — 2026-08-01
 
 **Done**

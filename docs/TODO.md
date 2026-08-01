@@ -504,3 +504,9 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] `docs/PLAN.md` updated first: compass-relocation bullet + build-order item 46
 - [x] `_compassButton` app-bar action → `_compassChip`: a `Positioned` (top-right, 12 px inset) in the canvas `Stack` before `RegionPickOverlay` — elevated Material chip, needle `Transform.rotate(−rotation)` over a live signed-`°` readout, `InkWell` → `_levelView`, key `compass-button` kept, own `Consumer` on a rotation select
 - [x] Tests: compass test updated — chip sits in the canvas's top-right while rotated, shows the degrees readout, still absent at level view, click still levels about the canvas center keeping scale
+
+## Phase 61 — Rotation-preserving Fit + compass size tweak (user feedback)
+- [x] `docs/PLAN.md` updated first: rotation-preserving-Fit bullet + build-order item 47; decision recorded — Reset stays the full home (origin / 100 % / level; zoom-to-100 % already keeps the angle)
+- [x] `visibleWorldBounds` / `fittedViewport` gain optional `rotation`: bounds in the view frame (contributions rotated by +θ, circle disc = rotated center ± r), state via `CanvasViewport.pinning` (reduces exactly to the old solve at θ = 0); `_fitConstruction` passes the live angle; PNG fit framing untouched (default 0)
+- [x] Compass chip slightly smaller: 30 px needle, 12/8 padding, `labelMedium` readout
+- [x] Tests: rotated-fit units (horizontal pair at π/2 scales by height, contents on screen and centered under the returned state, rotation carried, θ = 0 identical to before); fit widget test wanders off *rotated* and expects the angle kept; Reset still restores the default state
