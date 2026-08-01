@@ -499,3 +499,8 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] Undo two-staged the same way: Ctrl+Z mid-collection consumes the pending input and leaves the stack untouched; the second press undoes as before (previously the reset listener cleared the pending point *and* popped the last command in one stroke)
 - [x] Tests: `has_partial_input_test.dart` lifecycle coverage across the hierarchy, end-to-end two-stage Esc + undo widget test, resolver expectation updated — 1394 green, analyze clean
 - [x] Follow-up (user request): the app-bar undo **button** two-stages exactly like Ctrl+Z — one `_undo()` funnel for both entry points, button enabled while pending input exists even on an empty stack (narrow `hasPartialInput` select, so the scaffold still doesn't rebuild per tap); canvas mid-collection undo test updated to the two-press contract — 1396 green
+
+## Phase 60 — Conspicuous compass: canvas-corner chip (user feedback on 43b)
+- [x] `docs/PLAN.md` updated first: compass-relocation bullet + build-order item 46
+- [x] `_compassButton` app-bar action → `_compassChip`: a `Positioned` (top-right, 12 px inset) in the canvas `Stack` before `RegionPickOverlay` — elevated Material chip, needle `Transform.rotate(−rotation)` over a live signed-`°` readout, `InkWell` → `_levelView`, key `compass-button` kept, own `Consumer` on a rotation select
+- [x] Tests: compass test updated — chip sits in the canvas's top-right while rotated, shows the degrees readout, still absent at level view, click still levels about the canvas center keeping scale

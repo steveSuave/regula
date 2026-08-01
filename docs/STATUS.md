@@ -6,6 +6,23 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 84 — 2026-08-01
+
+**Done**
+- **Phase 60 — compass relocation** (user feedback: the app-bar compass was too easy to miss), on `phase-60-compass-corner`. PLAN updated first: the compass moves to a **floating chip on the canvas's top-right corner** — the map-app convention, larger and on the content it levels.
+- `_compassButton` (app-bar `IconButton`) → `_compassChip`: a `Positioned` (12 px inset) in the canvas `Stack`, mounted *before* `RegionPickOverlay` so an export pick still owns the surface. Elevated `Material` chip (`surfaceContainerHigh`, radius 16), 36 px needle in `primary` at `−rotation`, **live signed-degrees readout** under it (previously tooltip-only; tooltip now just "Straighten the view"). All 43b behaviors kept: mounted only while rotated, click levels about the canvas center keeping pan/zoom, own `Consumer` on a rotation select. Key `compass-button` unchanged.
+- Leaving the app bar retires the conditional icon-row mount — web-smoke icon indexing is now rotation-independent by construction.
+- Compass widget test extended: chip rect pinned to the canvas top-right insets, `29°` readout at 0.5 rad, level-view absence and center-pivot leveling as before. 1446 tests green (26 goldens), analyze clean.
+
+**Next**
+- No queued phase.
+
+**Open questions / gotchas**
+- The session opened with "can we make viewport rotation undoable?" — cancelled by the user before any code. Design sketch if it returns: an application-layer `SetViewportCommand` (before/after `ViewportState` snapshots + injected setter, construction argument unused) on the shared `CommandStack`, emitted once per settled rotation interaction; PLAN's Phase 43 bullet still says "not undoable (viewport precedent)".
+- The chip overlaps canvas content in the top-right corner while rotated (it's an overlay by design); at very small canvas widths it stays 12 px off the inspector edge — no width gate was added.
+
+---
+
 ## Session 83 — 2026-07-31
 
 **Done**
