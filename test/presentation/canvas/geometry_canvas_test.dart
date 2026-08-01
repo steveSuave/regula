@@ -2008,8 +2008,8 @@ void main() {
     expect(container.read(selectionProvider), isEmpty);
   });
 
-  testWidgets('fit frames the construction; reset restores the default view',
-      (tester) async {
+  testWidgets('fit frames the construction keeping the view angle; reset '
+      'restores the default view', (tester) async {
     await pumpEditor(tester);
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
 
@@ -2022,16 +2022,18 @@ void main() {
     await tester.tapAt(origin + const Offset(300, 200));
     await tester.pump();
 
-    // Wander off first, so fit demonstrably recovers the construction.
-    container
-        .read(viewportProvider.notifier)
-        .set(const ViewportState(pan: Vec2(5000, 5000), scale: 7));
+    // Wander off *rotated*, so fit demonstrably recovers the
+    // construction — and (Phase 61) demonstrably keeps the angle.
+    container.read(viewportProvider.notifier).set(
+        const ViewportState(pan: Vec2(5000, 5000), scale: 7, rotation: 0.9));
     await tester.pump();
 
     await tester.tap(find.byIcon(Icons.fit_screen));
     await tester.pump();
     final canvasSize = tester.getSize(find.byType(GeometryCanvas));
     final fitted = CanvasViewport(container.read(viewportProvider));
+    expect(fitted.state.rotation, 0.9,
+        reason: 'fit frames, the compass levels — the angle is kept');
     final points = container
         .read(constructionProvider)
         .construction
