@@ -867,7 +867,6 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                   icon: const Icon(Icons.filter_center_focus),
                   onPressed: () => ref.read(viewportProvider.notifier).reset(),
                 ),
-                _compassButton(),
                 _gridMenu(),
                 IconButton(
                   tooltip: 'Keyboard shortcuts (?)',
@@ -913,38 +912,72 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     );
   }
 
-  /// The compass (Phase 43b): mounted only while the view is rotated —
-  /// it doubles as the "you are rotated" indicator, and clicking it
-  /// levels the view about the canvas center, keeping pan and zoom
-  /// (Reset/Fit both move the view; this is the way back to straight
-  /// that doesn't). The needle turns with the content, pointing where
-  /// world-up points on screen.
+  /// The compass (Phase 43b, relocated to the canvas corner in Phase 60
+  /// — the app-bar button was too easy to miss): a floating chip on the
+  /// canvas's top-right, the map-app convention, mounted only while the
+  /// view is rotated — it doubles as the "you are rotated" indicator,
+  /// and clicking it levels the view about the canvas center, keeping
+  /// pan and zoom (Reset/Fit both move the view; this is the way back
+  /// to straight that doesn't). The needle turns with the content,
+  /// pointing where world-up points on screen, over a live
+  /// signed-degrees readout.
   ///
   /// Its own [Consumer] over a rotation select, so twist frames rebuild
-  /// this one button instead of the whole screen — and the conditional
-  /// mount means a level view renders the exact pre-43b icon row.
-  Widget _compassButton() {
-    return Consumer(
-      builder: (context, ref, _) {
-        final rotation =
-            ref.watch(viewportProvider.select((state) => state.rotation));
-        if (rotation == 0) {
-          return const SizedBox.shrink();
-        }
-        final degrees =
-            (normalizeAngle(rotation) * 180 / math.pi).round();
-        return IconButton(
-          key: const ValueKey('compass-button'),
-          tooltip: 'Straighten the view ($degrees°)',
-          // Screen angles are clockwise-positive; world-up on screen sits
-          // at −rotation from straight up.
-          icon: Transform.rotate(
-            angle: -rotation,
-            child: const Icon(Icons.navigation_outlined),
-          ),
-          onPressed: _levelView,
-        );
-      },
+  /// this one chip instead of the whole screen.
+  Widget _compassChip() {
+    return Positioned(
+      top: 12,
+      right: 12,
+      child: Consumer(
+        builder: (context, ref, _) {
+          final rotation =
+              ref.watch(viewportProvider.select((state) => state.rotation));
+          if (rotation == 0) {
+            return const SizedBox.shrink();
+          }
+          final degrees =
+              (normalizeAngle(rotation) * 180 / math.pi).round();
+          final scheme = Theme.of(context).colorScheme;
+          return Material(
+            key: const ValueKey('compass-button'),
+            color: scheme.surfaceContainerHigh,
+            elevation: 3,
+            borderRadius: BorderRadius.circular(16),
+            child: Tooltip(
+              message: 'Straighten the view',
+              child: InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: _levelView,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Screen angles are clockwise-positive; world-up on
+                      // screen sits at −rotation from straight up.
+                      Transform.rotate(
+                        angle: -rotation,
+                        child: Icon(
+                          Icons.navigation_outlined,
+                          size: 36,
+                          color: scheme.primary,
+                        ),
+                      ),
+                      Text(
+                        '$degrees°',
+                        style: Theme.of(context).textTheme.labelLarge,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -1222,6 +1255,9 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                         children: [
                           GeometryCanvas(key: _canvasKey),
                           const NamePointsHint(),
+                          // Before the region-pick overlay, so an export
+                          // pick owns the whole surface.
+                          _compassChip(),
                           // Sits on top of (and exactly over) the canvas,
                           // so its local coordinates are canvas
                           // coordinates; opaque, so the canvas can't
