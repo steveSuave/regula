@@ -182,7 +182,9 @@ class ToolNotifier extends _$ToolNotifier {
   /// `labelVisible: false`: the name shows in the tree/inspector, not on
   /// the canvas, until the user reveals it. Angles additionally get
   /// `showValue: true`, so a fresh angle reads as its measure (`47.3°`)
-  /// rather than its name (user request).
+  /// rather than its name (user request), and a zero label offset — the
+  /// bisector base (`labelBaseTopLeft`, Phase 63) already places the
+  /// text past the arc, so the generic (6, −18) nudge would just skew it.
   void _autoNameNewObjects(Command command) {
     final construction = ref.read(constructionProvider).construction;
     final used = <String>{
@@ -204,10 +206,13 @@ class ToolNotifier extends _$ToolNotifier {
             object is GeoLocus ||
             object is GeoText ||
             object is GeoAngle;
+        final isAngle = object is GeoAngle;
         object.attributes = object.attributes.copyWith(
           name: name,
           labelVisible: object.attributes.labelVisible && !hideLabel,
-          showValue: object.attributes.showValue || object is GeoAngle,
+          showValue: object.attributes.showValue || isAngle,
+          labelDx: isAngle ? 0 : object.attributes.labelDx,
+          labelDy: isAngle ? 0 : object.attributes.labelDy,
         );
       case MacroCommand(:final commands):
         for (final child in commands) {

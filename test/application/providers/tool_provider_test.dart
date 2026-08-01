@@ -316,6 +316,9 @@ void main() {
             reason: 'the name lives in the tree/inspector, not the canvas');
         expect(angle.attributes.showValue, isTrue,
             reason: 'a fresh angle reads as its measure, e.g. 90.0°');
+        expect(angle.attributes.labelDx, 0);
+        expect(angle.attributes.labelDy, 0,
+            reason: 'the bisector base places the text; no generic nudge');
       });
 
       test('points keep labelVisible, hidden scaffolding burns no letters',

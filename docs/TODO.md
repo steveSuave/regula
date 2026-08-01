@@ -514,3 +514,9 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 ## Phase 62 — Angles show value, not name, by default (user request)
 - [x] `_nameObjectsIn` (tool_provider): `GeoAngle` joins the `hideLabel` group (name lives in tree/inspector) and gets `showValue: true` at auto-name time — a fresh angle's label reads `47.3°`, per-object toggles in the inspector unchanged, existing saves untouched (attributes are baked into the object, not re-derived)
 - [x] Test: new angle named `α` with `labelVisible` false / `showValue` true through the commit funnel — 1450 green, analyze clean
+
+## Phase 63 — Angle labels on the bisector, past the arc (user request)
+- [x] `labelBaseTopLeft` in `label_layout.dart`: the screen top-left the `(labelDx, labelDy)` nudge is measured from — `worldToScreen(labelAnchor)` for every kind except angles, which center the text on the wedge bisector at `angleMarkerRadius + clearance + support(text box, bisector)` so the box's *near edge* clears the arc whichever way the wedge opens; rotates with the view via `worldToScreenDirection`
+- [x] All three placement sites agree through the helper: painter `_drawLabel`, `labelScreenRect` (label-drag hit rect), declutter scene `LabelBox.anchor` (recovered as `rect.topLeft − offset`)
+- [x] Fresh angles bake `labelDx/labelDy: 0` in the auto-name funnel — the bisector base already places the text, the generic (6, −18) nudge would skew it
+- [x] Tests: bisector centering + marker clearance + radius-tracking + nudge-still-applies units; funnel test extended with the zero offset; `measures` goldens regenerated (value text no longer overlaps the right-angle square) — 1453 green, analyze clean

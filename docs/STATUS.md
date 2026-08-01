@@ -12,12 +12,17 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 - **Phase 62 — angles show their value, not their name, by default** (user request), on `phase-62-angle-value-default`. One-site change in the `_nameObjectsIn` auto-name funnel: `GeoAngle` joins the `hideLabel` group (like lines/circles, the Greek name still allocates and shows in the tree/inspector) and additionally gets `showValue: true` — a fresh angle's canvas label is just its measure (`90.0°`). Both remain plain per-object attributes, so the inspector toggles flip either back at will.
 - Existing saves are unaffected: the funnel only touches unnamed, visible objects at creation time, and attributes are baked into the object (undo/redo safe, no re-derivation).
 - Test: commit a `VertexAngle` through the funnel, expect name `α`, `labelVisible` false, `showValue` true. 1450 green, analyze clean.
+- **Phase 63 — angle labels on the bisector, past the arc** (user follow-up: the value sat behind/inside the marker; decided against a bigger fixed offset — direction-blind — and against growing the global default — points/segments are correctly snug), on `phase-63-angle-label-bisector`. New `labelBaseTopLeft(object, viewport, textSize)` in `label_layout.dart`: the screen point the `(labelDx, labelDy)` nudge is measured from. Angles center the text on the wedge bisector at `angleMarkerRadius + 4 + support(text box along bisector)` — the support term keeps the box's near *edge* clear of the arc even for wide values on a horizontal bisector; other kinds keep `worldToScreen(labelAnchor)` exactly.
+- The three placement sites all route through the helper so they can't drift: painter `_drawLabel`, `labelScreenRect` (label-drag hit rect), and the declutter scene's `LabelBox.anchor` (recovered as `rect.topLeft − offset` since only the rect knows the text size there). Fresh angles bake `labelDx/labelDy: 0` in the funnel; dragging an angle label still works as a nudge relative to the moving bisector base.
+- Tests: bisector-centering/clearance/radius-tracking/nudge units in `label_layout_test.dart`, funnel test extended; `measures_light/dark` goldens regenerated — the diff was exactly the value text moving off the right-angle square. 1453 green, analyze clean.
 
 **Next**
 - No queued phase.
 
 **Open questions / gotchas**
 - Hidden macro-scaffolding angles (none exist today) would skip the funnel case entirely — they'd keep `showValue: false`, which is the right dormant state anyway.
+- Old saves with angles keep their baked (6, −18) offset, so their labels land at bisector base + that small skew — mild, self-heals if the user drags the label. No migration felt worth it.
+- A dragged angle label follows the wedge as the angle changes (the base moves, the nudge is relative) — segment-midpoint precedent, deliberate.
 
 ---
 

@@ -185,6 +185,49 @@ void main() {
         reason: 'size changes the extent, not the anchor offset');
   });
 
+  group('angle labels sit on the bisector past the arc (Phase 63)', () {
+    // The fixture angle opens from +x to +y, so the world bisector is 45°
+    // up-right; on the default (unrotated, y-flipped) viewport that's
+    // screen direction (√2/2, −√2/2).
+    ObjectAttributes attrs({double radius = 28, double dx = 0, double dy = 0}) =>
+        ObjectAttributes(
+          showValue: true,
+          angleMarkerRadius: radius,
+          labelDx: dx,
+          labelDy: dy,
+        );
+
+    Offset vertexScreen() => viewport.worldToScreen(const Vec2(0, 0));
+
+    test('the text is centered on the bisector, clear of the marker', () {
+      final rect = labelScreenRect(angle(attrs()), viewport)!;
+      final toCenter = rect.center - vertexScreen();
+      expect(toCenter.dx, greaterThan(0));
+      expect(toCenter.dy, lessThan(0), reason: 'up-right on screen');
+      expect(toCenter.dx, closeTo(-toCenter.dy, 0.001),
+          reason: 'centered on the 45° bisector');
+      // The rect's nearest corner to the vertex must clear the arc.
+      final near = Offset(rect.left, rect.bottom) - vertexScreen();
+      expect(near.distance, greaterThanOrEqualTo(28),
+          reason: 'the near edge sits past the marker radius');
+    });
+
+    test('a larger marker radius pushes the label farther out', () {
+      final small = labelScreenRect(angle(attrs()), viewport)!;
+      final large = labelScreenRect(angle(attrs(radius: 48)), viewport)!;
+      expect(
+        (large.center - vertexScreen()).distance,
+        greaterThan((small.center - vertexScreen()).distance + 15),
+      );
+    });
+
+    test('labelDx/labelDy still nudge from the bisector base', () {
+      final base = labelScreenRect(angle(attrs()), viewport)!;
+      final nudged = labelScreenRect(angle(attrs(dx: 10, dy: 5)), viewport)!;
+      expect(nudged.topLeft, base.topLeft + const Offset(10, 5));
+    });
+  });
+
   test('a value-only label has a rect (unnamed segment, showValue on)', () {
     final rect = labelScreenRect(
       segment(const ObjectAttributes(showValue: true)),
