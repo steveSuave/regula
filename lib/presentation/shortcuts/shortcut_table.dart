@@ -96,7 +96,8 @@ enum ShortcutSection {
   viewport('Viewport'),
   tools('Tools'),
   constructions('Constructions (G, then…)'),
-  macros('Shape macros (X, then…)');
+  macros('Shape macros (X, then…)'),
+  textCalc('Text calculations (G E, then {…})');
 
   const ShortcutSection(this.title);
 
@@ -756,12 +757,12 @@ String? shortcutDisplayFor(AppAction action) {
   return null;
 }
 
-/// A display-only cheat-sheet row for a pointer gesture. Not a binding —
-/// the resolver never sees these; they exist so the pointer-first
-/// interactions (panning, zooming) are discoverable next to their
-/// keyboard cousins.
-class GestureRow {
-  const GestureRow({
+/// A display-only cheat-sheet row. Not a binding — the resolver never
+/// sees these; they exist so non-keyboard knowledge (pointer gestures,
+/// the text tool's expression language) is discoverable next to the
+/// shortcuts.
+class InfoRow {
+  const InfoRow({
     required this.display,
     required this.label,
     required this.section,
@@ -772,51 +773,122 @@ class GestureRow {
   final ShortcutSection section;
 }
 
-const List<GestureRow> gestureRows = [
-  GestureRow(
+const List<InfoRow> infoRows = [
+  InfoRow(
     display: 'Tap tree header',
     label: 'Select every object of that kind '
         '(Shift-tap or long-press adds)',
     section: ShortcutSection.appLevel,
   ),
-  GestureRow(
+  InfoRow(
     display: 'Long-press tree row',
     label: 'Toggle that object in the selection (touch shift-tap)',
     section: ShortcutSection.appLevel,
   ),
-  GestureRow(
+  InfoRow(
     display: 'Space + drag',
     label: 'Pan (hold Space, works with any tool)',
     section: ShortcutSection.viewport,
   ),
-  GestureRow(
+  InfoRow(
     display: 'Scroll',
     label: 'Pan (mouse wheel or two-finger swipe)',
     section: ShortcutSection.viewport,
   ),
-  GestureRow(
+  InfoRow(
     display: 'Ctrl/Cmd + scroll',
     label: 'Zoom about the cursor',
     section: ShortcutSection.viewport,
   ),
-  GestureRow(
+  InfoRow(
     display: 'Alt/Option + scroll',
     label: 'Rotate about the cursor (near level snaps straight)',
     section: ShortcutSection.viewport,
   ),
-  GestureRow(
+  InfoRow(
     display: 'Two-finger drag',
     label: 'Pan (touch)',
     section: ShortcutSection.viewport,
   ),
-  GestureRow(
+  InfoRow(
     display: 'Pinch',
     label: 'Zoom about the cursor (touch or trackpad)',
     section: ShortcutSection.viewport,
   ),
-  GestureRow(
+  InfoRow(
     display: 'Two-finger twist',
     label: 'Rotate the view (touch; releasing near level snaps straight)',
     section: ShortcutSection.viewport,
+  ),
+  // ── Text tool expression language (Phase 58) ─────────────────────
+  // Mirrors `objectFunctionNames` / `_numericFunctions` in the domain;
+  // pinned against them by `cheat_sheet_test.dart`.
+  InfoRow(
+    display: '{…}',
+    label: 'Live calculation inside a text — e.g. AB = {dist(A, B)}',
+    section: ShortcutSection.textCalc,
+  ),
+  InfoRow(
+    display: 'dist(A, B)',
+    label: 'Distance between two points',
+    section: ShortcutSection.textCalc,
+  ),
+  InfoRow(
+    display: 'len(s)',
+    label: 'Segment length; circle circumference, arc length, '
+        'sector perimeter',
+    section: ShortcutSection.textCalc,
+  ),
+  InfoRow(
+    display: 'angle(A, B, C)',
+    label: 'Angle at vertex B, in degrees',
+    section: ShortcutSection.textCalc,
+  ),
+  InfoRow(
+    display: 'area(p)',
+    label: 'Area of a polygon, circle, sector or arc segment',
+    section: ShortcutSection.textCalc,
+  ),
+  InfoRow(
+    display: 'perimeter(p)',
+    label: 'Perimeter of a polygon',
+    section: ShortcutSection.textCalc,
+  ),
+  InfoRow(
+    display: 'radius(c)',
+    label: 'Radius of a circle',
+    section: ShortcutSection.textCalc,
+  ),
+  InfoRow(
+    display: 'x(A), y(A)',
+    label: 'Coordinates of a point',
+    section: ShortcutSection.textCalc,
+  ),
+  InfoRow(
+    display: 'Bare name',
+    label: 'Segment → its length, angle → degrees, measurement → value',
+    section: ShortcutSection.textCalc,
+  ),
+  InfoRow(
+    display: '+ − * / ^ ( )',
+    label: 'Arithmetic; ^ is power. Pasted ×, ·, ÷ work too',
+    section: ShortcutSection.textCalc,
+  ),
+  InfoRow(
+    display: 'sqrt, abs, …',
+    label: 'Also round, floor, ceil, min, max; sin, cos, tan and '
+        'asin, acos, atan in degrees',
+    section: ShortcutSection.textCalc,
+  ),
+  InfoRow(
+    display: 'pi, e',
+    label: 'Constants — they shadow objects named pi or e',
+    section: ShortcutSection.textCalc,
+  ),
+  InfoRow(
+    display: '?',
+    label: 'Shown while a value is undefined (unknown name, wrong kind, '
+        'division by zero)',
+    section: ShortcutSection.textCalc,
   ),
 ];
