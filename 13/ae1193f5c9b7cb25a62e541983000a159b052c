@@ -1,0 +1,42 @@
+docs/TODO.md
+  s_b53583203ea5b9::t_9b4de76ee17b44 507-508
+  s_b53583203ea5b9::t_8eab8e283869ba 509-512
+lib/presentation/canvas/fit_viewport.dart
+  s_b53583203ea5b9::t_472916323309e4 54-60
+  s_b53583203ea5b9::t_5e0c19c9772b79 33-34,41-44
+  s_b53583203ea5b9::t_51d4095d77d504 101-105,110,112,129-140,142,144
+  s_b53583203ea5b9::t_99843de8d8ac78 12-16,21-22,26-31
+  s_b53583203ea5b9::t_7e7b520cfdc755 45
+docs/PLAN.md
+  s_b53583203ea5b9::t_e8a0100d1061f1 112
+  s_b53583203ea5b9::t_f6d7328d7d05ab 353
+lib/main.dart
+  s_b53583203ea5b9::t_4a984d149c8809 333-334
+  s_b53583203ea5b9::t_ae4506e210e464 955-956,967,973
+test/presentation/canvas/geometry_canvas_test.dart
+  s_b53583203ea5b9::t_55ff77b66f5bd1 2025-2028,2035-2036
+  s_b53583203ea5b9::t_617b5cac955cdd 2011-2012
+docs/STATUS.md
+  s_b53583203ea5b9::t_8eab8e283869ba 9-25
+test/presentation/canvas/fit_viewport_test.dart
+  s_b53583203ea5b9::t_05aca834f6a0ab 137-151,153-170,172-179,181,183,186-187,189-194,196-197,199-201
+  s_b53583203ea5b9::t_885979e551ea6c 152,171
+  s_b53583203ea5b9::t_3d0f847356bc4b 180,182,184-185,188,195,198
+  s_b53583203ea5b9::t_42954acd0965b7 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.19",
+  "base_commit_sha": "13ae1193f5c9b7cb25a62e541983000a159b052c",
+  "prompts": {},
+  "sessions": {
+    "s_b53583203ea5b9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d399f039-bcb9-413b-9b16-add93bfe8225",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
