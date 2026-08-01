@@ -16,6 +16,7 @@ import 'package:regula/domain/construction/objects/distance_measurement.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/rotated_point.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
+import 'package:regula/domain/construction/objects/vertex_angle.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/tools/point_tool.dart';
 import 'package:regula/domain/tools/tool.dart';
@@ -292,6 +293,29 @@ void main() {
         expect(distance.attributes.labelVisible, isTrue,
             reason: 'unlike lines/circles/polygons, the label stays shown — '
                 'it reads as "a = 5.00"');
+      });
+
+      test('a new angle is named from the Greek pool but shows only its '
+          'value: name label hidden, showValue on', () {
+        final a = FreePoint(id: 'a', position: const Vec2(1, 0));
+        final v = FreePoint(id: 'v', position: Vec2.zero);
+        final b = FreePoint(id: 'b', position: const Vec2(0, 1));
+        final angle = VertexAngle(id: 'ang', arm1: a, vertex: v, arm2: b);
+        commit(
+          container,
+          MacroCommand([
+            AddObjectCommand(a),
+            AddObjectCommand(v),
+            AddObjectCommand(b),
+            AddObjectCommand(angle),
+          ]),
+        );
+
+        expect(nameOf(container, 'ang'), 'α');
+        expect(angle.attributes.labelVisible, isFalse,
+            reason: 'the name lives in the tree/inspector, not the canvas');
+        expect(angle.attributes.showValue, isTrue,
+            reason: 'a fresh angle reads as its measure, e.g. 90.0°');
       });
 
       test('points keep labelVisible, hidden scaffolding burns no letters',
