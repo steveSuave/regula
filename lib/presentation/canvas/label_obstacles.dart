@@ -10,7 +10,6 @@ import '../../domain/construction/objects/sector.dart';
 import '../../domain/construction/objects/segment.dart';
 import '../../domain/math/vec2.dart';
 import 'canvas_viewport.dart';
-import 'label_anchor.dart';
 import 'label_declutter.dart';
 import 'label_layout.dart';
 
@@ -146,15 +145,20 @@ DeclutterScene buildDeclutterScene(
 
     final rect = labelScreenRect(object, viewport);
     if (rect != null) {
+      final offset = Offset(
+        object.attributes.labelDx,
+        object.attributes.labelDy,
+      );
       labels.add(
         LabelBox(
           id: object.id,
-          anchor: viewport.worldToScreen(labelAnchor(object)),
+          // Recover the offset origin from the rect the label actually
+          // occupies — for angles that's the bisector base, not the
+          // anchor (labelBaseTopLeft needs the text size, which only
+          // the rect knows here).
+          anchor: rect.topLeft - offset,
           size: rect.size,
-          offset: Offset(
-            object.attributes.labelDx,
-            object.attributes.labelDy,
-          ),
+          offset: offset,
         ),
       );
     }
