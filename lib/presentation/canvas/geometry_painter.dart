@@ -16,7 +16,6 @@ import '../../domain/math/vec2.dart';
 import 'canvas_viewport.dart';
 import 'dash_path.dart';
 import 'grid_layout.dart';
-import 'label_anchor.dart';
 import 'label_layout.dart';
 import 'large_radius_arc.dart';
 
@@ -26,7 +25,7 @@ import 'large_radius_arc.dart';
 /// Stroke widths and point radii come from `ObjectAttributes` and are in
 /// logical pixels — they do not scale with zoom (a hairline stays a
 /// hairline). A named object with `labelVisible` gets its name painted
-/// beside its [labelAnchor], in the object's own color.
+/// beside its [labelBaseTopLeft], in the object's own color.
 class GeometryPainter extends CustomPainter {
   GeometryPainter({
     required this.construction,
@@ -582,7 +581,7 @@ class GeometryPainter extends CustomPainter {
     }
   }
 
-  /// Paints the object's [labelText] beside its [labelAnchor], shifted
+  /// Paints the object's [labelText] at its [labelBaseTopLeft], shifted
   /// by the stored label offset (or the in-progress [labelDragPreview]).
   /// Like stroke widths, the font size and offset are in logical pixels
   /// and do not scale with zoom.
@@ -601,7 +600,10 @@ class GeometryPainter extends CustomPainter {
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    textPainter.paint(canvas, viewport.worldToScreen(labelAnchor(object)) + offset);
+    textPainter.paint(
+      canvas,
+      labelBaseTopLeft(object, viewport, textPainter.size) + offset,
+    );
     textPainter.dispose();
   }
 

@@ -46,8 +46,45 @@ String? labelText(GeoObject object) {
   return '$name = $value';
 }
 
+/// Extra clearance between an angle's arc marker and its label box.
+const double _angleLabelClearance = 4.0;
+
+/// The screen top-left the label offset `(labelDx, labelDy)` is measured
+/// from — the position the text paints at when the offset is zero.
+///
+/// For every kind but angles this is `worldToScreen(labelAnchor)`.
+/// Angles get direction-aware placement (Phase 63): the text is centered
+/// on the wedge's bisector just past the arc marker, so the value sits
+/// in front of the arc whichever way the wedge opens, tracks the
+/// per-object marker radius, and turns with view rotation. The distance
+/// adds the text box's support radius along the bisector, keeping the
+/// box's *near edge* — not merely its center — clear of the arc even
+/// for wide values on a horizontal bisector. [textSize] must be the
+/// laid-out size of the text being placed; callers already measure it.
+Offset labelBaseTopLeft(
+  GeoObject object,
+  CanvasViewport viewport,
+  Size textSize,
+) {
+  if (object case GeoAngle(:final angle?)) {
+    final direction = viewport.worldToScreenDirection(
+      angle.startDirection.rotated(angle.sweep / 2),
+    );
+    final support = 0.5 *
+        (textSize.width * direction.dx.abs() +
+            textSize.height * direction.dy.abs());
+    final center = viewport.worldToScreen(angle.vertex) +
+        direction *
+            (object.attributes.angleMarkerRadius +
+                _angleLabelClearance +
+                support);
+    return center - Offset(textSize.width / 2, textSize.height / 2);
+  }
+  return viewport.worldToScreen(labelAnchor(object));
+}
+
 /// The screen rectangle [object]'s label occupies: the text laid out at
-/// `worldToScreen(labelAnchor) + (labelDx, labelDy)`. Null when the
+/// `labelBaseTopLeft + (labelDx, labelDy)`. Null when the
 /// object paints no label (hidden, undefined, or no [labelText] parts)
 /// — the label drag in `GeometryCanvas` hit-tests against this, so an
 /// invisible label must never be grabbable.
@@ -72,7 +109,7 @@ Rect? labelScreenRect(GeoObject object, CanvasViewport viewport) {
   )..layout();
   final size = textPainter.size;
   textPainter.dispose();
-  final topLeft = viewport.worldToScreen(labelAnchor(object)) +
+  final topLeft = labelBaseTopLeft(object, viewport, size) +
       Offset(attributes.labelDx, attributes.labelDy);
   return topLeft & size;
 }
