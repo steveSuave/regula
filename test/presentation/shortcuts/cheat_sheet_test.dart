@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/application/providers/tool_provider.dart';
+import 'package:regula/domain/construction/text_template.dart';
+import 'package:regula/domain/math/expression.dart';
 import 'package:regula/domain/tools/point_tool.dart';
 import 'package:regula/main.dart';
 import 'package:regula/presentation/shortcuts/cheat_sheet.dart';
@@ -54,8 +56,28 @@ void main() {
     expect(find.text('Space + drag'), findsOneWidget);
     expect(find.text('Scroll'), findsOneWidget);
 
+    // Display-only text-calculation rows document the `{…}` language.
+    expect(find.text('dist(A, B)'), findsOneWidget);
+
     await pressQuestionMark(tester);
     expect(find.byType(ShortcutCheatSheet), findsNothing);
+  });
+
+  test('text-calc rows cover the whole expression language', () {
+    final rows = [
+      for (final row in infoRows)
+        if (row.section == ShortcutSection.textCalc)
+          '${row.display} ${row.label}',
+    ].join('\n');
+    for (final name in objectFunctionNames) {
+      expect(rows, contains('$name('), reason: "accessor '$name' missing");
+    }
+    for (final name in numericFunctionNames) {
+      expect(rows, contains(name), reason: "function '$name' missing");
+    }
+    for (final name in constantNames) {
+      expect(rows, contains(name), reason: "constant '$name' missing");
+    }
   });
 
   testWidgets('Esc only closes the sheet — the active tool survives', (

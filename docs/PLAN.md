@@ -299,7 +299,7 @@ Macros (`X` leader for advanced shapes):
 
 Shifted single letters coexist with the leaders: `Shift`+`G` / `Shift`+`X` must resolve as their own bindings and never arm the `G`/`X` leader — `KeyStroke`'s shift matching is exact, but Phase 36 pins it with a dedicated resolver test.
 
-The full table is rendered in a `?`-key cheat sheet overlay. Bindings live in `lib/presentation/shortcuts/shortcut_table.dart` and are tested with widget tests that send key events and assert the active tool / command.
+The full table is rendered in a `?`-key cheat sheet overlay. Bindings live in `lib/presentation/shortcuts/shortcut_table.dart` and are tested with widget tests that send key events and assert the active tool / command. The sheet also carries display-only `InfoRow`s — rows the resolver never sees: the pointer gestures (panning, zooming, tree selection), and, since Phase 64, a **Text calculations** section documenting the text tool's `{…}` expression language (the eight geometry accessors, bare-name sugar, operators, numeric functions, `pi`/`e`, and the `?` undefined marker), pinned against the domain registries by test so a new accessor can't ship undocumented.
 
 ## Build order (rough)
 
