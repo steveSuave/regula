@@ -1745,8 +1745,9 @@ void main() {
     expect(objectCount(), 0);
   });
 
-  testWidgets('the compass appears only while rotated and levels the '
-      'view about the canvas center', (tester) async {
+  testWidgets('the compass chip floats on the canvas top-right while '
+      'rotated and levels the view about the canvas center',
+      (tester) async {
     await pumpEditor(tester);
     const compass = ValueKey('compass-button');
     expect(find.byKey(compass), findsNothing,
@@ -1757,6 +1758,20 @@ void main() {
     container.read(viewportProvider.notifier).set(rotated);
     await tester.pump();
     expect(find.byKey(compass), findsOneWidget);
+
+    // Phase 60: the chip sits on the canvas (map-app convention), inset
+    // from its top-right corner, with a live degrees readout.
+    final canvasRect = tester.getRect(find.byType(GeometryCanvas));
+    final chipRect = tester.getRect(find.byKey(compass));
+    expect(chipRect.top, canvasRect.top + 12,
+        reason: 'the compass floats over the canvas, not the app bar');
+    expect(chipRect.right, canvasRect.right - 12);
+    expect(chipRect.left, greaterThan(canvasRect.left));
+    expect(chipRect.bottom, lessThan(canvasRect.bottom));
+    expect(
+        find.descendant(of: find.byKey(compass), matching: find.text('29°')),
+        findsOneWidget,
+        reason: '0.5 rad reads as 29°');
 
     final origin = tester.getTopLeft(find.byType(GeometryCanvas));
     final centerLocal =
