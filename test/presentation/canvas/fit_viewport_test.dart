@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -131,6 +132,71 @@ void main() {
         canvas,
       )!;
       expect(microscopic.scale, CanvasViewport.maxScale);
+    });
+
+    test('a rotated fit keeps the angle and scales to the rotated '
+        'extents (Phase 61)', () {
+      // A world-horizontal pair stands vertical on screen at θ = π/2,
+      // so the fit must scale by the canvas *height*, not width.
+      final state = fittedViewport(
+        [point('a', 0, 0), point('b', 100, 0)],
+        canvas,
+        rotation: math.pi / 2,
+      )!;
+      expect(state.rotation, math.pi / 2);
+      expect(state.scale, closeTo((600 - 2 * fitMarginPx) / 100, 1e-12));
+
+      final viewport = CanvasViewport(state);
+      final a = viewport.worldToScreen(const Vec2(0, 0));
+      final b = viewport.worldToScreen(const Vec2(100, 0));
+      expect((a + b) / 2, offsetMoreOrLessEquals(const Offset(400, 300), epsilon: 1e-6));
+      for (final screen in [a, b]) {
+        expect(screen.dx, inInclusiveRange(fitMarginPx - 1e-9, 800 - fitMarginPx + 1e-9));
+        expect(screen.dy, inInclusiveRange(fitMarginPx - 1e-9, 600 - fitMarginPx + 1e-9));
+      }
+    });
+
+    test('an arbitrary view angle centers the framed extremes', () {
+      final state = fittedViewport(
+        [point('a', -30, 10), point('b', 50, -25)],
+        canvas,
+        rotation: 0.7,
+      )!;
+      expect(state.rotation, 0.7);
+      final viewport = CanvasViewport(state);
+      final a = viewport.worldToScreen(const Vec2(-30, 10));
+      final b = viewport.worldToScreen(const Vec2(50, -25));
+      // Two points span the view-frame box, so their screen midpoint is
+      // the box center — pinned to the canvas center at any angle.
+      expect((a + b) / 2, offsetMoreOrLessEquals(const Offset(400, 300), epsilon: 1e-6));
+      for (final screen in [a, b]) {
+        expect(screen.dx, inInclusiveRange(fitMarginPx - 1e-9, 800 - fitMarginPx + 1e-9));
+        expect(screen.dy, inInclusiveRange(fitMarginPx - 1e-9, 600 - fitMarginPx + 1e-9));
+      }
+    });
+
+    test('a rotated disc stays tightly framed — the box rotates as '
+        'center ± radius', () {
+      // A lone disc's view-frame box is 60 × 60 at any angle; rotating
+      // box *corners* instead would break this scale.
+      final center = point('c', 10, 10,
+          attributes: const ObjectAttributes(visible: false));
+      final rim = point('r', 40, 10,
+          attributes: const ObjectAttributes(visible: false));
+      final state = fittedViewport(
+        [
+          center,
+          rim,
+          CircleCenterPoint(id: 'k', center: center, onCircle: rim),
+        ],
+        canvas,
+        rotation: 0.7,
+      )!;
+      expect(state.scale, closeTo((600 - 2 * fitMarginPx) / 60, 1e-12));
+      expect(
+        CanvasViewport(state).worldToScreen(const Vec2(10, 10)),
+        offsetMoreOrLessEquals(const Offset(400, 300), epsilon: 1e-6),
+      );
     });
 
     test('a locus contributes its core samples, not its diverging arms '
