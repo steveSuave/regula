@@ -6,6 +6,21 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 86 — 2026-08-01
+
+**Done**
+- **Phase 62 — angles show their value, not their name, by default** (user request), on `phase-62-angle-value-default`. One-site change in the `_nameObjectsIn` auto-name funnel: `GeoAngle` joins the `hideLabel` group (like lines/circles, the Greek name still allocates and shows in the tree/inspector) and additionally gets `showValue: true` — a fresh angle's canvas label is just its measure (`90.0°`). Both remain plain per-object attributes, so the inspector toggles flip either back at will.
+- Existing saves are unaffected: the funnel only touches unnamed, visible objects at creation time, and attributes are baked into the object (undo/redo safe, no re-derivation).
+- Test: commit a `VertexAngle` through the funnel, expect name `α`, `labelVisible` false, `showValue` true. 1450 green, analyze clean.
+
+**Next**
+- No queued phase.
+
+**Open questions / gotchas**
+- Hidden macro-scaffolding angles (none exist today) would skip the funnel case entirely — they'd keep `showValue: false`, which is the right dormant state anyway.
+
+---
+
 ## Session 85 — 2026-08-01
 
 **Done**
