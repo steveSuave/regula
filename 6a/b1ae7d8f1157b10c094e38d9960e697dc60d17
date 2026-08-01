@@ -1,0 +1,33 @@
+lib/presentation/shortcuts/cheat_sheet.dart
+  s_743baad39447ab::t_14dc2311ccf698 90-91,96-97
+lib/presentation/shortcuts/shortcut_table.dart
+  s_743baad39447ab::t_9fca5381a959f4 760-765
+  s_743baad39447ab::t_ad32ec6f63e406 776-777,783,788,793,798,803,808,813,818,823-893
+  s_743baad39447ab::t_e48bbae7d7cdbc 99-100
+docs/PLAN.md
+  s_743baad39447ab::t_e182725ef48bdf 302
+docs/TODO.md
+  s_743baad39447ab::t_8079cc6170dbdb 523-527
+docs/STATUS.md
+  s_743baad39447ab::t_4625213c8bd9ce 9-24
+test/presentation/shortcuts/cheat_sheet_test.dart
+  s_743baad39447ab::t_b55f0a08500de6 59-61,66-80
+  s_743baad39447ab::t_f1d39ffb65db69 6-7
+  s_743baad39447ab::t_fc7d258cf66722 81-82
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.19",
+  "base_commit_sha": "6ab1ae7d8f1157b10c094e38d9960e697dc60d17",
+  "prompts": {},
+  "sessions": {
+    "s_743baad39447ab": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cf9f1db3-3914-415c-b870-634882952415",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
