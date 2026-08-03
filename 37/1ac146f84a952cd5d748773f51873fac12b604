@@ -1,0 +1,25 @@
+test/presentation/shortcuts/editor_shortcuts_test.dart
+  s_1d44c57b50ef63::t_e4986a96e73a04 1122-1159
+docs/STATUS.md
+  s_1d44c57b50ef63::t_dd0b9776c90fdf 9-23
+lib/presentation/shortcuts/app_shortcuts.dart
+  s_1d44c57b50ef63::t_b94bbb0bfb5084 55-59,62,67-80
+  s_1d44c57b50ef63::t_76fffa861a6e85 54
+  s_1d44c57b50ef63::t_a79a67803886eb 81
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "371ac146f84a952cd5d748773f51873fac12b604",
+  "prompts": {},
+  "sessions": {
+    "s_1d44c57b50ef63": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ee61eed9-653d-423d-b3e4-fbda65f80ded",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
