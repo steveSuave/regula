@@ -52,9 +52,31 @@ class _AppShortcutsState extends State<AppShortcuts> {
   final FocusNode _focusNode = FocusNode(debugLabel: 'AppShortcuts');
 
   @override
+  void initState() {
+    super.initState();
+    FocusManager.instance.addListener(_reclaimDroppedFocus);
+  }
+
+  @override
   void dispose() {
+    FocusManager.instance.removeListener(_reclaimDroppedFocus);
     _focusNode.dispose();
     super.dispose();
+  }
+
+  /// Text fields drop focus onto their enclosing *scope* when left —
+  /// Enter's default `unfocus()`, and disposal of a still-focused field
+  /// (the name editor is rebuilt under a new key on rename) both do.
+  /// A scope's children are not on the key-event dispatch path, so
+  /// shortcuts would go dead until the next canvas click. Whenever the
+  /// primary focus lands on a scope above this node — focus fell on
+  /// "nothing" — take it back. A foreign scope (a dialog's) is not an
+  /// ancestor and is left alone.
+  void _reclaimDroppedFocus() {
+    final primary = FocusManager.instance.primaryFocus;
+    if (primary is FocusScopeNode && _focusNode.ancestors.contains(primary)) {
+      _focusNode.requestFocus();
+    }
   }
 
   KeyEventResult _onKeyEvent(FocusNode node, KeyEvent event) {
