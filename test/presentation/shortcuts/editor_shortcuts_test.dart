@@ -1119,4 +1119,42 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.keyP);
     expect(activeTool(), isA<PointTool>());
   });
+
+  testWidgets('shortcuts revive after committing a rename with Enter', (
+    tester,
+  ) async {
+    await pumpEditor(tester);
+    final (a, _, _) = buildSmallConstruction();
+    container.read(selectionProvider.notifier).select(a.id);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'Q');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+    expect(a.attributes.name, 'Q', reason: 'the rename committed');
+
+    // No canvas click in between: leaving the field must hand focus
+    // back to the shortcut layer by itself.
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyP);
+    expect(activeTool(), isA<PointTool>(),
+        reason: 'shortcuts must not stay dead after a rename');
+  });
+
+  testWidgets('shortcuts revive after leaving the name field unchanged', (
+    tester,
+  ) async {
+    await pumpEditor(tester);
+    final (a, _, _) = buildSmallConstruction();
+    container.read(selectionProvider.notifier).select(a.id);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(TextField));
+    await tester.pumpAndSettle();
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyP);
+    expect(activeTool(), isA<PointTool>(),
+        reason: 'an unchanged commit must also hand focus back');
+  });
 }

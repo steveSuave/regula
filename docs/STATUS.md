@@ -6,6 +6,21 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 88 — 2026-08-03
+
+**Done**
+- **Bugfix: shortcuts went dead after renaming an object in the inspector** (user report), on `fix-shortcuts-dead-after-rename`. Root cause: leaving a text field (Enter's default `unfocus()`, or the name editor being rebuilt under a new `ValueKey` while focused) drops primary focus onto the enclosing *FocusScope*, and a scope's children are off the key-event dispatch path — so `AppShortcuts` stopped seeing keys until the next canvas click (whose pointer-down `refocus` was the only revival).
+- Fix at the shortcut layer, covering every text field at once: `_AppShortcutsState` listens to `FocusManager` and reclaims focus whenever the primary focus lands on a scope that is an ancestor of its node (focus fell on "nothing"). Foreign scopes (dialogs) are not ancestors and are left alone; the canvas `refocus` stays as belt-and-braces.
+- Tests: two regressions in `editor_shortcuts_test.dart` — rename committed with Enter, and leaving the field unchanged; both then expect `P` to activate the point tool with no canvas click. 1456 green, analyze clean.
+
+**Next**
+- Merge `fix-shortcuts-dead-after-rename` into main after review.
+
+**Open questions / gotchas**
+- The reclaim check is `primary is FocusScopeNode && ancestors.contains(primary)` — if a nested FocusScope is ever introduced *inside* the editor around a panel, focus dropped onto that scope would also be reclaimed (correct today, worth re-checking then).
+
+---
+
 ## Session 87 — 2026-08-01
 
 **Done**
