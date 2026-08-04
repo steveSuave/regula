@@ -14,6 +14,8 @@ import '../../domain/construction/objects/distance_measurement.dart';
 import '../../domain/construction/objects/expression_text.dart';
 import '../../domain/construction/objects/fixed_radius_circle.dart';
 import '../../domain/construction/objects/free_point.dart';
+import '../../domain/construction/objects/harmonic_conjugate_point.dart';
+import '../../domain/construction/objects/homothetic_point.dart';
 import '../../domain/construction/objects/incenter.dart';
 import '../../domain/construction/objects/intersection_point.dart';
 import '../../domain/construction/objects/length_measurement.dart';
@@ -170,6 +172,8 @@ Map<String, dynamic> _encodeObject(GeoObject object) {
       ),
     ReflectedPoint() => ('ReflectedPoint', const {}),
     ProjectionPoint() => ('ProjectionPoint', const {}),
+    HomotheticPoint(:final ratio) => ('HomotheticPoint', {'ratio': ratio}),
+    HarmonicConjugatePoint() => ('HarmonicConjugatePoint', const {}),
     CentralReflectionPoint() => ('CentralReflectionPoint', const {}),
     RotatedPoint(:final angle) => ('RotatedPoint', {'angle': angle}),
     TranslatedPoint() => ('TranslatedPoint', const {}),
@@ -308,6 +312,20 @@ GeoObject _decodeObject(Map<String, dynamic> json, Construction construction) {
         id: id,
         point: point(0),
         line: line(1),
+        attributes: attributes,
+      ),
+    'HomotheticPoint' => HomotheticPoint(
+        id: id,
+        point: point(0),
+        center: point(1),
+        ratio: _doubleParam(id, params, 'ratio'),
+        attributes: attributes,
+      ),
+    'HarmonicConjugatePoint' => HarmonicConjugatePoint(
+        id: id,
+        point1: point(0),
+        point2: point(1),
+        point3: point(2),
         attributes: attributes,
       ),
     'CentralReflectionPoint' => CentralReflectionPoint(

@@ -7,6 +7,8 @@ import '../../domain/construction/objects/circle_center.dart';
 import '../../domain/construction/objects/circumcenter.dart';
 import '../../domain/construction/objects/compass_circle.dart';
 import '../../domain/construction/objects/distance_measurement.dart';
+import '../../domain/construction/objects/harmonic_conjugate_point.dart';
+import '../../domain/construction/objects/homothetic_point.dart';
 import '../../domain/construction/objects/incenter.dart';
 import '../../domain/construction/objects/intersection_point.dart';
 import '../../domain/construction/objects/length_measurement.dart';
@@ -39,6 +41,8 @@ String objectKindLabel(GeoObject object) => switch (object) {
       PointOnObject() => 'Point on object',
       SegmentRatioPoint() => 'Segment-ratio point',
       ProjectionPoint() => 'Projection point',
+      HomotheticPoint() => 'Homothetic point',
+      HarmonicConjugatePoint() => 'Harmonic conjugate',
       Centroid() => 'Centroid',
       Orthocenter() => 'Orthocenter',
       Incenter() => 'Incenter',
