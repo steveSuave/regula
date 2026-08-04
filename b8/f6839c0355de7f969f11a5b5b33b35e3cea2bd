@@ -1,0 +1,36 @@
+test/presentation/panels/toolbar_test.dart
+  s_b8987ad8b54dc5::t_f1614d897ff073 362-392
+  s_b8987ad8b54dc5::t_da26cb8bfab9b8 1-2
+lib/presentation/panels/toolbar.dart
+  s_b8987ad8b54dc5::t_970fc103d494df 26
+  s_b8987ad8b54dc5::t_47f5de1d9ce95c 743,749,751-755,758
+  s_b8987ad8b54dc5::t_213efbde129839 874
+  s_b8987ad8b54dc5::t_99d527ba33d4fa 925,928
+  s_b8987ad8b54dc5::t_87fa66c6a0d0aa 893,899,904-905
+  s_b8987ad8b54dc5::t_91e14189a30091 1208,1211-1216,1218-1222,1224
+  s_b8987ad8b54dc5::t_ce37330fc60686 768,773,775-779,782
+  s_b8987ad8b54dc5::t_3a5a1ee78682b7 679-707
+  s_b8987ad8b54dc5::t_4e2462ccc3550d 994,999
+  s_b8987ad8b54dc5::t_515f5a05f25c22 1121-1124
+  s_b8987ad8b54dc5::t_799373b97404f4 848,853-854
+  s_b8987ad8b54dc5::t_acd7882539984a 946,951
+  s_b8987ad8b54dc5::t_6e375501bdcc6b 973,976
+  s_b8987ad8b54dc5::t_c175a322f34ba2 1172-1175
+  s_b8987ad8b54dc5::t_d5845eec33819d 1057
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "b8f6839c0355de7f969f11a5b5b33b35e3cea2bd",
+  "prompts": {},
+  "sessions": {
+    "s_b8987ad8b54dc5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a9ded4f1-7d13-4452-9025-64ab2b220145",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
