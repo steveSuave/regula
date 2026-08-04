@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/domain/construction/objects/central_reflection_point.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/homothetic_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
 import 'package:regula/domain/construction/objects/reflected_point.dart';
@@ -30,6 +31,18 @@ void main() {
         RotatedPoint(id: 'n0', point: a, center: b, angle: 1.25 + 1e-9);
 
     expect(equivalentExisting([existing], candidate), isNull);
+  });
+
+  test('homothetic points compare their ratio exactly (Phase 68)', () {
+    final existing =
+        HomotheticPoint(id: 'h', point: a, center: b, ratio: 2);
+    final matching =
+        HomotheticPoint(id: 'n0', point: a, center: b, ratio: 2);
+    final other =
+        HomotheticPoint(id: 'n1', point: a, center: b, ratio: 2 + 1e-9);
+
+    expect(equivalentExisting([b, a, existing], matching), same(existing));
+    expect(equivalentExisting([existing], other), isNull);
   });
 
   test('identical parents means instances, not positions', () {

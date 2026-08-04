@@ -6,6 +6,25 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 91 — 2026-08-05
+
+**Done**
+- **Phase 68 — dilate joins the Transform group**, on `phase-68-dilate-transform` (user request, out of order ahead of 66/67; PLAN updated first, build-order item 51). Follow-on to the session's design discussion: homothety can never be composed from the four isometries (they form a group, |k| ≠ 1 is unreachable), but Phase 24's rebuild-same-kind machinery only needs a *similarity*, so whole-object dilation rides it unchanged.
+- `ObjectTransform.dilate` + `TransformObjectTool.dilate({newId, ratio})` — fifth named constructor, rotate model (dialog-baked ratio, transformee then center). All nine curve kinds rebuild; **no orientation caveats**: plane homothety is k·I, det k² > 0, so no `VertexAngle` arm swap and `Sector` is supported even at negative ratios. `equivalentExisting` compares `HomotheticPoint.ratio` exactly.
+- `HomotheticPoint` unchanged (codec/labels/object tests untouched) — it's now the dilate transform's image-point kind, the `ReflectedPoint`/`RotatedPoint` role. This also resolves Session 90's homothetic-dedupe gotcha: dilate point mode dedupes via `equivalentExisting`, which the old `TwoPointTool` closure never did.
+- Toolbar: Transform flyout += 'Dilate from point (object, then center)…'; the Points homothetic row is gone; 'Intersection of two curves' moved to row 2 (user request). `askDilationRatio` returns a bare double — non-finite *and zero* read as cancel; `G H` rewired, chord row listed with the other transforms.
+- 1500 tests green, analyze clean. Merged to `main`.
+
+**Next**
+- Phase 66 (nine-point circle + inscribed circle: `circumradius`/inradius helpers in `triangle_centers.dart`, two `ThreePointCircle`-modeled `GeoCircle`s, transform-whitelist entries), then Phase 67.
+
+**Open questions / gotchas**
+- The Transform group is now closed over plane similarities by composition (spiral similarity = rotate ∘ dilate about one center); nothing further is *needed* there. Inversion is the one valuable non-similarity, and it cannot ride rebuild-same-kind (segments map to arcs) — its own phase with dedicated kinds if requested.
+- `SegmentRatioPoint` still commits through the plain `TwoPointTool` closure with no dedupe (the surviving half of the Session 90 gotcha).
+- Ratio dialogs still parse only decimals and one `a/b` fraction; swapping `_parseRatio` for the Phase 58 expression parser (numeric-only env — no geometry accessors, ratios are baked at creation) would allow `sqrt(2)` etc. in all three dialogs. Discussed and shelved pending a user go-ahead.
+
+---
+
 ## Session 90 — 2026-08-05
 
 **Done**

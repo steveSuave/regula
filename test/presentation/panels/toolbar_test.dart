@@ -313,6 +313,80 @@ void main() {
     expect(iconColor(tester, Icons.flip), theme.colorScheme.primary);
   });
 
+  testWidgets('the dilate item asks for a ratio; OK activates the dilate '
+      'transform and highlights Transform, cancel and zero activate '
+      'nothing (Phase 68)', (tester) async {
+    await pumpEditor(tester);
+
+    Future<void> openDilateDialog() async {
+      await tester.tap(find.byIcon(Icons.flip));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Dilate from point…'));
+      await tester.pumpAndSettle();
+    }
+
+    await openDilateDialog();
+    expect(find.text('Dilation ratio'), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(container.read(toolProvider).tool, isNull);
+
+    await openDilateDialog();
+    await tester.enterText(find.byType(TextField), '0');
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    expect(container.read(toolProvider).tool, isNull,
+        reason: 'ratio 0 collapses onto the center — reads as cancel');
+
+    await openDilateDialog();
+    await tester.enterText(find.byType(TextField), '-3/2');
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+
+    final tool = container.read(toolProvider).tool;
+    expect(tool, isA<TransformObjectTool>());
+    final dilate = tool! as TransformObjectTool;
+    expect(dilate.transform, ObjectTransform.dilate);
+    expect(dilate.ratio, -1.5);
+    final theme = Theme.of(tester.element(find.byType(AppBar)));
+    expect(iconColor(tester, Icons.flip), theme.colorScheme.primary);
+    expect(
+      iconColor(tester, Icons.control_point),
+      isNot(theme.colorScheme.primary),
+      reason: 'dilate lives in Transform now, not Points',
+    );
+  });
+
+  testWidgets('Points flyout: intersection sits directly below Point, above '
+      'Midpoint; the homothetic row is gone (Phase 68)', (tester) async {
+    await pumpEditor(tester);
+
+    await tester.tap(find.byIcon(Icons.control_point));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Homothetic point…'), findsNothing,
+        reason: 'retired in favor of the Transform-group dilate');
+
+    final pointY = tester.getTopLeft(find.text('Point')).dy;
+    final intersectionY =
+        tester.getTopLeft(find.text('Intersection of two curves')).dy;
+    final midpointY = tester.getTopLeft(find.text('Midpoint or center')).dy;
+    expect(pointY, lessThan(intersectionY));
+    expect(intersectionY, lessThan(midpointY),
+        reason: 'row order is Point, Intersection, Midpoint');
+    final otherRowBetween = [
+      'Segment-ratio point…',
+      'Projection onto a line',
+      'Harmonic conjugate',
+      'Centroid',
+    ].any((label) {
+      final y = tester.getTopLeft(find.textContaining(label).first).dy;
+      return y > pointY && y < midpointY;
+    });
+    expect(otherRowBetween, isFalse,
+        reason: 'nothing else sits between Point and Midpoint');
+  });
+
   testWidgets('the regular-polygon item asks for the side count; cancel '
       'activates nothing', (tester) async {
     await pumpEditor(tester);

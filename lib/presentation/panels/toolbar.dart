@@ -11,7 +11,6 @@ import '../../domain/construction/objects/centroid.dart';
 import '../../domain/construction/objects/circle_center_point.dart';
 import '../../domain/construction/objects/circumcenter.dart';
 import '../../domain/construction/objects/compass_circle.dart';
-import '../../domain/construction/objects/homothetic_point.dart';
 import '../../domain/construction/objects/incenter.dart';
 import '../../domain/construction/objects/line_through_two_points.dart';
 import '../../domain/construction/objects/orthocenter.dart';
@@ -187,11 +186,11 @@ class GeometryToolbar extends ConsumerWidget {
           : TwoPointTool(newId: newObjectId, build: build);
     }
 
-    Future<Tool?> homothetyPick() async {
-      final build = await askHomothetyBuilder(context);
-      return build == null
+    Future<Tool?> dilatePick() async {
+      final ratio = await askDilationRatio(context);
+      return ratio == null
           ? null
-          : TwoPointTool(newId: newObjectId, build: build);
+          : TransformObjectTool.dilate(newId: newObjectId, ratio: ratio);
     }
 
     Future<Tool?> rotatePick() async {
@@ -253,6 +252,11 @@ class GeometryToolbar extends ConsumerWidget {
               AppAction.pointTool,
             ),
             (
+              'Intersection of two curves',
+              _pick(() => IntersectionTool(newId: newObjectId)),
+              AppAction.intersectionTool,
+            ),
+            (
               'Midpoint or center',
               _pick(() => MidpointTool(newId: newObjectId)),
               AppAction.midpointTool,
@@ -269,19 +273,9 @@ class GeometryToolbar extends ConsumerWidget {
               AppAction.projectionTool,
             ),
             (
-              'Homothetic point (point, then center)…',
-              homothetyPick,
-              AppAction.homotheticPointTool,
-            ),
-            (
               'Harmonic conjugate (A, B, then C)',
               _pick(() => HarmonicConjugateTool(newId: newObjectId)),
               AppAction.harmonicConjugateTool,
-            ),
-            (
-              'Intersection of two curves',
-              _pick(() => IntersectionTool(newId: newObjectId)),
-              AppAction.intersectionTool,
             ),
             ('Centroid', _center(Centroid.new), AppAction.centroidTool),
             ('Orthocenter', _center(Orthocenter.new), AppAction.orthocenterTool),
@@ -430,6 +424,11 @@ class GeometryToolbar extends ConsumerWidget {
               'Translate by vector (object, then tail, tip)',
               _pick(() => TransformObjectTool.translate(newId: newObjectId)),
               AppAction.translateByVectorTool,
+            ),
+            (
+              'Dilate from point (object, then center)…',
+              dilatePick,
+              AppAction.dilateTool,
             ),
           ],
         ),
@@ -694,24 +693,17 @@ Future<TwoPointBuilder?> askRatioBuilder(BuildContext context) async {
   return build;
 }
 
-/// Asks for a homothety (dilation) ratio and wraps it as a
-/// [TwoPointBuilder] over `HomotheticPoint` — the shared path behind the
-/// Points flyout item and the `G H` shortcut. Tap order is point, then
-/// center (the transform-tools' transformee-first convention). Null when
-/// cancelled; unparseable or non-finite input reads as cancel,
-/// mirroring [askRatioBuilder].
-Future<TwoPointBuilder?> askHomothetyBuilder(BuildContext context) async {
-  final ratio = await showDialog<double>(
-    context: context,
-    builder: (context) => const _HomothetyDialog(),
-  );
-  if (ratio == null) {
-    return null;
-  }
-  GeoObject build(String id, GeoPoint a, GeoPoint b) =>
-      HomotheticPoint(id: id, point: a, center: b, ratio: ratio);
-  return build;
-}
+/// Asks for a dilation (homothety) ratio — the shared path behind the
+/// Transform flyout item and the `G H` shortcut (Phase 68; the Phase 65
+/// Points-flyout closure over `HomotheticPoint` retired in its favor).
+/// Null when cancelled; unparseable, non-finite or **zero** input reads
+/// as cancel — ratio 0 would collapse every image onto the center,
+/// the [_parseLength] non-positive precedent.
+Future<double?> askDilationRatio(BuildContext context) =>
+    showDialog<double>(
+      context: context,
+      builder: (context) => const _DilationDialog(),
+    );
 
 /// Asks for a rotation angle in degrees (counter-clockwise; negative =
 /// clockwise) and returns it in *radians* — the shared path behind the
@@ -839,16 +831,16 @@ class _RatioDialogState extends State<_RatioDialog> {
   }
 }
 
-/// Homothety twin of [_RatioDialog] (same controller-lifetime reasoning);
-/// accepts any finite ratio, negative included.
-class _HomothetyDialog extends StatefulWidget {
-  const _HomothetyDialog();
+/// Dilation twin of [_RatioDialog] (same controller-lifetime reasoning);
+/// accepts any finite non-zero ratio, negative included.
+class _DilationDialog extends StatefulWidget {
+  const _DilationDialog();
 
   @override
-  State<_HomothetyDialog> createState() => _HomothetyDialogState();
+  State<_DilationDialog> createState() => _DilationDialogState();
 }
 
-class _HomothetyDialogState extends State<_HomothetyDialog> {
+class _DilationDialogState extends State<_DilationDialog> {
   final _controller = TextEditingController();
 
   @override
@@ -859,13 +851,13 @@ class _HomothetyDialogState extends State<_HomothetyDialog> {
 
   double? _parse(String text) {
     final value = _parseRatio(text);
-    return value != null && value.isFinite ? value : null;
+    return value != null && value.isFinite && value != 0 ? value : null;
   }
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Homothety ratio'),
+      title: const Text('Dilation ratio'),
       content: TextField(
         controller: _controller,
         autofocus: true,
