@@ -7,6 +7,7 @@ import '../construction/objects/central_reflection_point.dart';
 import '../construction/objects/circle_center_point.dart';
 import '../construction/objects/compass_circle.dart';
 import '../construction/objects/free_point.dart';
+import '../construction/objects/homothetic_point.dart';
 import '../construction/objects/line_through_two_points.dart';
 import '../construction/objects/ray.dart';
 import '../construction/objects/reflected_point.dart';
@@ -21,12 +22,19 @@ import 'point_resolution.dart';
 import 'tool.dart';
 import 'transform_equivalence.dart';
 
-/// Which isometry a [TransformObjectTool] applies.
-enum ObjectTransform { reflectAboutLine, reflectAboutPoint, rotate, translate }
+/// Which transform a [TransformObjectTool] applies — the four Phase 24
+/// isometries plus dilation (Phase 68), a similarity.
+enum ObjectTransform {
+  reflectAboutLine,
+  reflectAboutPoint,
+  rotate,
+  translate,
+  dilate,
+}
 
-/// The Phase 24 transform tool: applies one of the four isometries to a
-/// point *or* a whole curve, replacing the four Phase 15 point-only
-/// wirings.
+/// The Phase 24 transform tool: applies one of the isometries — or, since
+/// Phase 68, a dilation — to a point *or* a whole curve, replacing the
+/// four Phase 15 point-only wirings.
 ///
 /// The transformee is always the **first** input. A first tap whose
 /// best-ranked in-threshold curve is a supported source picks that curve —
@@ -38,9 +46,12 @@ enum ObjectTransform { reflectAboutLine, reflectAboutPoint, rotate, translate }
 /// taps (center, vector tail and tip).
 ///
 /// Curve mode rebuilds the **same kind over transform-point images of the
-/// defining points**, all in one `MacroCommand` — no new object kinds, and
-/// since all four transforms are isometries the image is automatically
-/// congruent. Image points are committed visible (usable geometry).
+/// defining points**, all in one `MacroCommand` — no new object kinds.
+/// Every transform is a *similarity*, which is all the rebuild needs: the
+/// isometries give congruent images, dilation a |ratio|-scaled similar
+/// one (a rebuilt circle's radius comes out right because its defining
+/// points scale together). Image points are committed visible (usable
+/// geometry).
 ///
 /// Supported sources are the curves whose parents are all `GeoPoint`s:
 /// `Segment`, `Ray`, `LineThroughTwoPoints`, `CircleCenterPoint`,
@@ -52,9 +63,10 @@ enum ObjectTransform { reflectAboutLine, reflectAboutPoint, rotate, translate }
 /// deferred — though any `GeoLine` still serves as reflect's mirror.
 ///
 /// Orientation: line reflection reverses it, so a reflected `VertexAngle`
-/// swaps its arm points and the marker measures the same wedge; the three
-/// orientation-preserving transforms rebuild arms as-is. `Arc` needs no
-/// care — the via-point image picks the branch.
+/// swaps its arm points and the marker measures the same wedge; the
+/// orientation-preserving transforms rebuild arms as-is — dilation
+/// included, even at negative ratios (plane homothety is `k·I`, det
+/// `k² > 0`). `Arc` needs no care — the via-point image picks the branch.
 ///
 /// Images are reused across gestures (Phase 40): before adding an image
 /// point or rebuilt curve, the commit looks for an equivalent existing
@@ -66,18 +78,30 @@ enum ObjectTransform { reflectAboutLine, reflectAboutPoint, rotate, translate }
 class TransformObjectTool implements ToolInputPreview {
   TransformObjectTool.reflectAboutLine({required this.newId})
       : transform = ObjectTransform.reflectAboutLine,
-        angle = null;
+        angle = null,
+        ratio = null;
 
   TransformObjectTool.reflectAboutPoint({required this.newId})
       : transform = ObjectTransform.reflectAboutPoint,
-        angle = null;
+        angle = null,
+        ratio = null;
 
   TransformObjectTool.rotate({required this.newId, required double this.angle})
-      : transform = ObjectTransform.rotate;
+      : transform = ObjectTransform.rotate,
+        ratio = null;
 
   TransformObjectTool.translate({required this.newId})
       : transform = ObjectTransform.translate,
-        angle = null;
+        angle = null,
+        ratio = null;
+
+  TransformObjectTool.dilate({required this.newId, required double this.ratio})
+      : transform = ObjectTransform.dilate,
+        angle = null {
+    if (!ratio!.isFinite) {
+      throw ArgumentError.value(ratio, 'ratio', 'must be finite');
+    }
+  }
 
   /// Produces a fresh unique object id per call (see `PointTool.newId`).
   final String Function() newId;
@@ -88,6 +112,12 @@ class TransformObjectTool implements ToolInputPreview {
   /// [ObjectTransform.rotate] (chosen in a dialog before activation, like
   /// the segment-ratio tool's ratio).
   final double? angle;
+
+  /// Dilation scale factor about the center tap; non-null exactly for
+  /// [ObjectTransform.dilate] (dialog-chosen like [angle]). Finite,
+  /// negative allowed (far side of the center); the dialog additionally
+  /// refuses 0, which would collapse every image onto the center.
+  final double? ratio;
 
   /// Point-mode transformee (tapped existing point, or a new free point
   /// from an empty-canvas tap).
@@ -108,7 +138,10 @@ class TransformObjectTool implements ToolInputPreview {
 
   int get _paramCount => switch (transform) {
         ObjectTransform.reflectAboutLine => 0,
-        ObjectTransform.reflectAboutPoint || ObjectTransform.rotate => 1,
+        ObjectTransform.reflectAboutPoint ||
+        ObjectTransform.rotate ||
+        ObjectTransform.dilate =>
+          1,
         ObjectTransform.translate => 2,
       };
 
@@ -299,6 +332,12 @@ class TransformObjectTool implements ToolInputPreview {
             point: point,
             vectorFrom: _params[0].point,
             vectorTo: _params[1].point,
+          ),
+        ObjectTransform.dilate => HomotheticPoint(
+            id: newId(),
+            point: point,
+            center: _params[0].point,
+            ratio: ratio!,
           ),
       };
 
