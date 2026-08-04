@@ -4,11 +4,14 @@ import 'package:regula/domain/construction/objects/centroid.dart';
 import 'package:regula/domain/construction/objects/circle_center.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/harmonic_conjugate_point.dart';
+import 'package:regula/domain/construction/objects/homothetic_point.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_angle.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
 import 'package:regula/domain/construction/objects/perpendicular_line.dart';
+import 'package:regula/domain/construction/objects/projection_point.dart';
 import 'package:regula/domain/construction/objects/ray.dart';
 import 'package:regula/domain/construction/objects/sector.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
@@ -50,6 +53,22 @@ void main() {
         ),
       ),
       'Circle center',
+    );
+    expect(
+      objectKindLabel(ProjectionPoint(id: 'pr', point: c, line: line1)),
+      'Projection point',
+    );
+    expect(
+      objectKindLabel(
+        HomotheticPoint(id: 'ho', point: c, center: a, ratio: 2),
+      ),
+      'Homothetic point',
+    );
+    expect(
+      objectKindLabel(
+        HarmonicConjugatePoint(id: 'hc', point1: a, point2: b, point3: c),
+      ),
+      'Harmonic conjugate',
     );
   });
 

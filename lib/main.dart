@@ -36,6 +36,7 @@ import 'domain/tools/distance_tool.dart';
 import 'domain/tools/equilateral_triangle_macro_tool.dart';
 import 'domain/tools/fixed_length_segment_tool.dart';
 import 'domain/tools/fixed_radius_circle_tool.dart';
+import 'domain/tools/harmonic_conjugate_tool.dart';
 import 'domain/tools/intersection_tool.dart';
 import 'domain/tools/isosceles_trapezium_macro_tool.dart';
 import 'domain/tools/isosceles_triangle_macro_tool.dart';
@@ -482,6 +483,16 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         .activate(TwoPointTool(newId: newObjectId, build: build));
   }
 
+  Future<void> _activateHomotheticPointTool() async {
+    final build = await askHomothetyBuilder(context);
+    if (build == null) {
+      return;
+    }
+    ref
+        .read(toolProvider.notifier)
+        .activate(TwoPointTool(newId: newObjectId, build: build));
+  }
+
   Future<void> _activateRotateTool() async {
     final angle = await askRotationAngle(context);
     if (angle == null) {
@@ -673,6 +684,14 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         tools.activate(
           TwoPointTool(newId: newObjectId, build: buildPerpendicularBisector),
         );
+      case AppAction.projectionTool:
+        tools.activate(
+          PointAndLineTool(newId: newObjectId, build: buildProjectionPoint),
+        );
+      case AppAction.homotheticPointTool:
+        _activateHomotheticPointTool();
+      case AppAction.harmonicConjugateTool:
+        tools.activate(HarmonicConjugateTool(newId: newObjectId));
       case AppAction.tangentTool:
         tools.activate(TangentTool(newId: newObjectId));
       case AppAction.fixedRadiusCircleTool:

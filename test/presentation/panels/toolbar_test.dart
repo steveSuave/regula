@@ -14,6 +14,7 @@ import 'package:regula/domain/tools/isosceles_trapezium_macro_tool.dart';
 import 'package:regula/domain/tools/isosceles_triangle_macro_tool.dart';
 import 'package:regula/domain/tools/kite_macro_tool.dart';
 import 'package:regula/domain/tools/name_points_tool.dart';
+import 'package:regula/domain/tools/point_and_line_tool.dart';
 import 'package:regula/domain/tools/polygon_tool.dart';
 import 'package:regula/domain/tools/random_shape_stamp_tool.dart';
 import 'package:regula/domain/tools/rectangle_macro_tool.dart';
@@ -25,6 +26,7 @@ import 'package:regula/domain/tools/tangent_tool.dart';
 import 'package:regula/domain/tools/transform_object_tool.dart';
 import 'package:regula/domain/tools/two_point_tool.dart';
 import 'package:regula/main.dart';
+import 'package:regula/presentation/panels/toolbar.dart';
 import '../../wide_window.dart';
 
 /// Tests for the toolbar's group flyouts: activation, the active-group
@@ -84,6 +86,26 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(container.read(toolProvider).tool, isA<TwoPointTool>());
+    final theme = Theme.of(tester.element(find.byType(AppBar)));
+    expect(iconColor(tester, Icons.control_point), theme.colorScheme.primary);
+    expect(
+      iconColor(tester, Icons.timeline),
+      isNot(theme.colorScheme.primary),
+    );
+  });
+
+  testWidgets('the projection row highlights Points, not Lines — the one '
+      'PointAndLineTool that builds a point', (tester) async {
+    await pumpEditor(tester);
+
+    await tester.tap(find.byIcon(Icons.control_point));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Projection onto a line'));
+    await tester.pumpAndSettle();
+
+    final tool = container.read(toolProvider).tool;
+    expect(tool, isA<PointAndLineTool>());
+    expect((tool as PointAndLineTool).build, buildProjectionPoint);
     final theme = Theme.of(tester.element(find.byType(AppBar)));
     expect(iconColor(tester, Icons.control_point), theme.colorScheme.primary);
     expect(
