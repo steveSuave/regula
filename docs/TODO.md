@@ -525,3 +525,27 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] `ShortcutSection.textCalc` ("Text calculations (G E, then {…})") + display-only rows for the `{…}` slot syntax: the eight geometry accessors (`dist`, `len`, `angle`, `area`, `perimeter`, `radius`, `x`, `y`), bare-name sugar, operators (incl. pasted `×·÷`), the numeric functions (trig in degrees), `pi`/`e` shadowing, and the `?` undefined marker
 - [x] `GestureRow` generalized to `InfoRow` — display-only cheat-sheet rows are no longer gesture-specific
 - [x] Tests: sheet renders the new section (`dist(A, B)` spot check rides the existing every-section loop); a registry pin asserts every `objectFunctionNames` / `numericFunctionNames` / `constantNames` entry is mentioned in the section — 1454 green, analyze clean
+
+## Phase 65 — Derived points: projection, homothety, harmonic conjugate (user request)
+- [ ] `ProjectionPoint` (`GeoPoint`; parents: point + line): foot of the perpendicular via the existing `LineEq.project`; undefined while either parent is; modeled on `reflected_point.dart`
+- [ ] Projection tool on the `PointAndLineTool` base (point + line in either order, like perpendicular/parallel)
+- [ ] `HomotheticPoint` (`GeoPoint`; parents: point + center; scalar `ratio` baked at creation — the `RotatedPoint.angle` precedent). Not an isometry, so it stays out of `TransformKind`/curve mode v1
+- [ ] `HarmonicConjugatePoint` (`GeoPoint`; parents: three collinear points A, B, C → the fourth harmonic D with cross-ratio (A,B;C,D) = −1); undefined while non-collinear or C is the midpoint of AB; tool on `ThreePointTool` with `dedupedDerivedPoint`
+- [ ] Math: `harmonicConjugate` in a new `lib/domain/math/harmonic.dart`, with unit + property tests (no new public domain API without a test)
+- [ ] Registration per new concrete object: codec `_encodeObject`/`_decodeObject` (+ round-trip test), `object_kind_label.dart`, toolbar row, `AppAction` + shortcut-table row, `main.dart` action switch
+- [ ] Tests: recompute/undefined-state units per object, tool commit funnels — analyze clean, suite green
+
+## Phase 66 — Triangle circles: Euler (nine-point) circle & inscribed circle (user request)
+- [ ] Math: `circumradius(a, b, c)` and inradius (distance incenter → a side) helpers in `triangle_centers.dart`; nine-point center = midpoint of circumcenter & orthocenter, radius = R/2 — with tests
+- [ ] `NinePointCircle` and `InscribedCircle` (`GeoCircle` subclasses; three `GeoPoint` parents; private `CircleEq?` behind `get circle` — modeled on `three_point_circle.dart`); undefined while the vertices are collinear/coincident
+- [ ] Tools: 3-vertex flow with dedupe (the `triangle_center_tool.dart` pattern — emit nothing when an identical circle already exists)
+- [ ] Join the transform/equivalence whitelists (`transform_object_tool.dart`, `transform_equivalence.dart`) so the new circles are transformable like `ThreePointCircle`
+- [ ] Registration per new concrete object: codec (+ round-trip test), `object_kind_label.dart`, toolbar rows, `AppAction` + shortcut rows, `main.dart` switch
+- [ ] Tests: math units (equilateral/right-triangle closed forms, degenerate cases), object recompute units — analyze clean, suite green
+
+## Phase 67 — Circle relations: Apollonius circle & radical axis (user request)
+- [ ] Math: `radicalAxis(CircleEq, CircleEq) → LineEq?` (null for concentric) and `apolloniusCircle(a, b, ratio) → CircleEq?` (null at ratio 1 — the locus degenerates to the perpendicular bisector), in `circle_eq.dart` or a small new math file, with property tests (e.g. points on the radical axis have equal power; points on the Apollonius circle satisfy the distance ratio)
+- [ ] `ApolloniusCircle` (`GeoCircle`; parents A, B + third point C supplying the ratio `|CA|/|CB|` — click-only, no numeric entry; the circle passes through C) via `ThreePointTool`; undefined while C is equidistant from A and B, or points coincide
+- [ ] `RadicalAxisLine` (`GeoLine`; parents: two circles); undefined while the circles are concentric; needs a new small two-circle slot tool modeled on `PointAndLineTool` (no existing "click two circles" base)
+- [ ] Registration per new concrete object: codec (+ round-trip test), `object_kind_label.dart`, toolbar rows, `AppAction` + shortcut rows, `main.dart` switch
+- [ ] Tests: math property tests, object recompute/undefined units, two-circle tool funnel — analyze clean, suite green

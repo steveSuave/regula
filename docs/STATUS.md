@@ -6,6 +6,22 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 89 — 2026-08-04
+
+**Done**
+- **Docs only — seven EucliDraw-inspired constructions registered as future phases** (user request, after a survey of EucliDraw's tool menus): projection point, homothetic point (dilation), harmonic 4th conjugate, nine-point (Euler) circle, inscribed circle, Apollonius circle, radical axis.
+- `docs/TODO.md`: Phases 65–67 appended (grouped by machinery — derived points / triangle circles / circle relations), all boxes unticked.
+- `docs/PLAN.md`: build-order items 48–50; new objects added to the Points / Lines / Circles subclass bullets; pure-math bullets extended (`triangle_centers.dart` circumradius + inradius, `CircleEq` radical axis + Apollonius, new `harmonic.dart`).
+- No code changes; all seven are new concrete objects within existing sealed kinds, so painting/hit-testing/labels come free and no save-format version bump is needed.
+
+**Next**
+- Start Phase 65 — `ProjectionPoint` first: it's a thin object wrapper over the existing `LineEq.project`, with the tool on the `PointAndLineTool` base.
+
+**Open questions / gotchas**
+- Homothety ratio input UX: numeric prompt (the fixed-radius-circle precedent) vs. something drag-based — decide at Phase 65 implementation.
+- Apollonius circle deliberately takes its ratio from a third clicked point C (`|CA|/|CB|`, circle through C) rather than numeric entry — matches the app's constructive style; revisit if numeric entry is ever wanted.
+- Radical axis needs the first "click two circles" tool; model it on `PointAndLineTool` rather than widening `TwoLineOrThreePointTool`.
+
 ## Session 88 — 2026-08-03
 
 **Done**
