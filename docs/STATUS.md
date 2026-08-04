@@ -6,6 +6,25 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 90 — 2026-08-05
+
+**Done**
+- **Phase 65 — derived points: projection, homothety, harmonic conjugate**, on `phase-65-derived-points` (merged the session-89 docs branch to `main` first). Three new `GeoPoint` kinds, so painter/hit-test/labels/naming came free; codec entries are additive, no version bump.
+- `ProjectionPoint` (foot of the perpendicular via `LineEq.project`, modeled on `ReflectedPoint`), tool = `PointAndLineTool` + `buildProjectionPoint` tear-off, Points flyout, `G F`. The Points/Lines group highlight now splits on the builder — the one `PointAndLineTool` that builds a point.
+- `HomotheticPoint` (finite `ratio` baked at creation, constructor-rejected otherwise; `ArgumentError` normalizes to `FormatException` in decode like `FixedRadiusCircle`). Ratio UX settled per the open question: numeric dialog, segment-ratio precedent (dialog-first closure over `TwoPointTool`, point then center), `G H`.
+- New `math/harmonic.dart` `harmonicConjugate` (null when non-collinear / coincident base / C at midpoint), glados-tested: cross-ratio −1, conjugate collinear, involution. `HarmonicConjugatePoint` + dedicated `HarmonicConjugateTool` on `G 4`.
+- **Key finding:** `dedupedDerivedPoint`'s numeric probe can *never* confirm a harmonic conjugate — perturbing the roots breaks collinearity, the candidate goes undefined, and the prober conservatively keeps duplicates. The tool dedupes **structurally** instead (identical parents, either base-pair order; `MultiPointTool.constructionObjects` exposes the search space). PLAN/TODO updated with the delta.
+- 1491 tests green, analyze clean. Toolbar-test gotcha: flyout labels with a parenthetical render as *two* Text widgets — `find.text` must target the main label only.
+
+**Next**
+- Merge `phase-65-derived-points` into `main`, then Phase 66 (nine-point circle + inscribed circle: `circumradius`/inradius helpers in `triangle_centers.dart`, two `ThreePointCircle`-modeled `GeoCircle`s, transform-whitelist entries).
+
+**Open questions / gotchas**
+- Homothetic dedupe: `HomotheticPoint` taps go through the plain `TwoPointTool` (no dedupe), so running the same dialog+taps twice stacks a duplicate — same as `SegmentRatioPoint` today; fold both into a structural dedupe if it ever annoys.
+- Web smoke not re-run this session (domain + widget covered; `drive.js` never clicks Points-flyout rows — it activates the point tool via the `P` shortcut and the macro section drives the Macros menu's row 1 — so the three inserted rows shift no scripted index).
+
+---
+
 ## Session 89 — 2026-08-04
 
 **Done**
