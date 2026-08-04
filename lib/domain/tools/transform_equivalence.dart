@@ -3,6 +3,7 @@ import '../construction/objects/arc.dart';
 import '../construction/objects/central_reflection_point.dart';
 import '../construction/objects/circle_center_point.dart';
 import '../construction/objects/compass_circle.dart';
+import '../construction/objects/homothetic_point.dart';
 import '../construction/objects/line_through_two_points.dart';
 import '../construction/objects/ray.dart';
 import '../construction/objects/reflected_point.dart';
@@ -17,11 +18,11 @@ import '../construction/objects/vertex_angle.dart';
 ///
 /// Equivalence is *structural identity*: same concrete kind, identical
 /// parent **instances** slot-by-slot, equal params (`RotatedPoint.angle`
-/// compared exactly — the same dialog value, no epsilon). A numerically
-/// coincident object built from different parents deliberately does not
-/// match: it moves differently under drags.
+/// and `HomotheticPoint.ratio` compared exactly — the same dialog value,
+/// no epsilon). A numerically coincident object built from different
+/// parents deliberately does not match: it moves differently under drags.
 ///
-/// Covers exactly what `TransformObjectTool` can emit — the four
+/// Covers exactly what `TransformObjectTool` can emit — the five
 /// transform-point kinds and the nine rebuildable curve kinds; any other
 /// candidate finds nothing.
 GeoObject? equivalentExisting(
@@ -44,6 +45,7 @@ bool _covered(GeoObject object) => switch (object) {
       CentralReflectionPoint() ||
       RotatedPoint() ||
       TranslatedPoint() ||
+      HomotheticPoint() ||
       Segment() ||
       Ray() ||
       LineThroughTwoPoints() ||
@@ -73,6 +75,7 @@ bool _equivalent(GeoObject existing, GeoObject candidate) {
   }
   return switch ((existing, candidate)) {
     (final RotatedPoint a, final RotatedPoint b) => a.angle == b.angle,
+    (final HomotheticPoint a, final HomotheticPoint b) => a.ratio == b.ratio,
     _ => true,
   };
 }

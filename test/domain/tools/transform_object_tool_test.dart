@@ -10,6 +10,7 @@ import 'package:regula/domain/construction/objects/central_reflection_point.dart
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/compass_circle.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/homothetic_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/perpendicular_line.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
@@ -754,6 +755,150 @@ void main() {
       expect(identical(image.point1, hidden), isTrue);
       expect(hidden.attributes.visible, isFalse,
           reason: 'a reused equivalent keeps its attributes');
+    });
+  });
+
+  group('dilate (Phase 68)', () {
+    test('point mode: point then center commits a bare HomotheticPoint', () {
+      final p = FreePoint(id: 'p', position: const Vec2(3, 1));
+      final c = FreePoint(id: 'c', position: const Vec2(1, 1));
+      final tool = TransformObjectTool.dilate(newId: newId, ratio: 2);
+
+      expect(tool.onInput(ToolInput(p.position, hit: p)), isA<ToolAccepted>());
+      final result = tool.onInput(ToolInput(c.position, hit: c));
+
+      expect(result, isA<ToolCommitted>());
+      final command = (result as ToolCommitted).command;
+      final image = (command as AddObjectCommand).object as HomotheticPoint;
+      expect(image.parents, [p, c]);
+      expect(image.ratio, 2);
+      expect(image.position!.closeTo(const Vec2(5, 1), 1e-12), isTrue);
+    });
+
+    test('a non-finite ratio is rejected at construction', () {
+      expect(
+        () => TransformObjectTool.dilate(newId: newId, ratio: double.nan),
+        throwsArgumentError,
+      );
+    });
+
+    test('dilate a circle: radius scales by |ratio|, a negative ratio lands '
+        'on the far side of the center', () {
+      final cc = FreePoint(id: 'cc', position: const Vec2(1, 0));
+      final rim = FreePoint(id: 'rim', position: const Vec2(2, 0));
+      final circle = CircleCenterPoint(id: 'o', center: cc, onCircle: rim);
+      final o = FreePoint(id: 'ctr', position: const Vec2(0, 0));
+      final construction = Construction()
+        ..add(cc)
+        ..add(rim)
+        ..add(circle)
+        ..add(o);
+      final tool = TransformObjectTool.dilate(newId: newId, ratio: -2);
+
+      tool.onInput(ToolInput(const Vec2(2, 0.01), hit: circle));
+      final result =
+          tool.onInput(ToolInput(o.position, hit: o)) as ToolCommitted;
+
+      (result.command as MacroCommand).apply(construction);
+      final image = construction.objects.last as CircleCenterPoint;
+      expect(image.circle!.radius, closeTo(2, 1e-12));
+      expect(image.circle!.center.closeTo(const Vec2(-2, 0), 1e-12), isTrue);
+      expect(image.center, isA<HomotheticPoint>());
+    });
+
+    test('sector is supported — homothety preserves orientation even at a '
+        'negative ratio', () {
+      final c = FreePoint(id: 'c', position: const Vec2(0, 0));
+      final s = FreePoint(id: 's', position: const Vec2(1, 0));
+      final e = FreePoint(id: 'e', position: const Vec2(0, 1));
+      final sector = Sector(id: 'sec', center: c, start: s, end: e);
+      final o = FreePoint(id: 'o', position: const Vec2(3, 3));
+      final construction = Construction()
+        ..add(c)
+        ..add(s)
+        ..add(e)
+        ..add(sector)
+        ..add(o);
+      final tool = TransformObjectTool.dilate(newId: newId, ratio: -1.5);
+
+      tool.onInput(ToolInput(const Vec2(1, 0), hit: sector));
+      final result =
+          tool.onInput(ToolInput(o.position, hit: o)) as ToolCommitted;
+
+      (result.command as MacroCommand).apply(construction);
+      final image = construction.objects.last as Sector;
+      expect(image.sweep!, closeTo(sector.sweep!, 1e-12),
+          reason: 'det k² > 0: the wedge is the image wedge, not its '
+              'complement');
+      expect(image.circle!.radius, closeTo(1.5, 1e-12));
+    });
+
+    test('vertex angle: arms keep their order, sweep unchanged', () {
+      final a1 = FreePoint(id: 'a1', position: const Vec2(2, 1));
+      final vx = FreePoint(id: 'vx', position: const Vec2(1, 1));
+      final a2 = FreePoint(id: 'a2', position: const Vec2(1, 2));
+      final angle = VertexAngle(id: 'ang', arm1: a1, vertex: vx, arm2: a2);
+      final o = FreePoint(id: 'o', position: const Vec2(0, 0));
+      final construction = Construction()
+        ..add(a1)
+        ..add(vx)
+        ..add(a2)
+        ..add(angle)
+        ..add(o);
+      final tool = TransformObjectTool.dilate(newId: newId, ratio: -1);
+
+      tool.onInput(ToolInput(const Vec2(1, 1), hit: angle));
+      final result =
+          tool.onInput(ToolInput(o.position, hit: o)) as ToolCommitted;
+
+      (result.command as MacroCommand).apply(construction);
+      final image = construction.objects.last as VertexAngle;
+      expect((image.arm1 as HomotheticPoint).point, a1,
+          reason: 'no arm swap — dilation preserves orientation');
+      expect((image.arm2 as HomotheticPoint).point, a2);
+      expect(image.angle!.sweep, closeTo(angle.angle!.sweep, 1e-12));
+    });
+
+    test('images reuse across gestures at the same ratio; a different '
+        'ratio commits fresh', () {
+      final a = FreePoint(id: 'a', position: const Vec2(0, 2));
+      final b = FreePoint(id: 'b', position: const Vec2(4, 2));
+      final c = FreePoint(id: 'c', position: const Vec2(4, 6));
+      final o = FreePoint(id: 'o', position: const Vec2(10, 10));
+      final ab = Segment(id: 'ab', point1: a, point2: b);
+      final bc = Segment(id: 'bc', point1: b, point2: c);
+      final construction = Construction()
+        ..add(a)
+        ..add(b)
+        ..add(c)
+        ..add(o)
+        ..add(ab)
+        ..add(bc);
+      ToolInput tapOn(GeoObject hit, Vec2 position) =>
+          ToolInput(position, hit: hit, objects: construction.objects);
+
+      final tool = TransformObjectTool.dilate(newId: newId, ratio: 2);
+      tool.onInput(tapOn(ab, const Vec2(2, 2)));
+      final first = tool.onInput(tapOn(o, o.position)) as ToolCommitted;
+      first.command.apply(construction);
+
+      tool.onInput(tapOn(bc, const Vec2(4, 4)));
+      final second = tool.onInput(tapOn(o, o.position)) as ToolCommitted;
+      expect((second.command as MacroCommand).commands, hasLength(2),
+          reason: "C's image + the rebuilt segment — B's image is reused");
+      second.command.apply(construction);
+      expect(construction.objects.whereType<HomotheticPoint>(), hasLength(3),
+          reason: 'the shared vertex B is imaged once');
+
+      tool.onInput(tapOn(ab, const Vec2(2, 2)));
+      expect(tool.onInput(tapOn(o, o.position)), isA<ToolIgnored>(),
+          reason: 'repeating the same dilation adds nothing');
+      tool.reset();
+
+      final half = TransformObjectTool.dilate(newId: newId, ratio: 0.5);
+      half.onInput(tapOn(ab, const Vec2(2, 2)));
+      expect(half.onInput(tapOn(o, o.position)), isA<ToolCommitted>(),
+          reason: 'a different ratio is never falsely reused');
     });
   });
 }
