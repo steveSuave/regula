@@ -19,12 +19,14 @@ import 'package:regula/domain/construction/objects/distance_measurement.dart';
 import 'package:regula/domain/construction/objects/fixed_radius_circle.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
+import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/locus.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
 import 'package:regula/domain/construction/objects/parallel_line.dart';
 import 'package:regula/domain/construction/objects/perpendicular_bisector_line.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
 import 'package:regula/domain/construction/objects/polygon.dart';
+import 'package:regula/domain/construction/objects/projection_point.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/construction/objects/tangent_line.dart';
 import 'package:regula/domain/math/vec2.dart';
@@ -54,6 +56,7 @@ import 'package:regula/domain/tools/two_point_tool.dart';
 import 'package:regula/domain/tools/visibility_tool.dart';
 import 'package:regula/main.dart';
 import 'package:regula/presentation/canvas/geometry_canvas.dart';
+import 'package:regula/presentation/panels/toolbar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../wide_window.dart';
 
@@ -228,6 +231,34 @@ void main() {
     final bisector = objects.last as PerpendicularBisectorLine;
     expect(bisector.line!.contains(const Vec2(2, 7)), isTrue,
         reason: 'vertical bisector of the horizontal pair at x = 2');
+  });
+
+  testWidgets('G F builds a projection point end to end', (tester) async {
+    await pumpEditor(tester);
+    final stack = container.read(commandStackProvider.notifier);
+    final a = FreePoint(id: 'a', position: const Vec2(0, 0));
+    final b = FreePoint(id: 'b', position: const Vec2(4, 0));
+    final line = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
+    for (final object in [a, b, line]) {
+      stack.execute(AddObjectCommand(object));
+    }
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyF);
+    final tool = activeTool();
+    expect(tool, isA<PointAndLineTool>());
+    expect((tool as PointAndLineTool).build, buildProjectionPoint);
+
+    final tools = container.read(toolProvider.notifier);
+    tools.handleInput(ToolInput(const Vec2(2, 0), hit: line));
+    tools.handleInput(const ToolInput(Vec2(1, 3)));
+
+    final objects =
+        container.read(constructionProvider).construction.objects.toList();
+    expect(objects.last, isA<ProjectionPoint>());
+    final foot = objects.last as ProjectionPoint;
+    expect(foot.position!.closeTo(const Vec2(1, 0)), isTrue,
+        reason: 'the foot of the perpendicular from (1, 3) onto y = 0');
   });
 
   testWidgets('D measures a distance end to end', (tester) async {
