@@ -560,8 +560,8 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] Tests: dilate point/curve funnels (scaled circle radius, negative ratio, sector allowed), equivalence (same ratio reuses, different ratio commits), toolbar row order + highlight, `G H` end-to-end + cancel + zero — analyze clean, 1500 green
 
 ## Phase 69 — Expression-powered numeric dialogs + shortcut in the title (user request)
-- [ ] `docs/PLAN.md` updated first: Phase 69 bullet + build-order item 52
-- [ ] `_parseRatio` → Phase 58 expression language (`parseExpression` + `evaluateExpression` over `EmptyExpressionEnv` — numeric-only, no geometry accessors): `sqrt(2)`, `pi/6`, `a/b`, `×·÷` all parse; unparseable/non-finite still cancel; per-dialog range guards unchanged (zero ratio, non-positive length); side-count dialog stays integer-only
-- [ ] Dialog hints mention an expression example (`sqrt(2)` and friends)
-- [ ] `_DialogTitle`: title left + dimmed `shortcutDisplayFor` right (the `ToolMenuRow` convention) in every dialog-tool — segment ratio `G R`, dilation `G H`, rotation `G T`, angle size `G D`, radius `⇧C`, length `⇧S`, sides `X G`, naming `G M`, text `G E`
-- [ ] Tests: expression inputs land the evaluated value (dilate `sqrt(2)`, radius `pi`), dialog titles show the chord, existing plain-number inputs unchanged — analyze clean, suite green
+- [x] `docs/PLAN.md` updated first: Phase 69 bullet + build-order item 52
+- [x] `_parseRatio` → Phase 58 expression language (`parseExpression` + `evaluateExpression` over `EmptyExpressionEnv` — numeric-only, no geometry accessors): `sqrt(2)`, `pi/6`, `a/b`, `×·÷` all parse; unparseable/non-finite still cancel; per-dialog range guards unchanged (zero ratio, non-positive length); side-count dialog stays integer-only
+- [x] Dialog hints mention an expression example (`sqrt(2)` and friends)
+- [x] `_DialogTitle`: title left + dimmed `shortcutDisplayFor` right (the `ToolMenuRow` convention) in every dialog-tool — segment ratio `G R`, dilation `G H`, rotation `G T`, angle size `G D`, radius `⇧ C`, length `⇧ S`, sides `X G`, naming `G M`, text `G E`
+- [x] Tests: expression inputs land the evaluated value (dilate `sqrt(2)`, radius `pi`), dialog titles show the chord, existing plain-number inputs unchanged — analyze clean, 1501 green
