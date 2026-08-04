@@ -6,6 +6,23 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 92 — 2026-08-05
+
+**Done**
+- **Phase 69 — expression-powered numeric dialogs + shortcut in the title**, on `phase-69-expression-dialogs` (user request, follow-on to the Session 91 gotcha). `_parseRatio` now parses the Phase 58 expression language over `EmptyExpressionEnv` — `sqrt(2)`, `pi/6`, `2^0.5`, pasted `×·÷`, and the old `a/b` fractions via the grammar's division — feeding every ratio/angle/length dialog; the angle dialogs inherit degrees-mode trig. Geometry accessors deliberately don't resolve: dialog values are baked at creation, a `dist(A,B)` ratio would go silently stale.
+- Guards unchanged: unparseable/non-finite reads as cancel (`evaluateExpression` already nulls non-finite, so the dilation dialog's own `isFinite` check dropped out), zero ratio and non-positive lengths still cancel, side count stays integer-only.
+- `_DialogTitle` — title left, dimmed `shortcutDisplayFor` right, the `ToolMenuRow` convention carried into all nine dialog-tools (`G R`, `G H`, `G T`, `G D`, `⇧ C`, `⇧ S`, `X G`, `G M`, `G E`) so the chord is learnable at the point of use.
+- 1501 tests green, analyze clean. Merged to `main`.
+
+**Next**
+- Phase 66 (nine-point circle + inscribed circle), then Phase 67 (Apollonius circle + radical axis).
+
+**Open questions / gotchas**
+- Scientific notation ('1e3') was never supported by the old parser and still isn't — `e` is Euler's constant in the expression language; nobody has asked.
+- The cheat sheet's Phase 64 text-calc section documents the expression language for `{…}` slots only; it doesn't mention the dialogs now speak the numeric subset. Add a line there if users don't discover it.
+
+---
+
 ## Session 91 — 2026-08-05
 
 **Done**
