@@ -21,6 +21,8 @@ import 'package:regula/domain/construction/objects/distance_measurement.dart';
 import 'package:regula/domain/construction/objects/expression_text.dart';
 import 'package:regula/domain/construction/objects/fixed_radius_circle.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/harmonic_conjugate_point.dart';
+import 'package:regula/domain/construction/objects/homothetic_point.dart';
 import 'package:regula/domain/construction/objects/incenter.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/length_measurement.dart';
@@ -34,6 +36,7 @@ import 'package:regula/domain/construction/objects/perpendicular_bisector_line.d
 import 'package:regula/domain/construction/objects/perpendicular_line.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
 import 'package:regula/domain/construction/objects/polygon.dart';
+import 'package:regula/domain/construction/objects/projection_point.dart';
 import 'package:regula/domain/construction/objects/ray.dart';
 import 'package:regula/domain/construction/objects/reflected_point.dart';
 import 'package:regula/domain/construction/objects/rotated_point.dart';
@@ -195,6 +198,12 @@ Construction buildKitchenSink() {
     ..add(LengthMeasurement(id: 'alen', subject: arc))
     ..add(LengthMeasurement(id: 'slen', subject: sector))
     ..add(ReflectedPoint(id: 'refl', point: c, mirror: lineAb))
+    ..add(ProjectionPoint(id: 'proj', point: c, line: lineAb))
+    // Non-default negative ratio, so the round-trip must carry it.
+    ..add(HomotheticPoint(id: 'homo', point: c, center: a, ratio: -1.5))
+    ..add(
+      HarmonicConjugatePoint(id: 'harm', point1: a, point2: b, point3: ratio),
+    )
     ..add(CentralReflectionPoint(id: 'crefl', point: c, center: a))
     ..add(RotatedPoint(id: 'rot', point: b, center: a, angle: 0.75))
     ..add(TranslatedPoint(id: 'trans', point: c, vectorFrom: a, vectorTo: b))

@@ -1,0 +1,46 @@
+import '../../math/vec2.dart';
+import '../geo_object.dart';
+
+/// [point] scaled about [center] by a fixed [ratio] — the homothety
+/// (dilation) image `center + ratio · (point − center)`.
+///
+/// Defined whenever both parents are — a point coinciding with the center
+/// maps to itself. The ratio is fixed for the object's lifetime, like
+/// `RotatedPoint.angle`: negative lands on the far side of the center, 1
+/// is the identity. Not an isometry, so it stays out of the whole-object
+/// transform machinery (`TransformKind`) v1.
+class HomotheticPoint extends GeoPoint {
+  HomotheticPoint({
+    required super.id,
+    required this.point,
+    required this.center,
+    required this.ratio,
+    super.attributes,
+  }) {
+    if (!ratio.isFinite) {
+      throw ArgumentError.value(ratio, 'ratio', 'must be finite');
+    }
+    recompute();
+  }
+
+  final GeoPoint point;
+  final GeoPoint center;
+
+  /// Scale factor of the dilation about [center].
+  final double ratio;
+
+  Vec2? _position;
+
+  @override
+  Vec2? get position => _position;
+
+  @override
+  List<GeoObject> get parents => [point, center];
+
+  @override
+  void recompute() {
+    final p = point.position;
+    final c = center.position;
+    _position = (p == null || c == null) ? null : c + (p - c) * ratio;
+  }
+}
