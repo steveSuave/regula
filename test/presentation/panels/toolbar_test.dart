@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -355,6 +357,37 @@ void main() {
       isNot(theme.colorScheme.primary),
       reason: 'dilate lives in Transform now, not Points',
     );
+  });
+
+  testWidgets('dialogs evaluate expressions and show the tool shortcut in '
+      'the title (Phase 69)', (tester) async {
+    await pumpEditor(tester);
+
+    await tester.tap(find.byIcon(Icons.flip));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Dilate from point…'));
+    await tester.pumpAndSettle();
+    expect(find.text('G H'), findsOneWidget,
+        reason: 'the dialog title carries the chord');
+    await tester.enterText(find.byType(TextField), 'sqrt(2)');
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    final dilate = container.read(toolProvider).tool! as TransformObjectTool;
+    expect(dilate.ratio, closeTo(math.sqrt2, 1e-12));
+
+    container.read(toolProvider.notifier).deactivate();
+    await tester.pump();
+    await tester.tap(find.byIcon(Icons.circle_outlined));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Circle by radius…'));
+    await tester.pumpAndSettle();
+    expect(find.text('⇧ C'), findsOneWidget);
+    await tester.enterText(find.byType(TextField), 'pi');
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    final circle =
+        container.read(toolProvider).tool! as FixedRadiusCircleTool;
+    expect(circle.radius, closeTo(math.pi, 1e-12));
   });
 
   testWidgets('Points flyout: intersection sits directly below Point, above '
