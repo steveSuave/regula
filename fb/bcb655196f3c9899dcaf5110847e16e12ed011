@@ -1,0 +1,38 @@
+test/domain/tools/transform_equivalence_test.dart
+  s_b8987ad8b54dc5::t_785e47887afc27 36-38,40-43,45-47
+  s_b8987ad8b54dc5::t_59efebe00fea25 39,44
+  s_b8987ad8b54dc5::t_dd4ad28fd461c3 4
+lib/domain/tools/transform_object_tool.dart
+  s_b8987ad8b54dc5::t_795540c117d4bf 10
+  s_b8987ad8b54dc5::t_4c1915edbc8bca 49-54
+  s_b8987ad8b54dc5::t_7ec0f38da3a435 66-69
+  s_b8987ad8b54dc5::t_ba1e90ea7ef07a 141-144
+  s_b8987ad8b54dc5::t_8c46242d6e8164 81-82,86-87,90-91,95-104
+  s_b8987ad8b54dc5::t_0d052574285b69 25-33,35-37
+  s_b8987ad8b54dc5::t_9e312887a2a107 336-341
+  s_b8987ad8b54dc5::t_cee4e4cc60ea5b 116-121
+lib/domain/tools/transform_equivalence.dart
+  s_b8987ad8b54dc5::t_e130e0894ebe5a 78
+  s_b8987ad8b54dc5::t_bfabd0eab11c97 21-23,25
+  s_b8987ad8b54dc5::t_68e7ccea9ba501 48
+  s_b8987ad8b54dc5::t_bfba36f871f3b5 6
+test/domain/tools/transform_object_tool_test.dart
+  s_b8987ad8b54dc5::t_68361debb12f28 13
+  s_b8987ad8b54dc5::t_6e84cc91d8b0ad 760-903
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "fbbcb655196f3c9899dcaf5110847e16e12ed011",
+  "prompts": {},
+  "sessions": {
+    "s_b8987ad8b54dc5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a9ded4f1-7d13-4452-9025-64ab2b220145",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
