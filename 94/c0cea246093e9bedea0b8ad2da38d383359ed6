@@ -1,0 +1,55 @@
+lib/presentation/panels/toolbar.dart
+  s_b8987ad8b54dc5::t_49d01b899b55d2 90-96
+  s_b8987ad8b54dc5::t_a5caa30e9c8e1a 145,152
+  s_b8987ad8b54dc5::t_9b72e5765481e8 20
+  s_b8987ad8b54dc5::t_04653f1e30c54f 252-260
+  s_b8987ad8b54dc5::t_f8a81f3eeb2eb8 251
+lib/application/persistence/construction_codec.dart
+  s_b8987ad8b54dc5::t_6a947f1b9205ff 30
+  s_b8987ad8b54dc5::t_726410d51ba3c4 172
+  s_b8987ad8b54dc5::t_9a97446688401a 307-312
+lib/presentation/panels/object_kind_label.dart
+  s_b8987ad8b54dc5::t_29a2d29b4c4dbf 41
+  s_b8987ad8b54dc5::t_6a92e7eb738aec 20
+lib/main.dart
+  s_b8987ad8b54dc5::t_1da5f590ae63b0 676-679
+test/domain/construction/objects/projection_point_test.dart
+  s_b8987ad8b54dc5::t_b0fd0b356aa2ea 1-83
+test/presentation/shortcuts/editor_shortcuts_test.dart
+  s_b8987ad8b54dc5::t_cb657e236da2c2 29
+  s_b8987ad8b54dc5::t_f0bcfc99241d1f 59
+  s_b8987ad8b54dc5::t_003b6b2efa0815 236-263
+  s_b8987ad8b54dc5::t_48c3fcc305c051 22
+test/application/persistence/construction_codec_test.dart
+  s_b8987ad8b54dc5::t_ce9f3d11bce982 199
+  s_b8987ad8b54dc5::t_98e8c5b4820f94 37
+lib/domain/construction/objects/projection_point.dart
+  s_b8987ad8b54dc5::t_d156726eabb7ae 1-38
+lib/presentation/shortcuts/shortcut_table.dart
+  s_b8987ad8b54dc5::t_4e9636bec59324 623-628
+  s_b8987ad8b54dc5::t_2ca7a1675e6bdf 65
+test/presentation/panels/object_kind_label_test.dart
+  s_b8987ad8b54dc5::t_0557c2861ef32c 12
+  s_b8987ad8b54dc5::t_dbf8d1add788fa 55-58
+test/presentation/panels/toolbar_test.dart
+  s_b8987ad8b54dc5::t_6697e44c5f46c2 29
+  s_b8987ad8b54dc5::t_2a915111822c84 97-102,104-116
+  s_b8987ad8b54dc5::t_8a8c276555cad4 103
+  s_b8987ad8b54dc5::t_bde4567589ccd1 17
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "94c0cea246093e9bedea0b8ad2da38d383359ed6",
+  "prompts": {},
+  "sessions": {
+    "s_b8987ad8b54dc5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a9ded4f1-7d13-4452-9025-64ab2b220145",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
