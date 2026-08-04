@@ -483,14 +483,14 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         .activate(TwoPointTool(newId: newObjectId, build: build));
   }
 
-  Future<void> _activateHomotheticPointTool() async {
-    final build = await askHomothetyBuilder(context);
-    if (build == null) {
+  Future<void> _activateDilateTool() async {
+    final ratio = await askDilationRatio(context);
+    if (ratio == null) {
       return;
     }
     ref
         .read(toolProvider.notifier)
-        .activate(TwoPointTool(newId: newObjectId, build: build));
+        .activate(TransformObjectTool.dilate(newId: newObjectId, ratio: ratio));
   }
 
   Future<void> _activateRotateTool() async {
@@ -688,8 +688,6 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         tools.activate(
           PointAndLineTool(newId: newObjectId, build: buildProjectionPoint),
         );
-      case AppAction.homotheticPointTool:
-        _activateHomotheticPointTool();
       case AppAction.harmonicConjugateTool:
         tools.activate(HarmonicConjugateTool(newId: newObjectId));
       case AppAction.tangentTool:
@@ -742,6 +740,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         _activateRotateTool();
       case AppAction.translateByVectorTool:
         tools.activate(TransformObjectTool.translate(newId: newObjectId));
+      case AppAction.dilateTool:
+        _activateDilateTool();
       case AppAction.angleBySizeTool:
         _activateAngleBySizeTool();
       case AppAction.namePointsTool:
