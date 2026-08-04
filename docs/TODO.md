@@ -527,13 +527,13 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] Tests: sheet renders the new section (`dist(A, B)` spot check rides the existing every-section loop); a registry pin asserts every `objectFunctionNames` / `numericFunctionNames` / `constantNames` entry is mentioned in the section — 1454 green, analyze clean
 
 ## Phase 65 — Derived points: projection, homothety, harmonic conjugate (user request)
-- [ ] `ProjectionPoint` (`GeoPoint`; parents: point + line): foot of the perpendicular via the existing `LineEq.project`; undefined while either parent is; modeled on `reflected_point.dart`
-- [ ] Projection tool on the `PointAndLineTool` base (point + line in either order, like perpendicular/parallel)
-- [ ] `HomotheticPoint` (`GeoPoint`; parents: point + center; scalar `ratio` baked at creation — the `RotatedPoint.angle` precedent). Not an isometry, so it stays out of `TransformKind`/curve mode v1
-- [ ] `HarmonicConjugatePoint` (`GeoPoint`; parents: three collinear points A, B, C → the fourth harmonic D with cross-ratio (A,B;C,D) = −1); undefined while non-collinear or C is the midpoint of AB; tool on `ThreePointTool` with `dedupedDerivedPoint`
-- [ ] Math: `harmonicConjugate` in a new `lib/domain/math/harmonic.dart`, with unit + property tests (no new public domain API without a test)
-- [ ] Registration per new concrete object: codec `_encodeObject`/`_decodeObject` (+ round-trip test), `object_kind_label.dart`, toolbar row, `AppAction` + shortcut-table row, `main.dart` action switch
-- [ ] Tests: recompute/undefined-state units per object, tool commit funnels — analyze clean, suite green
+- [x] `ProjectionPoint` (`GeoPoint`; parents: point + line): foot of the perpendicular via the existing `LineEq.project`; undefined while either parent is; modeled on `reflected_point.dart`
+- [x] Projection tool on the `PointAndLineTool` base (point + line in either order, like perpendicular/parallel) (`buildProjectionPoint` tear-off, `G F`; the Points/Lines group highlight splits on the builder — the one `PointAndLineTool` that builds a point)
+- [x] `HomotheticPoint` (`GeoPoint`; parents: point + center; scalar `ratio` baked at creation — the `RotatedPoint.angle` precedent). Not an isometry, so it stays out of `TransformKind`/curve mode v1 (ratio UX settled as the numeric dialog — segment-ratio precedent: dialog-first closure over `TwoPointTool`, point then center, `G H`; constructor rejects non-finite ratios)
+- [x] `HarmonicConjugatePoint` (`GeoPoint`; parents: three collinear points A, B, C → the fourth harmonic D with cross-ratio (A,B;C,D) = −1); undefined while non-collinear or C is the midpoint of AB; tool on `ThreePointTool` with `dedupedDerivedPoint` (landed as a dedicated `MultiPointTool` subclass on `G 4` with *structural* dedupe — identical parents, either base-pair order — because the numeric probe can never confirm an object whose parents must stay collinear)
+- [x] Math: `harmonicConjugate` in a new `lib/domain/math/harmonic.dart`, with unit + property tests (no new public domain API without a test) (glados: cross-ratio −1, conjugate on line AB, involution)
+- [x] Registration per new concrete object: codec `_encodeObject`/`_decodeObject` (+ round-trip test), `object_kind_label.dart`, toolbar row, `AppAction` + shortcut-table row, `main.dart` action switch
+- [x] Tests: recompute/undefined-state units per object, tool commit funnels — analyze clean, suite green (1491 green; end-to-end shortcut tests for `G F`/`G H`/`G 4`, toolbar highlight test, codec kitchen-sink entries)
 
 ## Phase 66 — Triangle circles: Euler (nine-point) circle & inscribed circle (user request)
 - [ ] Math: `circumradius(a, b, c)` and inradius (distance incenter → a side) helpers in `triangle_centers.dart`; nine-point center = midpoint of circumcenter & orthocenter, radius = R/2 — with tests
