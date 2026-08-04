@@ -549,3 +549,12 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [ ] `RadicalAxisLine` (`GeoLine`; parents: two circles); undefined while the circles are concentric; needs a new small two-circle slot tool modeled on `PointAndLineTool` (no existing "click two circles" base)
 - [ ] Registration per new concrete object: codec (+ round-trip test), `object_kind_label.dart`, toolbar rows, `AppAction` + shortcut rows, `main.dart` switch
 - [ ] Tests: math property tests, object recompute/undefined units, two-circle tool funnel — analyze clean, suite green
+
+## Phase 68 — Dilate joins the Transform group (user request)
+- [ ] `docs/PLAN.md` updated first: Phase 68 bullet (macro composition is similarity-sound; homothety is orientation-preserving, det k² > 0; completeness note — isometries + dilations generate all plane similarities), annotations on the Phase 24/65/toolbar sections, build-order item 51
+- [ ] `ObjectTransform.dilate` + `TransformObjectTool.dilate({newId, ratio})` — fifth named constructor on the rotate model (dialog-baked param, one center tap after the transformee): point mode → `HomotheticPoint`; curve mode rebuilds all nine kinds, no `VertexAngle` arm swap, `Sector` supported (exclusion stays reflect-about-line-only)
+- [ ] `equivalentExisting` covers `HomotheticPoint` (`ratio` compared exactly — the `RotatedPoint.angle` precedent)
+- [ ] Toolbar: Transform flyout gains 'Dilate from point (object, then center)…'; Points flyout drops the homothetic row; 'Intersection of two curves' moves to row 2 (below Point, above Midpoint)
+- [ ] Dialog: `askHomothetyBuilder` → `askDilationRatio` returning the bare ratio (the `TwoPointBuilder` closure retires); rejects non-finite *and zero* (collapse onto the center reads as cancel, like `_parseLength`'s non-positives)
+- [ ] Shortcuts & wiring: `AppAction.homotheticPointTool` → `dilateTool`, `G H` rewired to dialog → `TransformObjectTool.dilate`, row moved beside the other transform chords; `main.dart` `_activateDilateTool` on the `_activateRotateTool` model
+- [ ] Tests: dilate point/curve funnels (scaled circle radius, negative ratio, sector allowed), equivalence (same ratio reuses, different ratio commits), toolbar row order + highlight, `G H` end-to-end + cancel — analyze clean, suite green
