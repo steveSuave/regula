@@ -62,6 +62,13 @@ abstract class MultiPointTool implements ToolInputPreview {
   /// degrades to never deduplicating.
   List<GeoObject> _constructionObjects = const [];
 
+  /// [_constructionObjects], for subclasses whose dedupe is *structural*
+  /// (same kind, identical parent instances) rather than numeric — the
+  /// route for objects that go undefined under [dedupedDerivedPoint]'s
+  /// random probes, like the harmonic conjugate, whose collinear parents
+  /// never survive a perturbation.
+  List<GeoObject> get constructionObjects => _constructionObjects;
+
   /// The points collected so far (up to `pointCount − 1` entries).
   /// Existing points track their live positions; new free points are not
   /// yet in the construction and sit where they were tapped.

@@ -18,6 +18,8 @@ import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/distance_measurement.dart';
 import 'package:regula/domain/construction/objects/fixed_radius_circle.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/harmonic_conjugate_point.dart';
+import 'package:regula/domain/construction/objects/homothetic_point.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/locus.dart';
@@ -38,6 +40,7 @@ import 'package:regula/domain/tools/distance_tool.dart';
 import 'package:regula/domain/tools/equilateral_triangle_macro_tool.dart';
 import 'package:regula/domain/tools/fixed_length_segment_tool.dart';
 import 'package:regula/domain/tools/fixed_radius_circle_tool.dart';
+import 'package:regula/domain/tools/harmonic_conjugate_tool.dart';
 import 'package:regula/domain/tools/intersection_tool.dart';
 import 'package:regula/domain/tools/locus_tool.dart';
 import 'package:regula/domain/tools/point_and_line_tool.dart';
@@ -259,6 +262,53 @@ void main() {
     final foot = objects.last as ProjectionPoint;
     expect(foot.position!.closeTo(const Vec2(1, 0)), isTrue,
         reason: 'the foot of the perpendicular from (1, 3) onto y = 0');
+  });
+
+  testWidgets('G H asks for the ratio; OK builds a homothetic point end to '
+      'end, cancel activates nothing', (tester) async {
+    await pumpEditor(tester);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyH);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '-1/2');
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    expect(activeTool(), isA<TwoPointTool>());
+
+    tapWorld(4, 2); // the point, then the center
+    tapWorld(0, 0);
+    final objects =
+        container.read(constructionProvider).construction.objects.toList();
+    expect(objects.last, isA<HomotheticPoint>());
+    final image = objects.last as HomotheticPoint;
+    expect(image.ratio, -0.5);
+    expect(image.position!.closeTo(const Vec2(-2, -1)), isTrue);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyH);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(activeTool(), isA<TwoPointTool>(),
+        reason: 'cancel leaves the previous tool active');
+  });
+
+  testWidgets('G 4 builds a harmonic conjugate end to end', (tester) async {
+    await pumpEditor(tester);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
+    await tester.sendKeyEvent(LogicalKeyboardKey.digit4);
+    expect(activeTool(), isA<HarmonicConjugateTool>());
+
+    tapWorld(0, 0);
+    tapWorld(4, 0);
+    tapWorld(1, 0);
+    final objects =
+        container.read(constructionProvider).construction.objects.toList();
+    expect(objects.last, isA<HarmonicConjugatePoint>());
+    final conjugate = objects.last as HarmonicConjugatePoint;
+    expect(conjugate.position!.closeTo(const Vec2(-2, 0)), isTrue,
+        reason: 'the fourth harmonic of the quarter point');
   });
 
   testWidgets('D measures a distance end to end', (tester) async {

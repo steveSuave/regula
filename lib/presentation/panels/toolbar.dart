@@ -11,6 +11,7 @@ import '../../domain/construction/objects/centroid.dart';
 import '../../domain/construction/objects/circle_center_point.dart';
 import '../../domain/construction/objects/circumcenter.dart';
 import '../../domain/construction/objects/compass_circle.dart';
+import '../../domain/construction/objects/homothetic_point.dart';
 import '../../domain/construction/objects/incenter.dart';
 import '../../domain/construction/objects/line_through_two_points.dart';
 import '../../domain/construction/objects/orthocenter.dart';
@@ -31,6 +32,7 @@ import '../../domain/tools/distance_tool.dart';
 import '../../domain/tools/equilateral_triangle_macro_tool.dart';
 import '../../domain/tools/fixed_length_segment_tool.dart';
 import '../../domain/tools/fixed_radius_circle_tool.dart';
+import '../../domain/tools/harmonic_conjugate_tool.dart';
 import '../../domain/tools/intersection_tool.dart';
 import '../../domain/tools/isosceles_trapezium_macro_tool.dart';
 import '../../domain/tools/isosceles_triangle_macro_tool.dart';
@@ -142,6 +144,7 @@ class GeometryToolbar extends ConsumerWidget {
         tool is PointTool ||
         tool is IntersectionTool ||
         tool is TriangleCenterTool ||
+        tool is HarmonicConjugateTool ||
         (tool is PointAndLineTool && tool.build == buildProjectionPoint) ||
         (tool is TwoPointTool &&
             tool is! DistanceTool &&
@@ -179,6 +182,13 @@ class GeometryToolbar extends ConsumerWidget {
 
     Future<Tool?> ratioPick() async {
       final build = await askRatioBuilder(context);
+      return build == null
+          ? null
+          : TwoPointTool(newId: newObjectId, build: build);
+    }
+
+    Future<Tool?> homothetyPick() async {
+      final build = await askHomothetyBuilder(context);
       return build == null
           ? null
           : TwoPointTool(newId: newObjectId, build: build);
@@ -257,6 +267,16 @@ class GeometryToolbar extends ConsumerWidget {
                 ),
               ),
               AppAction.projectionTool,
+            ),
+            (
+              'Homothetic point (point, then center)…',
+              homothetyPick,
+              AppAction.homotheticPointTool,
+            ),
+            (
+              'Harmonic conjugate (A, B, then C)',
+              _pick(() => HarmonicConjugateTool(newId: newObjectId)),
+              AppAction.harmonicConjugateTool,
             ),
             (
               'Intersection of two curves',
@@ -674,6 +694,25 @@ Future<TwoPointBuilder?> askRatioBuilder(BuildContext context) async {
   return build;
 }
 
+/// Asks for a homothety (dilation) ratio and wraps it as a
+/// [TwoPointBuilder] over `HomotheticPoint` — the shared path behind the
+/// Points flyout item and the `G H` shortcut. Tap order is point, then
+/// center (the transform-tools' transformee-first convention). Null when
+/// cancelled; unparseable or non-finite input reads as cancel,
+/// mirroring [askRatioBuilder].
+Future<TwoPointBuilder?> askHomothetyBuilder(BuildContext context) async {
+  final ratio = await showDialog<double>(
+    context: context,
+    builder: (context) => const _HomothetyDialog(),
+  );
+  if (ratio == null) {
+    return null;
+  }
+  GeoObject build(String id, GeoPoint a, GeoPoint b) =>
+      HomotheticPoint(id: id, point: a, center: b, ratio: ratio);
+  return build;
+}
+
 /// Asks for a rotation angle in degrees (counter-clockwise; negative =
 /// clockwise) and returns it in *radians* — the shared path behind the
 /// Transform flyout item and the `G T` shortcut. Null when cancelled or
@@ -793,6 +832,56 @@ class _RatioDialogState extends State<_RatioDialog> {
         TextButton(
           onPressed: () =>
               Navigator.pop(context, _parseRatio(_controller.text)),
+          child: const Text('OK'),
+        ),
+      ],
+    );
+  }
+}
+
+/// Homothety twin of [_RatioDialog] (same controller-lifetime reasoning);
+/// accepts any finite ratio, negative included.
+class _HomothetyDialog extends StatefulWidget {
+  const _HomothetyDialog();
+
+  @override
+  State<_HomothetyDialog> createState() => _HomothetyDialogState();
+}
+
+class _HomothetyDialogState extends State<_HomothetyDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  double? _parse(String text) {
+    final value = _parseRatio(text);
+    return value != null && value.isFinite ? value : null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Homothety ratio'),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        decoration: const InputDecoration(
+          hintText: 'image = center + ratio · (point − center) — e.g. 2 '
+              'or -1/2',
+        ),
+        onSubmitted: (text) => Navigator.pop(context, _parse(text)),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(context, _parse(_controller.text)),
           child: const Text('OK'),
         ),
       ],
