@@ -23,6 +23,7 @@ import '../../domain/construction/objects/sector.dart';
 import '../../domain/construction/objects/segment.dart';
 import '../../domain/construction/objects/segment_ratio_point.dart';
 import '../../domain/construction/objects/three_point_circle.dart';
+import '../../domain/math/expression.dart';
 import '../../domain/tools/angle_bisector_tool.dart';
 import '../../domain/tools/angle_by_size_tool.dart';
 import '../../domain/tools/angle_tool.dart';
@@ -675,6 +676,35 @@ class ToolMenuRow extends StatelessWidget {
   }
 }
 
+/// Dialog title row: the tool's name left, its dimmed shortcut right —
+/// the [ToolMenuRow] convention carried into the dialog tools (Phase 69),
+/// so the chord is learnable at the point of use.
+class _DialogTitle extends StatelessWidget {
+  const _DialogTitle(this.title, this.action);
+
+  final String title;
+  final AppAction action;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final display = shortcutDisplayFor(action);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(title),
+        if (display != null)
+          Text(
+            display,
+            style: theme.textTheme.labelSmall!.copyWith(
+              color: theme.colorScheme.outline,
+            ),
+          ),
+      ],
+    );
+  }
+}
+
 /// Asks for a segment-ratio interpolation parameter and wraps it as a
 /// [TwoPointBuilder] — the shared path behind the Points flyout item and
 /// the `G R` shortcut. Null when cancelled; unparseable input reads as
@@ -710,18 +740,22 @@ Future<double?> askDilationRatio(BuildContext context) =>
 /// Transform flyout item and the `G T` shortcut. Null when cancelled or
 /// unparseable, mirroring [askRatioBuilder].
 Future<double?> askRotationAngle(BuildContext context) =>
-    _askDegrees(context, 'Rotation angle');
+    _askDegrees(context, 'Rotation angle', AppAction.rotateAroundPointTool);
 
 /// The angle-by-size twin of [askRotationAngle], behind the Angles flyout
 /// item and the `G D` shortcut. Same convention: degrees in, radians out,
 /// negative = clockwise.
 Future<double?> askAngleSize(BuildContext context) =>
-    _askDegrees(context, 'Angle size');
+    _askDegrees(context, 'Angle size', AppAction.angleBySizeTool);
 
-Future<double?> _askDegrees(BuildContext context, String title) async {
+Future<double?> _askDegrees(
+  BuildContext context,
+  String title,
+  AppAction action,
+) async {
   final degrees = await showDialog<double>(
     context: context,
-    builder: (context) => _AngleDialog(title: title),
+    builder: (context) => _AngleDialog(title: title, action: action),
   );
   return degrees == null ? null : degrees * math.pi / 180;
 }
@@ -731,17 +765,21 @@ Future<double?> _askDegrees(BuildContext context, String title) async {
 /// unparseable, non-positive or non-finite input reads as cancel too,
 /// mirroring [askRatioBuilder].
 Future<double?> askCircleRadius(BuildContext context) =>
-    _askLength(context, 'Circle radius');
+    _askLength(context, 'Circle radius', AppAction.fixedRadiusCircleTool);
 
 /// The segment twin of [askCircleRadius], behind the Lines flyout item
 /// and the `⇧S` shortcut. Same convention: world units, positive only.
 Future<double?> askSegmentLength(BuildContext context) =>
-    _askLength(context, 'Segment length');
+    _askLength(context, 'Segment length', AppAction.fixedLengthSegmentTool);
 
-Future<double?> _askLength(BuildContext context, String title) =>
+Future<double?> _askLength(
+  BuildContext context,
+  String title,
+  AppAction action,
+) =>
     showDialog<double>(
       context: context,
-      builder: (context) => _LengthDialog(title: title),
+      builder: (context) => _LengthDialog(title: title, action: action),
     );
 
 /// Asks for a regular polygon's side count — the shared path behind the
@@ -807,12 +845,13 @@ class _RatioDialogState extends State<_RatioDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Segment ratio'),
+      title: const _DialogTitle('Segment ratio', AppAction.segmentRatioTool),
       content: TextField(
         controller: _controller,
         autofocus: true,
         decoration: const InputDecoration(
-          hintText: '0 = first point, 1 = second — e.g. 0.25 or 1/4',
+          hintText: '0 = first point, 1 = second — '
+              'e.g. 0.25, 1/4 or 1/sqrt(2)',
         ),
         onSubmitted: (text) => Navigator.pop(context, _parseRatio(text)),
       ),
@@ -832,7 +871,7 @@ class _RatioDialogState extends State<_RatioDialog> {
 }
 
 /// Dilation twin of [_RatioDialog] (same controller-lifetime reasoning);
-/// accepts any finite non-zero ratio, negative included.
+/// accepts any non-zero ratio, negative included.
 class _DilationDialog extends StatefulWidget {
   const _DilationDialog();
 
@@ -851,19 +890,19 @@ class _DilationDialogState extends State<_DilationDialog> {
 
   double? _parse(String text) {
     final value = _parseRatio(text);
-    return value != null && value.isFinite && value != 0 ? value : null;
+    return value != null && value != 0 ? value : null;
   }
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Dilation ratio'),
+      title: const _DialogTitle('Dilation ratio', AppAction.dilateTool),
       content: TextField(
         controller: _controller,
         autofocus: true,
         decoration: const InputDecoration(
-          hintText: 'image = center + ratio · (point − center) — e.g. 2 '
-              'or -1/2',
+          hintText: 'image = center + ratio · (point − center) — e.g. 2, '
+              '-1/2 or sqrt(2)',
         ),
         onSubmitted: (text) => Navigator.pop(context, _parse(text)),
       ),
@@ -883,9 +922,10 @@ class _DilationDialogState extends State<_DilationDialog> {
 
 /// Degree twin of [_RatioDialog] (same controller-lifetime reasoning).
 class _AngleDialog extends StatefulWidget {
-  const _AngleDialog({required this.title});
+  const _AngleDialog({required this.title, required this.action});
 
   final String title;
+  final AppAction action;
 
   @override
   State<_AngleDialog> createState() => _AngleDialogState();
@@ -903,12 +943,12 @@ class _AngleDialogState extends State<_AngleDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.title),
+      title: _DialogTitle(widget.title, widget.action),
       content: TextField(
         controller: _controller,
         autofocus: true,
         decoration: const InputDecoration(
-          hintText: 'degrees, counter-clockwise — e.g. 45 or -30',
+          hintText: 'degrees, counter-clockwise — e.g. 45, -30 or 360/7',
         ),
         onSubmitted: (text) => Navigator.pop(context, _parseRatio(text)),
       ),
@@ -930,9 +970,10 @@ class _AngleDialogState extends State<_AngleDialog> {
 /// Positive-length sibling of [_AngleDialog] (same controller-lifetime
 /// reasoning), shared by the circle-radius and segment-length asks.
 class _LengthDialog extends StatefulWidget {
-  const _LengthDialog({required this.title});
+  const _LengthDialog({required this.title, required this.action});
 
   final String title;
+  final AppAction action;
 
   @override
   State<_LengthDialog> createState() => _LengthDialogState();
@@ -950,12 +991,12 @@ class _LengthDialogState extends State<_LengthDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.title),
+      title: _DialogTitle(widget.title, widget.action),
       content: TextField(
         controller: _controller,
         autofocus: true,
         decoration: const InputDecoration(
-          hintText: 'world units — e.g. 2.5 or 5/2',
+          hintText: 'world units — e.g. 2.5, 5/2 or sqrt(8)',
         ),
         onSubmitted: (text) => Navigator.pop(context, _parseLength(text)),
       ),
@@ -1013,7 +1054,7 @@ class _TextContentDialogState extends State<_TextContentDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Text'),
+      title: const _DialogTitle('Text', AppAction.textTool),
       content: TextField(
         key: const ValueKey('text-content-field'),
         controller: _controller,
@@ -1077,7 +1118,10 @@ class _NamePointsDialogState extends State<_NamePointsDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Name points in sequence'),
+      title: const _DialogTitle(
+        'Name points in sequence',
+        AppAction.namePointsTool,
+      ),
       content: TextField(
         controller: _controller,
         autofocus: true,
@@ -1125,7 +1169,10 @@ class _SideCountDialogState extends State<_SideCountDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Number of sides'),
+      title: const _DialogTitle(
+        'Number of sides',
+        AppAction.regularPolygonMacroTool,
+      ),
       content: TextField(
         controller: _controller,
         autofocus: true,
@@ -1153,24 +1200,26 @@ int? _parseSideCount(String text) {
   return (count == null || count < 3 || count > 100) ? null : count;
 }
 
-/// Parses "0.25", "-1", or a fraction "1/4". Null when unparseable.
 /// [_parseRatio] restricted to finite positive values — a length. Null
 /// (= cancel) for anything else, so OK on garbage or a non-positive
 /// number quietly does nothing.
 double? _parseLength(String text) {
   final value = _parseRatio(text);
-  return value != null && value.isFinite && value > 0 ? value : null;
+  return value != null && value > 0 ? value : null;
 }
 
+/// Evaluates [text] as a Phase 58 numeric expression — "0.25", "1/4",
+/// "sqrt(2)", "pi/6", pasted `×·÷` — over the numeric-only
+/// [EmptyExpressionEnv] (Phase 69). Geometry accessors deliberately don't
+/// resolve: dialog values are baked at creation, and a `dist(A, B)`-derived
+/// ratio would go silently stale — live measures are the text tool's job.
+/// Null when unparseable or non-finite (= cancel).
 double? _parseRatio(String text) {
-  final parts = text.split('/');
-  if (parts.length == 2) {
-    final numerator = double.tryParse(parts[0].trim());
-    final denominator = double.tryParse(parts[1].trim());
-    if (numerator == null || denominator == null || denominator == 0) {
-      return null;
-    }
-    return numerator / denominator;
+  final Expr expr;
+  try {
+    expr = parseExpression(text);
+  } on ExpressionFormatException {
+    return null;
   }
-  return double.tryParse(text.trim());
+  return evaluateExpression(expr, const EmptyExpressionEnv());
 }
