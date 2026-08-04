@@ -9,6 +9,7 @@ import 'package:regula/domain/construction/objects/line_angle.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
 import 'package:regula/domain/construction/objects/perpendicular_line.dart';
+import 'package:regula/domain/construction/objects/projection_point.dart';
 import 'package:regula/domain/construction/objects/ray.dart';
 import 'package:regula/domain/construction/objects/sector.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
@@ -50,6 +51,10 @@ void main() {
         ),
       ),
       'Circle center',
+    );
+    expect(
+      objectKindLabel(ProjectionPoint(id: 'pr', point: c, line: line1)),
+      'Projection point',
     );
   });
 

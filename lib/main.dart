@@ -673,6 +673,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         tools.activate(
           TwoPointTool(newId: newObjectId, build: buildPerpendicularBisector),
         );
+      case AppAction.projectionTool:
+        tools.activate(
+          PointAndLineTool(newId: newObjectId, build: buildProjectionPoint),
+        );
       case AppAction.tangentTool:
         tools.activate(TangentTool(newId: newObjectId));
       case AppAction.fixedRadiusCircleTool:

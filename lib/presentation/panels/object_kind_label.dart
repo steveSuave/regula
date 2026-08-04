@@ -17,6 +17,7 @@ import '../../domain/construction/objects/parallel_line.dart';
 import '../../domain/construction/objects/perpendicular_bisector_line.dart';
 import '../../domain/construction/objects/perpendicular_line.dart';
 import '../../domain/construction/objects/point_on_object.dart';
+import '../../domain/construction/objects/projection_point.dart';
 import '../../domain/construction/objects/ray.dart';
 import '../../domain/construction/objects/sector.dart';
 import '../../domain/construction/objects/segment.dart';
@@ -37,6 +38,7 @@ String objectKindLabel(GeoObject object) => switch (object) {
       IntersectionPoint() => 'Intersection point',
       PointOnObject() => 'Point on object',
       SegmentRatioPoint() => 'Segment-ratio point',
+      ProjectionPoint() => 'Projection point',
       Centroid() => 'Centroid',
       Orthocenter() => 'Orthocenter',
       Incenter() => 'Incenter',

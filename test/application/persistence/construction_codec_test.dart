@@ -34,6 +34,7 @@ import 'package:regula/domain/construction/objects/perpendicular_bisector_line.d
 import 'package:regula/domain/construction/objects/perpendicular_line.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
 import 'package:regula/domain/construction/objects/polygon.dart';
+import 'package:regula/domain/construction/objects/projection_point.dart';
 import 'package:regula/domain/construction/objects/ray.dart';
 import 'package:regula/domain/construction/objects/reflected_point.dart';
 import 'package:regula/domain/construction/objects/rotated_point.dart';
@@ -195,6 +196,7 @@ Construction buildKitchenSink() {
     ..add(LengthMeasurement(id: 'alen', subject: arc))
     ..add(LengthMeasurement(id: 'slen', subject: sector))
     ..add(ReflectedPoint(id: 'refl', point: c, mirror: lineAb))
+    ..add(ProjectionPoint(id: 'proj', point: c, line: lineAb))
     ..add(CentralReflectionPoint(id: 'crefl', point: c, center: a))
     ..add(RotatedPoint(id: 'rot', point: b, center: a, angle: 0.75))
     ..add(TranslatedPoint(id: 'trans', point: c, vectorFrom: a, vectorTo: b))

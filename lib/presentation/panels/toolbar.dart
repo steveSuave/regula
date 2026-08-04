@@ -17,6 +17,7 @@ import '../../domain/construction/objects/orthocenter.dart';
 import '../../domain/construction/objects/parallel_line.dart';
 import '../../domain/construction/objects/perpendicular_bisector_line.dart';
 import '../../domain/construction/objects/perpendicular_line.dart';
+import '../../domain/construction/objects/projection_point.dart';
 import '../../domain/construction/objects/ray.dart';
 import '../../domain/construction/objects/sector.dart';
 import '../../domain/construction/objects/segment.dart';
@@ -86,6 +87,13 @@ GeoObject buildCircle(String id, GeoPoint a, GeoPoint b) =>
 GeoObject buildPerpendicularBisector(String id, GeoPoint a, GeoPoint b) =>
     PerpendicularBisectorLine(id: id, point1: a, point2: b);
 
+GeoObject buildProjectionPoint({
+  required String id,
+  required GeoPoint through,
+  required GeoLine reference,
+}) =>
+    ProjectionPoint(id: id, point: through, line: reference);
+
 GeoObject buildThreePointCircle(String id, GeoPoint a, GeoPoint b, GeoPoint c) =>
     ThreePointCircle(id: id, point1: a, point2: b, point3: c);
 
@@ -134,13 +142,14 @@ class GeometryToolbar extends ConsumerWidget {
         tool is PointTool ||
         tool is IntersectionTool ||
         tool is TriangleCenterTool ||
+        (tool is PointAndLineTool && tool.build == buildProjectionPoint) ||
         (tool is TwoPointTool &&
             tool is! DistanceTool &&
             !_lineBuilders.contains(tool.build) &&
             tool.build != buildCircle);
     final linesActive =
         tool is PolygonTool ||
-        tool is PointAndLineTool ||
+        (tool is PointAndLineTool && tool.build != buildProjectionPoint) ||
         tool is AngleBisectorTool ||
         tool is TangentTool ||
         tool is FixedLengthSegmentTool ||
@@ -239,6 +248,16 @@ class GeometryToolbar extends ConsumerWidget {
               AppAction.midpointTool,
             ),
             ('Segment-ratio point…', ratioPick, AppAction.segmentRatioTool),
+            (
+              'Projection onto a line (point and line)',
+              _pick(
+                () => PointAndLineTool(
+                  newId: newObjectId,
+                  build: buildProjectionPoint,
+                ),
+              ),
+              AppAction.projectionTool,
+            ),
             (
               'Intersection of two curves',
               _pick(() => IntersectionTool(newId: newObjectId)),

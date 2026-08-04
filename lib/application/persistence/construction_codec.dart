@@ -27,6 +27,7 @@ import '../../domain/construction/objects/perpendicular_bisector_line.dart';
 import '../../domain/construction/objects/perpendicular_line.dart';
 import '../../domain/construction/objects/point_on_object.dart';
 import '../../domain/construction/objects/polygon.dart';
+import '../../domain/construction/objects/projection_point.dart';
 import '../../domain/construction/objects/ray.dart';
 import '../../domain/construction/objects/reflected_point.dart';
 import '../../domain/construction/objects/rotated_point.dart';
@@ -168,6 +169,7 @@ Map<String, dynamic> _encodeObject(GeoObject object) {
         {'branchIndex': branchIndex}
       ),
     ReflectedPoint() => ('ReflectedPoint', const {}),
+    ProjectionPoint() => ('ProjectionPoint', const {}),
     CentralReflectionPoint() => ('CentralReflectionPoint', const {}),
     RotatedPoint(:final angle) => ('RotatedPoint', {'angle': angle}),
     TranslatedPoint() => ('TranslatedPoint', const {}),
@@ -300,6 +302,12 @@ GeoObject _decodeObject(Map<String, dynamic> json, Construction construction) {
         id: id,
         point: point(0),
         mirror: line(1),
+        attributes: attributes,
+      ),
+    'ProjectionPoint' => ProjectionPoint(
+        id: id,
+        point: point(0),
+        line: line(1),
         attributes: attributes,
       ),
     'CentralReflectionPoint' => CentralReflectionPoint(
