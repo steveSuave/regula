@@ -264,8 +264,9 @@ void main() {
         reason: 'the foot of the perpendicular from (1, 3) onto y = 0');
   });
 
-  testWidgets('G H asks for the ratio; OK builds a homothetic point end to '
-      'end, cancel activates nothing', (tester) async {
+  testWidgets('G H asks for the ratio; OK activates the dilate transform '
+      'and builds a homothetic point end to end, cancel activates nothing',
+      (tester) async {
     await pumpEditor(tester);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
@@ -274,7 +275,7 @@ void main() {
     await tester.enterText(find.byType(TextField), '-1/2');
     await tester.tap(find.text('OK'));
     await tester.pumpAndSettle();
-    expect(activeTool(), isA<TwoPointTool>());
+    expect(activeTool(), isA<TransformObjectTool>());
 
     tapWorld(4, 2); // the point, then the center
     tapWorld(0, 0);
@@ -290,8 +291,17 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
-    expect(activeTool(), isA<TwoPointTool>(),
+    expect(activeTool(), isA<TransformObjectTool>(),
         reason: 'cancel leaves the previous tool active');
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyH);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '0');
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    expect((activeTool()! as TransformObjectTool).ratio, -0.5,
+        reason: 'ratio 0 would collapse onto the center — reads as cancel');
   });
 
   testWidgets('G 4 builds a harmonic conjugate end to end', (tester) async {

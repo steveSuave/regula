@@ -63,7 +63,6 @@ enum AppAction {
   threePointCircleTool,
   segmentRatioTool,
   projectionTool,
-  homotheticPointTool,
   harmonicConjugateTool,
   arcTool,
   sectorTool,
@@ -72,6 +71,7 @@ enum AppAction {
   reflectAboutPointTool,
   rotateAroundPointTool,
   translateByVectorTool,
+  dilateTool,
   angleBySizeTool,
   namePointsTool,
   textTool,
@@ -629,12 +629,6 @@ final List<ShortcutBinding> shortcutTable = [
     'G F',
   ),
   _g(
-    LogicalKeyboardKey.keyH,
-    AppAction.homotheticPointTool,
-    'Homothetic point…',
-    'G H',
-  ),
-  _g(
     LogicalKeyboardKey.digit4,
     AppAction.harmonicConjugateTool,
     'Harmonic conjugate (fourth harmonic point)',
@@ -665,6 +659,12 @@ final List<ShortcutBinding> shortcutTable = [
     AppAction.translateByVectorTool,
     'Translate by vector',
     'G V',
+  ),
+  _g(
+    LogicalKeyboardKey.keyH,
+    AppAction.dilateTool,
+    'Dilate from point (homothety)…',
+    'G H',
   ),
   _g(
     LogicalKeyboardKey.keyD,
