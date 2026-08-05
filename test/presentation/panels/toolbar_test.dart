@@ -837,6 +837,43 @@ void main() {
     );
   });
 
+  testWidgets('the circle-by-diameter row activates its tool and highlights '
+      'Circles, not Points', (tester) async {
+    await pumpEditor(tester);
+
+    await tester.tap(find.byIcon(Icons.circle_outlined));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Circle by diameter'));
+    await tester.pumpAndSettle();
+
+    final tool = container.read(toolProvider).tool;
+    expect(tool, isA<TwoPointTool>());
+    expect((tool! as TwoPointTool).build, buildDiameterCircle);
+    final theme = Theme.of(tester.element(find.byType(AppBar)));
+    expect(
+      iconColor(tester, Icons.circle_outlined),
+      theme.colorScheme.primary,
+    );
+    expect(
+      iconColor(tester, Icons.control_point),
+      isNot(theme.colorScheme.primary),
+      reason: 'a two-point circle builder must not fall into the Points '
+          'catch-all',
+    );
+  });
+
+  testWidgets('Lines flyout: Radical axis sits above Polygon (Phase 70)',
+      (tester) async {
+    await pumpEditor(tester);
+
+    await tester.tap(find.byIcon(Icons.timeline));
+    await tester.pumpAndSettle();
+
+    final radicalAxisY = tester.getTopLeft(find.text('Radical axis')).dy;
+    final polygonY = tester.getTopLeft(find.text('Polygon')).dy;
+    expect(radicalAxisY, lessThan(polygonY));
+  });
+
   testWidgets('flyout rows show their shortcut as trailing text',
       (tester) async {
     await pumpEditor(tester);

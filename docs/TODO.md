@@ -565,3 +565,11 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] Dialog hints mention an expression example (`sqrt(2)` and friends)
 - [x] `_DialogTitle`: title left + dimmed `shortcutDisplayFor` right (the `ToolMenuRow` convention) in every dialog-tool — segment ratio `G R`, dilation `G H`, rotation `G T`, angle size `G D`, radius `⇧ C`, length `⇧ S`, sides `X G`, naming `G M`, text `G E`
 - [x] Tests: expression inputs land the evaluated value (dilate `sqrt(2)`, radius `pi`), dialog titles show the chord, existing plain-number inputs unchanged — analyze clean, 1501 green
+
+## Phase 70 — Circle by diameter + Lines flyout reorder (user request)
+- [x] `DiameterCircle` (`GeoCircle`; two `GeoPoint` parents — diameter endpoints; center = midpoint, radius = half distance; zero-radius at coincident endpoints like `CircleCenterPoint`)
+- [x] Tool: rides `TwoPointTool` via a `buildDiameterCircle` tear-off; Circles flyout row 2 'Circle by diameter'; group highlight splits on a `_twoPointCircleBuilders` set (`buildCircle` + `buildDiameterCircle`); chord `G 2` (pairs with `G 3`)
+- [x] Joins the transform + equivalence whitelists (all-`GeoPoint`-parents rule — a diameter maps to a diameter under any similarity)
+- [x] Lines flyout: Radical axis moves above Polygon
+- [x] Registration per new concrete object: codec (+ kitchen-sink round-trip), `object_kind_label.dart`, toolbar row, `AppAction` + shortcut row, `main.dart` switch
+- [x] Tests: object recompute/degeneracy units, toolbar row + highlight, `G 2` end-to-end, transform rebuild — analyze clean, suite green

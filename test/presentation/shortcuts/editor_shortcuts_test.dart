@@ -778,6 +778,20 @@ void main() {
     expect(activeTool(), isA<RadicalAxisTool>());
   });
 
+  testWidgets('G 2 activates the circle-by-diameter tool', (tester) async {
+    await pumpEditor(tester);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
+    await tester.sendKeyEvent(LogicalKeyboardKey.digit2);
+    final tool = activeTool();
+    expect(tool, isA<TwoPointTool>());
+    expect(
+      (tool! as TwoPointTool).build,
+      buildDiameterCircle,
+      reason: 'G 2 pairs with G 3 — two points fix a diameter',
+    );
+  });
+
   testWidgets('G chords reach the transform tools', (tester) async {
     await pumpEditor(tester);
 

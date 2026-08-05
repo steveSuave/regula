@@ -11,6 +11,7 @@ import '../../domain/construction/objects/circle_center.dart';
 import '../../domain/construction/objects/circle_center_point.dart';
 import '../../domain/construction/objects/circumcenter.dart';
 import '../../domain/construction/objects/compass_circle.dart';
+import '../../domain/construction/objects/diameter_circle.dart';
 import '../../domain/construction/objects/distance_measurement.dart';
 import '../../domain/construction/objects/expression_text.dart';
 import '../../domain/construction/objects/fixed_radius_circle.dart';
@@ -200,6 +201,7 @@ Map<String, dynamic> _encodeObject(GeoObject object) {
     TangentLine(:final branch) => ('TangentLine', {'branch': branch}),
     RadicalAxisLine() => ('RadicalAxisLine', const {}),
     CircleCenterPoint() => ('CircleCenterPoint', const {}),
+    DiameterCircle() => ('DiameterCircle', const {}),
     ThreePointCircle() => ('ThreePointCircle', const {}),
     NinePointCircle() => ('NinePointCircle', const {}),
     InscribedCircle() => ('InscribedCircle', const {}),
@@ -456,6 +458,12 @@ GeoObject _decodeObject(Map<String, dynamic> json, Construction construction) {
         id: id,
         center: point(0),
         onCircle: point(1),
+        attributes: attributes,
+      ),
+    'DiameterCircle' => DiameterCircle(
+        id: id,
+        point1: point(0),
+        point2: point(1),
         attributes: attributes,
       ),
     'ThreePointCircle' => ThreePointCircle(
