@@ -8,7 +8,9 @@ import '../construction/objects/circle_center_point.dart';
 import '../construction/objects/compass_circle.dart';
 import '../construction/objects/free_point.dart';
 import '../construction/objects/homothetic_point.dart';
+import '../construction/objects/inscribed_circle.dart';
 import '../construction/objects/line_through_two_points.dart';
+import '../construction/objects/nine_point_circle.dart';
 import '../construction/objects/ray.dart';
 import '../construction/objects/reflected_point.dart';
 import '../construction/objects/rotated_point.dart';
@@ -55,7 +57,8 @@ enum ObjectTransform {
 ///
 /// Supported sources are the curves whose parents are all `GeoPoint`s:
 /// `Segment`, `Ray`, `LineThroughTwoPoints`, `CircleCenterPoint`,
-/// `CompassCircle`, `ThreePointCircle`, `Arc`, `VertexAngle`, and `Sector`
+/// `CompassCircle`, `ThreePointCircle`, `NinePointCircle`,
+/// `InscribedCircle`, `Arc`, `VertexAngle`, and `Sector`
 /// except under reflect-about-line (rebuilding would give the
 /// complementary wedge — documented limitation). Curves with non-point
 /// parents (`PerpendicularLine`, `ParallelLine`, `AngleBisectorLine`,
@@ -231,6 +234,8 @@ class TransformObjectTool implements ToolInputPreview {
         CircleCenterPoint() ||
         CompassCircle() ||
         ThreePointCircle() ||
+        NinePointCircle() ||
+        InscribedCircle() ||
         Arc() ||
         VertexAngle() =>
           true,
@@ -442,6 +447,18 @@ class TransformObjectTool implements ToolInputPreview {
           point1: img(c.point1),
           point2: img(c.point2),
           point3: img(c.point3),
+        ),
+      final NinePointCircle c => NinePointCircle(
+          id: newId(),
+          vertex1: img(c.vertex1),
+          vertex2: img(c.vertex2),
+          vertex3: img(c.vertex3),
+        ),
+      final InscribedCircle c => InscribedCircle(
+          id: newId(),
+          vertex1: img(c.vertex1),
+          vertex2: img(c.vertex2),
+          vertex3: img(c.vertex3),
         ),
       final Arc a =>
         Arc(id: newId(), start: img(a.start), via: img(a.via), end: img(a.end)),

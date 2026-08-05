@@ -61,6 +61,8 @@ enum AppAction {
   incenterTool,
   circumcenterTool,
   threePointCircleTool,
+  ninePointCircleTool,
+  inscribedCircleTool,
   segmentRatioTool,
   projectionTool,
   harmonicConjugateTool,
@@ -176,14 +178,19 @@ class ShortcutBinding {
   final bool showInCheatSheet;
 }
 
-/// A `G`-leader chord (constructions).
+/// A `G`-leader chord (constructions). [shift] shifts the *second*
+/// stroke (`G ⇧ I` vs `G I`).
 ShortcutBinding _g(
   LogicalKeyboardKey second,
   AppAction action,
   String label,
-  String display,
-) => ShortcutBinding(
-  sequence: [const KeyStroke(LogicalKeyboardKey.keyG), KeyStroke(second)],
+  String display, {
+  bool shift = false,
+}) => ShortcutBinding(
+  sequence: [
+    const KeyStroke(LogicalKeyboardKey.keyG),
+    KeyStroke(second, shift: shift),
+  ],
   action: action,
   label: label,
   section: ShortcutSection.constructions,
@@ -615,6 +622,19 @@ final List<ShortcutBinding> shortcutTable = [
     AppAction.threePointCircleTool,
     'Circle through three points',
     'G 3',
+  ),
+  _g(
+    LogicalKeyboardKey.digit9,
+    AppAction.ninePointCircleTool,
+    'Nine-point (Euler) circle',
+    'G 9',
+  ),
+  _g(
+    LogicalKeyboardKey.keyI,
+    AppAction.inscribedCircleTool,
+    'Inscribed circle (incircle)',
+    'G ⇧ I',
+    shift: true,
   ),
   _g(
     LogicalKeyboardKey.keyR,

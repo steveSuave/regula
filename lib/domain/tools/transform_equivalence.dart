@@ -4,7 +4,9 @@ import '../construction/objects/central_reflection_point.dart';
 import '../construction/objects/circle_center_point.dart';
 import '../construction/objects/compass_circle.dart';
 import '../construction/objects/homothetic_point.dart';
+import '../construction/objects/inscribed_circle.dart';
 import '../construction/objects/line_through_two_points.dart';
+import '../construction/objects/nine_point_circle.dart';
 import '../construction/objects/ray.dart';
 import '../construction/objects/reflected_point.dart';
 import '../construction/objects/rotated_point.dart';
@@ -23,8 +25,8 @@ import '../construction/objects/vertex_angle.dart';
 /// parents deliberately does not match: it moves differently under drags.
 ///
 /// Covers exactly what `TransformObjectTool` can emit — the five
-/// transform-point kinds and the nine rebuildable curve kinds; any other
-/// candidate finds nothing.
+/// transform-point kinds and the eleven rebuildable curve kinds; any
+/// other candidate finds nothing.
 GeoObject? equivalentExisting(
   Iterable<GeoObject> objects,
   GeoObject candidate,
@@ -52,6 +54,8 @@ bool _covered(GeoObject object) => switch (object) {
       CircleCenterPoint() ||
       CompassCircle() ||
       ThreePointCircle() ||
+      NinePointCircle() ||
+      InscribedCircle() ||
       Arc() ||
       Sector() ||
       VertexAngle() =>

@@ -6,6 +6,25 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 93 — 2026-08-05
+
+**Done**
+- **Phase 66 — triangle circles: nine-point (Euler) circle & inscribed circle**, on `phase-66-triangle-circles`. Math first: `circumradius`/`inradius` in `triangle_centers.dart`, with glados properties pinning Euler's `|OI|² = R(R − 2r)` and the nine-point-through-side-midpoints fact before any object existed.
+- `NinePointCircle` + `InscribedCircle` on a new shared abstract `TriangleCircle` base (the `TriangleCenterPoint` pattern: `vertex1..3`, `computeCircle` hook; `ThreePointCircle` deliberately left un-refactored onto it — different field names, codec untouched). Nine-point center computed via the Euler identity `H = A + B + C − 2O`, one circumcenter call per recompute.
+- `TriangleCircleTool` (`TriangleCenterTool` shape, `.new` tear-off builders) with **structural** dedupe like the harmonic tool, but order-insensitive — the circles are symmetric in their vertices, so a vertex permutation still refuses; a different circle kind over the same triangle commits.
+- Both kinds joined the transform whitelists (all five transforms — no reflect caveat for circles) and `equivalentExisting`; codec, kind labels, circles-flyout rows (appended after Sector, no index shifts), `G 9` and `G ⇧ I` chords (`_g` grew `_x`'s second-stroke shift flag — first shifted G chord).
+- 1527 tests green (+26), analyze clean. Merged to `main`.
+
+**Next**
+- Phase 67 (Apollonius circle + radical axis: `radicalAxis`/`apolloniusCircle` math beside `CircleEq`, `ApolloniusCircle` via `ThreePointTool`, `RadicalAxisLine` + the first "click two circles" tool).
+
+**Open questions / gotchas**
+- Widget-test gotcha rediscovered: a flyout row can't be re-opened by tapping its *active* group icon — the deactivation double-tap detector swallows the single tap — so per-row tests each start from a fresh editor.
+- Web smoke not re-run (domain + widget covered; both new rows appended at the flyout's end, so no drive.js index shifts — the Session 90 precedent).
+- `ToolMenuRow` splits only a *trailing* parenthetical; the nine-point row is labeled 'Nine-point circle (Euler circle)' to fit that convention.
+
+---
+
 ## Session 92 — 2026-08-05
 
 **Done**

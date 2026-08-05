@@ -12,7 +12,9 @@ import '../../domain/construction/objects/circle_center_point.dart';
 import '../../domain/construction/objects/circumcenter.dart';
 import '../../domain/construction/objects/compass_circle.dart';
 import '../../domain/construction/objects/incenter.dart';
+import '../../domain/construction/objects/inscribed_circle.dart';
 import '../../domain/construction/objects/line_through_two_points.dart';
+import '../../domain/construction/objects/nine_point_circle.dart';
 import '../../domain/construction/objects/orthocenter.dart';
 import '../../domain/construction/objects/parallel_line.dart';
 import '../../domain/construction/objects/perpendicular_bisector_line.dart';
@@ -57,6 +59,7 @@ import '../../domain/tools/tool.dart';
 import '../../domain/tools/transform_object_tool.dart';
 import '../../domain/tools/trapezium_macro_tool.dart';
 import '../../domain/tools/triangle_center_tool.dart';
+import '../../domain/tools/triangle_circle_tool.dart';
 import '../../domain/tools/two_point_tool.dart';
 import '../shortcuts/shortcut_table.dart';
 
@@ -159,6 +162,7 @@ class GeometryToolbar extends ConsumerWidget {
         (tool is TwoPointTool && _lineBuilders.contains(tool.build));
     final circlesActive =
         tool is FixedRadiusCircleTool ||
+        tool is TriangleCircleTool ||
         (tool is TwoPointTool && tool.build == buildCircle) ||
         (tool is ThreePointTool && _circleBuilders.contains(tool.build));
     final anglesActive = tool is AngleTool || tool is AngleBySizeTool;
@@ -349,7 +353,7 @@ class GeometryToolbar extends ConsumerWidget {
         _ToolGroup(
           icon: Icons.circle_outlined,
           tooltip: 'Circles: center + rim, by radius, three-point, compass, '
-              'arc, sector',
+              'arc, sector, nine-point, inscribed',
           active: circlesActive,
           items: [
             (
@@ -377,6 +381,16 @@ class GeometryToolbar extends ConsumerWidget {
               'Sector (center, rim, then angle)',
               _threePoint(buildSector),
               AppAction.sectorTool,
+            ),
+            (
+              'Nine-point circle (Euler circle)',
+              _triangleCircle(NinePointCircle.new),
+              AppAction.ninePointCircleTool,
+            ),
+            (
+              'Inscribed circle (incircle)',
+              _triangleCircle(InscribedCircle.new),
+              AppAction.inscribedCircleTool,
             ),
           ],
         ),
@@ -558,6 +572,9 @@ ToolPick _threePoint(ThreePointBuilder build) =>
 
 ToolPick _center(TriangleCenterBuilder build) =>
     _pick(() => TriangleCenterTool(newId: newObjectId, buildCenter: build));
+
+ToolPick _triangleCircle(TriangleCircleBuilder build) =>
+    _pick(() => TriangleCircleTool(newId: newObjectId, buildCircle: build));
 
 /// One flyout group: an icon opening a popup menu of [items]. While
 /// [active], the icon is tinted and a double-click deactivates the tool.
