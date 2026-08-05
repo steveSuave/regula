@@ -1,0 +1,22 @@
+test/domain/math/triangle_centers_test.dart
+  s_868924825dac75::t_10f12b1de72d5d 61-85
+  s_868924825dac75::t_d17202a6e82d58 155-189
+lib/domain/math/triangle_centers.dart
+  s_868924825dac75::t_092f897e8d1c02 58-82
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "b5c9d12baa25689892ad8615c780894228d1f853",
+  "prompts": {},
+  "sessions": {
+    "s_868924825dac75": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7ee47832-d21b-4aba-873e-396d8b2a6212",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
