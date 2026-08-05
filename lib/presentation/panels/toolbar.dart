@@ -12,6 +12,7 @@ import '../../domain/construction/objects/centroid.dart';
 import '../../domain/construction/objects/circle_center_point.dart';
 import '../../domain/construction/objects/circumcenter.dart';
 import '../../domain/construction/objects/compass_circle.dart';
+import '../../domain/construction/objects/diameter_circle.dart';
 import '../../domain/construction/objects/incenter.dart';
 import '../../domain/construction/objects/inscribed_circle.dart';
 import '../../domain/construction/objects/line_through_two_points.dart';
@@ -91,6 +92,9 @@ GeoObject buildRay(String id, GeoPoint a, GeoPoint b) =>
 GeoObject buildCircle(String id, GeoPoint a, GeoPoint b) =>
     CircleCenterPoint(id: id, center: a, onCircle: b);
 
+GeoObject buildDiameterCircle(String id, GeoPoint a, GeoPoint b) =>
+    DiameterCircle(id: id, point1: a, point2: b);
+
 GeoObject buildPerpendicularBisector(String id, GeoPoint a, GeoPoint b) =>
     PerpendicularBisectorLine(id: id, point1: a, point2: b);
 
@@ -129,6 +133,7 @@ const _circleBuilders = {
   buildSector,
   buildApolloniusCircle,
 };
+const _twoPointCircleBuilders = {buildCircle, buildDiameterCircle};
 
 /// The tool palette (PLAN "Toolbar / tool palette"): a Move/select
 /// button followed by the flyout groups — Points, Lines, Circles,
@@ -158,7 +163,7 @@ class GeometryToolbar extends ConsumerWidget {
         (tool is TwoPointTool &&
             tool is! DistanceTool &&
             !_lineBuilders.contains(tool.build) &&
-            tool.build != buildCircle);
+            !_twoPointCircleBuilders.contains(tool.build));
     final linesActive =
         tool is PolygonTool ||
         (tool is PointAndLineTool && tool.build != buildProjectionPoint) ||
@@ -170,7 +175,7 @@ class GeometryToolbar extends ConsumerWidget {
     final circlesActive =
         tool is FixedRadiusCircleTool ||
         tool is TriangleCircleTool ||
-        (tool is TwoPointTool && tool.build == buildCircle) ||
+        (tool is TwoPointTool && _twoPointCircleBuilders.contains(tool.build)) ||
         (tool is ThreePointTool && _circleBuilders.contains(tool.build));
     final anglesActive = tool is AngleTool || tool is AngleBySizeTool;
     final transformActive = tool is TransformObjectTool;
@@ -351,27 +356,33 @@ class GeometryToolbar extends ConsumerWidget {
               AppAction.tangentTool,
             ),
             (
-              'Polygon (tap vertices, tap the first again to close)',
-              _pick(() => PolygonTool(newId: newObjectId)),
-              AppAction.polygonTool,
-            ),
-            (
               'Radical axis (two circles)',
               _pick(() => RadicalAxisTool(newId: newObjectId)),
               AppAction.radicalAxisTool,
+            ),
+            (
+              'Polygon (tap vertices, tap the first again to close)',
+              _pick(() => PolygonTool(newId: newObjectId)),
+              AppAction.polygonTool,
             ),
           ],
         ),
         _ToolGroup(
           icon: Icons.circle_outlined,
-          tooltip: 'Circles: center + rim, by radius, three-point, compass, '
-              'arc, sector, nine-point, inscribed, Apollonius',
+          tooltip: 'Circles: center + rim, by diameter, by radius, '
+              'three-point, compass, arc, sector, nine-point, inscribed, '
+              'Apollonius',
           active: circlesActive,
           items: [
             (
               'Circle (center, then rim)',
               _twoPoint(buildCircle),
               AppAction.circleTool,
+            ),
+            (
+              'Circle by diameter (the two endpoints)',
+              _twoPoint(buildDiameterCircle),
+              AppAction.diameterCircleTool,
             ),
             (
               'Circle by radius (tap the center)…',

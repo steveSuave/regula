@@ -668,6 +668,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         tools.activate(TwoPointTool(newId: newObjectId, build: buildRay));
       case AppAction.circleTool:
         tools.activate(TwoPointTool(newId: newObjectId, build: buildCircle));
+      case AppAction.diameterCircleTool:
+        tools.activate(
+          TwoPointTool(newId: newObjectId, build: buildDiameterCircle),
+        );
       case AppAction.midpointTool:
         tools.activate(MidpointTool(newId: newObjectId));
       case AppAction.intersectionTool:
