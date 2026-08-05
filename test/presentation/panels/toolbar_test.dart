@@ -19,6 +19,7 @@ import 'package:regula/domain/tools/isosceles_triangle_macro_tool.dart';
 import 'package:regula/domain/tools/kite_macro_tool.dart';
 import 'package:regula/domain/tools/name_points_tool.dart';
 import 'package:regula/domain/tools/point_and_line_tool.dart';
+import 'package:regula/domain/tools/polar_line_tool.dart';
 import 'package:regula/domain/tools/polygon_tool.dart';
 import 'package:regula/domain/tools/radical_axis_tool.dart';
 import 'package:regula/domain/tools/random_shape_stamp_tool.dart';
@@ -817,6 +818,39 @@ void main() {
       iconColor(tester, Icons.circle_outlined),
       theme.colorScheme.primary,
     );
+  });
+
+  testWidgets('the polar-line row activates its tool and highlights Lines',
+      (tester) async {
+    await pumpEditor(tester);
+
+    await tester.tap(find.byIcon(Icons.timeline));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Polar line'));
+    await tester.pumpAndSettle();
+
+    expect(container.read(toolProvider).tool, isA<PolarLineTool>());
+    final theme = Theme.of(tester.element(find.byType(AppBar)));
+    expect(iconColor(tester, Icons.timeline), theme.colorScheme.primary);
+    expect(
+      iconColor(tester, Icons.circle_outlined),
+      isNot(theme.colorScheme.primary),
+    );
+  });
+
+  testWidgets('Lines flyout: Polar line sits below Tangents, above '
+      'Radical axis (Phase 71)', (tester) async {
+    await pumpEditor(tester);
+
+    await tester.tap(find.byIcon(Icons.timeline));
+    await tester.pumpAndSettle();
+
+    final tangentsY = tester.getTopLeft(find.text('Tangents from point')).dy;
+    final polarY = tester.getTopLeft(find.text('Polar line')).dy;
+    final radicalAxisY = tester.getTopLeft(find.text('Radical axis')).dy;
+    expect(tangentsY, lessThan(polarY),
+        reason: 'the two point-and-circle tools stay adjacent');
+    expect(polarY, lessThan(radicalAxisY));
   });
 
   testWidgets('the radical-axis row activates its tool and highlights Lines',

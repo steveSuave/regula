@@ -47,6 +47,7 @@ import '../../domain/tools/name_points_tool.dart';
 import '../../domain/tools/parallelogram_macro_tool.dart';
 import '../../domain/tools/point_and_line_tool.dart';
 import '../../domain/tools/point_tool.dart';
+import '../../domain/tools/polar_line_tool.dart';
 import '../../domain/tools/polygon_tool.dart';
 import '../../domain/tools/radical_axis_tool.dart';
 import '../../domain/tools/random_shape_stamp_tool.dart';
@@ -169,6 +170,7 @@ class GeometryToolbar extends ConsumerWidget {
         (tool is PointAndLineTool && tool.build != buildProjectionPoint) ||
         tool is AngleBisectorTool ||
         tool is TangentTool ||
+        tool is PolarLineTool ||
         tool is RadicalAxisTool ||
         tool is FixedLengthSegmentTool ||
         (tool is TwoPointTool && _lineBuilders.contains(tool.build));
@@ -307,7 +309,7 @@ class GeometryToolbar extends ConsumerWidget {
         _ToolGroup(
           icon: Icons.timeline,
           tooltip: 'Lines: line, segment, ray, perpendicular, parallel, '
-              'bisectors, tangents, radical axis',
+              'bisectors, tangents, polar, radical axis',
           active: linesActive,
           items: [
             ('Line', _twoPoint(buildLine), AppAction.lineTool),
@@ -354,6 +356,11 @@ class GeometryToolbar extends ConsumerWidget {
               'Tangents from point (point and circle)',
               _pick(() => TangentTool(newId: newObjectId)),
               AppAction.tangentTool,
+            ),
+            (
+              'Polar line (point and circle)',
+              _pick(() => PolarLineTool(newId: newObjectId)),
+              AppAction.polarLineTool,
             ),
             (
               'Radical axis (two circles)',

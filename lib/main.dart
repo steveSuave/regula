@@ -49,6 +49,7 @@ import 'domain/tools/name_points_tool.dart';
 import 'domain/tools/parallelogram_macro_tool.dart';
 import 'domain/tools/point_and_line_tool.dart';
 import 'domain/tools/point_tool.dart';
+import 'domain/tools/polar_line_tool.dart';
 import 'domain/tools/polygon_tool.dart';
 import 'domain/tools/radical_axis_tool.dart';
 import 'domain/tools/random_shape_stamp_tool.dart';
@@ -700,6 +701,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         tools.activate(HarmonicConjugateTool(newId: newObjectId));
       case AppAction.tangentTool:
         tools.activate(TangentTool(newId: newObjectId));
+      case AppAction.polarLineTool:
+        tools.activate(PolarLineTool(newId: newObjectId));
       case AppAction.radicalAxisTool:
         tools.activate(RadicalAxisTool(newId: newObjectId));
       case AppAction.fixedRadiusCircleTool:

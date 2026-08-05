@@ -32,6 +32,7 @@ import '../../domain/construction/objects/parallel_line.dart';
 import '../../domain/construction/objects/perpendicular_bisector_line.dart';
 import '../../domain/construction/objects/perpendicular_line.dart';
 import '../../domain/construction/objects/point_on_object.dart';
+import '../../domain/construction/objects/polar_line.dart';
 import '../../domain/construction/objects/polygon.dart';
 import '../../domain/construction/objects/projection_point.dart';
 import '../../domain/construction/objects/radical_axis_line.dart';
@@ -199,6 +200,7 @@ Map<String, dynamic> _encodeObject(GeoObject object) {
         {'branch': branch}
       ),
     TangentLine(:final branch) => ('TangentLine', {'branch': branch}),
+    PolarLine() => ('PolarLine', const {}),
     RadicalAxisLine() => ('RadicalAxisLine', const {}),
     CircleCenterPoint() => ('CircleCenterPoint', const {}),
     DiameterCircle() => ('DiameterCircle', const {}),
@@ -446,6 +448,12 @@ GeoObject _decodeObject(Map<String, dynamic> json, Construction construction) {
         point: point(0),
         circle: circle(1),
         branch: _intParam(id, params, 'branch'),
+        attributes: attributes,
+      ),
+    'PolarLine' => PolarLine(
+        id: id,
+        point: point(0),
+        circle: circle(1),
         attributes: attributes,
       ),
     'RadicalAxisLine' => RadicalAxisLine(
