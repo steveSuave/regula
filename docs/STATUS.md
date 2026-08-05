@@ -6,6 +6,25 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 96 — 2026-08-05
+
+**Done**
+- **Phase 71 — polar line of a point w.r.t. a circle**, on `phase-71-polar-line` (user request; placement question answered: the row sits *above* Radical axis, directly below Tangents — the Lines flyout orders point+line tools → point+circle tools → the two-circle tool, and polar is point+circle). PLAN Lines-section sentence + build-order item 54 written first.
+- Math: `polarLine(pole, CircleEq) → LineEq?` in `circle_relations.dart` — the line `(P − c)·(X − c) = r²`, null while the pole sits on the center. Glados-pinned: perpendicular to the center–pole join at the inverse point, carries the tangent points from outside, La Hire reciprocity (Q on polar of P ⇔ P on polar of Q).
+- `PolarLine` (`GeoLine`; point + circle parents on the `TangentLine` model, no branch — the polar is single-valued; tangent at the pole when on the circle, still defined inside). `PolarLineTool` = `TangentTool`'s either-order two-slot collection (circle-flavored taps consumed before the point ladder) committing one line — bare `AddObjectCommand` for a reused point, `MacroCommand` when the ladder built the pole — plus `RadicalAxisTool`'s structural dedupe over identical point + circle instances (only reused points checked; a ladder-built point is new by construction).
+- Registration: codec `PolarLine` entry + kitchen-sink round-trip (additive, no version bump), kind label 'Polar line', Lines flyout row + `linesActive` + group tooltip, `AppAction.polarLineTool`, chord `G ⇧ P` (`G P` stays reflect-about-point — the `G ⇧ A`/`G A` precedent), `main.dart` switch.
+- Excluded from the transform whitelists like `TangentLine`/`RadicalAxisLine` (circle parent — not an all-`GeoPoint`-parents kind).
+- 1589 tests green (+22: math canonical + 3 properties, object units incl. undefined-pole cascade via a line∩circle intersection, 7-test tool funnel, codec, toolbar row/order/highlight, `G ⇧ P` end-to-end), analyze clean.
+
+**Next**
+- No queued phase.
+
+**Open questions / gotchas**
+- `G ⇧ P` is the third shifted G chord (after `G ⇧ I`, `G ⇧ A`); the resolver's shift flag handles it, nothing new.
+- The polar tool's dedupe runs on the *completing* tap only when the point slot holds a reused point — two polars over the same pair are impossible, but a hidden equivalent is not revealed (the `RadicalAxisTool` stance).
+
+---
+
 ## Session 95 — 2026-08-05
 
 **Done**
