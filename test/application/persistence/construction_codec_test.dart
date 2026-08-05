@@ -18,6 +18,7 @@ import 'package:regula/domain/construction/objects/circle_center.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/circumcenter.dart';
 import 'package:regula/domain/construction/objects/compass_circle.dart';
+import 'package:regula/domain/construction/objects/diameter_circle.dart';
 import 'package:regula/domain/construction/objects/distance_measurement.dart';
 import 'package:regula/domain/construction/objects/expression_text.dart';
 import 'package:regula/domain/construction/objects/fixed_radius_circle.dart';
@@ -142,6 +143,7 @@ Construction buildKitchenSink() {
     ..add(
       CompassCircle(id: 'comp', radiusPoint1: a, radiusPoint2: b, center: c),
     )
+    ..add(DiameterCircle(id: 'dia', point1: a, point2: c))
     ..add(arc)
     ..add(sector)
     ..add(
