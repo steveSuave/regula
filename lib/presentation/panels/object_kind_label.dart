@@ -10,10 +10,12 @@ import '../../domain/construction/objects/distance_measurement.dart';
 import '../../domain/construction/objects/harmonic_conjugate_point.dart';
 import '../../domain/construction/objects/homothetic_point.dart';
 import '../../domain/construction/objects/incenter.dart';
+import '../../domain/construction/objects/inscribed_circle.dart';
 import '../../domain/construction/objects/intersection_point.dart';
 import '../../domain/construction/objects/length_measurement.dart';
 import '../../domain/construction/objects/line_angle.dart';
 import '../../domain/construction/objects/midpoint.dart';
+import '../../domain/construction/objects/nine_point_circle.dart';
 import '../../domain/construction/objects/orthocenter.dart';
 import '../../domain/construction/objects/parallel_line.dart';
 import '../../domain/construction/objects/perpendicular_bisector_line.dart';
@@ -61,6 +63,8 @@ String objectKindLabel(GeoObject object) => switch (object) {
       Arc() => 'Arc',
       Sector() => 'Sector',
       CompassCircle() => 'Compass circle',
+      NinePointCircle() => 'Nine-point circle',
+      InscribedCircle() => 'Inscribed circle',
       GeoCircle() => 'Circle',
       LineAngle() => 'Angle between lines',
       GeoAngle() => 'Angle',

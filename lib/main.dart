@@ -23,6 +23,8 @@ import 'domain/construction/geo_object.dart';
 import 'domain/construction/objects/centroid.dart';
 import 'domain/construction/objects/circumcenter.dart';
 import 'domain/construction/objects/incenter.dart';
+import 'domain/construction/objects/inscribed_circle.dart';
+import 'domain/construction/objects/nine_point_circle.dart';
 import 'domain/construction/objects/orthocenter.dart';
 import 'domain/construction/objects/parallel_line.dart';
 import 'domain/construction/objects/perpendicular_line.dart';
@@ -61,6 +63,7 @@ import 'domain/tools/three_point_tool.dart';
 import 'domain/tools/transform_object_tool.dart';
 import 'domain/tools/trapezium_macro_tool.dart';
 import 'domain/tools/triangle_center_tool.dart';
+import 'domain/tools/triangle_circle_tool.dart';
 import 'domain/tools/two_point_tool.dart';
 import 'domain/tools/visibility_tool.dart';
 import 'presentation/canvas/canvas_viewport.dart';
@@ -725,6 +728,20 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
       case AppAction.threePointCircleTool:
         tools.activate(
           ThreePointTool(newId: newObjectId, build: buildThreePointCircle),
+        );
+      case AppAction.ninePointCircleTool:
+        tools.activate(
+          TriangleCircleTool(
+            newId: newObjectId,
+            buildCircle: NinePointCircle.new,
+          ),
+        );
+      case AppAction.inscribedCircleTool:
+        tools.activate(
+          TriangleCircleTool(
+            newId: newObjectId,
+            buildCircle: InscribedCircle.new,
+          ),
         );
       case AppAction.segmentRatioTool:
         _activateSegmentRatioTool();

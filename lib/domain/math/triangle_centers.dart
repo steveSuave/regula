@@ -55,3 +55,28 @@ Vec2? incenter(Vec2 a, Vec2 b, Vec2 c, [double epsilon = defaultEpsilon]) {
   final lc = a.distanceTo(b);
   return (a * la + b * lb + c * lc) / (la + lb + lc);
 }
+
+/// Radius of the circle through all three vertices, or `null` when they
+/// are collinear.
+///
+/// The nine-point (Euler) circle is then centered at the midpoint of
+/// [circumcenter] and [orthocenter] with radius `circumradius / 2`.
+double? circumradius(Vec2 a, Vec2 b, Vec2 c, [double epsilon = defaultEpsilon]) {
+  final o = circumcenter(a, b, c, epsilon);
+  return o?.distanceTo(a);
+}
+
+/// Radius of the inscribed circle — the distance from the [incenter] to any
+/// side — or `null` when the vertices are collinear.
+///
+/// Closed form `area / semiperimeter`, which for vertices is
+/// `|(b−a) × (c−a)| / (|bc| + |ca| + |ab|)`.
+double? inradius(Vec2 a, Vec2 b, Vec2 c, [double epsilon = defaultEpsilon]) {
+  if (isCollinear(a, b, c, epsilon)) {
+    return null;
+  }
+  final la = b.distanceTo(c);
+  final lb = c.distanceTo(a);
+  final lc = a.distanceTo(b);
+  return (b - a).cross(c - a).abs() / (la + lb + lc);
+}

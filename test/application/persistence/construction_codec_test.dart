@@ -24,12 +24,14 @@ import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/harmonic_conjugate_point.dart';
 import 'package:regula/domain/construction/objects/homothetic_point.dart';
 import 'package:regula/domain/construction/objects/incenter.dart';
+import 'package:regula/domain/construction/objects/inscribed_circle.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/length_measurement.dart';
 import 'package:regula/domain/construction/objects/line_angle.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/locus.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
+import 'package:regula/domain/construction/objects/nine_point_circle.dart';
 import 'package:regula/domain/construction/objects/orthocenter.dart';
 import 'package:regula/domain/construction/objects/parallel_line.dart';
 import 'package:regula/domain/construction/objects/perpendicular_bisector_line.dart';
@@ -129,6 +131,8 @@ Construction buildKitchenSink() {
     // tangent is defined and its geometry participates in the round-trip.
     ..add(TangentLine(id: 'tan', point: ratio, circle: circle, branch: 1))
     ..add(ThreePointCircle(id: 'tpc', point1: a, point2: b, point3: c))
+    ..add(NinePointCircle(id: 'npc', vertex1: a, vertex2: b, vertex3: c))
+    ..add(InscribedCircle(id: 'insc', vertex1: a, vertex2: b, vertex3: c))
     ..add(FixedRadiusCircle(id: 'frc', center: c, radius: 2.5))
     ..add(
       CompassCircle(id: 'comp', radiusPoint1: a, radiusPoint2: b, center: c),
