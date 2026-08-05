@@ -6,6 +6,24 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 95 — 2026-08-05
+
+**Done**
+- **Phase 70 — circle by diameter + Lines flyout reorder**, on `phase-70-circle-by-diameter`. `DiameterCircle` (`GeoCircle`; two `GeoPoint` parents — the endpoints of a diameter; center = midpoint, radius = half distance; coincident endpoints give a zero-radius circle, the `CircleCenterPoint` stance). Rides `TwoPointTool` via a `buildDiameterCircle` tear-off — no new tool class. Circles flyout row 2 ('Circle by diameter (the two endpoints)', directly under center + rim), chord `G 2` (pairs with `G 3`'s three-point circle). Group highlight now splits on a `_twoPointCircleBuilders` set ({`buildCircle`, `buildDiameterCircle`}) in both the Points catch-all exclusion and the Circles check.
+- Joins the transform + equivalence whitelists (all-`GeoPoint`-parents rule — a diameter maps to a diameter under any similarity). Codec/kind-label/kitchen-sink entries additive, no version bump.
+- Lines flyout reorder (user request): Radical axis moves above Polygon (Polygon is now the last row). Safe for drive.js — verified it activates tools by shortcut only, never by Lines/Circles row index (the Phase 68 intersection-row move is precedent for mid-flyout shifts).
+- 1567 tests green (+8: object units, codec kitchen sink, toolbar row + highlight + Lines order, `G 2` end-to-end, translated diameter circle), analyze clean.
+- Answered the user's division-tool survey (no new tools recommended): harmonic division already exists (`G 4`, Phase 65); golden section is the segment-ratio dialog with `(sqrt(5)-1)/2` (Phase 69 expressions make it exact); geometric mean is not a fixed-ratio point (√(ab) depends on both lengths) but is now a 3-step classical construction — diameter circle over the joined segments + perpendicular + intersection.
+
+**Next**
+- No queued phase. If a one-tap geometric mean is ever wanted, it would be a new derived point kind (parents A, B, C collinear → altitude-foot construction), not a ratio preset.
+
+**Open questions / gotchas**
+- `G 2` is the first G chord on a digit that neighbors `G 3`/`G 4` semantically but not structurally — nothing shares state; the resolver handles digits like letters.
+- The Circles flyout insertion shifted rows 2+ down by one; drive.js was audited (shortcut-driven, File-menu clicks only), but any *future* scripted flyout clicking must re-count.
+
+---
+
 ## Session 94 — 2026-08-05
 
 **Done**
