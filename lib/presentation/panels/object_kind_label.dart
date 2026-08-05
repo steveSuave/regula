@@ -1,5 +1,6 @@
 import '../../domain/construction/geo_object.dart';
 import '../../domain/construction/objects/angle_bisector_line.dart';
+import '../../domain/construction/objects/apollonius_circle.dart';
 import '../../domain/construction/objects/arc.dart';
 import '../../domain/construction/objects/area_measurement.dart';
 import '../../domain/construction/objects/centroid.dart';
@@ -22,6 +23,7 @@ import '../../domain/construction/objects/perpendicular_bisector_line.dart';
 import '../../domain/construction/objects/perpendicular_line.dart';
 import '../../domain/construction/objects/point_on_object.dart';
 import '../../domain/construction/objects/projection_point.dart';
+import '../../domain/construction/objects/radical_axis_line.dart';
 import '../../domain/construction/objects/ray.dart';
 import '../../domain/construction/objects/sector.dart';
 import '../../domain/construction/objects/segment.dart';
@@ -59,12 +61,14 @@ String objectKindLabel(GeoObject object) => switch (object) {
       TwoLineBisectorLine() => 'Angle bisector',
       PerpendicularBisectorLine() => 'Perpendicular bisector',
       TangentLine() => 'Tangent line',
+      RadicalAxisLine() => 'Radical axis',
       GeoLine() => 'Line',
       Arc() => 'Arc',
       Sector() => 'Sector',
       CompassCircle() => 'Compass circle',
       NinePointCircle() => 'Nine-point circle',
       InscribedCircle() => 'Inscribed circle',
+      ApolloniusCircle() => 'Apollonius circle',
       GeoCircle() => 'Circle',
       LineAngle() => 'Angle between lines',
       GeoAngle() => 'Angle',

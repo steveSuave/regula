@@ -48,12 +48,14 @@ import 'package:regula/domain/tools/locus_tool.dart';
 import 'package:regula/domain/tools/point_and_line_tool.dart';
 import 'package:regula/domain/tools/point_tool.dart';
 import 'package:regula/domain/tools/polygon_tool.dart';
+import 'package:regula/domain/tools/radical_axis_tool.dart';
 import 'package:regula/domain/tools/random_shape_stamp_tool.dart';
 import 'package:regula/domain/tools/rectangle_macro_tool.dart';
 import 'package:regula/domain/tools/regular_polygon_macro_tool.dart';
 import 'package:regula/domain/tools/right_triangle_macro_tool.dart';
 import 'package:regula/domain/tools/square_macro_tool.dart';
 import 'package:regula/domain/tools/tangent_tool.dart';
+import 'package:regula/domain/tools/three_point_tool.dart';
 import 'package:regula/domain/tools/tool.dart';
 import 'package:regula/domain/tools/transform_object_tool.dart';
 import 'package:regula/domain/tools/triangle_center_tool.dart';
@@ -753,6 +755,27 @@ void main() {
       InscribedCircle.new,
       reason: 'G ⇧ I is the inscribed circle — G I stays the incenter',
     );
+  });
+
+  testWidgets('G ⇧ A and G X activate the circle-relation tools',
+      (tester) async {
+    await pumpEditor(tester);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    final tool = activeTool();
+    expect(tool, isA<ThreePointTool>());
+    expect(
+      (tool! as ThreePointTool).build,
+      buildApolloniusCircle,
+      reason: 'G ⇧ A is the Apollonius circle — G A stays the arc',
+    );
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyX);
+    expect(activeTool(), isA<RadicalAxisTool>());
   });
 
   testWidgets('G chords reach the transform tools', (tester) async {
