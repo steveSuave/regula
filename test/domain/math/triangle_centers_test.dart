@@ -58,6 +58,31 @@ void main() {
       expect(circumcenter(p, p, p), isNull);
       expect(incenter(p, p, q), isNull);
     });
+
+    test('circumradius of a right triangle is half the hypotenuse', () {
+      expect(circumradius(a, b, c), closeTo(2.5, 1e-12));
+    });
+
+    test('inradius of the 3-4-5 triangle is (3 + 4 − 5) / 2 = 1', () {
+      expect(inradius(a, b, c), closeTo(1, 1e-12));
+    });
+
+    test('equilateral radii: R = s/√3 and r = R/2', () {
+      const p = Vec2.zero;
+      const q = Vec2(1, 0);
+      final r = Vec2(0.5, math.sqrt(3) / 2);
+      expect(circumradius(p, q, r), closeTo(1 / math.sqrt(3), 1e-12));
+      expect(inradius(p, q, r), closeTo(1 / (2 * math.sqrt(3)), 1e-12));
+    });
+
+    test('radii of degenerate triangles are null', () {
+      const p = Vec2(1, 1);
+      const q = Vec2(2, 2);
+      expect(circumradius(p, q, const Vec2(3, 3)), isNull);
+      expect(inradius(p, q, const Vec2(3, 3)), isNull);
+      expect(circumradius(p, p, p), isNull);
+      expect(inradius(p, p, q), isNull);
+    });
   });
 
   group('triangle center properties', () {
@@ -125,6 +150,41 @@ void main() {
       expect(isCollinear(o, g, h, 1e-9), isTrue);
       // The centroid divides O→H in ratio 1:2.
       expect(g.closeTo(o.lerp(h, 1 / 3), 1e-6 * (1 + o.distanceTo(h))), isTrue);
+    });
+
+    Glados3(any.vec2, any.vec2, any.vec2)
+        .test('inradius is the distance from the incenter to every side',
+            (a, b, c) {
+      if (!isWellConditioned(a, b, c)) return;
+      final i = incenter(a, b, c)!;
+      final r = inradius(a, b, c)!;
+      final tolerance = 1e-9 * (1 + r);
+      expect(LineEq.throughPoints(a, b).distanceTo(i), closeTo(r, tolerance));
+      expect(LineEq.throughPoints(b, c).distanceTo(i), closeTo(r, tolerance));
+      expect(LineEq.throughPoints(c, a).distanceTo(i), closeTo(r, tolerance));
+    });
+
+    Glados3(any.vec2, any.vec2, any.vec2)
+        .test('Euler formula: |OI|² = R(R − 2r)', (a, b, c) {
+      if (!isWellConditioned(a, b, c)) return;
+      final o = circumcenter(a, b, c)!;
+      final i = incenter(a, b, c)!;
+      final bigR = circumradius(a, b, c)!;
+      final r = inradius(a, b, c)!;
+      final d2 = o.distanceTo(i) * o.distanceTo(i);
+      expect(d2, closeTo(bigR * (bigR - 2 * r), 1e-6 * (1 + bigR * bigR)));
+    });
+
+    Glados3(any.vec2, any.vec2, any.vec2)
+        .test('nine-point circle passes through the three side midpoints',
+            (a, b, c) {
+      if (!isWellConditioned(a, b, c)) return;
+      final center = circumcenter(a, b, c)!.lerp(orthocenter(a, b, c)!, 0.5);
+      final radius = circumradius(a, b, c)! / 2;
+      final tolerance = 1e-6 * (1 + radius);
+      expect(center.distanceTo(a.lerp(b, 0.5)), closeTo(radius, tolerance));
+      expect(center.distanceTo(b.lerp(c, 0.5)), closeTo(radius, tolerance));
+      expect(center.distanceTo(c.lerp(a, 0.5)), closeTo(radius, tolerance));
     });
 
     Glados2(any.vec2, any.vec2)
