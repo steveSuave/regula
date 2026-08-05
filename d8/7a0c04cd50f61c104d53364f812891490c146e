@@ -1,0 +1,21 @@
+lib/domain/math/circle_relations.dart
+  s_a13e50fb18e557::t_305eb3953e279e 1-61
+test/domain/math/circle_relations_test.dart
+  s_a13e50fb18e557::t_895990b4f57a6c 1-156
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "d87a0c04cd50f61c104d53364f812891490c146e",
+  "prompts": {},
+  "sessions": {
+    "s_a13e50fb18e557": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6124839b-5ef3-4e3e-9c46-e7907ffd9538",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
