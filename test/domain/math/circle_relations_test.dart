@@ -5,6 +5,7 @@ import 'package:regula/domain/math/circle_eq.dart';
 import 'package:regula/domain/math/circle_relations.dart';
 import 'package:regula/domain/math/intersections.dart';
 import 'package:regula/domain/math/line_eq.dart';
+import 'package:regula/domain/math/tangents.dart';
 import 'package:regula/domain/math/vec2.dart';
 
 import 'generators.dart';
@@ -80,6 +81,87 @@ void main() {
       final midpoint = (a + b) * 0.5;
       final scale = math.max(1.0, midpoint.norm);
       expect(axis.distanceTo(midpoint) / scale, lessThan(1e-6));
+    });
+  });
+
+  group('polarLine on canonical configurations', () {
+    final unit = CircleEq(Vec2.zero, 1);
+
+    test('external pole: perpendicular chord through the inverse point', () {
+      // Pole (2, 0) on the unit circle inverts to (1/2, 0): x = 1/2.
+      final polar = polarLine(const Vec2(2, 0), unit);
+      expect(polar!.closeTo(LineEq(1, 0, -0.5)), isTrue);
+    });
+
+    test('pole on the circle: the tangent at the pole', () {
+      final polar = polarLine(const Vec2(1, 0), unit);
+      expect(polar!.closeTo(LineEq(1, 0, -1)), isTrue);
+    });
+
+    test('internal pole: the polar lies outside the circle', () {
+      final polar = polarLine(const Vec2(0.5, 0), unit);
+      expect(polar!.closeTo(LineEq(1, 0, -2)), isTrue);
+    });
+
+    test('an off-origin circle translates the whole configuration', () {
+      // n = (3, 0), n·X = n·c + r² = 6 + 4: the line x = 10/3.
+      final polar = polarLine(const Vec2(5, 3), CircleEq(const Vec2(2, 3), 2));
+      expect(polar!.closeTo(LineEq(3, 0, -10)), isTrue);
+    });
+
+    test('a pole on the center has no polar', () {
+      expect(polarLine(Vec2.zero, unit), isNull);
+      expect(polarLine(const Vec2(2, 3), CircleEq(const Vec2(2, 3), 4)), isNull);
+    });
+  });
+
+  group('polarLine properties', () {
+    final axisParameter = any.intInRange(-2000, 2001).map((i) => i * 1.0);
+
+    Glados2(any.circleEq, any.vec2).test(
+        'perpendicular to the center–pole join at the inverse point',
+        (circle, pole) {
+      if (pole.closeTo(circle.center, 1e-3)) {
+        return;
+      }
+      final polar = polarLine(pole, circle)!;
+      final n = pole - circle.center;
+      final inverse =
+          circle.center + n * (circle.radius * circle.radius / n.normSquared);
+      final scale = math.max(1.0, math.max(inverse.norm, n.norm));
+      expect(polar.distanceTo(inverse) / scale, lessThan(1e-6));
+      expect(polar.distanceTo(inverse + n.perpendicular) / scale,
+          lessThan(1e-6),
+          reason: 'stepping from the inverse point perpendicular to the '
+              'center–pole join must stay on the polar');
+    });
+
+    Glados2(any.circleEq, any.vec2).test(
+        'an external pole\'s polar carries both tangent points',
+        (circle, pole) {
+      if (pole.closeTo(circle.center, 1e-3)) {
+        return;
+      }
+      final polar = polarLine(pole, circle)!;
+      for (final touch in tangentPointsToCircle(pole, circle)) {
+        final scale = math.max(1.0, touch.norm);
+        expect(polar.distanceTo(touch) / scale, lessThan(1e-6));
+      }
+    });
+
+    Glados3(any.circleEq, any.vec2, axisParameter).test(
+        'La Hire reciprocity: Q on the polar of P puts P on the polar of Q',
+        (circle, p, t) {
+      if (p.closeTo(circle.center, 1e-3)) {
+        return;
+      }
+      final q = polarLine(p, circle)!.pointAt(t);
+      if (q.closeTo(circle.center, 1e-3)) {
+        return;
+      }
+      final polarOfQ = polarLine(q, circle)!;
+      final scale = math.max(1.0, math.max(p.norm, q.norm));
+      expect(polarOfQ.distanceTo(p) / scale, lessThan(1e-6));
     });
   });
 

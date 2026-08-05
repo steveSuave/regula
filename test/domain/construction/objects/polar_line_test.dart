@@ -1,0 +1,90 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/domain/construction/construction.dart';
+import 'package:regula/domain/construction/objects/circle_center_point.dart';
+import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/intersection_point.dart';
+import 'package:regula/domain/construction/objects/line_through_two_points.dart';
+import 'package:regula/domain/construction/objects/polar_line.dart';
+import 'package:regula/domain/math/line_eq.dart';
+import 'package:regula/domain/math/vec2.dart';
+
+void main() {
+  group('PolarLine', () {
+    (Construction, PolarLine) build({Vec2 pole = const Vec2(2, 0)}) {
+      final construction = Construction();
+      final o = FreePoint(id: 'o', position: Vec2.zero);
+      final r = FreePoint(id: 'r', position: const Vec2(1, 0));
+      final p = FreePoint(id: 'p', position: pole);
+      final circle = CircleCenterPoint(id: 'circ', center: o, onCircle: r);
+      final polar = PolarLine(id: 'x', point: p, circle: circle);
+      construction
+        ..add(o)
+        ..add(r)
+        ..add(p)
+        ..add(circle)
+        ..add(polar);
+      return (construction, polar);
+    }
+
+    test('external pole: the chord of contact through the inverse point', () {
+      final (_, polar) = build();
+      expect(polar.line!.closeTo(LineEq(1, 0, -0.5)), isTrue);
+      expect(polar.parents.map((p) => p.id), ['p', 'circ']);
+    });
+
+    test('pole on the circle: the tangent at the pole', () {
+      final (_, polar) = build(pole: const Vec2(1, 0));
+      expect(polar.line!.closeTo(LineEq(1, 0, -1)), isTrue);
+    });
+
+    test('drag the pole onto the center: undefined, then recovers', () {
+      final (construction, polar) = build();
+
+      construction.moveFreePoint('p', Vec2.zero);
+      expect(polar.isDefined, isFalse);
+      expect(polar.line, isNull);
+
+      construction.moveFreePoint('p', const Vec2(2, 0));
+      expect(polar.isDefined, isTrue);
+      expect(polar.line!.closeTo(LineEq(1, 0, -0.5)), isTrue);
+    });
+
+    test('undefined while the pole is', () {
+      // The pole is a line∩circle intersection; dragging the line clear
+      // of the circle undefines it — and the polar with it.
+      final construction = Construction();
+      final o = FreePoint(id: 'o', position: Vec2.zero);
+      final r = FreePoint(id: 'r', position: const Vec2(1, 0));
+      final l1 = FreePoint(id: 'l1', position: const Vec2(0.5, -1));
+      final l2 = FreePoint(id: 'l2', position: const Vec2(0.5, 1));
+      final circle = CircleCenterPoint(id: 'circ', center: o, onCircle: r);
+      final line = LineThroughTwoPoints(id: 'l', point1: l1, point2: l2);
+      final pole = IntersectionPoint(
+        id: 'p',
+        curve1: line,
+        curve2: circle,
+        branchIndex: 0,
+      );
+      final polar = PolarLine(id: 'x', point: pole, circle: circle);
+      construction
+        ..add(o)
+        ..add(r)
+        ..add(l1)
+        ..add(l2)
+        ..add(circle)
+        ..add(line)
+        ..add(pole)
+        ..add(polar);
+      expect(polar.isDefined, isTrue);
+
+      construction.moveFreePoint('l1', const Vec2(5, -1));
+      construction.moveFreePoint('l2', const Vec2(5, 1));
+      expect(pole.isDefined, isFalse);
+      expect(polar.isDefined, isFalse);
+
+      construction.moveFreePoint('l1', const Vec2(0.5, -1));
+      construction.moveFreePoint('l2', const Vec2(0.5, 1));
+      expect(polar.isDefined, isTrue);
+    });
+  });
+}

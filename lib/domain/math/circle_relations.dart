@@ -31,6 +31,35 @@ LineEq? radicalAxis(
   );
 }
 
+/// The polar line of [pole] with respect to [circle] — the line
+/// `(pole − c)·(X − c) = r²` — or `null` when [pole] sits on the center
+/// (within [epsilon]), where every direction is equally perpendicular
+/// and no polar exists.
+///
+/// The normal is the center→pole offset, so the polar is always
+/// perpendicular to that join, crossing it at the *inverse point* of the
+/// pole (distance `r² / |pole − c|` from the center). A pole outside the
+/// circle sends the polar through its two tangent points; a pole on the
+/// circle is its own inverse, collapsing the polar onto the tangent
+/// there; a pole inside sends it outside the circle entirely. Poles and
+/// polars are reciprocal (La Hire): Q lies on the polar of P exactly
+/// when P lies on the polar of Q.
+LineEq? polarLine(
+  Vec2 pole,
+  CircleEq circle, [
+  double epsilon = defaultEpsilon,
+]) {
+  if (pole.closeTo(circle.center, epsilon)) {
+    return null;
+  }
+  final n = pole - circle.center;
+  return LineEq(
+    n.x,
+    n.y,
+    -n.dot(circle.center) - circle.radius * circle.radius,
+  );
+}
+
 /// The Apollonius circle over [a] and [b] with distance ratio [ratio] —
 /// the locus of points P with `|PA| / |PB| = ratio` — or `null` when the
 /// configuration degenerates: [a] and [b] coincide (within [epsilon]),
