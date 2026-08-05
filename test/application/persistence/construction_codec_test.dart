@@ -9,6 +9,7 @@ import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/geo_object.dart';
 import 'package:regula/domain/construction/object_attributes.dart';
 import 'package:regula/domain/construction/objects/angle_bisector_line.dart';
+import 'package:regula/domain/construction/objects/apollonius_circle.dart';
 import 'package:regula/domain/construction/objects/arc.dart';
 import 'package:regula/domain/construction/objects/area_measurement.dart';
 import 'package:regula/domain/construction/objects/central_reflection_point.dart';
@@ -39,6 +40,7 @@ import 'package:regula/domain/construction/objects/perpendicular_line.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
 import 'package:regula/domain/construction/objects/polygon.dart';
 import 'package:regula/domain/construction/objects/projection_point.dart';
+import 'package:regula/domain/construction/objects/radical_axis_line.dart';
 import 'package:regula/domain/construction/objects/ray.dart';
 import 'package:regula/domain/construction/objects/reflected_point.dart';
 import 'package:regula/domain/construction/objects/rotated_point.dart';
@@ -111,6 +113,7 @@ Construction buildKitchenSink() {
 
   final perp = PerpendicularLine(id: 'perp', through: c, reference: lineAb);
   final circle = CircleCenterPoint(id: 'cc', center: a, onCircle: b);
+  final tpc = ThreePointCircle(id: 'tpc', point1: a, point2: b, point3: c);
   final arc = Arc(id: 'arc', start: a, via: c, end: b);
   final sector = Sector(
     id: 'sec',
@@ -130,9 +133,11 @@ Construction buildKitchenSink() {
     // The ratio point sits at (9, 0), outside the radius-4 circle, so the
     // tangent is defined and its geometry participates in the round-trip.
     ..add(TangentLine(id: 'tan', point: ratio, circle: circle, branch: 1))
-    ..add(ThreePointCircle(id: 'tpc', point1: a, point2: b, point3: c))
+    ..add(tpc)
     ..add(NinePointCircle(id: 'npc', vertex1: a, vertex2: b, vertex3: c))
     ..add(InscribedCircle(id: 'insc', vertex1: a, vertex2: b, vertex3: c))
+    ..add(ApolloniusCircle(id: 'apo', point1: a, point2: b, point3: c))
+    ..add(RadicalAxisLine(id: 'rax', circle1: circle, circle2: tpc))
     ..add(FixedRadiusCircle(id: 'frc', center: c, radius: 2.5))
     ..add(
       CompassCircle(id: 'comp', radiusPoint1: a, radiusPoint2: b, center: c),

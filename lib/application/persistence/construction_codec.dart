@@ -2,6 +2,7 @@ import '../../domain/construction/construction.dart';
 import '../../domain/construction/geo_object.dart';
 import '../../domain/construction/object_attributes.dart';
 import '../../domain/construction/objects/angle_bisector_line.dart';
+import '../../domain/construction/objects/apollonius_circle.dart';
 import '../../domain/construction/objects/arc.dart';
 import '../../domain/construction/objects/area_measurement.dart';
 import '../../domain/construction/objects/central_reflection_point.dart';
@@ -32,6 +33,7 @@ import '../../domain/construction/objects/perpendicular_line.dart';
 import '../../domain/construction/objects/point_on_object.dart';
 import '../../domain/construction/objects/polygon.dart';
 import '../../domain/construction/objects/projection_point.dart';
+import '../../domain/construction/objects/radical_axis_line.dart';
 import '../../domain/construction/objects/ray.dart';
 import '../../domain/construction/objects/reflected_point.dart';
 import '../../domain/construction/objects/rotated_point.dart';
@@ -196,10 +198,12 @@ Map<String, dynamic> _encodeObject(GeoObject object) {
         {'branch': branch}
       ),
     TangentLine(:final branch) => ('TangentLine', {'branch': branch}),
+    RadicalAxisLine() => ('RadicalAxisLine', const {}),
     CircleCenterPoint() => ('CircleCenterPoint', const {}),
     ThreePointCircle() => ('ThreePointCircle', const {}),
     NinePointCircle() => ('NinePointCircle', const {}),
     InscribedCircle() => ('InscribedCircle', const {}),
+    ApolloniusCircle() => ('ApolloniusCircle', const {}),
     CompassCircle() => ('CompassCircle', const {}),
     FixedRadiusCircle(:final radius) => (
         'FixedRadiusCircle',
@@ -442,6 +446,12 @@ GeoObject _decodeObject(Map<String, dynamic> json, Construction construction) {
         branch: _intParam(id, params, 'branch'),
         attributes: attributes,
       ),
+    'RadicalAxisLine' => RadicalAxisLine(
+        id: id,
+        circle1: circle(0),
+        circle2: circle(1),
+        attributes: attributes,
+      ),
     'CircleCenterPoint' => CircleCenterPoint(
         id: id,
         center: point(0),
@@ -467,6 +477,13 @@ GeoObject _decodeObject(Map<String, dynamic> json, Construction construction) {
         vertex1: point(0),
         vertex2: point(1),
         vertex3: point(2),
+        attributes: attributes,
+      ),
+    'ApolloniusCircle' => ApolloniusCircle(
+        id: id,
+        point1: point(0),
+        point2: point(1),
+        point3: point(2),
         attributes: attributes,
       ),
     'CompassCircle' => CompassCircle(
