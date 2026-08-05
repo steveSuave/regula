@@ -10,6 +10,7 @@ import 'package:regula/domain/construction/objects/arc.dart';
 import 'package:regula/domain/construction/objects/central_reflection_point.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/compass_circle.dart';
+import 'package:regula/domain/construction/objects/diameter_circle.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/homothetic_point.dart';
 import 'package:regula/domain/construction/objects/inscribed_circle.dart';
@@ -446,6 +447,32 @@ void main() {
       expect(image.circle!.radius, closeTo(4, 1e-12));
       expect(image.circle!.center.closeTo(const Vec2(8, 0), 1e-12), isTrue);
       expect(image.point1, isA<HomotheticPoint>());
+    });
+
+    test('translate a diameter circle: rebuilt over the image endpoints', () {
+      final p1 = FreePoint(id: 'p1', position: const Vec2(0, 0));
+      final p2 = FreePoint(id: 'p2', position: const Vec2(6, 8));
+      final circle = DiameterCircle(id: 'o', point1: p1, point2: p2);
+      final from = FreePoint(id: 'from', position: const Vec2(0, 0));
+      final to = FreePoint(id: 'to', position: const Vec2(10, 1));
+      final construction = Construction()
+        ..add(p1)
+        ..add(p2)
+        ..add(circle)
+        ..add(from)
+        ..add(to);
+      final tool = TransformObjectTool.translate(newId: newId);
+
+      tool.onInput(ToolInput(const Vec2(3, 4), hit: circle));
+      tool.onInput(ToolInput(from.position, hit: from));
+      final result =
+          tool.onInput(ToolInput(to.position, hit: to)) as ToolCommitted;
+
+      (result.command as MacroCommand).apply(construction);
+      final image = construction.objects.last as DiameterCircle;
+      expect(image.circle!.radius, closeTo(5, 1e-12));
+      expect(image.circle!.center.closeTo(const Vec2(13, 5), 1e-12), isTrue);
+      expect(image.point1, isA<TranslatedPoint>());
     });
 
     test('reflect an arc: endpoints mirror, sweep flips sign (via picks the '

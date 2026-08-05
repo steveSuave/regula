@@ -60,6 +60,7 @@ enum AppAction {
   orthocenterTool,
   incenterTool,
   circumcenterTool,
+  diameterCircleTool,
   threePointCircleTool,
   ninePointCircleTool,
   inscribedCircleTool,
@@ -618,6 +619,12 @@ final List<ShortcutBinding> shortcutTable = [
     AppAction.circumcenterTool,
     'Circumcenter',
     'G U',
+  ),
+  _g(
+    LogicalKeyboardKey.digit2,
+    AppAction.diameterCircleTool,
+    'Circle by diameter (the two endpoints)',
+    'G 2',
   ),
   _g(
     LogicalKeyboardKey.digit3,

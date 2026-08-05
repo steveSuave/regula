@@ -7,6 +7,7 @@ import '../construction/objects/arc.dart';
 import '../construction/objects/central_reflection_point.dart';
 import '../construction/objects/circle_center_point.dart';
 import '../construction/objects/compass_circle.dart';
+import '../construction/objects/diameter_circle.dart';
 import '../construction/objects/free_point.dart';
 import '../construction/objects/homothetic_point.dart';
 import '../construction/objects/inscribed_circle.dart';
@@ -58,7 +59,7 @@ enum ObjectTransform {
 ///
 /// Supported sources are the curves whose parents are all `GeoPoint`s:
 /// `Segment`, `Ray`, `LineThroughTwoPoints`, `CircleCenterPoint`,
-/// `CompassCircle`, `ThreePointCircle`, `NinePointCircle`,
+/// `DiameterCircle`, `CompassCircle`, `ThreePointCircle`, `NinePointCircle`,
 /// `InscribedCircle`, `ApolloniusCircle` (distance *ratios* survive any
 /// similarity), `Arc`, `VertexAngle`, and `Sector`
 /// except under reflect-about-line (rebuilding would give the
@@ -235,6 +236,7 @@ class TransformObjectTool implements ToolInputPreview {
         Ray() ||
         LineThroughTwoPoints() ||
         CircleCenterPoint() ||
+        DiameterCircle() ||
         CompassCircle() ||
         ThreePointCircle() ||
         NinePointCircle() ||
@@ -439,6 +441,11 @@ class TransformObjectTool implements ToolInputPreview {
           id: newId(),
           center: img(c.center),
           onCircle: img(c.onCircle),
+        ),
+      final DiameterCircle c => DiameterCircle(
+          id: newId(),
+          point1: img(c.point1),
+          point2: img(c.point2),
         ),
       final CompassCircle c => CompassCircle(
           id: newId(),
