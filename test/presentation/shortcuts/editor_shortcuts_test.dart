@@ -20,10 +20,12 @@ import 'package:regula/domain/construction/objects/fixed_radius_circle.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/harmonic_conjugate_point.dart';
 import 'package:regula/domain/construction/objects/homothetic_point.dart';
+import 'package:regula/domain/construction/objects/inscribed_circle.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/locus.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
+import 'package:regula/domain/construction/objects/nine_point_circle.dart';
 import 'package:regula/domain/construction/objects/parallel_line.dart';
 import 'package:regula/domain/construction/objects/perpendicular_bisector_line.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
@@ -55,6 +57,7 @@ import 'package:regula/domain/tools/tangent_tool.dart';
 import 'package:regula/domain/tools/tool.dart';
 import 'package:regula/domain/tools/transform_object_tool.dart';
 import 'package:regula/domain/tools/triangle_center_tool.dart';
+import 'package:regula/domain/tools/triangle_circle_tool.dart';
 import 'package:regula/domain/tools/two_point_tool.dart';
 import 'package:regula/domain/tools/visibility_tool.dart';
 import 'package:regula/main.dart';
@@ -723,6 +726,33 @@ void main() {
     stamp = tool! as RandomShapeStampTool;
     expect(stamp.convex, isTrue, reason: 'X 4 is the convex quadrilateral');
     expect(stamp.minVertices, 4);
+  });
+
+  testWidgets('G 9 and G ⇧ I activate the triangle-circle tools',
+      (tester) async {
+    await pumpEditor(tester);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
+    await tester.sendKeyEvent(LogicalKeyboardKey.digit9);
+    var tool = activeTool();
+    expect(tool, isA<TriangleCircleTool>());
+    expect(
+      (tool! as TriangleCircleTool).buildCircle,
+      NinePointCircle.new,
+      reason: 'G 9 is the nine-point circle',
+    );
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyI);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    tool = activeTool();
+    expect(tool, isA<TriangleCircleTool>());
+    expect(
+      (tool! as TriangleCircleTool).buildCircle,
+      InscribedCircle.new,
+      reason: 'G ⇧ I is the inscribed circle — G I stays the incenter',
+    );
   });
 
   testWidgets('G chords reach the transform tools', (tester) async {

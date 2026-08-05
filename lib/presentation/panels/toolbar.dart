@@ -383,7 +383,7 @@ class GeometryToolbar extends ConsumerWidget {
               AppAction.sectorTool,
             ),
             (
-              'Nine-point (Euler) circle',
+              'Nine-point circle (Euler circle)',
               _triangleCircle(NinePointCircle.new),
               AppAction.ninePointCircleTool,
             ),
