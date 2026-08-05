@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/object_ids.dart';
 import '../../application/providers/tool_provider.dart';
 import '../../domain/construction/geo_object.dart';
+import '../../domain/construction/objects/apollonius_circle.dart';
 import '../../domain/construction/objects/arc.dart';
 import '../../domain/construction/objects/centroid.dart';
 import '../../domain/construction/objects/circle_center_point.dart';
@@ -46,6 +47,7 @@ import '../../domain/tools/parallelogram_macro_tool.dart';
 import '../../domain/tools/point_and_line_tool.dart';
 import '../../domain/tools/point_tool.dart';
 import '../../domain/tools/polygon_tool.dart';
+import '../../domain/tools/radical_axis_tool.dart';
 import '../../domain/tools/random_shape_stamp_tool.dart';
 import '../../domain/tools/rectangle_macro_tool.dart';
 import '../../domain/tools/regular_polygon_macro_tool.dart';
@@ -111,6 +113,9 @@ GeoObject buildArc(String id, GeoPoint a, GeoPoint b, GeoPoint c) =>
 GeoObject buildSector(String id, GeoPoint a, GeoPoint b, GeoPoint c) =>
     Sector(id: id, center: a, start: b, end: c);
 
+GeoObject buildApolloniusCircle(String id, GeoPoint a, GeoPoint b, GeoPoint c) =>
+    ApolloniusCircle(id: id, point1: a, point2: b, point3: c);
+
 const _lineBuilders = {
   buildLine,
   buildSegment,
@@ -122,6 +127,7 @@ const _circleBuilders = {
   buildCompassCircle,
   buildArc,
   buildSector,
+  buildApolloniusCircle,
 };
 
 /// The tool palette (PLAN "Toolbar / tool palette"): a Move/select
@@ -158,6 +164,7 @@ class GeometryToolbar extends ConsumerWidget {
         (tool is PointAndLineTool && tool.build != buildProjectionPoint) ||
         tool is AngleBisectorTool ||
         tool is TangentTool ||
+        tool is RadicalAxisTool ||
         tool is FixedLengthSegmentTool ||
         (tool is TwoPointTool && _lineBuilders.contains(tool.build));
     final circlesActive =
@@ -295,7 +302,7 @@ class GeometryToolbar extends ConsumerWidget {
         _ToolGroup(
           icon: Icons.timeline,
           tooltip: 'Lines: line, segment, ray, perpendicular, parallel, '
-              'bisectors, tangents',
+              'bisectors, tangents, radical axis',
           active: linesActive,
           items: [
             ('Line', _twoPoint(buildLine), AppAction.lineTool),
@@ -348,12 +355,17 @@ class GeometryToolbar extends ConsumerWidget {
               _pick(() => PolygonTool(newId: newObjectId)),
               AppAction.polygonTool,
             ),
+            (
+              'Radical axis (two circles)',
+              _pick(() => RadicalAxisTool(newId: newObjectId)),
+              AppAction.radicalAxisTool,
+            ),
           ],
         ),
         _ToolGroup(
           icon: Icons.circle_outlined,
           tooltip: 'Circles: center + rim, by radius, three-point, compass, '
-              'arc, sector, nine-point, inscribed',
+              'arc, sector, nine-point, inscribed, Apollonius',
           active: circlesActive,
           items: [
             (
@@ -391,6 +403,11 @@ class GeometryToolbar extends ConsumerWidget {
               'Inscribed circle (incircle)',
               _triangleCircle(InscribedCircle.new),
               AppAction.inscribedCircleTool,
+            ),
+            (
+              'Apollonius circle (A, B, then the ratio point)',
+              _threePoint(buildApolloniusCircle),
+              AppAction.apolloniusCircleTool,
             ),
           ],
         ),

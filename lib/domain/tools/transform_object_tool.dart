@@ -2,6 +2,7 @@ import '../commands/add_object_command.dart';
 import '../commands/command.dart';
 import '../commands/macro_command.dart';
 import '../construction/geo_object.dart';
+import '../construction/objects/apollonius_circle.dart';
 import '../construction/objects/arc.dart';
 import '../construction/objects/central_reflection_point.dart';
 import '../construction/objects/circle_center_point.dart';
@@ -58,12 +59,14 @@ enum ObjectTransform {
 /// Supported sources are the curves whose parents are all `GeoPoint`s:
 /// `Segment`, `Ray`, `LineThroughTwoPoints`, `CircleCenterPoint`,
 /// `CompassCircle`, `ThreePointCircle`, `NinePointCircle`,
-/// `InscribedCircle`, `Arc`, `VertexAngle`, and `Sector`
+/// `InscribedCircle`, `ApolloniusCircle` (distance *ratios* survive any
+/// similarity), `Arc`, `VertexAngle`, and `Sector`
 /// except under reflect-about-line (rebuilding would give the
 /// complementary wedge — documented limitation). Curves with non-point
 /// parents (`PerpendicularLine`, `ParallelLine`, `AngleBisectorLine`,
-/// `LineAngle`) are ignored as transformees — object-level recursion is
-/// deferred — though any `GeoLine` still serves as reflect's mirror.
+/// `LineAngle`, `RadicalAxisLine`) are ignored as transformees —
+/// object-level recursion is deferred — though any `GeoLine` still
+/// serves as reflect's mirror.
 ///
 /// Orientation: line reflection reverses it, so a reflected `VertexAngle`
 /// swaps its arm points and the marker measures the same wedge; the
@@ -236,6 +239,7 @@ class TransformObjectTool implements ToolInputPreview {
         ThreePointCircle() ||
         NinePointCircle() ||
         InscribedCircle() ||
+        ApolloniusCircle() ||
         Arc() ||
         VertexAngle() =>
           true,
@@ -453,6 +457,12 @@ class TransformObjectTool implements ToolInputPreview {
           vertex1: img(c.vertex1),
           vertex2: img(c.vertex2),
           vertex3: img(c.vertex3),
+        ),
+      final ApolloniusCircle c => ApolloniusCircle(
+          id: newId(),
+          point1: img(c.point1),
+          point2: img(c.point2),
+          point3: img(c.point3),
         ),
       final InscribedCircle c => InscribedCircle(
           id: newId(),
