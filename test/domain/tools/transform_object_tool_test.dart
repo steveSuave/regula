@@ -5,6 +5,7 @@ import 'package:regula/domain/commands/add_object_command.dart';
 import 'package:regula/domain/commands/macro_command.dart';
 import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/geo_object.dart';
+import 'package:regula/domain/construction/objects/apollonius_circle.dart';
 import 'package:regula/domain/construction/objects/arc.dart';
 import 'package:regula/domain/construction/objects/central_reflection_point.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
@@ -417,6 +418,34 @@ void main() {
       expect(image.circle!.radius, closeTo(1, 1e-12));
       expect(image.circle!.center.closeTo(const Vec2(11, 2), 1e-12), isTrue);
       expect(image.vertex1, isA<TranslatedPoint>());
+    });
+
+    test('dilate an Apollonius circle: the distance ratio survives, so the '
+        'image is the scaled circle', () {
+      final p1 = FreePoint(id: 'p1', position: const Vec2(0, 0));
+      final p2 = FreePoint(id: 'p2', position: const Vec2(3, 0));
+      final p3 = FreePoint(id: 'p3', position: const Vec2(2, 0));
+      final circle =
+          ApolloniusCircle(id: 'o', point1: p1, point2: p2, point3: p3);
+      final o = FreePoint(id: 'ctr', position: const Vec2(0, 0));
+      final construction = Construction()
+        ..add(p1)
+        ..add(p2)
+        ..add(p3)
+        ..add(circle)
+        ..add(o);
+      final tool = TransformObjectTool.dilate(newId: newId, ratio: 2);
+
+      tool.onInput(ToolInput(const Vec2(2, 0), hit: circle));
+      final result =
+          tool.onInput(ToolInput(o.position, hit: o)) as ToolCommitted;
+
+      // Source circle: center (4, 0), radius 2 — the image doubles both.
+      (result.command as MacroCommand).apply(construction);
+      final image = construction.objects.last as ApolloniusCircle;
+      expect(image.circle!.radius, closeTo(4, 1e-12));
+      expect(image.circle!.center.closeTo(const Vec2(8, 0), 1e-12), isTrue);
+      expect(image.point1, isA<HomotheticPoint>());
     });
 
     test('reflect an arc: endpoints mirror, sweep flips sign (via picks the '
