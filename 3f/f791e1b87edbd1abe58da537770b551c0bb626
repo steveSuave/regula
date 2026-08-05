@@ -1,0 +1,67 @@
+docs/TODO.md
+  s_eccb5a85dd4833::t_a0b000e4a1a312 576-577
+  s_eccb5a85dd4833::t_43a3917af26415 578-583
+lib/application/persistence/construction_codec.dart
+  s_eccb5a85dd4833::t_49dba1c0b80a28 35
+  s_eccb5a85dd4833::t_330fd6c24af86a 203
+  s_eccb5a85dd4833::t_744a2b655eb113 453-458
+lib/main.dart
+  s_eccb5a85dd4833::t_13e815e8da17c1 52
+  s_eccb5a85dd4833::t_fff918a3bc7254 704-705
+test/application/persistence/construction_codec_test.dart
+  s_eccb5a85dd4833::t_49dba1c0b80a28 42
+  s_eccb5a85dd4833::t_5049a00061d130 138
+docs/PLAN.md
+  s_eccb5a85dd4833::t_bf4639ad00550f 47,363
+test/domain/tools/polar_line_tool_test.dart
+  s_eccb5a85dd4833::t_d959e351a11d90 1-156
+test/presentation/shortcuts/editor_shortcuts_test.dart
+  s_eccb5a85dd4833::t_12c4ccb0620161 50
+  s_eccb5a85dd4833::t_37bc6b9b2059b0 782-795
+test/domain/construction/objects/polar_line_test.dart
+  s_eccb5a85dd4833::t_7c6657b35c42c6 1-90
+lib/presentation/panels/object_kind_label.dart
+  s_eccb5a85dd4833::t_269a5158386938 26
+  s_eccb5a85dd4833::t_54cacf6eea3ea6 66
+test/domain/math/circle_relations_test.dart
+  s_eccb5a85dd4833::t_08b9d1f8cf9f0d 131,133-136
+  s_eccb5a85dd4833::t_f2768510b74c11 8
+  s_eccb5a85dd4833::t_f6df3a6e91b77d 87-130,132,137-167
+test/presentation/panels/toolbar_test.dart
+  s_eccb5a85dd4833::t_4d053f8813ff6a 823-855
+  s_eccb5a85dd4833::t_f704f6a597642b 22
+docs/STATUS.md
+  s_eccb5a85dd4833::t_d7296d2ee43d52 9-27
+lib/domain/math/circle_relations.dart
+  s_eccb5a85dd4833::t_7fc8638e580bca 34-62
+lib/domain/construction/objects/polar_line.dart
+  s_eccb5a85dd4833::t_2d31c4e6481e91 1-41
+lib/domain/tools/polar_line_tool.dart
+  s_eccb5a85dd4833::t_5d2fa83e76e81d 1-109
+lib/presentation/panels/toolbar.dart
+  s_eccb5a85dd4833::t_d1dfab3bd1db3c 312
+  s_eccb5a85dd4833::t_37f34faa76d7ad 361-364
+  s_eccb5a85dd4833::t_e89f0e6158b247 173
+  s_eccb5a85dd4833::t_3fe4a84576f8bc 50
+  s_eccb5a85dd4833::t_2e7bebe791760b 360
+lib/presentation/shortcuts/shortcut_table.dart
+  s_eccb5a85dd4833::t_bb3cce0dcc62cc 719-724
+  s_eccb5a85dd4833::t_96ad593497ef98 74
+  s_eccb5a85dd4833::t_6e807034d73eeb 718
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "3ff791e1b87edbd1abe58da537770b551c0bb626",
+  "prompts": {},
+  "sessions": {
+    "s_eccb5a85dd4833": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "22f87efd-4981-42cb-ba6f-dbc9865c7f77",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
