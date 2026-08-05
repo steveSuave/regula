@@ -6,6 +6,24 @@ Write a fresh entry at the end of every session, before stopping. Do not edit ol
 
 ---
 
+## Session 94 — 2026-08-05
+
+**Done**
+- **Phase 67 — circle relations: Apollonius circle & radical axis**, on `phase-67-circle-relations`. Math first: new `math/circle_relations.dart` (the `harmonic.dart` precedent, not `circle_eq.dart` itself) — `radicalAxis` (null for concentric) and `apolloniusCircle` (null at ratio 1, non-positive or non-finite; center `(A − k²B)/(1 − k²)`, radius `k·|AB|/|1 − k²|`), glados-pinned: equal power on the axis, common chord of intersecting circles lies on it, circle points satisfy the ratio, internal/external division points on the circle, A↔B swap inverts the ratio.
+- `ApolloniusCircle` (`ThreePointCircle` model; recompute feeds `|CA|/|CB|` straight to the helper — C on A/B degenerates to ratio 0/∞, rejected there) via `ThreePointTool` + `buildApolloniusCircle` tear-off, Circles flyout, `G ⇧ A` (`G A` stays the arc). Joins the transform + equivalence whitelists (twelfth rebuildable curve kind — distance ratios survive any similarity).
+- `RadicalAxisLine` (`TwoLineBisectorLine` model minus the branch; identical-instance parents rejected) + `RadicalAxisTool` (`G X`) — the first "click two circles" tool: `PointAndLineTool` slots with `IntersectionTool`'s hit-only curve-tap rules, structural either-order dedupe (the axis is symmetric in its parents). Kept a dedicated class, not a builder-parameterized base, until a second two-circle consumer exists. Excluded from transforms like the other non-point-parent lines. Lines flyout row appended after Polygon.
+- Codec/kind-label/kitchen-sink entries additive, no version bump; both flyout rows appended at the end so drive.js indices hold. 1559 tests green (+32), analyze clean. Merged to `main`.
+
+**Next**
+- No queued phase — Phases 65–67 (the EucliDraw-inspired batch from Session 89) are all done.
+
+**Open questions / gotchas**
+- `G X` is the first G chord whose second stroke is another leader key (`X` opens the macro chords) — the resolver consumes it inside the G chord fine, pinned by the widget test; nothing to do unless a future chord wants `X` as a leader mid-sequence.
+- The radical-axis helper epsilon-guards only near-exact concentricity (`defaultEpsilon`), so nearly-concentric circles yield a well-defined but far-away axis — same conditioning stance as the harmonic conjugate's midpoint guard.
+- `ThreePointTool` gives the Apollonius tool no structural dedupe (same as `ThreePointCircle` itself); fold in a `TriangleCircleTool`-style refusal if duplicate stacking ever annoys — note the order-sensitivity: only (A,B) swaps *with* C fixed give the same circle when the ratio inverts, so blanket permutation-refusal would be wrong.
+
+---
+
 ## Session 93 — 2026-08-05
 
 **Done**
