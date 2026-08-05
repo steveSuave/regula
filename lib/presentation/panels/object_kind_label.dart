@@ -23,6 +23,7 @@ import '../../domain/construction/objects/parallel_line.dart';
 import '../../domain/construction/objects/perpendicular_bisector_line.dart';
 import '../../domain/construction/objects/perpendicular_line.dart';
 import '../../domain/construction/objects/point_on_object.dart';
+import '../../domain/construction/objects/polar_line.dart';
 import '../../domain/construction/objects/projection_point.dart';
 import '../../domain/construction/objects/radical_axis_line.dart';
 import '../../domain/construction/objects/ray.dart';
@@ -62,6 +63,7 @@ String objectKindLabel(GeoObject object) => switch (object) {
       TwoLineBisectorLine() => 'Angle bisector',
       PerpendicularBisectorLine() => 'Perpendicular bisector',
       TangentLine() => 'Tangent line',
+      PolarLine() => 'Polar line',
       RadicalAxisLine() => 'Radical axis',
       GeoLine() => 'Line',
       Arc() => 'Arc',

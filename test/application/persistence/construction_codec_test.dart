@@ -39,6 +39,7 @@ import 'package:regula/domain/construction/objects/parallel_line.dart';
 import 'package:regula/domain/construction/objects/perpendicular_bisector_line.dart';
 import 'package:regula/domain/construction/objects/perpendicular_line.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
+import 'package:regula/domain/construction/objects/polar_line.dart';
 import 'package:regula/domain/construction/objects/polygon.dart';
 import 'package:regula/domain/construction/objects/projection_point.dart';
 import 'package:regula/domain/construction/objects/radical_axis_line.dart';
@@ -134,6 +135,7 @@ Construction buildKitchenSink() {
     // The ratio point sits at (9, 0), outside the radius-4 circle, so the
     // tangent is defined and its geometry participates in the round-trip.
     ..add(TangentLine(id: 'tan', point: ratio, circle: circle, branch: 1))
+    ..add(PolarLine(id: 'pol', point: ratio, circle: circle))
     ..add(tpc)
     ..add(NinePointCircle(id: 'npc', vertex1: a, vertex2: b, vertex3: c))
     ..add(InscribedCircle(id: 'insc', vertex1: a, vertex2: b, vertex3: c))

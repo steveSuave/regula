@@ -573,3 +573,11 @@ Definition of done for each phase: code merged, tests passing, `docs/TODO.md` up
 - [x] Lines flyout: Radical axis moves above Polygon
 - [x] Registration per new concrete object: codec (+ kitchen-sink round-trip), `object_kind_label.dart`, toolbar row, `AppAction` + shortcut row, `main.dart` switch
 - [x] Tests: object recompute/degeneracy units, toolbar row + highlight, `G 2` end-to-end, transform rebuild — analyze clean, suite green
+
+## Phase 71 — Polar line of a point w.r.t. a circle (user request)
+- [x] `docs/PLAN.md` updated first: Phase 71 sentence in the Lines section + build-order item 54
+- [x] Math: `polarLine(pole, CircleEq) → LineEq?` in `circle_relations.dart` (null while the pole sits on the center; tangent at the pole when on the circle; carries the tangent points from outside; La Hire reciprocity) with canonical + glados property tests
+- [x] `PolarLine` (`GeoLine`; point + circle parents on the `TangentLine` model, no branch — the polar is single-valued); undefined while a parent is or the pole is on the center, recovers
+- [x] `PolarLineTool`: `TangentTool`'s two-slot either-order collection (circle taps consumed before the point ladder) committing one line, plus `RadicalAxisTool`'s structural dedupe over identical point + circle instances
+- [x] Registration: codec (+ kitchen-sink round-trip), `object_kind_label.dart`, Lines flyout row *above* Radical axis (below Tangents — point-and-circle tools stay adjacent), `AppAction` + `G ⇧ P` shortcut row, `main.dart` switch, `linesActive` highlight
+- [x] Tests: math units + properties, object recompute/undefined units, tool funnel (slots, dedupe, new-point commit), toolbar row order + highlight, `G ⇧ P` chord — analyze clean, 1589 green

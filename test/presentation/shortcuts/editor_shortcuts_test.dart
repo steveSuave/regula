@@ -47,6 +47,7 @@ import 'package:regula/domain/tools/intersection_tool.dart';
 import 'package:regula/domain/tools/locus_tool.dart';
 import 'package:regula/domain/tools/point_and_line_tool.dart';
 import 'package:regula/domain/tools/point_tool.dart';
+import 'package:regula/domain/tools/polar_line_tool.dart';
 import 'package:regula/domain/tools/polygon_tool.dart';
 import 'package:regula/domain/tools/radical_axis_tool.dart';
 import 'package:regula/domain/tools/random_shape_stamp_tool.dart';
@@ -776,6 +777,20 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
     await tester.sendKeyEvent(LogicalKeyboardKey.keyX);
     expect(activeTool(), isA<RadicalAxisTool>());
+  });
+
+  testWidgets('G ⇧ P activates the polar-line tool', (tester) async {
+    await pumpEditor(tester);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyP);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    expect(
+      activeTool(),
+      isA<PolarLineTool>(),
+      reason: 'G ⇧ P is the polar line — G P stays reflect-about-point',
+    );
   });
 
   testWidgets('G 2 activates the circle-by-diameter tool', (tester) async {

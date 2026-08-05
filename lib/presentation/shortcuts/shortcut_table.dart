@@ -71,6 +71,7 @@ enum AppAction {
   arcTool,
   sectorTool,
   tangentTool,
+  polarLineTool,
   radicalAxisTool,
   reflectAboutLineTool,
   reflectAboutPointTool,
@@ -713,6 +714,13 @@ final List<ShortcutBinding> shortcutTable = [
     AppAction.tangentTool,
     'Tangents from point to circle',
     'G N',
+  ),
+  _g(
+    LogicalKeyboardKey.keyP,
+    AppAction.polarLineTool,
+    'Polar line of a point and circle',
+    'G ⇧ P',
+    shift: true,
   ),
   _g(
     LogicalKeyboardKey.keyX,
