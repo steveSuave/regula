@@ -20,6 +20,7 @@ import 'package:regula/domain/tools/kite_macro_tool.dart';
 import 'package:regula/domain/tools/name_points_tool.dart';
 import 'package:regula/domain/tools/point_and_line_tool.dart';
 import 'package:regula/domain/tools/polygon_tool.dart';
+import 'package:regula/domain/tools/radical_axis_tool.dart';
 import 'package:regula/domain/tools/random_shape_stamp_tool.dart';
 import 'package:regula/domain/tools/rectangle_macro_tool.dart';
 import 'package:regula/domain/tools/regular_polygon_macro_tool.dart';
@@ -27,6 +28,7 @@ import 'package:regula/domain/tools/rhombus_macro_tool.dart';
 import 'package:regula/domain/tools/right_trapezium_macro_tool.dart';
 import 'package:regula/domain/tools/right_triangle_macro_tool.dart';
 import 'package:regula/domain/tools/tangent_tool.dart';
+import 'package:regula/domain/tools/three_point_tool.dart';
 import 'package:regula/domain/tools/transform_object_tool.dart';
 import 'package:regula/domain/tools/triangle_circle_tool.dart';
 import 'package:regula/domain/tools/two_point_tool.dart';
@@ -795,6 +797,43 @@ void main() {
     expect(
       iconColor(tester, Icons.circle_outlined),
       theme.colorScheme.primary,
+    );
+  });
+
+  testWidgets('the Apollonius-circle row activates its tool and highlights '
+      'Circles', (tester) async {
+    await pumpEditor(tester);
+
+    await tester.tap(find.byIcon(Icons.circle_outlined));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Apollonius circle'));
+    await tester.pumpAndSettle();
+
+    final tool = container.read(toolProvider).tool;
+    expect(tool, isA<ThreePointTool>());
+    expect((tool! as ThreePointTool).build, buildApolloniusCircle);
+    final theme = Theme.of(tester.element(find.byType(AppBar)));
+    expect(
+      iconColor(tester, Icons.circle_outlined),
+      theme.colorScheme.primary,
+    );
+  });
+
+  testWidgets('the radical-axis row activates its tool and highlights Lines',
+      (tester) async {
+    await pumpEditor(tester);
+
+    await tester.tap(find.byIcon(Icons.timeline));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Radical axis'));
+    await tester.pumpAndSettle();
+
+    expect(container.read(toolProvider).tool, isA<RadicalAxisTool>());
+    final theme = Theme.of(tester.element(find.byType(AppBar)));
+    expect(iconColor(tester, Icons.timeline), theme.colorScheme.primary);
+    expect(
+      iconColor(tester, Icons.circle_outlined),
+      isNot(theme.colorScheme.primary),
     );
   });
 
