@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/application/providers/tool_provider.dart';
+import 'package:regula/domain/construction/objects/inscribed_circle.dart';
+import 'package:regula/domain/construction/objects/nine_point_circle.dart';
 import 'package:regula/domain/tools/angle_by_size_tool.dart';
 import 'package:regula/domain/tools/area_tool.dart';
 import 'package:regula/domain/tools/distance_tool.dart';
@@ -26,6 +28,7 @@ import 'package:regula/domain/tools/right_trapezium_macro_tool.dart';
 import 'package:regula/domain/tools/right_triangle_macro_tool.dart';
 import 'package:regula/domain/tools/tangent_tool.dart';
 import 'package:regula/domain/tools/transform_object_tool.dart';
+import 'package:regula/domain/tools/triangle_circle_tool.dart';
 import 'package:regula/domain/tools/two_point_tool.dart';
 import 'package:regula/main.dart';
 import 'package:regula/presentation/panels/toolbar.dart';
@@ -753,6 +756,45 @@ void main() {
     expect(
       iconColor(tester, Icons.control_point),
       isNot(theme.colorScheme.primary),
+    );
+  });
+
+  testWidgets('the nine-point-circle row activates its tool and highlights '
+      'Circles', (tester) async {
+    await pumpEditor(tester);
+
+    await tester.tap(find.byIcon(Icons.circle_outlined));
+    await tester.pumpAndSettle();
+    // Parenthetical labels split into two Texts — target the name only.
+    await tester.tap(find.text('Nine-point circle'));
+    await tester.pumpAndSettle();
+
+    final tool = container.read(toolProvider).tool;
+    expect(tool, isA<TriangleCircleTool>());
+    expect((tool! as TriangleCircleTool).buildCircle, NinePointCircle.new);
+    final theme = Theme.of(tester.element(find.byType(AppBar)));
+    expect(
+      iconColor(tester, Icons.circle_outlined),
+      theme.colorScheme.primary,
+    );
+  });
+
+  testWidgets('the inscribed-circle row activates its tool and highlights '
+      'Circles', (tester) async {
+    await pumpEditor(tester);
+
+    await tester.tap(find.byIcon(Icons.circle_outlined));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Inscribed circle'));
+    await tester.pumpAndSettle();
+
+    final tool = container.read(toolProvider).tool;
+    expect(tool, isA<TriangleCircleTool>());
+    expect((tool! as TriangleCircleTool).buildCircle, InscribedCircle.new);
+    final theme = Theme.of(tester.element(find.byType(AppBar)));
+    expect(
+      iconColor(tester, Icons.circle_outlined),
+      theme.colorScheme.primary,
     );
   });
 
