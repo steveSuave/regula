@@ -1,0 +1,63 @@
+test/presentation/panels/toolbar_test.dart
+  s_c3917d75ededca::t_ba166809450fc5 840-876
+test/domain/tools/transform_object_tool_test.dart
+  s_c3917d75ededca::t_12277514495ece 13
+  s_c3917d75ededca::t_5768e7f22f3be9 452-477
+lib/application/persistence/construction_codec.dart
+  s_c3917d75ededca::t_1a29da57ac974f 463-468
+  s_c3917d75ededca::t_7ed0eaf3017315 14
+  s_c3917d75ededca::t_ec8f1302e6048e 204
+test/application/persistence/construction_codec_test.dart
+  s_c3917d75ededca::t_2d6cc180790341 21
+  s_c3917d75ededca::t_4e885a5c8c7305 146
+lib/presentation/panels/object_kind_label.dart
+  s_c3917d75ededca::t_687e52bd6da8bb 10
+  s_c3917d75ededca::t_f83e6f6c7f027f 70
+lib/presentation/shortcuts/shortcut_table.dart
+  s_c3917d75ededca::t_b240265fe15e85 63
+  s_c3917d75ededca::t_774ed7120cd97f 624-628
+  s_c3917d75ededca::t_4328705bd63c85 623
+test/domain/construction/objects/diameter_circle_test.dart
+  s_c3917d75ededca::t_6ed0ba4e001e61 21-22
+  s_c3917d75ededca::t_c63d49050d22da 1-20,23-43
+test/presentation/shortcuts/editor_shortcuts_test.dart
+  s_c3917d75ededca::t_9f60b5346c0dec 781-794
+lib/domain/tools/transform_equivalence.dart
+  s_c3917d75ededca::t_ae129969fa6d36 7
+  s_c3917d75ededca::t_f1cafec124a06c 57
+lib/presentation/panels/toolbar.dart
+  s_c3917d75ededca::t_6e4d24fd13493e 363-366
+  s_c3917d75ededca::t_395028ff7f3a41 15
+  s_c3917d75ededca::t_45edf38fe7b4d4 166
+  s_c3917d75ededca::t_853af9fe7d445d 372-374,382-385
+  s_c3917d75ededca::t_c670166946fa6b 95-97
+  s_c3917d75ededca::t_63169bb633f679 136
+  s_c3917d75ededca::t_9ddbd4d4ef0bb2 178
+  s_c3917d75ededca::t_5c9e5c79dce895 367
+  s_c3917d75ededca::t_a087eab164b680 386
+lib/domain/construction/objects/diameter_circle.dart
+  s_c3917d75ededca::t_b3c25c827ab584 1-40
+lib/domain/tools/transform_object_tool.dart
+  s_c3917d75ededca::t_6a77f5e17ea3e5 239
+  s_c3917d75ededca::t_71d4bed5819a9f 62
+  s_c3917d75ededca::t_f115a628a9c800 445-449
+  s_c3917d75ededca::t_7707bd5aa84773 10
+lib/main.dart
+  s_c3917d75ededca::t_315b7d1f2292a8 671-674
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "8e0a2a40b405c0772d69f3af42cdf1b980d8fb7b",
+  "prompts": {},
+  "sessions": {
+    "s_c3917d75ededca": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "13540958-0472-4dc4-a4f0-cb040fa82d97",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
