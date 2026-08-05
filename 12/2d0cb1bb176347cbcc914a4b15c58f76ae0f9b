@@ -1,0 +1,77 @@
+lib/domain/tools/radical_axis_tool.dart
+  s_a13e50fb18e557::t_5d26f10d854c00 1-73
+lib/presentation/shortcuts/shortcut_table.dart
+  s_a13e50fb18e557::t_8c281c5a69e100 642-647
+  s_a13e50fb18e557::t_d00054f65974d6 711-715
+  s_a13e50fb18e557::t_30e5f61581b93f 66
+  s_a13e50fb18e557::t_c9c1c323f3d8ab 73
+  s_a13e50fb18e557::t_564c9a63e9e9a6 641
+  s_a13e50fb18e557::t_29a421eac96205 710
+lib/application/persistence/construction_codec.dart
+  s_a13e50fb18e557::t_d8473fc80cf4e3 36
+  s_a13e50fb18e557::t_c339fb7cd7f9b0 449-454
+  s_a13e50fb18e557::t_e2e26837169e63 482-488
+  s_a13e50fb18e557::t_3f8973bd46ccf2 5
+  s_a13e50fb18e557::t_77d40d20cd7d07 201,206
+lib/presentation/panels/toolbar.dart
+  s_a13e50fb18e557::t_58b004d07dba8e 167
+  s_a13e50fb18e557::t_03ebabf7a036b6 50
+  s_a13e50fb18e557::t_f83d6856369880 305
+  s_a13e50fb18e557::t_5f0c29cbd79719 358-362
+  s_a13e50fb18e557::t_a74fba0e1790e5 9
+  s_a13e50fb18e557::t_3ff75cc8d634d2 407-411
+  s_a13e50fb18e557::t_23237169949157 368
+  s_a13e50fb18e557::t_8ac7378bcedca4 116-118,130
+lib/main.dart
+  s_a13e50fb18e557::t_b60c4405824a2a 699-700
+  s_a13e50fb18e557::t_41d7b27f64f3db 749-752
+  s_a13e50fb18e557::t_9f9881e0993a41 53
+lib/domain/construction/objects/apollonius_circle.dart
+  s_a13e50fb18e557::t_2b7c1c0435e78c 1-49
+lib/domain/construction/objects/radical_axis_line.dart
+  s_a13e50fb18e557::t_561ae3a0a0b617 1-44
+lib/domain/tools/transform_object_tool.dart
+  s_a13e50fb18e557::t_4ab76498e5df68 242
+  s_a13e50fb18e557::t_df2b08cf24cb94 5
+  s_a13e50fb18e557::t_3149e7d6cd861e 62-63,67-69
+  s_a13e50fb18e557::t_b23e32d5a932ef 461-466
+lib/domain/tools/transform_equivalence.dart
+  s_a13e50fb18e557::t_e8da6987b85789 60
+  s_a13e50fb18e557::t_ad4b8e017ccee3 2
+  s_a13e50fb18e557::t_ad7e6a0c0fcb0c 29
+test/domain/construction/objects/radical_axis_line_test.dart
+  s_a13e50fb18e557::t_c511264e85f04b 1-84
+test/application/persistence/construction_codec_test.dart
+  s_a13e50fb18e557::t_d52cb68f3ad259 12
+  s_a13e50fb18e557::t_d8e787fa1d0656 136,139-140
+  s_a13e50fb18e557::t_9ed6df31a08485 43
+  s_a13e50fb18e557::t_88b9f4348e4eaf 116
+lib/presentation/panels/object_kind_label.dart
+  s_a13e50fb18e557::t_806e2e728d2d17 3
+  s_a13e50fb18e557::t_039bb826651bbd 64
+  s_a13e50fb18e557::t_a3780ae455ec14 71
+  s_a13e50fb18e557::t_6b0de19c989ec1 26
+test/domain/tools/transform_object_tool_test.dart
+  s_a13e50fb18e557::t_cfbb1b085327b8 8
+  s_a13e50fb18e557::t_063b090705c5cd 423-450
+test/domain/construction/objects/apollonius_circle_test.dart
+  s_a13e50fb18e557::t_13a4e946df698d 1-64
+test/domain/tools/radical_axis_tool_test.dart
+  s_a13e50fb18e557::t_0d49a3298532e0 1-117
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "122d0cb1bb176347cbcc914a4b15c58f76ae0f9b",
+  "prompts": {},
+  "sessions": {
+    "s_a13e50fb18e557": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6124839b-5ef3-4e3e-9c46-e7907ffd9538",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
