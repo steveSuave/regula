@@ -1,0 +1,71 @@
+lib/domain/construction/objects/inscribed_circle.dart
+  s_868924825dac75::t_f7f3eb30ef9b3e 1-27
+lib/main.dart
+  s_868924825dac75::t_644a645e4051e2 732-745
+  s_868924825dac75::t_3d9760374b5eec 66
+  s_868924825dac75::t_e51372f2d96d2e 26-27
+lib/domain/construction/objects/triangle_circle.dart
+  s_868924825dac75::t_07ecc88635771a 1-47
+lib/domain/tools/triangle_circle_tool.dart
+  s_868924825dac75::t_41192916afe815 1-54
+lib/presentation/panels/object_kind_label.dart
+  s_868924825dac75::t_898e051d91ecd7 13
+  s_868924825dac75::t_362b4f274ef376 18
+  s_868924825dac75::t_d26b6256b22bd3 66-67
+test/application/persistence/construction_codec_test.dart
+  s_868924825dac75::t_eb9bdbcb26cca4 134-135
+  s_868924825dac75::t_8b17e19bb18719 27
+  s_868924825dac75::t_0029f806eba90d 34
+lib/application/persistence/construction_codec.dart
+  s_868924825dac75::t_3c92d329300ffb 201-202
+  s_868924825dac75::t_949da3f8afe952 20
+  s_868924825dac75::t_90a84fa03b2e9c 27
+  s_868924825dac75::t_a86dff2d5df0ba 458-471
+test/domain/construction/objects/inscribed_circle_test.dart
+  s_868924825dac75::t_5cde0fb5119b85 1-65
+lib/domain/tools/transform_equivalence.dart
+  s_868924825dac75::t_e8df33db1d1ad0 7,9
+  s_868924825dac75::t_a2032b64607588 28-29
+  s_868924825dac75::t_8a69933407cd39 57-58
+lib/domain/tools/transform_object_tool.dart
+  s_868924825dac75::t_9b199ce8af1f0a 60-61
+  s_868924825dac75::t_e28c69ddc8bd69 237-238
+  s_868924825dac75::t_1a679f0a3e818b 11,13
+  s_868924825dac75::t_b12ba9a29389ad 451-462
+lib/presentation/shortcuts/shortcut_table.dart
+  s_868924825dac75::t_c7aba1119a6038 64-65
+  s_868924825dac75::t_46e65c255ce74f 181-182,187-193
+  s_868924825dac75::t_3492bfe77b2ad5 626-638
+lib/domain/construction/objects/nine_point_circle.dart
+  s_868924825dac75::t_e762d2d8370e7d 1-31
+test/domain/construction/objects/nine_point_circle_test.dart
+  s_868924825dac75::t_d1bd1e6ef8dca5 1-67
+test/domain/tools/transform_object_tool_test.dart
+  s_868924825dac75::t_66fbaadcf571a5 14,16
+  s_868924825dac75::t_068a779aa8fcb1 367-421
+test/domain/tools/triangle_circle_tool_test.dart
+  s_868924825dac75::t_d444d7f9648602 1-144
+lib/presentation/panels/toolbar.dart
+  s_868924825dac75::t_fcd9b6c7b80888 165
+  s_868924825dac75::t_23aea710b553d2 385-394
+  s_868924825dac75::t_cb9ca1b70936a9 15,17
+  s_868924825dac75::t_06833fccb4a82f 62
+  s_868924825dac75::t_6c917cd4e1b331 356
+  s_868924825dac75::t_4bbc40022cc2be 576-578
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "48b207ab4fc1f63bd4f5e450acf7a1bc4cf20a46",
+  "prompts": {},
+  "sessions": {
+    "s_868924825dac75": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7ee47832-d21b-4aba-873e-396d8b2a6212",
+        "model": "claude-fable-5"
+      },
+      "human_author": "SLevantis <stefanos.levantis@agileactors.com>"
+    }
+  }
+}
