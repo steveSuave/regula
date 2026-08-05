@@ -11,7 +11,9 @@ import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/compass_circle.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/homothetic_point.dart';
+import 'package:regula/domain/construction/objects/inscribed_circle.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
+import 'package:regula/domain/construction/objects/nine_point_circle.dart';
 import 'package:regula/domain/construction/objects/perpendicular_line.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
 import 'package:regula/domain/construction/objects/reflected_point.dart';
@@ -360,6 +362,61 @@ void main() {
             .closeTo(Vec2(sourceCenter.x, -sourceCenter.y), 1e-12),
         isTrue,
       );
+    });
+
+    test('dilate a nine-point circle: rebuilt over the image triangle', () {
+      final p1 = FreePoint(id: 'p1', position: const Vec2(0, 0));
+      final p2 = FreePoint(id: 'p2', position: const Vec2(4, 0));
+      final p3 = FreePoint(id: 'p3', position: const Vec2(0, 3));
+      final circle =
+          NinePointCircle(id: 'o', vertex1: p1, vertex2: p2, vertex3: p3);
+      final o = FreePoint(id: 'ctr', position: const Vec2(0, 0));
+      final construction = Construction()
+        ..add(p1)
+        ..add(p2)
+        ..add(p3)
+        ..add(circle)
+        ..add(o);
+      final tool = TransformObjectTool.dilate(newId: newId, ratio: 2);
+
+      tool.onInput(ToolInput(const Vec2(1, 2), hit: circle));
+      final result =
+          tool.onInput(ToolInput(o.position, hit: o)) as ToolCommitted;
+
+      (result.command as MacroCommand).apply(construction);
+      final image = construction.objects.last as NinePointCircle;
+      expect(image.circle!.radius, closeTo(2.5, 1e-12));
+      expect(image.circle!.center.closeTo(const Vec2(2, 1.5), 1e-12), isTrue);
+      expect(image.vertex1, isA<HomotheticPoint>());
+    });
+
+    test('translate an inscribed circle: rebuilt over the image triangle', () {
+      final p1 = FreePoint(id: 'p1', position: const Vec2(0, 0));
+      final p2 = FreePoint(id: 'p2', position: const Vec2(4, 0));
+      final p3 = FreePoint(id: 'p3', position: const Vec2(0, 3));
+      final circle =
+          InscribedCircle(id: 'o', vertex1: p1, vertex2: p2, vertex3: p3);
+      final from = FreePoint(id: 'from', position: const Vec2(0, 0));
+      final to = FreePoint(id: 'to', position: const Vec2(10, 1));
+      final construction = Construction()
+        ..add(p1)
+        ..add(p2)
+        ..add(p3)
+        ..add(circle)
+        ..add(from)
+        ..add(to);
+      final tool = TransformObjectTool.translate(newId: newId);
+
+      tool.onInput(ToolInput(const Vec2(1, 1), hit: circle));
+      tool.onInput(ToolInput(from.position, hit: from));
+      final result =
+          tool.onInput(ToolInput(to.position, hit: to)) as ToolCommitted;
+
+      (result.command as MacroCommand).apply(construction);
+      final image = construction.objects.last as InscribedCircle;
+      expect(image.circle!.radius, closeTo(1, 1e-12));
+      expect(image.circle!.center.closeTo(const Vec2(11, 2), 1e-12), isTrue);
+      expect(image.vertex1, isA<TranslatedPoint>());
     });
 
     test('reflect an arc: endpoints mirror, sweep flips sign (via picks the '
