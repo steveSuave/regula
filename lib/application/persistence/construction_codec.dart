@@ -17,12 +17,14 @@ import '../../domain/construction/objects/free_point.dart';
 import '../../domain/construction/objects/harmonic_conjugate_point.dart';
 import '../../domain/construction/objects/homothetic_point.dart';
 import '../../domain/construction/objects/incenter.dart';
+import '../../domain/construction/objects/inscribed_circle.dart';
 import '../../domain/construction/objects/intersection_point.dart';
 import '../../domain/construction/objects/length_measurement.dart';
 import '../../domain/construction/objects/line_angle.dart';
 import '../../domain/construction/objects/line_through_two_points.dart';
 import '../../domain/construction/objects/locus.dart';
 import '../../domain/construction/objects/midpoint.dart';
+import '../../domain/construction/objects/nine_point_circle.dart';
 import '../../domain/construction/objects/orthocenter.dart';
 import '../../domain/construction/objects/parallel_line.dart';
 import '../../domain/construction/objects/perpendicular_bisector_line.dart';
@@ -196,6 +198,8 @@ Map<String, dynamic> _encodeObject(GeoObject object) {
     TangentLine(:final branch) => ('TangentLine', {'branch': branch}),
     CircleCenterPoint() => ('CircleCenterPoint', const {}),
     ThreePointCircle() => ('ThreePointCircle', const {}),
+    NinePointCircle() => ('NinePointCircle', const {}),
+    InscribedCircle() => ('InscribedCircle', const {}),
     CompassCircle() => ('CompassCircle', const {}),
     FixedRadiusCircle(:final radius) => (
         'FixedRadiusCircle',
@@ -449,6 +453,20 @@ GeoObject _decodeObject(Map<String, dynamic> json, Construction construction) {
         point1: point(0),
         point2: point(1),
         point3: point(2),
+        attributes: attributes,
+      ),
+    'NinePointCircle' => NinePointCircle(
+        id: id,
+        vertex1: point(0),
+        vertex2: point(1),
+        vertex3: point(2),
+        attributes: attributes,
+      ),
+    'InscribedCircle' => InscribedCircle(
+        id: id,
+        vertex1: point(0),
+        vertex2: point(1),
+        vertex3: point(2),
         attributes: attributes,
       ),
     'CompassCircle' => CompassCircle(
