@@ -1,4 +1,4 @@
-/// A parsed Newclid problem, built as a regula2 [Construction] (Phase 167).
+/// A parsed Newclid problem, built as a regula [Construction] (Phase 167).
 ///
 /// The mapping is not guessed from macro names: every construction's
 /// meaning was read off `newclid/src/newclid/jgex/constructions/*.py`,
@@ -72,7 +72,7 @@ enum UntranslatableReason {
   /// A construction macro this translator does not implement.
   unknownMacro,
 
-  /// A goal predicate outside regula2's ten, or at an arity it does not
+  /// A goal predicate outside regula's ten, or at an arity it does not
   /// have (`cyclic` over five points is a conjunction, not a fact).
   unsupportedGoal,
 

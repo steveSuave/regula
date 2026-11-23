@@ -1,8 +1,8 @@
-# regula2
+# regula
 
 A cross-platform (web, Android, iOS) dynamic geometry app built with Flutter.
 
-**Live at <https://stevesuave.github.io/regula2/>** — every push to `main` builds
+**Live at <https://stevesuave.github.io/regula/>** — every push to `main` builds
 `flutter build web --wasm --release` and publishes it to GitHub Pages.
 
 Construct points, lines, circles, conics and derived objects (intersections,

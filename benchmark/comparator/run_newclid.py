@@ -1,6 +1,6 @@
-"""Phase 175: Newclid over the corpus, as the comparator regula2 lacks.
+"""Phase 175: Newclid over the corpus, as the comparator regula lacks.
 
-One goal per problem, matching regula2's parser (several goals after one
+One goal per problem, matching regula's parser (several goals after one
 `?` are several problems), so the proved sets are comparable goal by
 goal. Auxiliary sections are not built, matching both defaults.
 

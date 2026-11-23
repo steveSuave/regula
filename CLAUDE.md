@@ -1,4 +1,4 @@
-# Claude Code Working Notes — regula2
+# Claude Code Working Notes — regula
 
 Auto-loaded into every session. A dynamic geometry app for web, Android and iOS, in Flutter. The kernel is **complex projective**: homogeneous coordinates over ℂ, drags resolved by analytic continuation, so intersection points never jump and loci are complete. The construction is a DAG whose only mutable roots are free points. The repo carries regula's full history (V1 ends at tag `v1-final`).
 
@@ -36,7 +36,7 @@ flutter run -d chrome
 dart format lib test benchmark   # in its own commit when it would mix with a behaviour change
 ```
 
-- **`main` is deployed.** `origin` is `github.com:steveSuave/regula2`; every push to `main` runs `ci.yml`, `benchmarks.yml` (informational) and `deploy.yml`, which publishes the wasm build to https://stevesuave.github.io/regula2/. Check `gh run list` after a merge.
+- **`main` is deployed.** `origin` is `github.com:steveSuave/regula`; every push to `main` runs `ci.yml`, `benchmarks.yml` (informational) and `deploy.yml`, which publishes the wasm build to https://stevesuave.github.io/regula/. Check `gh run list` after a merge.
 - **`test/web/` is the browser gate.** A green VM suite is not evidence about the renderer: anything resting on the rasterizer (path booleans, fill rules, blend modes, text metrics) is tested there behind `@TestOn('browser')`. Prefer a formulation with no platform-dependent step.
 
 ## Conventions

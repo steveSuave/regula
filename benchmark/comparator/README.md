@@ -15,17 +15,17 @@ cd ~/Code/var/Newclid
 
 # 2. check first whether the two unpatched blockers are gone upstream
 .venv/bin/pip index versions newclid              # was 3.0.1, the latest
-python3 <regula2>/benchmark/comparator/patch_newclid.py ~/Code/var/Newclid/.venv
+python3 <regula>/benchmark/comparator/patch_newclid.py ~/Code/var/Newclid/.venv
 
-# 3. regula2's side: the built set, source-qualified
-cd <regula2>
+# 3. regula's side: the built set, source-qualified
+cd <regula>
 dart run benchmark/corpus_bench.dart --verbose > /tmp/regula.log
 grep -oE "^  (proved|unproved|undecided|refuted) +\S+" /tmp/regula.log \
   | awk '{print $2}' > /tmp/built_keys.txt
 
 # 4. the comparator (~25 min for 150 keys at NC_TIMEOUT=30)
 cd ~/Code/var/Newclid && NC_TIMEOUT=30 .venv/bin/python \
-  <regula2>/benchmark/comparator/run_newclid.py \
+  <regula>/benchmark/comparator/run_newclid.py \
   newclid/problems_datasets /tmp/nc.json /tmp/built_keys.txt
 ```
 
@@ -61,7 +61,7 @@ cd ~/Code/var/Newclid
 
 `run_newclid.py` takes the corpus directory, an output JSON path, and
 optionally a file of `source:name` keys to restrict to — the natural
-one being regula2's own built set, which
+one being regula's own built set, which
 `dart run benchmark/corpus_bench.dart --verbose` prints (its verbose
 lines are source-qualified for exactly this reason).
 
@@ -74,7 +74,7 @@ cd ~/Code/var/Newclid && NC_TIMEOUT=30 .venv/bin/python \
 ```
 
 Two decisions in the harness are worth knowing. It splits multi-goal
-lines **one goal per problem**, matching regula2's parser, so the two
+lines **one goal per problem**, matching regula's parser, so the two
 proved sets are comparable goal by goal. And each problem runs in a
 **forked child with a hard timeout**, because Newclid blocks in C for
 long stretches and an in-process `SIGALRM` does not bite — one problem
