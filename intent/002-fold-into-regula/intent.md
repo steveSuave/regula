@@ -15,7 +15,7 @@ The app was forked into a second repository, `steveSuave/regula2`, when the V2 k
 
 ## Decisions already made (2026-11-16)
 
-- Fast-forward push into `regula`; no force push, no repo rename.
+- Fast-forward push into `regula`; no force push, no repo rename. **Amended 2026-11-23:** before `regula` goes public, its history is rewritten to replace the author emails (see Resolved questions), and that is pushed with one `--force-with-lease`. The fast-forward push already happened, and `regula` was private throughout.
 - `regula` becomes public.
 - `regula2` is archived with a redirect, not deleted.
 - The V1 app does not stay live. It remains recoverable from tag `v1-final`.
@@ -47,6 +47,8 @@ The app was forked into a second repository, `steveSuave/regula2`, when the V2 k
 - **Old local checkout:** deleted once the push is verified and the checkout is re-confirmed clean, with no stashes and no unpushed branches. Tag `v1-final` and `regula`'s own history keep V1 recoverable.
 - **Service worker (delegated, decided):** no code. The new build is served from the same `/regula/` scope, so the browser's byte-check of the service worker file replaces the old worker on the next visit. The plan includes a post-deploy check that a returning visitor gets the new build; it becomes work only if that check fails.
 - **Deep-link redirect (delegated, decided):** yes. `regula2`'s Pages site gets a small `404.html` plus `index.html` that redirect to the same path under `/regula/`, keeping query and hash. It is a few lines and costs nothing.
+
+- **Emails (2026-11-23):** the history carries a work address (989 commits, the `v0.1` and `v0.2` tags) and a local placeholder `git-ai@local` (844 commits). Before going public, both emails are rewritten to the personal Gmail address already on one commit; names are kept. The rewrite touches only identities. The tree of every commit stays byte-identical, which is checked. All SHAs change, including `7ef44db`, so tag `v1-final` moves to its rewritten commit. A bundle of the pre-rewrite state is kept outside the repo.
 
 ## Open questions
 
