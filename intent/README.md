@@ -6,13 +6,13 @@ One folder per change, following Anthropic's AI-native SDLC playbook: `intent.md
 |---|---|---|---|
 | 001 | [Docs follow the intent → spec → plan method](001-docs-method/intent.md) | done 2026-11-23; [spec](001-docs-method/spec.md), [plan](001-docs-method/plan.md) | — |
 | 002 | [regula2 becomes regula again](002-fold-into-regula/intent.md) | done 2026-11-23; [spec](002-fold-into-regula/spec.md), [plan](002-fold-into-regula/plan.md) | 001 |
-| 003 | [Prover is experimental, off by default](003-prover-flag/intent.md) | draft, awaiting review | 002 (so it ships to the final URL) |
+| 003 | [Prover is experimental, off by default](003-prover-flag/intent.md) | accepted 2026-11-23; [spec](003-prover-flag/spec.md), [plan](003-prover-flag/plan.md) awaiting approval | 002 (so it ships to the final URL) |
 | 004 | [Stereometry](004-stereometry/intent.md) | draft, awaiting review | 001; after 003 |
 | 005 | [CI is green again on Flutter stable](005-toolchain-3-50/intent.md) | part 1 done (workflows pinned to Flutter 3.47.2); part 2 (upgrade to Flutter 3.50 and `material_ui`): done and merged 2026-11-23 (Flutter 3.50.1, `material_ui`); [spec](005-toolchain-3-50/spec.md), [plan](005-toolchain-3-50/plan.md) | — |
 
 ## Where the next session starts
 
-**Intent 003**: a draft; the user reviews it, then spec and plan, then code. Then 004 the same way.
+**Intent 003**: the plan awaits approval, then code from its step 1. Then 004: a draft for review.
 
 ## Parked
 
