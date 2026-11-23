@@ -229,11 +229,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   /// resize the canvas.
   bool _showInspector = false;
 
-  /// Whether the proof panel is docked (M-P4). Ephemeral UI state like
-  /// [_showObjectTree], and hidden by default for the same reason: the
-  /// prover is the on-demand path, and a panel that opened itself would
-  /// be the always-on one.
-  bool _showProofPanel = false;
+  /// Whether the phone's proof sheet is up. The prover being on is the
+  /// panel being open (intent 007), and on a phone the panel is a modal
+  /// route, so this is what keeps a second sheet from stacking on it.
+  bool _proofSheetOpen = false;
 
   /// The last drag-selected export region (canvas screen coordinates) and
   /// the last-used export options — kept so the dialog reopens where the
@@ -1110,7 +1109,6 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     required bool hideDeleteActive,
     required UndoRedoState undoRedo,
     required bool toolMidCollection,
-    required bool proverOn,
   }) {
     return LayoutBuilder(
       builder: (context, constraints) => SingleChildScrollView(
@@ -1183,24 +1181,9 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                   onPressed: () => ref.read(viewportProvider.notifier).reset(),
                 ),
                 _gridMenu(),
+                // The prover has no button of its own: "Prover" in this
+                // menu opens and closes its panel (intent 007).
                 GeometryMenu(onFrameAbsolute: _frameAbsolute),
-                // Beside the geometry menu (user request): both answer
-                // questions *about* the document rather than editing it,
-                // and the prover's vocabulary is Euclidean, so which
-                // geometry is selected decides whether it can speak at
-                // all. The panel follows the object tree's gate — docked
-                // where there is room, a sheet where there is not, since
-                // both drawers are already spoken for. Absent until the
-                // user opts in (intent 003).
-                if (proverOn)
-                  IconButton(
-                    tooltip: 'Proof',
-                    isSelected: !compactPanels && _showProofPanel,
-                    icon: const Icon(Icons.fact_check_outlined),
-                    onPressed: () => compactPanels
-                        ? _openProofSheet()
-                        : setState(() => _showProofPanel = !_showProofPanel),
-                  ),
                 IconButton(
                   tooltip: 'Keyboard shortcuts (?)',
                   isSelected: _showCheatSheet,
@@ -1528,7 +1511,14 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   /// dismisses it. `shouldCloseOnMinExtent: false` is what keeps those
   /// separate — dragging the list all the way down tucks the sheet away
   /// rather than closing a proof the reader was in the middle of.
+  ///
+  /// The prover is on exactly while its panel is open (intent 007), so
+  /// dismissing the sheet turns it off — except when the sheet closed
+  /// itself to let a question be built on the figure, which reopens it
+  /// once the question is asked or the builder is closed.
   void _openProofSheet() {
+    if (_proofSheetOpen) return;
+    _proofSheetOpen = true;
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
@@ -1546,7 +1536,13 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         builder: (context, controller) =>
             ProofPanel(scrollController: controller),
       ),
-    );
+    ).then((_) {
+      _proofSheetOpen = false;
+      if (!mounted) return;
+      if (ref.read(questionDraftProvider) == null) {
+        ref.read(experimentalProverProvider.notifier).set(false);
+      }
+    });
   }
 
   @override
@@ -1584,14 +1580,23 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     final toolMidCollection = ref.watch(
       toolProvider.select((state) => state.tool?.hasPartialInput ?? false),
     );
-    // Intent 003: every prover surface hangs off this one flag. The
-    // preference's own notifier tears the prover's state down when it
-    // goes off; what is left here is the panel's open flag, which is
-    // this widget's, so that turning the prover back on shows the
-    // button and not a panel nobody asked for.
+    // Every prover surface hangs off this one flag (intents 003, 007):
+    // on is the panel open. Docked, that is just the build below; on a
+    // phone the sheet is a route, opened here when the flag goes on and
+    // again when a question the sheet stepped aside for is done with.
+    // The flag's own notifier tears the prover down when it goes off,
+    // before it closes the draft, so the second listener sees it off.
     final proverOn = ref.watch(experimentalProverProvider);
     ref.listen(experimentalProverProvider, (_, on) {
-      if (!on && _showProofPanel) setState(() => _showProofPanel = false);
+      if (on && compactPanels) _openProofSheet();
+    });
+    ref.listen(questionDraftProvider, (previous, next) {
+      if (previous != null &&
+          next == null &&
+          compactPanels &&
+          ref.read(experimentalProverProvider)) {
+        _openProofSheet();
+      }
     });
     final drawerWidth = math.min(
       AttributesInspector.panelWidth,
@@ -1630,7 +1635,6 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
             hideDeleteActive: hideDeleteActive,
             undoRedo: undoRedo,
             toolMidCollection: toolMidCollection,
-            proverOn: proverOn,
           ),
           // Non-empty actions suppress the end-drawer button Material
           // injects when `endDrawer` is set — the inspector drawer opens
@@ -1678,11 +1682,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                               left: 0,
                               right: 0,
                               bottom: 0,
-                              child: QuestionBuilderBar(
-                                onAsked: () => compactPanels
-                                    ? _openProofSheet()
-                                    : setState(() => _showProofPanel = true),
-                              ),
+                              child: const QuestionBuilderBar(),
                             ),
                           // Sits on top of (and exactly over) the canvas,
                           // so its local coordinates are canvas
@@ -1696,7 +1696,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                       ),
                     ),
                   ),
-                  if (proverOn && !compactPanels && _showProofPanel)
+                  if (proverOn && !compactPanels)
                     const SizedBox(
                       width: ProofPanel.panelWidth,
                       child: ProofPanel(),

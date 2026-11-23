@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:regula/application/providers/construction_provider.dart';
+import 'package:regula/application/providers/experimental_prover_provider.dart';
 import 'package:regula/application/providers/prover_provider.dart';
 import 'package:regula/application/providers/question_draft_provider.dart';
 import 'package:regula/application/providers/selection_provider.dart';
@@ -70,8 +71,9 @@ void main() {
     );
   }
 
+  /// "Prover" in the geometry menu, which is the panel (intent 007).
   Future<void> openPanel(WidgetTester tester) async {
-    await tester.tap(find.byTooltip('Proof'));
+    container.read(experimentalProverProvider.notifier).set(true);
     await tester.pump();
   }
 
@@ -113,7 +115,7 @@ void main() {
       tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Ask'));
 
   setUp(() async {
-    container = await editorContainer(prover: true);
+    container = await editorContainer();
   });
 
   group('the question builder', () {
@@ -279,18 +281,7 @@ void main() {
     }
 
     Future<void> openSheet(WidgetTester tester) async {
-      await tester.scrollUntilVisible(
-        find.descendant(
-          of: find.byType(AppBar),
-          matching: find.byIcon(Icons.fact_check_outlined),
-        ),
-        80,
-        scrollable: find.descendant(
-          of: find.byType(AppBar),
-          matching: find.byType(Scrollable),
-        ),
-      );
-      await tester.tap(find.byIcon(Icons.fact_check_outlined));
+      container.read(experimentalProverProvider.notifier).set(true);
       await tester.pumpAndSettle();
     }
 

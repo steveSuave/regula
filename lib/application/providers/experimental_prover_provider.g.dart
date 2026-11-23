@@ -8,14 +8,15 @@ part of 'experimental_prover_provider.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Whether the prover's surfaces exist at all: "Experimental: prover" in
-/// the view menu, off on a fresh install (DECISIONS §"The prover is
-/// behind a device preference").
+/// Whether the prover is on: "Prover" under the Experimental header of
+/// the geometry menu, off on every fresh load (DECISIONS §"The prover is an
+/// experimental toggle in the geometry menu").
 ///
-/// A preference of the device, beside [themeModeProvider], not of the
-/// document: a file opens the same whoever has the prover on. Writes are
-/// fire-and-forget like the theme's, and off is stored as no key at all,
-/// so an opted-out device and a fresh one hold the same thing.
+/// On *is* the prover's panel being open — docked where there is room,
+/// a sheet where there is not — so there is no separate Proof button to
+/// lose. Session state, like the object tree's visibility, and not
+/// stored: a stored "on" would come back on a phone as a prover with no
+/// sheet showing.
 ///
 /// **Off tears the prover's state down here, not in the widget that
 /// flips it**, so every route to off gets the same teardown. The
@@ -25,14 +26,15 @@ part of 'experimental_prover_provider.dart';
 @ProviderFor(ExperimentalProverNotifier)
 final experimentalProverProvider = ExperimentalProverNotifierProvider._();
 
-/// Whether the prover's surfaces exist at all: "Experimental: prover" in
-/// the view menu, off on a fresh install (DECISIONS §"The prover is
-/// behind a device preference").
+/// Whether the prover is on: "Prover" under the Experimental header of
+/// the geometry menu, off on every fresh load (DECISIONS §"The prover is an
+/// experimental toggle in the geometry menu").
 ///
-/// A preference of the device, beside [themeModeProvider], not of the
-/// document: a file opens the same whoever has the prover on. Writes are
-/// fire-and-forget like the theme's, and off is stored as no key at all,
-/// so an opted-out device and a fresh one hold the same thing.
+/// On *is* the prover's panel being open — docked where there is room,
+/// a sheet where there is not — so there is no separate Proof button to
+/// lose. Session state, like the object tree's visibility, and not
+/// stored: a stored "on" would come back on a phone as a prover with no
+/// sheet showing.
 ///
 /// **Off tears the prover's state down here, not in the widget that
 /// flips it**, so every route to off gets the same teardown. The
@@ -40,14 +42,15 @@ final experimentalProverProvider = ExperimentalProverNotifierProvider._();
 /// never read this.
 final class ExperimentalProverNotifierProvider
     extends $NotifierProvider<ExperimentalProverNotifier, bool> {
-  /// Whether the prover's surfaces exist at all: "Experimental: prover" in
-  /// the view menu, off on a fresh install (DECISIONS §"The prover is
-  /// behind a device preference").
+  /// Whether the prover is on: "Prover" under the Experimental header of
+  /// the geometry menu, off on every fresh load (DECISIONS §"The prover is an
+  /// experimental toggle in the geometry menu").
   ///
-  /// A preference of the device, beside [themeModeProvider], not of the
-  /// document: a file opens the same whoever has the prover on. Writes are
-  /// fire-and-forget like the theme's, and off is stored as no key at all,
-  /// so an opted-out device and a fresh one hold the same thing.
+  /// On *is* the prover's panel being open — docked where there is room,
+  /// a sheet where there is not — so there is no separate Proof button to
+  /// lose. Session state, like the object tree's visibility, and not
+  /// stored: a stored "on" would come back on a phone as a prover with no
+  /// sheet showing.
   ///
   /// **Off tears the prover's state down here, not in the widget that
   /// flips it**, so every route to off gets the same teardown. The
@@ -81,16 +84,17 @@ final class ExperimentalProverNotifierProvider
 }
 
 String _$experimentalProverNotifierHash() =>
-    r'b7f3ac2fb70224a710b3251170c43d0754f45154';
+    r'a4f28f3d468998fd3463ecd67a6d5008d2f2fcbd';
 
-/// Whether the prover's surfaces exist at all: "Experimental: prover" in
-/// the view menu, off on a fresh install (DECISIONS §"The prover is
-/// behind a device preference").
+/// Whether the prover is on: "Prover" under the Experimental header of
+/// the geometry menu, off on every fresh load (DECISIONS §"The prover is an
+/// experimental toggle in the geometry menu").
 ///
-/// A preference of the device, beside [themeModeProvider], not of the
-/// document: a file opens the same whoever has the prover on. Writes are
-/// fire-and-forget like the theme's, and off is stored as no key at all,
-/// so an opted-out device and a fresh one hold the same thing.
+/// On *is* the prover's panel being open — docked where there is room,
+/// a sheet where there is not — so there is no separate Proof button to
+/// lose. Session state, like the object tree's visibility, and not
+/// stored: a stored "on" would come back on a phone as a prover with no
+/// sheet showing.
 ///
 /// **Off tears the prover's state down here, not in the widget that
 /// flips it**, so every route to off gets the same teardown. The
