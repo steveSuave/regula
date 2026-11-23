@@ -113,7 +113,7 @@ void main() {
       tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Ask'));
 
   setUp(() async {
-    container = await editorContainer();
+    container = await editorContainer(prover: true);
   });
 
   group('the question builder', () {

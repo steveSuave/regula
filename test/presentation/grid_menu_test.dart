@@ -58,8 +58,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(settings(), const DocumentSettings(showAxes: true, showGrid: true));
 
-    // The menu re-opens with the toggled items checked (snap still off),
-    // and tapping unchecks.
+    // The menu re-opens with the toggled items checked (snap still off,
+    // and intent 003's Experimental: prover off on a fresh install), and
+    // tapping unchecks.
     await tester.tap(find.byIcon(Icons.grid_4x4));
     await tester.pumpAndSettle();
     expect(
@@ -68,7 +69,7 @@ void main() {
             find.byType(CheckedPopupMenuItem<VoidCallback>),
           )
           .map((item) => item.checked),
-      [true, true, false],
+      [true, true, false, false],
     );
     await tapItem(tester, 'Show grid');
     await tester.pumpAndSettle();

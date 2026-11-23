@@ -13,6 +13,7 @@ import 'application/persistence/file_io.dart';
 import 'application/providers/command_stack_provider.dart';
 import 'application/providers/construction_provider.dart';
 import 'application/providers/document_settings_provider.dart';
+import 'application/providers/experimental_prover_provider.dart';
 import 'application/providers/preferences_provider.dart';
 import 'application/providers/prover_provider.dart';
 import 'application/providers/question_draft_provider.dart';
@@ -1109,6 +1110,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     required bool hideDeleteActive,
     required UndoRedoState undoRedo,
     required bool toolMidCollection,
+    required bool proverOn,
   }) {
     return LayoutBuilder(
       builder: (context, constraints) => SingleChildScrollView(
@@ -1188,15 +1190,17 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                 // geometry is selected decides whether it can speak at
                 // all. The panel follows the object tree's gate — docked
                 // where there is room, a sheet where there is not, since
-                // both drawers are already spoken for.
-                IconButton(
-                  tooltip: 'Proof',
-                  isSelected: !compactPanels && _showProofPanel,
-                  icon: const Icon(Icons.fact_check_outlined),
-                  onPressed: () => compactPanels
-                      ? _openProofSheet()
-                      : setState(() => _showProofPanel = !_showProofPanel),
-                ),
+                // both drawers are already spoken for. Absent until the
+                // user opts in (intent 003).
+                if (proverOn)
+                  IconButton(
+                    tooltip: 'Proof',
+                    isSelected: !compactPanels && _showProofPanel,
+                    icon: const Icon(Icons.fact_check_outlined),
+                    onPressed: () => compactPanels
+                        ? _openProofSheet()
+                        : setState(() => _showProofPanel = !_showProofPanel),
+                  ),
                 IconButton(
                   tooltip: 'Keyboard shortcuts (?)',
                   isSelected: _showCheatSheet,
@@ -1463,13 +1467,17 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     );
   }
 
-  /// The Phase 36 axes/grid popup: two checked items flipping the
-  /// per-document `DocumentSettings` toggles — view chrome like the
-  /// viewport buttons around it, not undoable, persisted per document.
+  /// The view menu: the Phase 36 axes/grid popup, whose checked items
+  /// flip the per-document `DocumentSettings` toggles — view chrome like
+  /// the viewport buttons around it, not undoable, persisted per
+  /// document — and below them the Experimental section (intent 003),
+  /// whose items are device preferences instead, which is why they sit
+  /// under their own header.
   Widget _gridMenu() {
     final settings = ref.watch(documentSettingsProvider);
+    final proverOn = ref.watch(experimentalProverProvider);
     return PopupMenuButton<VoidCallback>(
-      tooltip: 'Axes & grid',
+      tooltip: 'View',
       popUpAnimationStyle: AnimationStyle.noAnimation,
       icon: const Icon(Icons.grid_4x4),
       onSelected: (action) => action(),
@@ -1501,6 +1509,21 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
             label: 'Snap to grid',
             display: shortcutDisplayFor(AppAction.toggleSnapToGrid),
           ),
+        ),
+        const PopupMenuDivider(),
+        PopupMenuItem(
+          enabled: false,
+          height: 32,
+          child: Text(
+            'Experimental',
+            style: Theme.of(context).textTheme.labelSmall,
+          ),
+        ),
+        CheckedPopupMenuItem(
+          checked: proverOn,
+          value: () =>
+              ref.read(experimentalProverProvider.notifier).set(!proverOn),
+          child: const ToolMenuRow(label: 'Prover', display: null),
         ),
       ],
     );
@@ -1580,6 +1603,15 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     final toolMidCollection = ref.watch(
       toolProvider.select((state) => state.tool?.hasPartialInput ?? false),
     );
+    // Intent 003: every prover surface hangs off this one flag. The
+    // preference's own notifier tears the prover's state down when it
+    // goes off; what is left here is the panel's open flag, which is
+    // this widget's, so that turning the prover back on shows the
+    // button and not a panel nobody asked for.
+    final proverOn = ref.watch(experimentalProverProvider);
+    ref.listen(experimentalProverProvider, (_, on) {
+      if (!on && _showProofPanel) setState(() => _showProofPanel = false);
+    });
     final drawerWidth = math.min(
       AttributesInspector.panelWidth,
       MediaQuery.sizeOf(context).width * 0.85,
@@ -1617,6 +1649,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
             hideDeleteActive: hideDeleteActive,
             undoRedo: undoRedo,
             toolMidCollection: toolMidCollection,
+            proverOn: proverOn,
           ),
           // Non-empty actions suppress the end-drawer button Material
           // injects when `endDrawer` is set — the inspector drawer opens
@@ -1659,7 +1692,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                           // canvas's bottom on every layout: it is
                           // filled by tapping the figure, which a
                           // phone's proof sheet would cover.
-                          if (buildingQuestion)
+                          if (proverOn && buildingQuestion)
                             Positioned(
                               left: 0,
                               right: 0,
@@ -1682,7 +1715,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                       ),
                     ),
                   ),
-                  if (!compactPanels && _showProofPanel)
+                  if (proverOn && !compactPanels && _showProofPanel)
                     const SizedBox(
                       width: ProofPanel.panelWidth,
                       child: ProofPanel(),

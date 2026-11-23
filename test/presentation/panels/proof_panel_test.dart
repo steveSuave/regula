@@ -163,7 +163,7 @@ void main() {
   }
 
   setUp(() async {
-    container = await editorContainer();
+    container = await editorContainer(prover: true);
   });
 
   group('provableGoals', () {
