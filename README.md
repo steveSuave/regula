@@ -84,8 +84,10 @@ Document and workspace:
   **PNG export**
 - **Light/dark theme**
 
-Also built in: a JGEX-style deductive-database theorem prover whose proofs replay
-step by step on the figure. Next is stereometry; see `intent/README.md`.
+Also built in, as an experimental feature that is off by default: a JGEX-style
+deductive-database theorem prover whose proofs replay step by step on the figure.
+Turn it on under **View → Experimental → Prover**. Next is stereometry; see
+`intent/README.md`.
 
 ## Non-goals
 
