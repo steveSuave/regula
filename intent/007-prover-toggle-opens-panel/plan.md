@@ -15,3 +15,4 @@ Written 2026-11-24 from [spec](spec.md) · Status: done 2026-11-24 · Branch: `i
 
 - Step 1: the prover widget tests open the panel through the flag (the same call the menu item makes) instead of tapping the Proof button. Mutation checks: without the sheet's off-on-dismiss, "dismissing the sheet turns the prover off" fails; without the draft listener's reopen, both phone question tests fail.
 - Gate: VM 3566 (the provider test lost its two storage cases for one toggle case; `prover_flag_test` gained two phone cases), browser 15, analyze clean.
+- Step 2: merged as `d2e6730`; CI, Benchmarks and Deploy green. Live, at full width: the globe's Prover item docks the panel with no icon added, and unchecking it closes the panel. The phone sheet was not driven live; its behaviour rests on the widget tests.
