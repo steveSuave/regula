@@ -10,6 +10,7 @@ One folder per change, following Anthropic's AI-native SDLC playbook: `intent.md
 | 004 | [Stereometry](004-stereometry/intent.md) | draft, awaiting review | 001; after 003 |
 | 005 | [CI is green again on Flutter stable](005-toolchain-3-50/intent.md) | part 1 done (workflows pinned to Flutter 3.47.2); part 2 (upgrade to Flutter 3.50 and `material_ui`): done and merged 2026-11-23 (Flutter 3.50.1, `material_ui`); [spec](005-toolchain-3-50/spec.md), [plan](005-toolchain-3-50/plan.md) | — |
 | 006 | [The prover toggle moves to the geometry menu](006-prover-toggle-geometry-menu/intent.md) | done 2026-11-24 (express); [spec](006-prover-toggle-geometry-menu/spec.md), [plan](006-prover-toggle-geometry-menu/plan.md) | 003 |
+| 007 | [The geometry menu's Prover item opens the prover](007-prover-toggle-opens-panel/intent.md) | done 2026-11-24 (express); [spec](007-prover-toggle-opens-panel/spec.md), [plan](007-prover-toggle-opens-panel/plan.md) | 006 |
 
 ## Where the next session starts
 

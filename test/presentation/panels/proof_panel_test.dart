@@ -9,6 +9,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:regula/application/persistence/construction_codec.dart';
 import 'package:regula/application/providers/command_stack_provider.dart';
 import 'package:regula/application/providers/construction_provider.dart';
+import 'package:regula/application/providers/experimental_prover_provider.dart';
 import 'package:regula/application/providers/proof_highlight_provider.dart';
 import 'package:regula/application/providers/prover_provider.dart';
 import 'package:regula/application/providers/selection_provider.dart';
@@ -101,8 +102,9 @@ void main() {
     );
   }
 
+  /// "Prover" in the geometry menu, which is the panel (intent 007).
   Future<void> openPanel(WidgetTester tester) async {
-    await tester.tap(find.byTooltip('Proof'));
+    container.read(experimentalProverProvider.notifier).set(true);
     await tester.pump();
   }
 
@@ -163,7 +165,7 @@ void main() {
   }
 
   setUp(() async {
-    container = await editorContainer(prover: true);
+    container = await editorContainer();
   });
 
   group('provableGoals', () {
@@ -285,7 +287,7 @@ void main() {
       expect(find.byType(ProofPanel), findsOneWidget);
       expect(find.textContaining('Nothing proved yet'), findsOneWidget);
 
-      await tester.tap(find.byTooltip('Proof'));
+      container.read(experimentalProverProvider.notifier).set(false);
       await tester.pump();
       expect(find.byType(ProofPanel), findsNothing);
     });
@@ -575,7 +577,7 @@ void main() {
       // The canvas outlives the panel; it must not be left pulsing at a
       // step nobody is looking at. The clear is post-frame (a provider
       // may not be modified inside `dispose`), so settle for it.
-      await tester.tap(find.byTooltip('Proof'));
+      container.read(experimentalProverProvider.notifier).set(false);
       await tester.pumpAndSettle();
 
       expect(container.read(proofHighlightProvider), isEmpty);
@@ -2032,18 +2034,7 @@ void main() {
     }
 
     Future<void> openSheet(WidgetTester tester) async {
-      await tester.scrollUntilVisible(
-        find.descendant(
-          of: find.byType(AppBar),
-          matching: find.byIcon(Icons.fact_check_outlined),
-        ),
-        80,
-        scrollable: find.descendant(
-          of: find.byType(AppBar),
-          matching: find.byType(Scrollable),
-        ),
-      );
-      await tester.tap(find.byIcon(Icons.fact_check_outlined));
+      container.read(experimentalProverProvider.notifier).set(true);
       await tester.pumpAndSettle();
     }
 

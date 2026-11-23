@@ -86,7 +86,8 @@ Document and workspace:
 
 Also built in, as an experimental feature that is off by default: a JGEX-style
 deductive-database theorem prover whose proofs replay step by step on the figure.
-Turn it on in the geometry menu (the globe): **Experimental → Prover**. Next is stereometry; see
+Open it from the geometry menu (the globe): **Experimental → Prover**, which
+shows its panel. Next is stereometry; see
 `intent/README.md`.
 
 ## Non-goals

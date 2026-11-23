@@ -1,22 +1,20 @@
-import 'dart:async';
-
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import 'preferences_provider.dart';
 import 'proof_highlight_provider.dart';
 import 'prover_provider.dart';
 import 'question_draft_provider.dart';
 
 part 'experimental_prover_provider.g.dart';
 
-/// Whether the prover's surfaces exist at all: "Experimental: prover" in
-/// the geometry menu, off on a fresh install (DECISIONS §"The prover is
-/// behind a device preference").
+/// Whether the prover is on: "Prover" under the Experimental header of
+/// the geometry menu, off on every fresh load (DECISIONS §"The prover is an
+/// experimental toggle in the geometry menu").
 ///
-/// A preference of the device, beside [themeModeProvider], not of the
-/// document: a file opens the same whoever has the prover on. Writes are
-/// fire-and-forget like the theme's, and off is stored as no key at all,
-/// so an opted-out device and a fresh one hold the same thing.
+/// On *is* the prover's panel being open — docked where there is room,
+/// a sheet where there is not — so there is no separate Proof button to
+/// lose. Session state, like the object tree's visibility, and not
+/// stored: a stored "on" would come back on a phone as a prover with no
+/// sheet showing.
 ///
 /// **Off tears the prover's state down here, not in the widget that
 /// flips it**, so every route to off gets the same teardown. The
@@ -24,21 +22,12 @@ part 'experimental_prover_provider.g.dart';
 /// never read this.
 @Riverpod(keepAlive: true, name: 'experimentalProverProvider')
 class ExperimentalProverNotifier extends _$ExperimentalProverNotifier {
-  static const String prefsKey = 'experimental.prover';
-
   @override
-  bool build() =>
-      ref.watch(sharedPreferencesProvider).getBool(prefsKey) ?? false;
+  bool build() => false;
 
   void set(bool enabled) {
     if (enabled == state) return;
     state = enabled;
-    final preferences = ref.read(sharedPreferencesProvider);
-    unawaited(
-      enabled
-          ? preferences.setBool(prefsKey, true)
-          : preferences.remove(prefsKey),
-    );
     if (!enabled) _tearDown();
   }
 
