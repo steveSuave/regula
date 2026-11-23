@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../application/providers/command_stack_provider.dart';
 import '../../application/providers/construction_provider.dart';
+import '../../application/providers/experimental_prover_provider.dart';
 import '../../domain/commands/set_geometry_command.dart';
 import '../../domain/construction/document_kernel.dart';
 import 'intersection_report.dart';
@@ -48,6 +49,7 @@ class GeometryMenu extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final construction = ref.watch(constructionProvider).construction;
     final current = construction.kernel.metric;
+    final proverOn = ref.watch(experimentalProverProvider);
     return PopupMenuButton<VoidCallback>(
       tooltip: 'Geometry: Euclidean, hyperbolic or elliptic',
       popUpAnimationStyle: AnimationStyle.noAnimation,
@@ -69,6 +71,30 @@ class GeometryMenu extends ConsumerWidget {
           child: const _GeometryRow(
             title: 'Help…',
             subtitle: 'Four things to build that look different in each.',
+          ),
+        ),
+        // Intent 006: the prover's switch lives here because the prover
+        // only speaks Euclidean, and its Proof button sits beside this
+        // menu. It is a device preference, not an edit like the rows
+        // above, so it sits under its own header.
+        const PopupMenuDivider(),
+        PopupMenuItem(
+          enabled: false,
+          height: 32,
+          child: Text(
+            'Experimental',
+            style: Theme.of(context).textTheme.labelSmall,
+          ),
+        ),
+        CheckedPopupMenuItem(
+          checked: proverOn,
+          value: () =>
+              ref.read(experimentalProverProvider.notifier).set(!proverOn),
+          child: const _GeometryRow(
+            title: 'Prover',
+            subtitle:
+                'Proofs of what the figure shows, step by step. Euclidean '
+                'only.',
           ),
         ),
       ],

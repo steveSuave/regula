@@ -10,7 +10,7 @@ import 'question_draft_provider.dart';
 part 'experimental_prover_provider.g.dart';
 
 /// Whether the prover's surfaces exist at all: "Experimental: prover" in
-/// the view menu, off on a fresh install (DECISIONS §"The prover is
+/// the geometry menu, off on a fresh install (DECISIONS §"The prover is
 /// behind a device preference").
 ///
 /// A preference of the device, beside [themeModeProvider], not of the

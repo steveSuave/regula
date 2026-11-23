@@ -776,14 +776,14 @@ Independent of the kernel track; can start any time after Phase 112 (it consumes
 
 ### The prover is behind a device preference (intent 003, 2026-11-23)
 
-The prover is experimental and off on a fresh install. "Experimental: prover" in the view menu's Experimental section turns it on. Off means the editor builds none of its surfaces: the Proof button, the docked panel, the phone's proof sheet and the question builder bar.
+The prover is experimental and off on a fresh install. "Prover", under the Experimental header at the bottom of the geometry menu, turns it on. It sat in the grid menu first and moved there in intent 006: the grid menu holds per-document view settings, and the geometry menu is where the prover's one precondition (Euclidean) is chosen, beside its Proof button. Off means the editor builds none of its surfaces: the Proof button, the docked panel, the phone's proof sheet and the question builder bar.
 
 - **A runtime preference, not a build define.** It is stored in `shared_preferences` beside the theme choice (`experimentalProverProvider`, key `experimental.prover`), so one deployed build serves both audiences. It is a preference of the device, not of the document: no codec change, and a file opens the same either way.
 - **Gated at the editor, never in the domain.** `lib/domain/prover/` and its tests are untouched, and so are the prover's own providers. One boolean in `EditorScreen.build` hides every surface on both layouts.
 - **Off tears down in the preference's notifier**, so every route to off gets the same teardown. It calls `stop()` then `clear()` on the prover (a stop alone publishes the interrupted prefix, because cancellation is not supersession; the generation bump in `clear()` drops it), closes the question draft (which ends `draftCheck`'s per-change probe), and clears the highlight. The dependency runs one way: the preference reads the prover's providers and they never read it.
 - **On shows the button and nothing else.** Re-enabling does not reopen a panel that was open when the prover went off.
 
-This is the pattern for a later staged surface (intent 004's are the likely next): a device preference under the view menu's Experimental header, its teardown in its own notifier, its gate in the editor.
+This is the pattern for a later staged surface (intent 004's are the likely next): a device preference under an Experimental header in the menu its surface belongs beside, its teardown in its own notifier, its gate in the editor.
 
 ### M-3D (last)
 

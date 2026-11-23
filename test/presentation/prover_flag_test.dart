@@ -14,7 +14,8 @@ import 'package:regula/presentation/panels/question_builder_bar.dart';
 import '../editor_container.dart';
 
 /// Intent 003: the prover is an experimental feature, off by default,
-/// switched on and off from the view menu's Experimental section.
+/// switched on and off from the Experimental section of the geometry
+/// menu (moved there by intent 006).
 void main() {
   late ProviderContainer container;
 
@@ -65,13 +66,15 @@ void main() {
     await settle(tester);
   }
 
+  const geometryMenu = 'Geometry: Euclidean, hyperbolic or elliptic';
+
   final proofButton = find.descendant(
     of: find.byType(AppBar),
     matching: find.byIcon(Icons.fact_check_outlined),
   );
 
   Future<void> toggleProver(WidgetTester tester) async {
-    await tapAppBar(tester, find.byTooltip('View'));
+    await tapAppBar(tester, find.byTooltip(geometryMenu));
     // The whole item, not its text (grid_menu_test's ListTile quirk).
     await tester.tap(
       find.widgetWithText(CheckedPopupMenuItem<VoidCallback>, 'Prover'),
@@ -97,11 +100,11 @@ void main() {
         expectNoProverSurface();
       });
 
-      testWidgets('View → Experimental → Prover shows the Proof button, '
+      testWidgets('Geometry → Experimental → Prover shows the Proof button, '
           'and only the button', (tester) async {
         await pumpEditor(tester, screen: screen);
 
-        await tapAppBar(tester, find.byTooltip('View'));
+        await tapAppBar(tester, find.byTooltip(geometryMenu));
         expect(find.text('Experimental'), findsOneWidget);
         final item = tester.widget<CheckedPopupMenuItem<VoidCallback>>(
           find.widgetWithText(CheckedPopupMenuItem<VoidCallback>, 'Prover'),
