@@ -13,6 +13,8 @@ import 'package:regula/presentation/panels/attributes_inspector.dart';
 import 'package:regula/presentation/panels/object_tree_panel.dart';
 import 'package:regula/presentation/panels/toolbar.dart';
 
+import '../editor_container.dart';
+
 /// Phase 47 unified app bar (supersedes the Phase 25/42 compact chrome):
 /// one chrome at every window width — tree toggle, title, File, the
 /// seven tool groups, view icons, theme, delete, undo/redo — and when
@@ -28,8 +30,7 @@ void main() {
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    container = ProviderContainer();
-    addTearDown(container.dispose);
+    container = await editorContainer();
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,

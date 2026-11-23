@@ -57,6 +57,7 @@ import 'package:regula/presentation/panels/conic_icon.dart';
 import 'package:regula/presentation/panels/toolbar.dart';
 import 'package:regula/presentation/shortcuts/shortcut_table.dart';
 
+import '../../editor_container.dart';
 import '../../wide_window.dart';
 
 /// Tests for the toolbar's group flyouts: activation, the active-group
@@ -68,8 +69,7 @@ void main() {
 
   Future<void> pumpEditor(WidgetTester tester) async {
     useWideTestWindow(tester);
-    container = ProviderContainer();
-    addTearDown(container.dispose);
+    container = await editorContainer();
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,

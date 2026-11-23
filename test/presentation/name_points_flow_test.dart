@@ -8,6 +8,7 @@ import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/main.dart';
 import 'package:regula/presentation/canvas/geometry_canvas.dart';
 
+import '../editor_container.dart';
 import '../wide_window.dart';
 
 /// The Phase 53 name-points flow end to end: activation through the
@@ -18,8 +19,7 @@ void main() {
 
   Future<void> pumpEditor(WidgetTester tester) async {
     useWideTestWindow(tester);
-    container = ProviderContainer();
-    addTearDown(container.dispose);
+    container = await editorContainer();
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,

@@ -48,6 +48,7 @@ import 'package:regula/presentation/canvas/label_layout.dart';
 import 'package:regula/presentation/panels/conic_icon.dart';
 import 'package:regula/presentation/panels/object_kind_label.dart';
 
+import '../../editor_container.dart';
 import '../../wide_window.dart';
 
 /// End-to-end tool flow: activate the point tool, tap the canvas, see
@@ -58,8 +59,7 @@ void main() {
 
   Future<void> pumpEditor(WidgetTester tester) async {
     useWideTestWindow(tester);
-    container = ProviderContainer();
-    addTearDown(container.dispose);
+    container = await editorContainer();
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,

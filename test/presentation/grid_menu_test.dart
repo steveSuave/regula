@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:regula/application/providers/document_settings_provider.dart';
 import 'package:regula/main.dart';
 
+import '../editor_container.dart';
 import '../wide_window.dart';
 
 /// The Phase 36 axes/grid popup: checked items over the per-document
@@ -21,8 +22,7 @@ void main() {
     } else {
       useWideTestWindow(tester);
     }
-    container = ProviderContainer();
-    addTearDown(container.dispose);
+    container = await editorContainer();
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
@@ -58,8 +58,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(settings(), const DocumentSettings(showAxes: true, showGrid: true));
 
-    // The menu re-opens with the toggled items checked (snap still off),
-    // and tapping unchecks.
+    // The menu re-opens with the toggled items checked (snap still off,
+    // and intent 003's Experimental: prover off on a fresh install), and
+    // tapping unchecks.
     await tester.tap(find.byIcon(Icons.grid_4x4));
     await tester.pumpAndSettle();
     expect(
@@ -68,7 +69,7 @@ void main() {
             find.byType(CheckedPopupMenuItem<VoidCallback>),
           )
           .map((item) => item.checked),
-      [true, true, false],
+      [true, true, false, false],
     );
     await tapItem(tester, 'Show grid');
     await tester.pumpAndSettle();

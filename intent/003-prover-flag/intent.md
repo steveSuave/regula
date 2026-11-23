@@ -1,6 +1,6 @@
 # Intent: the prover is an experimental feature, off by default
 
-Author: SLevantis, drafted with Claude · Status: draft, awaiting review · 2026-11-17
+Author: SLevantis, drafted with Claude · Status: accepted 2026-11-23 · 2026-11-17
 
 ## Problem
 
@@ -33,9 +33,9 @@ The deductive prover is always present in the interface: a Proof button in the t
 - Turning the setting off mid-run stops the run and clears the draft and highlight.
 - Works the same on wide and phone layouts.
 
-## Open questions
+## Open questions (answered 2026-11-23, at acceptance)
 
-- Does anything prover-related run without the panel open (a numeric probe on construction change, a shortcut)? Not yet checked; anything found is gated too.
-- Are there keyboard shortcuts or cheat-sheet entries for the prover that must hide with it?
-- Do README and the repo description still advertise theorem proving, or call it experimental?
-- Where exactly does the toggle live: the existing view menu, or a new "Experimental" section?
+- **Anything prover-related running without the panel?** Only `draftCheck` (`question_draft_provider.dart`), the numeric probe that re-checks a complete question on every construction change, drag frames included. It runs only while a question draft exists, and a draft is opened only from the proof panel. Clearing the draft when the setting goes off, and never building the panel while it is off, gates it.
+- **Keyboard shortcuts or cheat-sheet entries?** None. `AppAction` has no prover action and the cheat sheet lists none.
+- **README and repo description.** `README.md:87` advertises the prover without calling it experimental; it is reworded. The GitHub description ("A flutter geometry app") does not mention it.
+- **Where the toggle lives.** In an "Experimental" section of the existing view menu (the axes & grid popup), the user's choice.

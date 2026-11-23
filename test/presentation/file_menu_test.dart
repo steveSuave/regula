@@ -21,6 +21,7 @@ import 'package:regula/main.dart';
 import 'package:regula/presentation/canvas/canvas_viewport.dart';
 import 'package:regula/presentation/canvas/geometry_canvas.dart';
 
+import '../editor_container.dart';
 import '../wide_window.dart';
 
 /// Captures saves and replays canned open results instead of touching the
@@ -122,8 +123,7 @@ void main() {
 
   Future<void> pumpEditor(WidgetTester tester) async {
     useWideTestWindow(tester);
-    container = ProviderContainer();
-    addTearDown(container.dispose);
+    container = await editorContainer();
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
