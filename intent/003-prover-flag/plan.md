@@ -1,6 +1,6 @@
 # Plan: the prover is an experimental feature, off by default
 
-Written 2026-11-23 from [spec](spec.md) · Status: awaiting approval · Branch: `intent-003-prover-flag`
+Written 2026-11-23 from [spec](spec.md) · Status: done 2026-11-23 · Branch: `intent-003-prover-flag`
 
 ## Files that change
 
@@ -49,4 +49,12 @@ Written 2026-11-23 from [spec](spec.md) · Status: awaiting approval · Branch: 
 
 ## Progress and gotchas
 
-Not started.
+**Done 2026-11-23**, all seven steps in one session.
+
+- **Step 1, baseline.** VM 3555 passed; browser 15 passed; analyze clean. The first baseline ran in the background against the working tree while step 2's edits were landing, so its analyze line was polluted by a half-written helper. The counts were re-taken from a clean worktree at `main` (`test/presentation` 681 there, and 681 after the move). Gotcha: take a baseline from a worktree, never from the tree being edited.
+- **Step 2** (`fec482a`). The helper is `editorContainer()`. An `overrides` parameter was written and dropped: nothing needed it, and Riverpod 3 does not export `Override` from `flutter_riverpod.dart`.
+- **Step 3** (`a38692b`). Five provider tests. Mutation check: without `clear()` in the teardown, the mid-run test fails with `ProverReady(facts: 44, applications: 500, reachedFixpoint: false)`. That partial result is exactly what the teardown drops.
+- **Step 4** (`3591afb`). Five widget tests in `prover_flag_test.dart` (default off and toggle on, each at wide and phone; off with everything open). Departure: `grid_menu_test` expected three checked items and now expects four; it was not in the plan's file list. Gotcha: `pumpAndSettle` never settles while a proof step is highlighted, because the canvas pulses it; the test pumps a fixed duration then. Mutation checks: removing the panel-reset listener breaks the "on again leaves the panel closed" test, and removing the button's `if (proverOn)` breaks the default-off tests. Gate: VM 3565 (+10), browser 15, analyze clean; `lib/domain/prover` and `test/domain/prover` untouched.
+- **Step 5** (`f156e18`). README.
+- **Step 6, Chrome** (release wasm build served on 127.0.0.1, window 500×757, a real window and so compact: `innerWidth` 500, `screenX` 56). Fresh origin, no `flutter.*` keys: no Proof button between the globe and the keyboard. The View menu shows the divider, "Experimental", and "Prover" unchecked; checking it adds the button and no panel, and stores `flutter.experimental.prover`. The sheet opens at half height over the canvas, ▶ runs and answers. After a reload the setting holds; unchecking removes the key and the button.
+- **Old Phase 154's look, partly.** With a mouse the sheet cannot be resized at all: neither a drag (Flutter web leaves the mouse out of scrollables' drag devices) nor the wheel (the empty state has nothing to scroll) moves it off its initial half. That is the sheet as it already was on `main`, not this intent; touch resizing is pinned by `proof_panel_test`'s "on a phone" group. A desktop user in a narrow window gets the half-height sheet only. Recorded under Parked rather than fixed here.
