@@ -21,3 +21,4 @@ The gate green with the same counts as intent 003's close (VM 3565, browser 15),
 
 - Step 1: gate VM 3565, browser 15, analyze clean, the same counts as intent 003's close. `_gridMenu` was restored verbatim from `62ad89d`, before intent 003, rather than edited back. Gotcha: a scripted edit written against pre-format text missed `main.dart` after `dart format` had reflowed the block; matching formatted text, or restoring from git, is the way.
 - The Prover row uses the geometry menu's two-line row (title and subtitle), not the grid menu's `ToolMenuRow`.
+- Step 2: merged as `0b54e34`; CI, Benchmarks and Deploy green. On the live site the globe menu ends with "Experimental → Prover", and the grid menu is axes and grid again. Gotcha: the first load served the previous build from the browser's HTTP cache (Pages sends `max-age=600`, and a `?v=` on the page URL does not bust the wasm), so a user may need a hard reload for up to 10 minutes after a deploy.
