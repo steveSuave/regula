@@ -1467,17 +1467,13 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     );
   }
 
-  /// The view menu: the Phase 36 axes/grid popup, whose checked items
-  /// flip the per-document `DocumentSettings` toggles — view chrome like
-  /// the viewport buttons around it, not undoable, persisted per
-  /// document — and below them the Experimental section (intent 003),
-  /// whose items are device preferences instead, which is why they sit
-  /// under their own header.
+  /// The Phase 36 axes/grid popup: two checked items flipping the
+  /// per-document `DocumentSettings` toggles — view chrome like the
+  /// viewport buttons around it, not undoable, persisted per document.
   Widget _gridMenu() {
     final settings = ref.watch(documentSettingsProvider);
-    final proverOn = ref.watch(experimentalProverProvider);
     return PopupMenuButton<VoidCallback>(
-      tooltip: 'View',
+      tooltip: 'Axes & grid',
       popUpAnimationStyle: AnimationStyle.noAnimation,
       icon: const Icon(Icons.grid_4x4),
       onSelected: (action) => action(),
@@ -1509,21 +1505,6 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
             label: 'Snap to grid',
             display: shortcutDisplayFor(AppAction.toggleSnapToGrid),
           ),
-        ),
-        const PopupMenuDivider(),
-        PopupMenuItem(
-          enabled: false,
-          height: 32,
-          child: Text(
-            'Experimental',
-            style: Theme.of(context).textTheme.labelSmall,
-          ),
-        ),
-        CheckedPopupMenuItem(
-          checked: proverOn,
-          value: () =>
-              ref.read(experimentalProverProvider.notifier).set(!proverOn),
-          child: const ToolMenuRow(label: 'Prover', display: null),
         ),
       ],
     );
