@@ -13,6 +13,7 @@ import 'package:regula/domain/tools/point_tool.dart';
 import 'package:regula/main.dart';
 import 'package:regula/presentation/canvas/geometry_canvas.dart';
 
+import '../../editor_container.dart';
 import '../../wide_window.dart';
 
 /// End-to-end snap-to-grid (Phase 45): with the document toggle on, the
@@ -27,8 +28,7 @@ void main() {
 
   Future<void> pumpEditor(WidgetTester tester) async {
     useWideTestWindow(tester);
-    container = ProviderContainer();
-    addTearDown(container.dispose);
+    container = await editorContainer();
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,

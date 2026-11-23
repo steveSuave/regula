@@ -17,6 +17,7 @@ import 'package:regula/main.dart';
 import 'package:regula/presentation/panels/attributes_inspector.dart';
 import 'package:regula/presentation/panels/object_tree_panel.dart';
 
+import '../../editor_container.dart';
 import '../../wide_window.dart';
 
 void main() {
@@ -26,8 +27,7 @@ void main() {
   /// through the app-bar toggle.
   Future<void> pumpEditor(WidgetTester tester) async {
     useWideTestWindow(tester);
-    container = ProviderContainer();
-    addTearDown(container.dispose);
+    container = await editorContainer();
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,

@@ -21,6 +21,7 @@ import 'package:regula/presentation/canvas/geometry_canvas.dart';
 import 'package:regula/presentation/panels/proof_panel.dart';
 import 'package:regula/presentation/panels/question_builder_bar.dart';
 
+import '../../editor_container.dart';
 import '../../wide_window.dart';
 
 void main() {
@@ -111,9 +112,8 @@ void main() {
   FilledButton askButton(WidgetTester tester) =>
       tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Ask'));
 
-  setUp(() {
-    container = ProviderContainer();
-    addTearDown(container.dispose);
+  setUp(() async {
+    container = await editorContainer();
   });
 
   group('the question builder', () {

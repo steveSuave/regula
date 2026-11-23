@@ -15,6 +15,7 @@ import 'package:regula/main.dart';
 import 'package:regula/presentation/canvas/geometry_canvas.dart';
 import 'package:regula/presentation/canvas/region_pick_overlay.dart';
 
+import '../editor_container.dart';
 import '../wide_window.dart';
 
 /// Captures the export save instead of touching the real platform.
@@ -59,8 +60,7 @@ void main() {
 
   Future<void> pumpEditor(WidgetTester tester) async {
     useWideTestWindow(tester);
-    container = ProviderContainer();
-    addTearDown(container.dispose);
+    container = await editorContainer();
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,

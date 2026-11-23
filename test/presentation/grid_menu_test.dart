@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:regula/application/providers/document_settings_provider.dart';
 import 'package:regula/main.dart';
 
+import '../editor_container.dart';
 import '../wide_window.dart';
 
 /// The Phase 36 axes/grid popup: checked items over the per-document
@@ -21,8 +22,7 @@ void main() {
     } else {
       useWideTestWindow(tester);
     }
-    container = ProviderContainer();
-    addTearDown(container.dispose);
+    container = await editorContainer();
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,

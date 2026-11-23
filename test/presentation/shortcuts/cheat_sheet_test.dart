@@ -10,6 +10,7 @@ import 'package:regula/main.dart';
 import 'package:regula/presentation/shortcuts/cheat_sheet.dart';
 import 'package:regula/presentation/shortcuts/shortcut_table.dart';
 
+import '../../editor_container.dart';
 import '../../wide_window.dart';
 
 void main() {
@@ -17,8 +18,7 @@ void main() {
 
   Future<void> pumpEditor(WidgetTester tester) async {
     useWideTestWindow(tester);
-    container = ProviderContainer();
-    addTearDown(container.dispose);
+    container = await editorContainer();
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,

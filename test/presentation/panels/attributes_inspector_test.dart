@@ -24,6 +24,7 @@ import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/main.dart';
 import 'package:regula/presentation/panels/attributes_inspector.dart';
 
+import '../../editor_container.dart';
 import '../../wide_window.dart';
 
 void main() {
@@ -35,8 +36,7 @@ void main() {
   /// test about its *contents* has to open it first.
   Future<void> pumpEditor(WidgetTester tester, {bool open = true}) async {
     useWideTestWindow(tester);
-    container = ProviderContainer();
-    addTearDown(container.dispose);
+    container = await editorContainer();
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,

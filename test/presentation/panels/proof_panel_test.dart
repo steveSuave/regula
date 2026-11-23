@@ -37,6 +37,7 @@ import 'package:regula/presentation/canvas/geometry_canvas.dart';
 import 'package:regula/presentation/canvas/geometry_painter.dart';
 import 'package:regula/presentation/panels/proof_panel.dart';
 
+import '../../editor_container.dart';
 import '../../wide_window.dart';
 
 void main() {
@@ -161,9 +162,8 @@ void main() {
     );
   }
 
-  setUp(() {
-    container = ProviderContainer();
-    addTearDown(container.dispose);
+  setUp(() async {
+    container = await editorContainer();
   });
 
   group('provableGoals', () {
