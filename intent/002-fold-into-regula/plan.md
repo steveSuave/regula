@@ -1,6 +1,6 @@
 # Plan: regula2 becomes regula again
 
-Written 2026-11-23 from [spec](spec.md) · Status: awaiting approval · Branch: `intent-002-fold-into-regula`
+Written 2026-11-23 from [spec](spec.md) · Status: done 2026-11-23 · Branch: `intent-002-fold-into-regula`
 
 ## Files that change
 
@@ -45,4 +45,12 @@ Written 2026-11-23 from [spec](spec.md) · Status: awaiting approval · Branch: 
 
 ## Progress and gotchas
 
-Not started.
+**Done 2026-11-23.** Steps 1–9 ran on 2026-11-23, in a session that did not record them here; the next session (same day) found them on disk and on GitHub, checked what it could, and closed with 10 and 11. Departures and evidence:
+
+- **The plan ran before this file said it was approved.** Its status line stayed "awaiting approval" and this section "Not started" through steps 1–9. The commits and GitHub state are the record: `0fa9dc4` (base-href), `eed4de1` (renames), `7cae636` (6a added to the intent and plan).
+- **Steps 1–2 gate counts were not written down.** CI, Benchmarks and Deploy are green on `regula` for both renaming commits and for `7cae636` (runs 45235197025, 45237976316 and siblings). The one non-green run in the last 30 is a cancelled deploy superseded by the next push.
+- **Step 6a went ahead.** Every commit on `main` now carries `s.levantes@gmail.com` as author and committer (one merge commit keeps `noreply@github.com` as committer); `v0.1` and `v0.2` carry it as tagger. The pre-rewrite state is `~/Code/var/regula-before-rewrite.bundle` (old `main` `c79d4d5`, `v1-final` `7ef44db`, `v0.1`, `v0.2`). `v1-final` followed its commit: it is now `d0b15c1`, locally and on `origin`, an ancestor of `main` with V1's tree. Hashes quoted elsewhere in this folder and in `docs/archive/` are pre-rewrite; `docs/DECISIONS.md` now gives both.
+- **Step 6, the site.** In Chrome: `/regula/` serves `main.dart.wasm` of 2 864 523 bytes, starts, and opens the V1 fixture `test/fixtures/inter2.json` (through the file-input patch). The service-worker check of the spec was **not run** against a profile holding V1's worker; the checking profile had no service worker registered at the origin. No visitor report of a stuck V1 so far.
+- **Steps 7–9.** `regula` is public; `regula2` is archived and public, and its Pages site serves the redirect stub (run 45240230147). `/regula2/nope?x=1#y` lands on `/regula/nope?x=1#y`: path, query and hash kept. On `/regula2/?x=1#y` the app itself then rewrites the hash (Flutter's hash URL strategy), so a hash is only meaningful on non-app paths; nothing uses one today.
+- **Step 10, local cleanup.** The old V1 checkout `~/Code/var/regula` was clean and at `7ef44db`; every branch tip in it is in `~/Code/var/regula-v1-branches.bundle`. It held nine git-ignored `cl-*` session notes and a `flutter_01.log` found nowhere else; they are kept in `~/Code/var/regula-v1-session-notes/`, and the checkout went to the macOS Trash (not `rm`). In this checkout, 89 local branches that pointed into the pre-rewrite history (all merged into the old `main`, so all in the bundle) were deleted. **`m-3d-planning` was kept**: it is unmerged and intent 004 cites it. Its one commit was re-created on the rewritten parent with the new email, tree unchanged (`93e0193`). Memory: copied into the `-Code-var-regula` project key with the name changed, merged with that key's two still-valid V1-era memories; the obsolete "regula2 is V2" memory dropped. The directory rename `regula2` → `regula` is the last act of the session, after this commit is pushed.
+- **Gotcha for the future:** `git reflog` and loose objects in this checkout still hold the pre-rewrite commits with the old emails until they expire. They are local only and never pushed; a `git gc --prune=now` after reflog expiry removes them if that matters.

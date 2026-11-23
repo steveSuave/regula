@@ -1,6 +1,6 @@
 # Intent: regula2 becomes regula again
 
-Author: SLevantis, drafted with Claude · Status: accepted 2026-11-23 · 2026-11-17
+Author: SLevantis, drafted with Claude · Status: done 2026-11-23 · 2026-11-17
 
 ## Problem
 
