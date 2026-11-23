@@ -1,6 +1,6 @@
 # Intent: regula2 becomes regula again
 
-Author: SLevantis, drafted with Claude · Status: draft, awaiting review · 2026-11-17
+Author: SLevantis, drafted with Claude · Status: accepted 2026-11-23 · 2026-11-17
 
 ## Problem
 
@@ -41,9 +41,13 @@ The app was forked into a second repository, `steveSuave/regula2`, when the V2 k
 - History files (`docs/archive/`, old status entries) keep the old name.
 - Runs after intent 001, so the renamed docs are the restructured ones.
 
+## Resolved questions (2026-11-23)
+
+- **Branches:** only `main` and tags are pushed. Every phase branch is merged, so its commits are reachable from `main`, and the merge commits keep the history browsable. Pushing 34 merged branches would be cheap but would clutter `regula`'s branch list (user's call, delegated to Claude). If an old state is wanted later, tag the commit then.
+- **Old local checkout:** deleted once the push is verified and the checkout is re-confirmed clean, with no stashes and no unpushed branches. Tag `v1-final` and `regula`'s own history keep V1 recoverable.
+- **Service worker (delegated, decided):** no code. The new build is served from the same `/regula/` scope, so the browser's byte-check of the service worker file replaces the old worker on the next visit. The plan includes a post-deploy check that a returning visitor gets the new build; it becomes work only if that check fails.
+- **Deep-link redirect (delegated, decided):** yes. `regula2`'s Pages site gets a small `404.html` plus `index.html` that redirect to the same path under `/regula/`, keeping query and hash. It is a few lines and costs nothing.
+
 ## Open questions
 
-- Do the 34 remote phase branches of `regula2` get pushed to `regula`, or only `main` and tags? Proposed: only `main` and tags, since every branch is merged.
-- What happens to the old local checkout: deleted, or kept aside as `regula-v1`?
-- Browsers that visited the V1 site may hold its cached service worker; check that a returning visitor gets the new build.
-- Does the redirect on `regula2` also need a `404.html` so deep links redirect too?
+None.
