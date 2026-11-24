@@ -1,6 +1,6 @@
 # Spec: stereometry milestone 2 — the space kernel, planes, and the active plane
 
-Written 2026-11-24 from [intent](../intent.md) · Status: drafted, awaiting approval with the [plan](plan.md)
+Written 2026-11-24 from [intent](../intent.md) · Status: approved 2026-11-24 with the [plan](plan.md)
 
 Milestone 2 of five. After it a user can lift a point off its plane, join points in space, build planes, intersect lines and planes, and use every existing 2D tool inside any plane. Solids, cross-sections and hidden-edge dashing are milestone 3; measurements in space are milestone 4.
 
@@ -184,14 +184,14 @@ Still open:
 - **The rubber band in the space view** stays unavailable. Long-press and shift-tap select. Nothing in this milestone makes it more needed.
 - **A point on a segment that lies in no plane object** (a point on a pyramid's edge) is not offered here. Milestone 3 needs it for cross-sections and decides between a space value for `PointOnObject` and face planes.
 
-## Decisions to confirm at approval
+## Decisions taken at approval (2026-11-24)
 
-These are choices the intent leaves room on. Each has a default written into this spec.
+The user approved the plan and left these four to the best UI/UX. Each stands as drafted.
 
-1. **A lifted point's plane-bound dependents vanish** rather than the lift being refused. The alternative is to disable the handle on a point that carries a circle or a perpendicular.
-2. **A plane becomes active by a tap with no tool active**, not by any tap that falls on its patch while a tool is active. The alternative is friendlier for one-plane figures and unpredictable where patches overlap.
-3. **Adapters are hidden objects in the graph**, saved with the document, rather than a conversion done inside each of fifty kinds.
-4. **Two lines intersect only through a plane known by construction.** A numeric coplanarity test with a tolerance is not added.
+1. **A lifted point's plane-bound dependents vanish**; the lift is not refused. A handle that is sometimes missing is harder to understand than a circle that comes back when the point does. While the point is lifted the hint line says how many constructions are waiting for it to return to its plane.
+2. **A plane becomes active by a tap with no tool active**, and the chip returns to the base plane. A tap while a tool is active always lands in the active plane, so the same tap never means two things where patches overlap.
+3. **Adapters are hidden objects in the graph**, saved with the document.
+4. **Two lines intersect only through a plane known by construction.** No numeric coplanarity tolerance. The hint line says why a refused pair was refused.
 
 ## Areas of concern
 

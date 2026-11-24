@@ -1,6 +1,6 @@
 # Plan: stereometry milestone 2 — the space kernel, planes, and the active plane
 
-Written 2026-11-24 from [spec](spec.md) · Status: awaiting approval · Branch: `intent-004-stereometry`
+Written 2026-11-24 from [spec](spec.md) · Status: approved 2026-11-24, in progress · Branch: `intent-004-stereometry`
 
 Three stages. Each ends green on the full gate, with a look, and merges to `main`.
 
