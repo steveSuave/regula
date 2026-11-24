@@ -16,11 +16,14 @@ import '../../application/providers/space_view_provider.dart';
 import '../../application/providers/tool_provider.dart';
 import '../../application/providers/viewport_provider.dart';
 import '../../domain/commands/change_attributes_command.dart';
+import '../../domain/construction/construction.dart';
 import '../../domain/construction/geo_object.dart';
 import '../../domain/construction/objects/expression_text.dart';
+import '../../domain/construction/objects/free_point.dart';
 import '../../domain/construction/text_evaluator.dart';
 import '../../domain/construction/text_template.dart';
 import '../../domain/math/vec2.dart';
+import '../../domain/math/vec3.dart';
 import '../../domain/tools/delete_tool.dart';
 import '../../domain/tools/text_tool.dart';
 import '../../domain/tools/tool.dart';
@@ -33,6 +36,8 @@ import 'canvas_viewport.dart';
 import 'geometry_painter.dart';
 import 'grid_layout.dart';
 import 'label_layout.dart';
+import 'screen_figure.dart';
+import 'space_hit_tester.dart';
 import 'space_view.dart';
 import 'twist_gate.dart';
 
@@ -186,6 +191,10 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
   /// In-progress orbit of the space view's camera; null when none.
   /// Computed from the baseline each frame, like [_nav].
   _OrbitBaseline? _orbit;
+
+  /// The height of the object being dragged above the base plane: where
+  /// the pointer is read during the drag. 0 for anything unlifted.
+  double _dragHeight = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -575,18 +584,25 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
     }
     final hit = world == null
         ? null
-        : const CanvasHitTester().hitTest(
-            construction.objects,
+        : _hitsAt(
+            construction,
+            viewport,
+            screen,
             world,
-            viewport.hitRadius(GeometryCanvas.hitThresholdFor(_firstDownKind)),
-            worldPerPx: viewport.screenToWorldLength(1),
-          );
+            _firstDownKind,
+          ).firstOrNull;
     if (hit != null) {
+      // A lifted point is dragged parallel to its plane: the pointer is
+      // read on the plane at the point's height, for the whole gesture.
+      _dragHeight = hit is FreePoint ? hit.height : 0;
+      final grab = viewport.pickBasePlane(screen, height: _dragHeight);
       // May refuse (derived point): then the pan does nothing — starting
       // a band under an object the user visibly grabbed would surprise.
-      ref
-          .read(toolProvider.notifier)
-          .startDrag(hit, world!, gridSnapStep: _gridSnapStep(viewport));
+      if (grab != null) {
+        ref
+            .read(toolProvider.notifier)
+            .startDrag(hit, grab, gridSnapStep: _gridSnapStep(viewport));
+      }
       return;
     }
     if (spaceView) {
@@ -597,6 +613,44 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
       _bandAnchor = screen;
       _band = Rect.fromPoints(screen, screen);
     });
+  }
+
+  /// Every object under the pointer, best first.
+  ///
+  /// In the plan view this is the world-space test on the base-plane
+  /// point [world], as it always was. In the space view the pointer is
+  /// measured in pixels against each object's screen ink
+  /// ([SpaceHitTester]): under a tilt a world radius is an ellipse on
+  /// screen, and an object off the plane has no base-plane point at all.
+  List<GeoObject> _hitsAt(
+    Construction construction,
+    CanvasViewport viewport,
+    Offset screen,
+    Vec2 world,
+    PointerDeviceKind? kind, {
+    bool includeHidden = false,
+  }) {
+    final thresholdPx = GeometryCanvas.hitThresholdFor(kind);
+    // Also with the view off while something is lifted: seen from
+    // straight above it is still drawn, and must still be reachable.
+    if (ref.read(spaceViewProvider) ||
+        construction.objects.any((o) => o.isDefined && drawnInSpace(o))) {
+      return const SpaceHitTester().hitTestAll(
+        construction.objects,
+        viewport,
+        context.size ?? Size.zero,
+        screen,
+        thresholdPx,
+        includeHidden: includeHidden,
+      );
+    }
+    return const CanvasHitTester().hitTestAll(
+      construction.objects,
+      world,
+      viewport.hitRadius(thresholdPx),
+      worldPerPx: viewport.screenToWorldLength(1),
+      includeHidden: includeHidden,
+    );
   }
 
   /// Opens an orbit at [screen] about the figure's centre, from the
@@ -645,7 +699,11 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
       setState(() => _band = Rect.fromPoints(anchor, screen));
       return;
     }
-    ref.read(toolProvider.notifier).updateDrag(viewport.screenToWorld(screen));
+    ref
+        .read(toolProvider.notifier)
+        .updateDrag(
+          viewport.screenToWorld(viewport.footScreen(screen, _dragHeight)),
+        );
   }
 
   /// End-of-orbit settle: the azimuth as a twist settles it, and a tilt
@@ -762,12 +820,13 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
       return;
     }
     final construction = ref.read(constructionProvider).construction;
-    final hit = const CanvasHitTester().hitTest(
-      construction.objects,
+    final hit = _hitsAt(
+      construction,
+      viewport,
+      screen,
       world,
-      viewport.hitRadius(GeometryCanvas.hitThresholdFor(_firstDownKind)),
-      worldPerPx: viewport.screenToWorldLength(1),
-    );
+      _firstDownKind,
+    ).firstOrNull;
     if (hit == null) {
       return;
     }
@@ -874,11 +933,12 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
     final construction = ref.read(constructionProvider).construction;
     final tool = ref.read(toolProvider).tool;
     final threshold = viewport.hitRadius(GeometryCanvas.hitThresholdFor(kind));
-    final hits = const CanvasHitTester().hitTestAll(
-      construction.objects,
+    final hits = _hitsAt(
+      construction,
+      viewport,
+      screen,
       world,
-      threshold,
-      worldPerPx: viewport.screenToWorldLength(1),
+      kind,
       includeHidden: _revealsHidden(tool),
     );
     final hit = hits.firstOrNull;
@@ -1004,7 +1064,7 @@ class _NavBaseline {
   final double startScale;
   final double startRotation;
   final double startTilt;
-  final SpacePoint fixedWorld;
+  final Vec3 fixedWorld;
   final TwistGate? twist;
   Offset? lastFocal;
 }
@@ -1020,7 +1080,7 @@ class _OrbitBaseline {
 
   final Offset start;
   final CanvasViewport camera;
-  final SpacePoint pivot;
+  final Vec3 pivot;
 }
 
 /// The in-progress rubber band: a hairline outline over a translucent

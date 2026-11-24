@@ -7,6 +7,7 @@ import 'package:regula/domain/construction/geo_object.dart';
 import 'package:regula/domain/construction/object_attributes.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/math/vec3.dart';
 import 'package:regula/presentation/canvas/canvas_viewport.dart';
 import 'package:regula/presentation/canvas/space_view.dart';
 
@@ -24,7 +25,7 @@ void main() {
   const start = CanvasViewport(
     ViewportState(pan: Vec2(-20, 15), scale: 12, rotation: 0.3),
   );
-  const pivot = (x: 6.0, y: 3.0, z: 0.0);
+  const pivot = Vec3(6.0, 3.0, 0.0);
 
   void expectSamePlace(CanvasViewport before, ViewportState after) {
     final was = before.spaceToScreen(pivot);
@@ -34,7 +35,7 @@ void main() {
 
   test('the pivot is the centre of what Fit would frame, else the origin', () {
     expect(figurePivot(figure()), pivot);
-    expect(figurePivot(const []), (x: 0.0, y: 0.0, z: 0.0));
+    expect(figurePivot(const []), Vec3(0.0, 0.0, 0.0));
   });
 
   test('entering tilts to the oblique view and keeps the figure in place', () {

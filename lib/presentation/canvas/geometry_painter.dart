@@ -21,6 +21,7 @@ import 'fit_viewport.dart';
 import 'grid_layout.dart';
 import 'label_layout.dart';
 import 'large_radius_arc.dart';
+import 'screen_figure.dart';
 import 'sheet_canvas.dart';
 
 /// The canvas rect minus the disc — the region that is not part of the
@@ -598,6 +599,17 @@ class GeometryPainter extends CustomPainter {
     double pointRadiusExtra = 0,
     double dashPeriod = 0,
   }) {
+    if (drawnInSpace(object)) {
+      _drawInSpace(
+        canvas,
+        size,
+        object,
+        paint,
+        pointRadiusExtra: pointRadiusExtra,
+        dashPeriod: dashPeriod,
+      );
+      return;
+    }
     switch (object) {
       case GeoPoint():
         canvas.drawDot(
@@ -690,6 +702,40 @@ class GeometryPainter extends CustomPainter {
         break;
       case GeoLocus():
         _drawLocus(canvas, size, object, paint, dashPeriod);
+    }
+  }
+
+  /// Draws an object that has no value in its sheet — a lifted point, a
+  /// segment to one — from its space value (intent 004, milestone 2).
+  ///
+  /// The geometry is the object's [screenInkOf], the same screen ink the
+  /// space view's hit test measures against, so what is drawn is what is
+  /// picked. It is already in screen coordinates, so it goes to the real
+  /// canvas through an identity sheet: strokes, dashes and dots keep
+  /// their screen size, as everywhere.
+  void _drawInSpace(
+    SheetCanvas canvas,
+    Size size,
+    GeoObject object,
+    Paint paint, {
+    required double pointRadiusExtra,
+    required double dashPeriod,
+  }) {
+    final direct = SheetCanvas(canvas.screen, _flat);
+    final ink = screenInkOf(construction.objects, viewport, size, object);
+    final dot = ink.dot;
+    if (dot != null) {
+      direct.drawDot(
+        dot,
+        object.attributes.pointSize + pointRadiusExtra,
+        paint..style = PaintingStyle.fill,
+      );
+    }
+    for (final (from, to) in ink.segments) {
+      _drawStraight(direct, from, to, paint, dashPeriod);
+      if (object is Segment) {
+        _drawTickMarks(direct, from, to, object.attributes.tickMarks, paint);
+      }
     }
   }
 

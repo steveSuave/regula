@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/application/providers/viewport_provider.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/math/vec3.dart';
 import 'package:regula/presentation/canvas/canvas_viewport.dart';
 
 void main() {
@@ -472,7 +473,7 @@ void main() {
         );
         expectOffset(
           viewport.worldToScreen(world),
-          viewport.spaceToScreen((x: world.x, y: world.y, z: 0)),
+          viewport.spaceToScreen(Vec3(world.x, world.y, 0)),
         );
         // x never moves; y is squashed by cos tilt.
         expect(viewport.worldToScreen(world).dx, flatScreen.dx);
@@ -557,10 +558,10 @@ void main() {
         final from = CanvasViewport(
           randomState(tilt: i.isEven ? 0 : random.nextDouble() * math.pi),
         );
-        final pivot = (
-          x: spread(100),
-          y: spread(100),
-          z: i % 3 == 0 ? 0.0 : spread(40),
+        final pivot = Vec3(
+          spread(100),
+          spread(100),
+          i % 3 == 0 ? 0.0 : spread(40),
         );
         final before = from.spaceToScreen(pivot);
         for (final tilt in [
@@ -585,7 +586,7 @@ void main() {
 
     test('an orbit clamps the tilt to straight down … straight up', () {
       const viewport = CanvasViewport(ViewportState(scale: 10, tilt: 0.3));
-      const pivot = (x: 1.0, y: 2.0, z: 0.0);
+      const pivot = Vec3(1.0, 2.0, 0.0);
       expect(viewport.orbitedAbout(pivot, rotation: 0, tilt: 4).tilt, math.pi);
       final level = viewport.orbitedAbout(pivot, rotation: 0, tilt: -0.2);
       expect(level.tilt, 0);
@@ -614,9 +615,9 @@ void main() {
       for (final tilt in [0.6, math.pi / 2, math.pi / 2 - 0.02, 2.9]) {
         final viewport = CanvasViewport(randomState(tilt: tilt));
         final points = [
-          (x: 0.0, y: 0.0, z: 0.0),
-          (x: 7.0, y: -3.0, z: 0.0),
-          (x: -2.0, y: 5.0, z: 4.0),
+          Vec3(0.0, 0.0, 0.0),
+          Vec3(7.0, -3.0, 0.0),
+          Vec3(-2.0, 5.0, 4.0),
         ];
         const delta = Offset(31, -17);
         final panned = CanvasViewport(viewport.pannedByScreen(delta));

@@ -120,4 +120,12 @@ Three stages. Each ends green on the full gate, with a look, and merges to `main
   - `FreePoint.projPoint` is nullable too; `storedPoint` is the stored value whatever the height, for a pass that must save and restore it.
   - The byte-identity of a planar save is held by the existing v1 corpus (`kitchen-sink-v1.json` is compared against the live encoder) plus a test that no `h` is written.
   - `codec_v2_test`'s "v4 is refused" became "v5 is refused".
-  - **Until step 6 the painter and hit tester assume `isDefined` means a planar value.** Nothing in the UI can lift a point yet, so no path reaches them with a space-only object.
+  - Until step 6 the painter and hit tester assumed `isDefined` meant a planar value. Nothing in the UI could lift a point yet.
+- **Step 6, the space pass and the screen hit test.** 15 tests in `space_hit_tester_test.dart`, 2 in `geometry_painter_test.dart`, 5 in `drag_session_space_test.dart` (session level). VM 3729; goldens 35 with no diff. Notes:
+  - **`screen_figure.dart` holds one function, `screenInkOf`,** and the label declutter was rebuilt on it instead of gaining a second copy. Planar ink is laid out in `viewport.flat` with the formulas the declutter always used and then carried through the sheet map, so with no tilt every number is the one it was, and under tilt a circle's obstacle is now the ellipse it is drawn as (milestone 1's declutter concern, closed).
+  - **Depth decides only inside a 4 px distance band**, between objects of one priority. A plain (priority, distance, depth) order would never reach depth, since two distances are never equal.
+  - **The plan view uses the screen tester too when something is lifted.** The spec said the world tester runs untouched with the view off; it does, for every document with nothing lifted. `CanvasHitTester` skips space-drawn objects so it cannot dereference a missing planar value.
+  - `hitRadius` stays, as the snap threshold tools receive. Its widening is no longer a hit radius.
+  - `SpacePoint` (a record) became `Vec3` throughout presentation.
+  - A lifted point's drag reads the pointer at its height (`footScreen`), so nothing in the drag session changed. Rigid translation of an edge to a lifted point works as it is: all free points are on one sheet in stage A. The plan's "a translation needs all free ancestors on one sheet" belongs to stage C.
+  - Fit with a lifted point frames the planar bounds' corners and the lifted points' images; a figure with nothing lifted takes the old code.

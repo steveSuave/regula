@@ -19,6 +19,7 @@ import 'package:regula/domain/construction/objects/sector.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/construction/objects/vertex_angle.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/math/vec3.dart';
 import 'package:regula/domain/projective/absolute.dart';
 import 'package:regula/domain/projective/conic_matrix.dart';
 import 'package:regula/presentation/canvas/canvas_viewport.dart';
@@ -1144,6 +1145,67 @@ void main() {
       painterFor(scene(), viewport: camera(0)).paint(canvas, size);
       expect(canvas.circles, hasLength(4), reason: 'three points and the rim');
       expect(canvas.circles.last.$2, 80);
+    });
+
+    test('a lifted point and the segment to it are drawn where space puts '
+        'them, at every camera including the plan', () {
+      for (final tilt in [0.0, 1.0, 2.6]) {
+        final viewport = camera(tilt, rotation: 0.3);
+        final construction = Construction();
+        final a = FreePoint(id: 'a', position: const Vec2(10, -8));
+        final apex = FreePoint(
+          id: 'o',
+          position: const Vec2(12, -6),
+          height: 3,
+        );
+        construction
+          ..add(a)
+          ..add(apex)
+          ..add(Segment(id: 's', point1: a, point2: apex));
+        final canvas = _EverythingRecordingCanvas();
+        painterFor(construction, viewport: viewport).paint(canvas, size);
+
+        final foot = viewport.worldToScreen(const Vec2(10, -8));
+        final top = viewport.spaceToScreen(const Vec3(12, -6, 3));
+        expect(canvas.circles, hasLength(2));
+        expect((canvas.circles[0].$1 - foot).distance, lessThan(1e-9));
+        expect((canvas.circles[1].$1 - top).distance, lessThan(1e-9));
+        expect(canvas.circles[1].$2, const ObjectAttributes().pointSize);
+        expect(
+          canvas.lines.any(
+            (line) =>
+                (line.$1 - foot).distance < 1e-9 &&
+                (line.$2 - top).distance < 1e-9,
+          ),
+          isTrue,
+          reason: 'tilt $tilt',
+        );
+      }
+    });
+
+    test('a lifted point paints with a label, a halo and a dashed edge', () {
+      final construction = Construction();
+      final a = FreePoint(id: 'a', position: const Vec2(10, -8));
+      final apex = FreePoint(id: 'o', position: const Vec2(12, -6), height: 3);
+      final edge = Segment(id: 's', point1: a, point2: apex);
+      construction
+        ..add(a)
+        ..add(apex)
+        ..add(edge);
+      apex.attributes = apex.attributes.copyWith(name: 'O', labelVisible: true);
+      edge.attributes = edge.attributes.copyWith(
+        dashPeriod: 8,
+        showValue: true,
+        tickMarks: 2,
+      );
+      final recorder = PictureRecorder();
+      painterFor(
+        construction,
+        viewport: camera(1.0),
+        selectedIds: const {'o', 's'},
+        highlightedIds: const {'s'},
+      ).paint(Canvas(recorder), size);
+      recorder.endRecording();
     });
 
     test('a tilt repaints', () {

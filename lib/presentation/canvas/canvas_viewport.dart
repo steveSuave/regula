@@ -4,12 +4,12 @@ import 'dart:ui';
 
 import '../../application/providers/viewport_provider.dart';
 import '../../domain/math/vec2.dart';
+import '../../domain/math/vec3.dart';
 
 /// A point of space, in world coordinates: the base plane is `z == 0` and
 /// a planar document's `Vec2(x, y)` is `(x, y, 0)`. A presentation-side
 /// record, for camera pivots; the space kernel (intent 004, milestone 2)
 /// brings the domain's own type.
-typedef SpacePoint = ({double x, double y, double z});
 
 /// World↔screen transforms for the canvas, built from a [ViewportState]
 /// (never duplicating its data — see the Phase 4 STATUS note).
@@ -167,7 +167,7 @@ class CanvasViewport {
   }
 
   /// The screen image of a point of space.
-  Offset spaceToScreen(SpacePoint point) {
+  Offset spaceToScreen(Vec3 point) {
     final dx = point.x - state.pan.x;
     final dy = point.y - state.pan.y;
     final dz = point.z - state.panZ;
@@ -181,14 +181,26 @@ class CanvasViewport {
     );
   }
 
+  /// How near the viewer a point of space is: its coordinate along the
+  /// view direction, larger for nearer. Parallel projection has no eye
+  /// point, so only differences mean anything; the hit test uses them to
+  /// prefer the nearer of two objects equally close to the pointer.
+  double depthOf(Vec3 point) {
+    final dx = point.x - state.pan.x;
+    final dy = point.y - state.pan.y;
+    final dz = point.z - state.panZ;
+    final uy = dx * math.sin(state.rotation) + dy * math.cos(state.rotation);
+    return math.cos(state.tilt) * dz - math.sin(state.tilt) * uy;
+  }
+
   /// The point of space under [screen]: on the base plane when it can be
   /// picked, otherwise on the plane through the pan point that faces the
   /// camera. Always defined — the anchor for gestures that must keep
   /// "what is under the finger" there at any tilt.
-  SpacePoint spaceUnder(Offset screen) {
+  Vec3 spaceUnder(Offset screen) {
     if (basePlanePickable) {
       final world = screenToWorld(screen);
-      return (x: world.x, y: world.y, z: 0);
+      return Vec3(world.x, world.y, 0);
     }
     final vx = screen.dx / state.scale;
     final vy = -screen.dy / state.scale;
@@ -196,22 +208,37 @@ class CanvasViewport {
     final uz = math.sin(state.tilt) * vy;
     final c = math.cos(state.rotation);
     final s = math.sin(state.rotation);
-    return (
-      x: state.pan.x + vx * c + uy * s,
-      y: state.pan.y + uy * c - vx * s,
-      z: state.panZ + uz,
+    return Vec3(
+      state.pan.x + vx * c + uy * s,
+      state.pan.y + uy * c - vx * s,
+      state.panZ + uz,
     );
   }
 
   /// The base-plane point under [screen], or null when the plane is
   /// within [pickFloor] of edge-on. What a tap or an object drag uses.
-  Vec2? pickBasePlane(Offset screen) =>
-      basePlanePickable ? screenToWorld(screen) : null;
+  ///
+  /// With a [height], the pick is on the plane that far above the base
+  /// plane, and the answer is the foot of the picked point: where a
+  /// point lifted to that height must have its base coordinates to sit
+  /// under the pointer. That is how a lifted point is dragged parallel
+  /// to its plane.
+  Vec2? pickBasePlane(Offset screen, {double height = 0}) =>
+      basePlanePickable ? screenToWorld(footScreen(screen, height)) : null;
+
+  /// The screen image of the foot of a point seen at [screen] and known
+  /// to be [height] above the base plane. [screen] itself at height 0.
+  Offset footScreen(Offset screen, double height) => height == 0
+      ? screen
+      : Offset(
+          screen.dx,
+          screen.dy + state.scale * math.sin(state.tilt) * height,
+        );
 
   /// The state with the camera turned to [rotation] and [tilt] while
   /// [pivot] keeps its place on screen.
   ViewportState orbitedAbout(
-    SpacePoint pivot, {
+    Vec3 pivot, {
     required double rotation,
     required double tilt,
   }) => pinning(
@@ -398,16 +425,17 @@ class CanvasViewport {
   /// hit-test threshold expressed in world units.
   double screenToWorldLength(double screenLength) => screenLength / state.scale;
 
-  /// The world radius of a [screenRadius]-pixel hit target on the base
-  /// plane.
+  /// The world radius, on the base plane, of a [screenRadius]-pixel
+  /// reach.
   ///
-  /// Not tilted, it is [screenToWorldLength]. Tilted, a world disc is a
-  /// squashed ellipse on screen, and a radius sized for the unsquashed
-  /// axis would be too tight along the other. The radius is widened by
-  /// `1 / |cos tilt|`, capped at double: the target keeps its full size
-  /// along the foreshortened axis down to 60° of tilt and never grows
-  /// past twice it across. An approximation that holds until the hit
-  /// test itself works on screen (intent 004, milestone 2).
+  /// Not tilted, it is [screenToWorldLength], and the plan view's hit
+  /// test uses it. Tilted, a world disc is a squashed ellipse on screen,
+  /// so the radius is widened by `1 / |cos tilt|`, capped at double.
+  /// Since milestone 2 of intent 004 the space view hit-tests in screen
+  /// pixels (`SpaceHitTester`) and no longer leans on that; what still
+  /// reads this under a tilt is a tool's snap threshold, which is a
+  /// distance on the plane by nature and for which the approximation is
+  /// the honest size.
   double hitRadius(double screenRadius) => isTilted
       ? screenRadius / state.scale / math.max(math.cos(state.tilt).abs(), 0.5)
       : screenToWorldLength(screenRadius);

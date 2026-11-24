@@ -35,6 +35,7 @@ import 'package:regula/domain/construction/objects/segment_ratio_point.dart';
 import 'package:regula/domain/construction/objects/three_point_circle.dart';
 import 'package:regula/domain/construction/objects/vertex_angle.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/math/vec3.dart';
 import 'package:regula/domain/projective/ck_measure.dart';
 import 'package:regula/domain/projective/conic_shape.dart';
 import 'package:regula/domain/tools/delete_tool.dart';
@@ -3028,7 +3029,7 @@ void main() {
         .whereType<FreePoint>()
         .toList();
 
-    const figureCentre = (x: 200.0, y: -150.0, z: 0.0);
+    const figureCentre = Vec3(200.0, -150.0, 0.0);
 
     testWidgets('off, a drag on empty canvas leaves the camera alone', (
       tester,
