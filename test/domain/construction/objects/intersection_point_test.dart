@@ -51,7 +51,7 @@ void main() {
       );
       expect(x.isDefined, isFalse);
 
-      b.position = const Vec2(4, 2); // tilt l1 so they cross
+      b.chartPosition = const Vec2(4, 2); // tilt l1 so they cross
       l1.recompute();
       x.recompute();
       expect(x.isDefined, isTrue);
@@ -127,15 +127,15 @@ void main() {
       expect(x.position!.closeTo(const Vec2(1, 0)), isTrue);
 
       // Drag the line far above the circle: no intersection.
-      a.position = const Vec2(-2, 5);
-      b.position = const Vec2(2, 5);
+      a.chartPosition = const Vec2(-2, 5);
+      b.chartPosition = const Vec2(2, 5);
       l.recompute();
       x.recompute();
       expect(x.isDefined, isFalse);
 
       // Drag back: same branch reappears.
-      a.position = const Vec2(-2, 0);
-      b.position = const Vec2(2, 0);
+      a.chartPosition = const Vec2(-2, 0);
+      b.chartPosition = const Vec2(2, 0);
       l.recompute();
       x.recompute();
       expect(x.position!.closeTo(const Vec2(1, 0)), isTrue);

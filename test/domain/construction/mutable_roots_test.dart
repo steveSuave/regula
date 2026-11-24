@@ -79,7 +79,7 @@ void main() {
       final displacements = <double>[];
       for (var i = 0; i < 20; i++) {
         roots.perturb(rng);
-        displacements.add(a.position.distanceTo(const Vec2(100, 0)));
+        displacements.add(a.position!.distanceTo(const Vec2(100, 0)));
       }
       // Every displacement is exactly one probe radius off the base —
       // probeScale relative to the magnitude — never a random walk.

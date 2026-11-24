@@ -51,7 +51,7 @@ void main() {
       expect(circle.isDefined, isFalse);
 
       // Tilt the second line: the crossing appears and the circle with it.
-      q.position = const Vec2(4, -1);
+      q.chartPosition = const Vec2(4, -1);
       other.recompute();
       crossing.recompute();
       circle.recompute();
@@ -59,7 +59,7 @@ void main() {
       expect(circle.circle!.center, crossing.position);
       expect(circle.circle!.radius, 2);
 
-      q.position = const Vec2(4, 1);
+      q.chartPosition = const Vec2(4, 1);
       other.recompute();
       crossing.recompute();
       circle.recompute();
@@ -69,7 +69,7 @@ void main() {
     Glados(any.vec2).test('the radius is constant under center drags', (p) {
       final center = FreePoint(id: 'c', position: Vec2.zero);
       final circle = FixedRadiusCircle(id: 'k', center: center, radius: 1.75);
-      center.position = p;
+      center.chartPosition = p;
       circle.recompute();
       expect(circle.circle!.center, p);
       expect(circle.circle!.radius, 1.75);

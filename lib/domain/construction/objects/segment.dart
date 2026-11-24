@@ -1,7 +1,9 @@
 import '../../math/line_eq.dart';
 import '../../math/vec2.dart';
+import '../../math/vec3.dart';
 import '../../projective/absolute.dart';
 import '../../projective/proj_line.dart';
+import '../../projective/space/line3.dart';
 import '../geo_object.dart';
 import 'line_through_two_points.dart';
 
@@ -76,6 +78,34 @@ class Segment extends GeoLine {
     final t1 = line.parameterAt(point1.position!);
     final t2 = line.parameterAt(point2.position!);
     return t1 <= t2 ? (t1, t2) : (t2, t1);
+  }
+
+  /// Whether the two points have no common value in the sheet, so the
+  /// planar carrier does not exist and the space one stands in. A
+  /// planar degeneracy (coincident points) is not this: it stays
+  /// undefined, as it always was.
+  bool get _offSheet => point1.projPoint == null || point2.projPoint == null;
+
+  /// The carrier in space (intent 004): the join of the two points'
+  /// space values when they have no common value in the sheet — one end
+  /// is lifted — and the planar carrier's lift otherwise.
+  @override
+  Line3? get spaceLine =>
+      _offSheet ? spaceCarrierThrough(point1, point2) : super.spaceLine;
+
+  /// The ends in space; null while the respective parent has no real
+  /// finite space position.
+  Vec3? get spaceStart => point1.spacePosition;
+  Vec3? get spaceEnd => point2.spacePosition;
+
+  @override
+  bool get hasSpaceExtent {
+    if (!_offSheet) {
+      return false;
+    }
+    final a = spaceStart;
+    final b = spaceEnd;
+    return a != null && b != null && a != b;
   }
 
   @override

@@ -582,7 +582,7 @@ void main() {
       var uniformDefined = 0;
       for (var i = 0; i < 64; i++) {
         final b = host.circle!.pointAt(2 * math.pi * i / 64);
-        if (b.distanceTo(c.position) <= 240) uniformDefined++;
+        if (b.distanceTo(c.position!) <= 240) uniformDefined++;
       }
       expect(
         points.length,

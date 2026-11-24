@@ -51,7 +51,7 @@ void main() {
   test('identical parents means instances, not positions', () {
     // b2 coincides with b: the images are numerically identical today but
     // diverge the moment either free point is dragged.
-    final b2 = FreePoint(id: 'b2', position: b.position);
+    final b2 = FreePoint(id: 'b2', position: b.position!);
     final existing = CentralReflectionPoint(id: 'r', point: a, center: b);
     final candidate = CentralReflectionPoint(id: 'n0', point: a, center: b2);
 

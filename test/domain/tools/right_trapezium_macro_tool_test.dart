@@ -37,9 +37,9 @@ void main() {
   /// The right-trapezium invariant on the current corner positions.
   void expectRightTrapezium(Construction construction) {
     final free = freeCorners(construction);
-    final a = free[0].position;
-    final b = free[1].position;
-    final c = free[2].position;
+    final a = free[0].position!;
+    final b = free[1].position!;
+    final c = free[2].position!;
     final d = cornerD(construction).position!;
     final ab = b - a;
     expect(ab.dot(d - a).abs(), lessThan(1e-9), reason: '∠A is right');
@@ -80,7 +80,7 @@ void main() {
       final a = FreePoint(id: 'a', position: const Vec2(0, 0));
       construction.add(a);
 
-      tool.onInput(ToolInput(a.position, hit: a));
+      tool.onInput(ToolInput(a.position!, hit: a));
       tool.onInput(const ToolInput(Vec2(4, 0)));
       final result = tool.onInput(const ToolInput(Vec2(3, 2))) as ToolCommitted;
       result.command.apply(construction);
@@ -149,7 +149,7 @@ void main() {
         construction.add(point);
       }
       ToolResult tap(FreePoint point) => tool.onInput(
-        ToolInput(point.position, hit: point, objects: construction.objects),
+        ToolInput(point.position!, hit: point, objects: construction.objects),
       );
 
       tap(a);

@@ -380,7 +380,7 @@ void main() {
           final viewport = CanvasViewport(state);
           for (final object in square()) {
             final screen = viewport.worldToScreen(
-              (object as FreePoint).position,
+              (object as FreePoint).position!,
             );
             expect(
               screen.dx,

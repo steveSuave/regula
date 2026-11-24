@@ -38,7 +38,7 @@ void main() {
       final p = FreePoint(id: 'p', position: const Vec2(7, 1.5));
       final once = ReflectedPoint(id: 'r1', point: p, mirror: mirror);
       final twice = ReflectedPoint(id: 'r2', point: once, mirror: mirror);
-      expect(twice.position!.closeTo(p.position, 1e-9), isTrue);
+      expect(twice.position!.closeTo(p.position!, 1e-9), isTrue);
     });
 
     test('mirror is the perpendicular bisector of point and image', () {
@@ -50,10 +50,10 @@ void main() {
       final image = r.position!;
       // Equidistant, and the midpoint lies on the mirror.
       expect(
-        mirror.line!.distanceTo(p.position),
+        mirror.line!.distanceTo(p.position!),
         closeTo(mirror.line!.distanceTo(image), 1e-9),
       );
-      expect(mirror.line!.contains(p.position.lerp(image, 0.5), 1e-9), isTrue);
+      expect(mirror.line!.contains(p.position!.lerp(image, 0.5), 1e-9), isTrue);
     });
 
     test('tracks moved parents after recompute', () {
@@ -63,12 +63,12 @@ void main() {
       final p = FreePoint(id: 'p', position: const Vec2(1, 3));
       final r = ReflectedPoint(id: 'r', point: p, mirror: mirror);
 
-      p.position = const Vec2(2, -5);
+      p.chartPosition = const Vec2(2, -5);
       r.recompute();
       expect(r.position!.closeTo(const Vec2(2, 5)), isTrue);
 
       // Rotate the mirror to the y-axis: reflection flips x instead.
-      b.position = const Vec2(0, 4);
+      b.chartPosition = const Vec2(0, 4);
       mirror.recompute();
       r.recompute();
       expect(r.position!.closeTo(const Vec2(-2, -5)), isTrue);
@@ -82,7 +82,7 @@ void main() {
       final r = ReflectedPoint(id: 'r', point: p, mirror: mirror);
       expect(r.isDefined, isFalse);
 
-      b.position = const Vec2(4, 0);
+      b.chartPosition = const Vec2(4, 0);
       mirror.recompute();
       r.recompute();
       expect(r.isDefined, isTrue);

@@ -90,7 +90,7 @@ void main() {
 
       tool.onInput(const ToolInput(Vec2(1, 1)));
       final result =
-          tool.onInput(ToolInput(e.position, hit: e)) as ToolCommitted;
+          tool.onInput(ToolInput(e.position!, hit: e)) as ToolCommitted;
       result.command.apply(construction);
 
       final b = construction.objects.whereType<PointOnObject>().single;

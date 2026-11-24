@@ -53,7 +53,7 @@ void main() {
       final a = FreePoint(id: 'a', position: const Vec2(0, 0));
       final b = FreePoint(id: 'b', position: const Vec2(4, 0));
       final p = SegmentRatioPoint(id: 'p', point1: a, point2: b, ratio: 0.75);
-      b.position = const Vec2(0, 8);
+      b.chartPosition = const Vec2(0, 8);
       p.recompute();
       expect(p.position, const Vec2(0, 6));
     });
@@ -80,7 +80,7 @@ void main() {
       );
       expect(p.isDefined, isFalse);
 
-      b.position = const Vec2(2, 0); // line (and onLine) come back
+      b.chartPosition = const Vec2(2, 0); // line (and onLine) come back
       line.recompute();
       onLine.recompute(); // arc-length parameter 1 → (1, 0)
       p.recompute();

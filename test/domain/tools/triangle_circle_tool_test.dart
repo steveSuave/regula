@@ -27,9 +27,9 @@ void main() {
       final b = FreePoint(id: 'b', position: const Vec2(4, 0));
       final c = FreePoint(id: 'c', position: const Vec2(0, 3));
 
-      expect(tool.onInput(ToolInput(a.position, hit: a)), isA<ToolAccepted>());
-      expect(tool.onInput(ToolInput(b.position, hit: b)), isA<ToolAccepted>());
-      final result = tool.onInput(ToolInput(c.position, hit: c));
+      expect(tool.onInput(ToolInput(a.position!, hit: a)), isA<ToolAccepted>());
+      expect(tool.onInput(ToolInput(b.position!, hit: b)), isA<ToolAccepted>());
+      final result = tool.onInput(ToolInput(c.position!, hit: c));
 
       expect(result, isA<ToolCommitted>());
       final command = (result as ToolCommitted).command;
@@ -102,7 +102,7 @@ void main() {
     });
 
     ToolResult tap(TriangleCircleTool t, FreePoint point) => t.onInput(
-      ToolInput(point.position, hit: point, objects: construction.objects),
+      ToolInput(point.position!, hit: point, objects: construction.objects),
     );
 
     test('the same circle twice refuses the completing tap', () {

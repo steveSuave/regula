@@ -35,7 +35,7 @@ void main() {
         final tool = toolFor(PerpendicularLine.new);
         final inputs = [
           ToolInput(const Vec2(2, 0), hit: refLine),
-          ToolInput(p.position, hit: p),
+          ToolInput(p.position!, hit: p),
         ];
         if (!lineFirst) {
           inputs.setAll(0, inputs.reversed.toList());
@@ -110,7 +110,10 @@ void main() {
       );
 
       final p = FreePoint(id: 'p', position: const Vec2(1, 5));
-      expect(tool.onInput(ToolInput(p.position, hit: p)), isA<ToolCommitted>());
+      expect(
+        tool.onInput(ToolInput(p.position!, hit: p)),
+        isA<ToolCommitted>(),
+      );
     });
 
     test(
@@ -119,7 +122,7 @@ void main() {
         final p = FreePoint(id: 'p', position: const Vec2(1, 5));
         final tool = toolFor(PerpendicularLine.new);
 
-        tool.onInput(ToolInput(p.position, hit: p));
+        tool.onInput(ToolInput(p.position!, hit: p));
         expect(tool.onInput(const ToolInput(Vec2(9, 9))), isA<ToolIgnored>());
         expect(
           tool.onInput(ToolInput(const Vec2(2, 0), hit: refLine)),
@@ -134,7 +137,7 @@ void main() {
       expect(tool.previewPositions, isEmpty);
       expect(tool.previewObjectIds, isEmpty);
 
-      tool.onInput(ToolInput(p.position, hit: p));
+      tool.onInput(ToolInput(p.position!, hit: p));
       expect(tool.previewObjectIds, ['p']);
       expect(
         tool.previewPositions,
@@ -168,7 +171,7 @@ void main() {
       expect(tool.previewObjectIds, isEmpty);
 
       // A fresh point + line still commits from scratch.
-      tool.onInput(ToolInput(p.position, hit: p));
+      tool.onInput(ToolInput(p.position!, hit: p));
       expect(
         tool.onInput(ToolInput(const Vec2(2, 0), hit: refLine)),
         isA<ToolCommitted>(),

@@ -37,7 +37,7 @@ void main() {
       for (final t in const [0.0, 1.0, 2.5, 4.0]) {
         final p = circle.pointAt(t);
         expect(
-          p.distanceTo(a.position) / p.distanceTo(b.position),
+          p.distanceTo(a.position!) / p.distanceTo(b.position!),
           closeTo(1 / 3, 1e-9),
         );
       }
@@ -52,8 +52,8 @@ void main() {
         point2: b,
         ratio: Rational.fromInts(1, 2),
       );
-      expect(small.circle!.signedDistanceTo(a.position), lessThan(0));
-      expect(small.circle!.signedDistanceTo(b.position), greaterThan(0));
+      expect(small.circle!.signedDistanceTo(a.position!), lessThan(0));
+      expect(small.circle!.signedDistanceTo(b.position!), greaterThan(0));
     });
 
     test('ratio 1 is refused: that locus is the perpendicular bisector', () {

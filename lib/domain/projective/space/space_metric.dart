@@ -20,6 +20,14 @@ Line3 perpendicularLineToPlane(Point3 p, Plane3 plane) =>
 /// the line's own point at infinity.
 Line3 parallelLineThrough(Point3 p, Line3 line) => p.join(line.directionPoint);
 
+/// The midpoint of two points: the affine midpoint of two finite points,
+/// and the point at infinity itself when one of them is at infinity (the
+/// affine limit, as the planar `midpointOf` answers).
+Point3 midpoint3(Point3 a, Point3 b) {
+  final sum = a.xyz * b.w + b.xyz * a.w;
+  return Point3(sum.x, sum.y, sum.z, 2 * a.w * b.w);
+}
+
 /// The plane through [p] perpendicular to [line]. The zero plane when
 /// [line] has no direction and [p] is at infinity.
 Plane3 perpendicularPlaneToLine(Point3 p, Line3 line) {

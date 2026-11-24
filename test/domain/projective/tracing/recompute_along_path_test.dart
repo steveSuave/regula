@@ -294,7 +294,7 @@ void main() {
         'c',
         const DragPath(Vec2(-1.8, 0), end),
         onStep: (_) {
-          final cx = center.position.x;
+          final cx = center.position!.x;
           expect(p0.position!.x, lessThan(cx));
           expect(p1.position!.x, greaterThan(cx));
         },
@@ -340,7 +340,7 @@ void main() {
       // (moveFreePoint to the intended target) fully recovers.
       expect(p0.tracedBranch.isActive, isFalse);
       expect(p1.tracedBranch.isActive, isFalse);
-      expect(center.position.y, lessThan(5));
+      expect(center.position!.y, lessThan(5));
       construction.moveFreePoint('c', const Vec2(0, 0));
       expect(p0.position!.closeTo(Vec2(-3, 0)), isTrue);
       expect(p1.position!.closeTo(Vec2(3, 0)), isTrue);

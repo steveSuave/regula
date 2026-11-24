@@ -40,7 +40,7 @@ void main() {
       final c = FreePoint(id: 'c', position: const Vec2(1, 3));
       final polygon = Polygon(id: 'p', vertices: [a, b, c]);
 
-      c.position = const Vec2(2, 5);
+      c.chartPosition = const Vec2(2, 5);
       polygon.recompute();
       expect(polygon.polygonVertices![2], const Vec2(2, 5));
     });
@@ -64,14 +64,14 @@ void main() {
       final polygon = Polygon(id: 'p', vertices: [a, b, crossing]);
       expect(polygon.isDefined, isTrue);
 
-      rim.position = const Vec2(0, 2);
+      rim.chartPosition = const Vec2(0, 2);
       circle.recompute();
       crossing.recompute();
       polygon.recompute();
       expect(polygon.isDefined, isFalse);
       expect(polygon.polygonVertices, isNull);
 
-      rim.position = const Vec2(0, -1);
+      rim.chartPosition = const Vec2(0, -1);
       circle.recompute();
       crossing.recompute();
       polygon.recompute();

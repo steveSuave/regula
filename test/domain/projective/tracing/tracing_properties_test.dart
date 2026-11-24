@@ -110,7 +110,7 @@ void main() {
           // The roots sit at cx ± √(r² − cy²) with |cy| ≤ 0.8r: real,
           // strictly either side of the center — a swap would put a
           // branch on the wrong side.
-          final cx = center.position.x;
+          final cx = center.position!.x;
           expect(p0.position!.x, lessThan(cx));
           expect(p1.position!.x, greaterThan(cx));
         },

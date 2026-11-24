@@ -28,17 +28,23 @@ void main(List<String> args) {
   }
   final pad = 0.1 * ((maxX - minX) + (maxY - minY)) / 2 + 10;
   final sb = StringBuffer()
-    ..writeln('<svg xmlns="http://www.w3.org/2000/svg" width="800" '
-        'height="800" viewBox="${minX - pad} ${-maxY - pad} '
-        '${maxX - minX + 2 * pad} ${maxY - minY + 2 * pad}">')
-    ..writeln('<rect x="${minX - pad}" y="${-maxY - pad}" width="100%" '
-        'height="100%" fill="white"/>');
+    ..writeln(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="800" '
+      'height="800" viewBox="${minX - pad} ${-maxY - pad} '
+      '${maxX - minX + 2 * pad} ${maxY - minY + 2 * pad}">',
+    )
+    ..writeln(
+      '<rect x="${minX - pad}" y="${-maxY - pad}" width="100%" '
+      'height="100%" fill="white"/>',
+    );
   final width = (maxX - minX + 2 * pad) / 400;
   var path = StringBuffer();
   void flush() {
     if (path.isNotEmpty) {
-      sb.writeln('<path d="$path" fill="none" stroke="#1a56c4" '
-          'stroke-width="$width"/>');
+      sb.writeln(
+        '<path d="$path" fill="none" stroke="#1a56c4" '
+        'stroke-width="$width"/>',
+      );
       path = StringBuffer();
     }
   }
@@ -52,13 +58,17 @@ void main(List<String> args) {
   }
   flush();
   for (final p in construction.objects.whereType<FreePoint>()) {
-    sb.writeln('<circle cx="${p.position.x}" cy="${-p.position.y}" '
-        'r="${2 * width}" fill="#c41a1a"/>');
+    sb.writeln(
+      '<circle cx="${p.position!.x}" cy="${-p.position!.y}" '
+      'r="${2 * width}" fill="#c41a1a"/>',
+    );
   }
   sb.writeln('</svg>');
   File(args[1]).writeAsStringSync(sb.toString());
-  stdout.writeln('components: '
-      '${samples.fold<int>(1, (n, s) => s == null ? n + 1 : n)}, '
-      'samples: ${samples.whereType<Vec2>().length}, '
-      'core: ${points.length}');
+  stdout.writeln(
+    'components: '
+    '${samples.fold<int>(1, (n, s) => s == null ? n + 1 : n)}, '
+    'samples: ${samples.whereType<Vec2>().length}, '
+    'core: ${points.length}',
+  );
 }

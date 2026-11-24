@@ -35,7 +35,7 @@ void main() {
           point: p,
           center: c,
           ratio: 1,
-        ).position!.closeTo(p.position),
+        ).position!.closeTo(p.position!),
         isTrue,
       );
       expect(
@@ -44,7 +44,7 @@ void main() {
           point: p,
           center: c,
           ratio: 0,
-        ).position!.closeTo(c.position),
+        ).position!.closeTo(c.position!),
         isTrue,
       );
     });
@@ -61,11 +61,11 @@ void main() {
       final c = FreePoint(id: 'c', position: Vec2.zero);
       final h = HomotheticPoint(id: 'h', point: p, center: c, ratio: 2);
 
-      p.position = const Vec2(0, 3);
+      p.chartPosition = const Vec2(0, 3);
       h.recompute();
       expect(h.position!.closeTo(const Vec2(0, 6)), isTrue);
 
-      c.position = const Vec2(0, 3);
+      c.chartPosition = const Vec2(0, 3);
       h.recompute();
       expect(
         h.position!.closeTo(const Vec2(0, 3)),
@@ -83,7 +83,7 @@ void main() {
       final h = HomotheticPoint(id: 'h', point: onLine, center: c, ratio: 2);
       expect(h.isDefined, isFalse);
 
-      b.position = const Vec2(1, 0); // line and onLine come back: (2, 0)
+      b.chartPosition = const Vec2(1, 0); // line and onLine come back: (2, 0)
       line.recompute();
       onLine.recompute();
       h.recompute();

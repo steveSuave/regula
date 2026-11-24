@@ -35,7 +35,7 @@ void main() {
       );
       expect(d.isDefined, isFalse);
 
-      c.position = const Vec2(1, 0);
+      c.chartPosition = const Vec2(1, 0);
       d.recompute();
       expect(d.isDefined, isTrue);
       expect(d.position!.closeTo(const Vec2(-2, 0)), isTrue);
@@ -79,7 +79,7 @@ void main() {
       );
 
       // Slide C outside the segment: the conjugate returns inside.
-      c.position = const Vec2(-2, 0);
+      c.chartPosition = const Vec2(-2, 0);
       d.recompute();
       expect(
         d.position!.closeTo(const Vec2(1, 0)),

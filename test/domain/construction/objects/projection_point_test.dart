@@ -39,8 +39,8 @@ void main() {
       final foot = ProjectionPoint(id: 'f', point: p, line: line);
       final f = foot.position!;
       expect(line.line!.contains(f, 1e-9), isTrue);
-      final direction = b.position - a.position;
-      expect(direction.dot(p.position - f), closeTo(0, 1e-9));
+      final direction = b.position! - a.position!;
+      expect(direction.dot(p.position! - f), closeTo(0, 1e-9));
     });
 
     test('projecting the foot again is the identity', () {
@@ -60,12 +60,12 @@ void main() {
       final p = FreePoint(id: 'p', position: const Vec2(1, 3));
       final foot = ProjectionPoint(id: 'f', point: p, line: line);
 
-      p.position = const Vec2(2, -5);
+      p.chartPosition = const Vec2(2, -5);
       foot.recompute();
       expect(foot.position!.closeTo(const Vec2(2, 0)), isTrue);
 
       // Rotate the line to the y-axis: the foot lands on x = 0.
-      b.position = const Vec2(0, 4);
+      b.chartPosition = const Vec2(0, 4);
       line.recompute();
       foot.recompute();
       expect(foot.position!.closeTo(const Vec2(0, -5)), isTrue);
@@ -79,7 +79,7 @@ void main() {
       final foot = ProjectionPoint(id: 'f', point: p, line: line);
       expect(foot.isDefined, isFalse);
 
-      b.position = const Vec2(4, 0);
+      b.chartPosition = const Vec2(4, 0);
       line.recompute();
       foot.recompute();
       expect(foot.isDefined, isTrue);

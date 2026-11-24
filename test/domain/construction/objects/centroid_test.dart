@@ -27,8 +27,8 @@ void main() {
       expect(g.isDefined, isTrue);
       expect(g.position!.closeTo(const Vec2(1, 1)), isTrue);
 
-      b.position = const Vec2(0, 0);
-      c.position = const Vec2(0, 0);
+      b.chartPosition = const Vec2(0, 0);
+      c.chartPosition = const Vec2(0, 0);
       g.recompute();
       expect(g.isDefined, isTrue);
       expect(g.position!.closeTo(const Vec2(0, 0)), isTrue);

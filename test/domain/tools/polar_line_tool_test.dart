@@ -33,7 +33,7 @@ void main() {
         final tool = newTool();
         final inputs = [
           ToolInput(const Vec2(1, 0.05), hit: circle),
-          ToolInput(p.position, hit: p),
+          ToolInput(p.position!, hit: p),
         ];
         if (!circleFirst) {
           inputs.setAll(0, inputs.reversed.toList());
@@ -84,7 +84,7 @@ void main() {
       expect(repeat, isA<ToolIgnored>());
 
       final p = FreePoint(id: 'p', position: const Vec2(5, 0));
-      final result = tool.onInput(ToolInput(p.position, hit: p));
+      final result = tool.onInput(ToolInput(p.position!, hit: p));
       expect(result, isA<ToolCommitted>());
       expect(
         ((result as ToolCommitted).command as AddObjectCommand).object,
@@ -98,7 +98,7 @@ void main() {
       final objects = [center, rim, p, circle, existing];
 
       final inputs = [
-        ToolInput(p.position, hit: p, objects: objects),
+        ToolInput(p.position!, hit: p, objects: objects),
         ToolInput(const Vec2(1, 0.05), hit: circle, objects: objects),
       ];
       for (final circleFirst in [true, false]) {
@@ -129,7 +129,7 @@ void main() {
       final objects = [center, rim, p, o2, r2, circle, other, existing];
 
       final tool = newTool();
-      tool.onInput(ToolInput(p.position, hit: p, objects: objects));
+      tool.onInput(ToolInput(p.position!, hit: p, objects: objects));
       expect(
         tool.onInput(ToolInput(const Vec2(1, 5), hit: other, objects: objects)),
         isA<ToolCommitted>(),
@@ -138,7 +138,7 @@ void main() {
 
     test('previews: existing inputs haloed, new point keeps the marker', () {
       final p = FreePoint(id: 'p', position: const Vec2(5, 0));
-      final existing = newTool()..onInput(ToolInput(p.position, hit: p));
+      final existing = newTool()..onInput(ToolInput(p.position!, hit: p));
       expect(existing.previewObjectIds, ['p']);
       expect(existing.previewPositions, isEmpty);
 
@@ -153,8 +153,8 @@ void main() {
     test('a second point input is ignored', () {
       final p = FreePoint(id: 'p', position: const Vec2(5, 0));
       final q = FreePoint(id: 'q', position: const Vec2(0, 5));
-      final tool = newTool()..onInput(ToolInput(p.position, hit: p));
-      expect(tool.onInput(ToolInput(q.position, hit: q)), isA<ToolIgnored>());
+      final tool = newTool()..onInput(ToolInput(p.position!, hit: p));
+      expect(tool.onInput(ToolInput(q.position!, hit: q)), isA<ToolIgnored>());
       expect(tool.previewObjectIds, ['p']);
     });
   });

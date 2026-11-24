@@ -20,8 +20,8 @@ void main() {
       final b = FreePoint(id: 'b', position: const Vec2(3, 4));
       final l = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
       expect(l.isDefined, isTrue);
-      expect(l.line!.contains(a.position), isTrue);
-      expect(l.line!.contains(b.position), isTrue);
+      expect(l.line!.contains(a.position!), isTrue);
+      expect(l.line!.contains(b.position!), isTrue);
     });
 
     test('an infinite line offers the whole carrier: no parameter extent, '
@@ -39,12 +39,12 @@ void main() {
       final l = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
       expect(l.isDefined, isTrue);
 
-      b.position = const Vec2(2, 2); // drag onto a: degenerate
+      b.chartPosition = const Vec2(2, 2); // drag onto a: degenerate
       l.recompute();
       expect(l.isDefined, isFalse);
       expect(l.line, isNull);
 
-      b.position = const Vec2(2, 7); // drag away: defined again
+      b.chartPosition = const Vec2(2, 7); // drag away: defined again
       l.recompute();
       expect(l.isDefined, isTrue);
       expect(l.line!.contains(const Vec2(2, 5)), isTrue);
@@ -138,7 +138,7 @@ void main() {
       );
       if (crossing.position == null) return;
       final join = LineThroughTwoPoints(id: 'j', point1: crossing, point2: e);
-      final delta = e.position - crossing.position!;
+      final delta = e.position! - crossing.position!;
       if (join.line == null || delta.norm < 1e-6) return;
       expect(
         join.line!.direction.dot(delta),

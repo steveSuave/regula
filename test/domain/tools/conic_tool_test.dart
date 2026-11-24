@@ -38,12 +38,12 @@ void main() {
 
       for (final p in points.take(4)) {
         expect(
-          tool.onInput(ToolInput(p.position, hit: p)),
+          tool.onInput(ToolInput(p.position!, hit: p)),
           isA<ToolAccepted>(),
         );
       }
       final result = tool.onInput(
-        ToolInput(points.last.position, hit: points.last),
+        ToolInput(points.last.position!, hit: points.last),
       );
 
       expect(result, isA<ToolCommitted>());
@@ -85,9 +85,9 @@ void main() {
       final b = FreePoint(id: 'b', position: ellipse[1]);
       final tool = conicTool();
 
-      expect(tool.onInput(ToolInput(a.position, hit: a)), isA<ToolAccepted>());
-      expect(tool.onInput(ToolInput(a.position, hit: a)), isA<ToolIgnored>());
-      expect(tool.onInput(ToolInput(b.position, hit: b)), isA<ToolAccepted>());
+      expect(tool.onInput(ToolInput(a.position!, hit: a)), isA<ToolAccepted>());
+      expect(tool.onInput(ToolInput(a.position!, hit: a)), isA<ToolIgnored>());
+      expect(tool.onInput(ToolInput(b.position!, hit: b)), isA<ToolAccepted>());
       expect(tool.collectedVertices, [a, b]);
     });
 

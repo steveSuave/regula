@@ -37,7 +37,7 @@ void main() {
       final distance = DistanceMeasurement(id: 'd', point1: a, point2: b);
       expect(distance.value, 1);
 
-      b.position = const Vec2(0, 7);
+      b.chartPosition = const Vec2(0, 7);
       distance.recompute();
       expect(distance.value, 7);
       expect(distance.anchor, const Vec2(0, 3.5));
@@ -65,7 +65,7 @@ void main() {
 
       // Radius below 3 lifts the circle off the line: the crossing — and
       // with it the measurement — goes undefined.
-      rim.position = const Vec2(0, 2);
+      rim.chartPosition = const Vec2(0, 2);
       circle.recompute();
       crossing.recompute();
       distance.recompute();
@@ -73,7 +73,7 @@ void main() {
       expect(distance.value, isNull);
       expect(distance.anchor, isNull);
 
-      rim.position = const Vec2(0, -1);
+      rim.chartPosition = const Vec2(0, -1);
       circle.recompute();
       crossing.recompute();
       distance.recompute();

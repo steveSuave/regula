@@ -37,9 +37,9 @@ void main() {
   /// Pairwise-equal adjacent sides on the current corner positions.
   void expectKite(Construction construction) {
     final free = freeCorners(construction);
-    final a = free[0].position;
-    final b = free[1].position;
-    final c = free[2].position;
+    final a = free[0].position!;
+    final b = free[1].position!;
+    final c = free[2].position!;
     final d = cornerD(construction).position!;
     expect((d - a).norm, closeTo((b - a).norm, 1e-9), reason: '|AD| = |AB|');
     expect((d - c).norm, closeTo((b - c).norm, 1e-9), reason: '|CD| = |CB|');
@@ -151,7 +151,7 @@ void main() {
         construction.add(point);
       }
       ToolResult tap(FreePoint point) => tool.onInput(
-        ToolInput(point.position, hit: point, objects: construction.objects),
+        ToolInput(point.position!, hit: point, objects: construction.objects),
       );
 
       tap(a);

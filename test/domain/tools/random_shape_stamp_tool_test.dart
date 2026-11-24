@@ -58,7 +58,7 @@ void main() {
       result.command.apply(construction);
 
       for (final vertex in construction.objects.whereType<FreePoint>()) {
-        final distance = vertex.position.distanceTo(tap);
+        final distance = vertex.position!.distanceTo(tap);
         expect(distance, greaterThanOrEqualTo(20));
         expect(distance, lessThanOrEqualTo(40));
       }
@@ -92,7 +92,7 @@ void main() {
       // normalize back before comparing the winding order.
       final angles = [
         for (final v in construction.objects.whereType<FreePoint>())
-          math.atan2(v.position.y, v.position.x) % (2 * math.pi),
+          math.atan2(v.position!.y, v.position!.x) % (2 * math.pi),
       ];
       final sorted = List.of(angles)..sort();
       expect(angles, sorted, reason: 'sorted angles cannot self-intersect');
@@ -120,8 +120,8 @@ void main() {
         expect(corners, hasLength(4), reason: 'seed $seed');
         final crossProducts = [
           for (var k = 0; k < 4; k++)
-            (corners[(k + 1) % 4] - corners[k]).cross(
-              corners[(k + 2) % 4] - corners[(k + 1) % 4],
+            (corners[(k + 1) % 4]! - corners[k]!).cross(
+              corners[(k + 2) % 4]! - corners[(k + 1) % 4]!,
             ),
         ];
         for (final crossProduct in crossProducts) {
@@ -185,7 +185,7 @@ void main() {
 
         // On-circle distance 40, stretched by axis factors in [0.7, 1.3].
         for (final vertex in construction.objects.whereType<FreePoint>()) {
-          final distance = vertex.position.distanceTo(tap);
+          final distance = vertex.position!.distanceTo(tap);
           expect(
             distance,
             greaterThanOrEqualTo(40 * 0.7),
@@ -203,7 +203,7 @@ void main() {
       final tool = toolFor(min: 3, max: 3);
 
       final result =
-          tool.onInput(ToolInput(e.position, hit: e)) as ToolCommitted;
+          tool.onInput(ToolInput(e.position!, hit: e)) as ToolCommitted;
       result.command.apply(construction);
       expect(
         construction.objects.whereType<FreePoint>(),

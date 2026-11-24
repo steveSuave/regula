@@ -139,12 +139,12 @@ void main() {
       expect(bisector.isDefined, isFalse);
 
       // Tilt the second line: the bisector appears.
-      q.position = const Vec2(4, 3);
+      q.chartPosition = const Vec2(4, 3);
       parallel.recompute();
       bisector.recompute();
       expect(bisector.line, isNotNull);
 
-      q.position = const Vec2(4, 1);
+      q.chartPosition = const Vec2(4, 1);
       parallel.recompute();
       bisector.recompute();
       expect(bisector.line, isNull, reason: 'parallel again — undefined');
@@ -176,7 +176,7 @@ void main() {
       // Tilt the second line: the bisector must stay inside the deformed
       // first-quadrant wedge (both direction components positive — the
       // other branch has mixed signs) and keep the equidistance property.
-      y.position = const Vec2(1, 4);
+      y.chartPosition = const Vec2(1, 4);
       yAxis.recompute();
       bisector.recompute();
       final direction = bisector.line!.direction;

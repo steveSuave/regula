@@ -30,7 +30,7 @@ void main() {
   /// A tap on [hit] with the live construction attached, like the canvas
   /// builds it.
   ToolInput tapOn(FreePoint hit) =>
-      ToolInput(hit.position, hit: hit, objects: construction.objects);
+      ToolInput(hit.position!, hit: hit, objects: construction.objects);
 
   /// Runs one tap through [tool] and applies the committed command.
   ChangeAttributesCommand tapAndApply(NamePointsTool tool, ToolInput input) {

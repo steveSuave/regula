@@ -63,7 +63,7 @@ void main() {
   /// One complete gesture: session, frames, commit.
   void drag(Construction construction, String id, Vec2 to) {
     final mover = construction.byId(id)! as FreePoint;
-    final from = mover.position;
+    final from = mover.position!;
     final session = DragSession.start(construction, mover, from);
     if (session == null) return;
     for (var step = 1; step <= 30; step++) {
@@ -196,7 +196,7 @@ void main() {
       for (final target in const ['A', 'C', 'D', 'E']) {
         for (final away in const [Vec2(-3, 1.5), Vec2(2.5, -2), Vec2(0, 3)]) {
           final construction = rig();
-          final home = (construction.byId(target)! as FreePoint).position;
+          final home = (construction.byId(target)! as FreePoint).position!;
 
           for (var i = 0; i < 3; i++) {
             tap(construction, where[i], flip: flips[i]);
@@ -256,7 +256,7 @@ void main() {
   test('an identical round trip permutes the crossings that vanish, and '
       'enough trips bring every name home', () {
     final (construction, points, home) = seatedRig();
-    final start = (construction.byId('D')! as FreePoint).position;
+    final start = (construction.byId('D')! as FreePoint).position!;
     final atHome = seating(points, home);
 
     final seen = <String>[];
@@ -303,7 +303,7 @@ void main() {
 
   test('however the names permute, all four survive and none ever doubles', () {
     final (construction, points, home) = seatedRig();
-    final start = (construction.byId('D')! as FreePoint).position;
+    final start = (construction.byId('D')! as FreePoint).position!;
     // Varying the excursion is what makes the names roll rather than
     // alternate: a different loop realizes a different permutation.
     for (var trip = 1; trip <= 40; trip++) {

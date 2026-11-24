@@ -28,7 +28,7 @@ void main() {
       final b = FreePoint(id: 'b', position: const Vec2(5, 0));
       final c = FreePoint(id: 'c', position: const Vec2(2, 7));
       final k = ApolloniusCircle(id: 'k', point1: a, point2: b, point3: c);
-      expect(k.circle!.distanceTo(c.position), lessThan(1e-9));
+      expect(k.circle!.distanceTo(c.position!), lessThan(1e-9));
     });
 
     test('drag C through the perpendicular bisector: undefined, recovers', () {

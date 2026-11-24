@@ -15,7 +15,7 @@ void main() {
 
     test('position is mutable and recompute is a no-op', () {
       final p = FreePoint(id: 'p1', position: Vec2.zero);
-      p.position = const Vec2(3, 4);
+      p.chartPosition = const Vec2(3, 4);
       p.recompute();
       expect(p.position, const Vec2(3, 4));
     });
@@ -26,9 +26,9 @@ void main() {
       'stores the exact lift and projects back exactly at any magnitude',
       () {
         final p = FreePoint(id: 'p', position: const Vec2(1e12, -3e12));
-        expect(p.projPoint.x, const Complex(1e12));
-        expect(p.projPoint.y, const Complex(-3e12));
-        expect(p.projPoint.w, Complex.one);
+        expect(p.projPoint!.x, const Complex(1e12));
+        expect(p.projPoint!.y, const Complex(-3e12));
+        expect(p.projPoint!.w, Complex.one);
         // Beyond 1/projectiveEpsilon the tolerance-based chart projection
         // would call this "at infinity"; a free point's stored lift has w
         // exactly 1, so the position reads back exactly regardless.
@@ -39,8 +39,8 @@ void main() {
 
     test('the position setter re-lifts', () {
       final p = FreePoint(id: 'p', position: Vec2.zero);
-      p.position = const Vec2(3, 4);
-      expect(p.projPoint.closeTo(ProjPoint.real(3, 4)), isTrue);
+      p.chartPosition = const Vec2(3, 4);
+      expect(p.projPoint!.closeTo(ProjPoint.real(3, 4)), isTrue);
     });
   });
 
@@ -57,10 +57,10 @@ void main() {
       expect(p.projPoint, detoured);
       expect(p.position, const Vec2(1, 2));
       // The ordinary setter restores the real-lift regime.
-      p.position = const Vec2(3, 4);
-      expect(p.projPoint.x, const Complex(3));
-      expect(p.projPoint.y, const Complex(4));
-      expect(p.projPoint.w, Complex.one);
+      p.chartPosition = const Vec2(3, 4);
+      expect(p.projPoint!.x, const Complex(3));
+      expect(p.projPoint!.y, const Complex(4));
+      expect(p.projPoint!.w, Complex.one);
     });
   });
 }

@@ -37,8 +37,8 @@ void main() {
   /// The legs stay equal on the current corner positions.
   void expectIsosceles(Construction construction) {
     final free = corners(construction);
-    final a = free[0].position;
-    final b = free[1].position;
+    final a = free[0].position!;
+    final b = free[1].position!;
     final c = apex(construction).position!;
     expect(c.distanceTo(a), closeTo(c.distanceTo(b), 1e-9));
   }
@@ -87,7 +87,7 @@ void main() {
       tool.onInput(const ToolInput(Vec2(0, 0)));
       tool.onInput(const ToolInput(Vec2(4, 0)));
       final result =
-          tool.onInput(ToolInput(e.position, hit: e)) as ToolCommitted;
+          tool.onInput(ToolInput(e.position!, hit: e)) as ToolCommitted;
       result.command.apply(construction);
 
       expect(

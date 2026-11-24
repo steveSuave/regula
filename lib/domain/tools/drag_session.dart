@@ -384,7 +384,7 @@ class _TranslateDragSession implements DragSession {
     this._gridSnapStep = 0,
   }) : _pointIds = [for (final point in points) point.id],
        _startPositions = {
-         for (final point in points) point.id: point.position,
+         for (final point in points) point.id: point.chartPosition,
        } {
     // Traced previews adopt branch identity per frame (each pass leaves
     // `branchIndex` re-derived under the tracked root — Phase 116), so

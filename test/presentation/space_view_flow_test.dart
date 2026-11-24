@@ -140,7 +140,7 @@ void main() {
                 .construction
                 .objects
                 .whereType<FreePoint>()) {
-          final shown = fitted.worldToScreen(object.position);
+          final shown = fitted.worldToScreen(object.position!);
           expect(
             shown.dx,
             inInclusiveRange(

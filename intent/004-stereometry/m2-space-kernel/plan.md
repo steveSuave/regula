@@ -113,3 +113,11 @@ Three stages. Each ends green on the full gate, with a look, and merges to `main
   - **The horizontal `u` is `ẑ × n`, not `n × ẑ`** as the spec first said: with it a vertical plane facing the viewer has `u` to the right and `v` up, and an upward horizontal plane gets the base axes. Spec amended.
   - `Line3.joinPoint` is oriented so the plane through a, b, c has its normal along ab × ac, the same hand as `PlaneFrame.throughPoints`.
   - The DECISIONS section is opened in this commit, because `decision_citations_test` needs a cited section to exist. It gains bullets as the steps land.
+- **Steps 3 to 5, space values, the height, the intrinsic kinds, the codec** (one commit: the nullable `position` could not compile in parts). 24 new tests. Notes:
+  - **`sheetFrame`, not `sheet`.** Until planes exist every object is on the base plane, so stage A carries only `GeoObject.sheetFrame` (the base frame). The sheet as an identity arrives with stage C, where something can differ.
+  - **The intrinsic kinds' gate is "a parent has no value in the sheet"**, not "my own planar value is null". The second would have turned two coincident planar points into a defined space segment.
+  - `FreePoint.position` nullable: 10 sites in `lib/`, about 440 in `test/`, fixed by a script driven by the analyzer's own error locations (`position!` at the declaration of a local where there was one, `chartPosition` for the setter). No test's meaning changed; every one of those points is unlifted.
+  - `FreePoint.projPoint` is nullable too; `storedPoint` is the stored value whatever the height, for a pass that must save and restore it.
+  - The byte-identity of a planar save is held by the existing v1 corpus (`kitchen-sink-v1.json` is compared against the live encoder) plus a test that no `h` is written.
+  - `codec_v2_test`'s "v4 is refused" became "v5 is refused".
+  - **Until step 6 the painter and hit tester assume `isDefined` means a planar value.** Nothing in the UI can lift a point yet, so no path reaches them with a space-only object.

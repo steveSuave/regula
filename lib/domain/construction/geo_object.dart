@@ -2,11 +2,15 @@ import '../math/angle_geometry.dart';
 import '../math/circle_eq.dart';
 import '../math/line_eq.dart';
 import '../math/vec2.dart';
+import '../math/vec3.dart';
 import '../projective/absolute.dart';
 import '../projective/conic_matrix.dart';
 import '../projective/conic_shape.dart';
 import '../projective/proj_line.dart';
 import '../projective/proj_point.dart';
+import '../projective/space/line3.dart';
+import '../projective/space/plane_frame.dart';
+import '../projective/space/point3.dart';
 import 'object_attributes.dart';
 
 /// Base of every object in the construction graph.
@@ -47,8 +51,9 @@ import 'object_attributes.dart';
 /// input now yields genuine faraway geometry, and only exact degeneracy
 /// degenerates.
 ///
-/// Three sanctioned exceptions, each argued where it lives rather than
-/// here: the realness gate shared by `IntersectionPoint` and
+/// Four sanctioned exceptions, each argued where it lives rather than
+/// here: a `FreePoint` lifted off its sheet has no value in it (intent
+/// 004 — the test is `height != 0`, exact, so there is no band); the realness gate shared by `IntersectionPoint` and
 /// `TangentLine` (a *complex* carrier or pole yields nothing rather than
 /// a mined real point — Phase 110, and named for both kinds since the
 /// Phase 136c audit), `PointOnObject` on a carrier with no chart
@@ -77,6 +82,18 @@ sealed class GeoObject {
 
   /// Whether the object currently has valid geometry (see class doc).
   bool get isDefined;
+
+  /// The coordinates of this object's **sheet**: the plane its planar
+  /// values (`projPoint`, `projLine`, `conic`, and their projections)
+  /// are written in. Null for an object that lies in no one plane and
+  /// has only a space value.
+  ///
+  /// The planar kernel is the space kernel's chart (DECISIONS §"Sheets: a
+  /// plane is a chart of one space"): a planar kind computes exactly as
+  /// it always did, and its sheet says where in space that computation
+  /// sits. Every object is on the base plane until planes exist
+  /// (milestone 2, stage C).
+  PlaneFrame? get sheetFrame => PlaneFrame.base;
 
   /// Recomputes this object's geometry from its parents' current state,
   /// in the geometry [absolute] names.
@@ -128,8 +145,29 @@ abstract class GeoPoint extends GeoObject {
   /// makes [isDefined] the rendering question "real and finite?".
   ProjPoint? get projPoint;
 
+  /// The point as a point of space: the sheet's lift of [projPoint].
+  /// Null when that is null or not real — space is real, so a complex
+  /// planar value has no image in it — and when there is no sheet.
+  ///
+  /// The few kinds whose value needs no plane (a lifted free point, the
+  /// midpoint of two points of space) override this and
+  /// [spacePosition], and answer where [projPoint] cannot.
+  Point3? get spacePoint {
+    final p = projPoint;
+    return p == null ? null : sheetFrame?.liftPoint(p);
+  }
+
+  /// The real finite position in space, or null: the projection of
+  /// [spacePoint], as [position] is of [projPoint].
+  Vec3? get spacePosition {
+    final p = position;
+    return p == null ? null : sheetFrame?.lift(p);
+  }
+
+  /// Defined when the point has a real finite position, in its sheet or
+  /// in space. The first arm is the planar question and short-circuits.
   @override
-  bool get isDefined => position != null;
+  bool get isDefined => position != null || spacePosition != null;
 }
 
 /// A line-valued object (infinite lines, rays, segments share the carrier
@@ -150,6 +188,19 @@ abstract class GeoLine extends GeoObject {
   /// ([ProjLine.toLineEq]); real-extent metadata ([parameterExtent])
   /// stays affine either way.
   ProjLine? get projLine;
+
+  /// The carrier as a line of space: the sheet's lift of [projLine],
+  /// null when that is null or not real. Kinds whose carrier needs no
+  /// plane (the line through two points of space) override this.
+  Line3? get spaceLine {
+    final l = projLine;
+    return l == null ? null : sheetFrame?.liftLine(l);
+  }
+
+  /// Whether the line has something to draw in space while it has no
+  /// [line] in its sheet. False for every plane-bound kind; the kinds
+  /// that override [spaceLine] answer it.
+  bool get hasSpaceExtent => false;
 
   /// The parameter span of the carrier this object actually occupies, in
   /// the carrier's arc-length parameterization (`LineEq.parameterAt`), as
@@ -179,7 +230,7 @@ abstract class GeoLine extends GeoObject {
   }
 
   @override
-  bool get isDefined => line != null;
+  bool get isDefined => line != null || hasSpaceExtent;
 }
 
 /// A circle-valued object. [circle] is null while undefined, which means

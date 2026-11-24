@@ -39,7 +39,7 @@ void main() {
         final tool = newTool();
         final inputs = [
           ToolInput(const Vec2(1, 0.05), hit: circle),
-          ToolInput(p.position, hit: p),
+          ToolInput(p.position!, hit: p),
         ];
         if (!circleFirst) {
           inputs.setAll(0, inputs.reversed.toList());
@@ -75,7 +75,7 @@ void main() {
         tool.onInput(ToolInput(const Vec2(1, 0.05), hit: circle)),
         isA<ToolAccepted>(),
       );
-      final result = tool.onInput(ToolInput(rim.position, hit: rim));
+      final result = tool.onInput(ToolInput(rim.position!, hit: rim));
       final command = (result as ToolCommitted).command as MacroCommand;
       expect(command.commands, hasLength(1));
       final tangents = tangentsOf(command);
@@ -120,7 +120,7 @@ void main() {
 
       // The collection is still live: a point tap completes the pair.
       final p = FreePoint(id: 'p', position: const Vec2(5, 0));
-      final result = tool.onInput(ToolInput(p.position, hit: p));
+      final result = tool.onInput(ToolInput(p.position!, hit: p));
       expect(result, isA<ToolCommitted>());
       final command = (result as ToolCommitted).command as MacroCommand;
       expect(
@@ -170,7 +170,7 @@ void main() {
 
     test('previews: existing inputs haloed, new point keeps the marker', () {
       final p = FreePoint(id: 'p', position: const Vec2(5, 0));
-      final existing = newTool()..onInput(ToolInput(p.position, hit: p));
+      final existing = newTool()..onInput(ToolInput(p.position!, hit: p));
       expect(existing.previewObjectIds, ['p']);
       expect(existing.previewPositions, isEmpty);
 
@@ -185,8 +185,8 @@ void main() {
     test('a second point input is ignored', () {
       final p = FreePoint(id: 'p', position: const Vec2(5, 0));
       final q = FreePoint(id: 'q', position: const Vec2(0, 5));
-      final tool = newTool()..onInput(ToolInput(p.position, hit: p));
-      expect(tool.onInput(ToolInput(q.position, hit: q)), isA<ToolIgnored>());
+      final tool = newTool()..onInput(ToolInput(p.position!, hit: p));
+      expect(tool.onInput(ToolInput(q.position!, hit: q)), isA<ToolIgnored>());
       expect(tool.previewObjectIds, ['p']);
     });
   });

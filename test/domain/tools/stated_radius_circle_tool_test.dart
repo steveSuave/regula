@@ -50,7 +50,7 @@ void main() {
       construction.add(e);
 
       final result =
-          tool.onInput(ToolInput(e.position, hit: e)) as ToolCommitted;
+          tool.onInput(ToolInput(e.position!, hit: e)) as ToolCommitted;
       expect(result.command, isA<AddObjectCommand>());
       result.command.apply(construction);
       final circle = construction.objects

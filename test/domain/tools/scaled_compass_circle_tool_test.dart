@@ -55,11 +55,11 @@ void main() {
       construction.add(b);
       construction.add(c);
 
-      tool.onInput(ToolInput(a.position, hit: a));
-      expect(tool.onInput(ToolInput(a.position, hit: a)), isA<ToolIgnored>());
-      tool.onInput(ToolInput(b.position, hit: b));
+      tool.onInput(ToolInput(a.position!, hit: a));
+      expect(tool.onInput(ToolInput(a.position!, hit: a)), isA<ToolIgnored>());
+      tool.onInput(ToolInput(b.position!, hit: b));
       final result =
-          tool.onInput(ToolInput(c.position, hit: c)) as ToolCommitted;
+          tool.onInput(ToolInput(c.position!, hit: c)) as ToolCommitted;
       expect(result.command, isA<AddObjectCommand>());
       result.command.apply(construction);
       final circle = construction.objects

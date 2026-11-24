@@ -29,7 +29,7 @@ void main() {
       expect(bisector.line, isNull);
       expect(bisector.isDefined, isFalse);
 
-      q.position = const Vec2(6, 2);
+      q.chartPosition = const Vec2(6, 2);
       bisector.recompute();
       expect(bisector.line, isNotNull);
       expect(
@@ -38,7 +38,7 @@ void main() {
         reason: 'vertical bisector of a horizontal join at x = 4',
       );
 
-      q.position = const Vec2(2, 2);
+      q.chartPosition = const Vec2(2, 2);
       bisector.recompute();
       expect(bisector.line, isNull, reason: 'coincident again — undefined');
     });
@@ -65,7 +65,7 @@ void main() {
       expect(bisector.line, isNull);
 
       // Tilt the second line: the crossing appears and the bisector with it.
-      q.position = const Vec2(4, -1);
+      q.chartPosition = const Vec2(4, -1);
       other.recompute();
       crossing.recompute();
       bisector.recompute();

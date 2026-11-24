@@ -33,9 +33,9 @@ void main() {
       final k = NinePointCircle(id: 'k', vertex1: a, vertex2: b, vertex3: c);
       final circle = k.circle!;
       final midpoints = [
-        (a.position + b.position) / 2,
-        (b.position + c.position) / 2,
-        (c.position + a.position) / 2,
+        (a.position! + b.position!) / 2,
+        (b.position! + c.position!) / 2,
+        (c.position! + a.position!) / 2,
       ];
       for (final m in midpoints) {
         expect(circle.center.distanceTo(m), closeTo(circle.radius, 1e-9));

@@ -78,7 +78,7 @@ void main() {
       expect(slope.value, double.infinity);
       expect(slope.anchor, isNotNull);
 
-      b.position = const Vec2(5, 4);
+      b.chartPosition = const Vec2(5, 4);
       line.recompute();
       slope.recompute();
       expect(slope.isDefined, isTrue);
@@ -92,12 +92,12 @@ void main() {
       final slope = SlopeMeasurement(id: 'm', subject: line);
       expect(slope.isDefined, isTrue);
 
-      b.position = const Vec2(0, 0);
+      b.chartPosition = const Vec2(0, 0);
       line.recompute();
       slope.recompute();
       expect(slope.isDefined, isFalse);
 
-      b.position = const Vec2(2, 2);
+      b.chartPosition = const Vec2(2, 2);
       line.recompute();
       slope.recompute();
       expect(slope.isDefined, isTrue);
@@ -111,7 +111,7 @@ void main() {
       final slope = SlopeMeasurement(id: 'm', subject: segment);
       expect(slope.value, closeTo(1, 1e-12));
 
-      b.position = const Vec2(4, 2);
+      b.chartPosition = const Vec2(4, 2);
       segment.recompute();
       slope.recompute();
       expect(slope.value, closeTo(0.5, 1e-12));

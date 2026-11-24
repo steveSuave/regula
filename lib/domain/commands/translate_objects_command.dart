@@ -58,8 +58,8 @@ class TranslateObjectsCommand implements Command {
     }
     _before.clear();
     for (final point in points) {
-      _before[point.id] = point.position;
-      construction.moveFreePoint(point.id, point.position + delta);
+      _before[point.id] = point.chartPosition;
+      construction.moveFreePoint(point.id, point.chartPosition + delta);
     }
   }
 

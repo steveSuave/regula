@@ -56,7 +56,7 @@ void main() {
         final tool = TransformObjectTool.reflectAboutLine(newId: newId);
         final inputs = [
           ToolInput(const Vec2(2, 0), hit: xAxis),
-          ToolInput(p.position, hit: p),
+          ToolInput(p.position!, hit: p),
         ];
         if (!lineFirst) {
           inputs.setAll(0, inputs.reversed.toList());
@@ -102,14 +102,14 @@ void main() {
       final circle = CircleCenterPoint(id: 'o', center: p, onCircle: q);
       final tool = TransformObjectTool.reflectAboutLine(newId: newId);
 
-      tool.onInput(ToolInput(p.position, hit: p));
+      tool.onInput(ToolInput(p.position!, hit: p));
       expect(
         tool.onInput(const ToolInput(Vec2(9, 9))),
         isA<ToolIgnored>(),
         reason: 'empty canvas is a missed tap',
       );
       expect(
-        tool.onInput(ToolInput(q.position, hit: q)),
+        tool.onInput(ToolInput(q.position!, hit: q)),
         isA<ToolIgnored>(),
         reason: 'a second point is ignored',
       );
@@ -129,13 +129,13 @@ void main() {
       final c = FreePoint(id: 'c', position: const Vec2(1, 1));
       final tool = TransformObjectTool.reflectAboutPoint(newId: newId);
 
-      expect(tool.onInput(ToolInput(p.position, hit: p)), isA<ToolAccepted>());
+      expect(tool.onInput(ToolInput(p.position!, hit: p)), isA<ToolAccepted>());
       expect(
-        tool.onInput(ToolInput(p.position, hit: p)),
+        tool.onInput(ToolInput(p.position!, hit: p)),
         isA<ToolIgnored>(),
         reason: 'the same existing point twice is refused',
       );
-      final result = tool.onInput(ToolInput(c.position, hit: c));
+      final result = tool.onInput(ToolInput(c.position!, hit: c));
 
       expect(result, isA<ToolCommitted>());
       final command = (result as ToolCommitted).command;
@@ -150,8 +150,8 @@ void main() {
       final c = FreePoint(id: 'c', position: const Vec2(0, 0));
       final tool = TransformObjectTool.rotate(newId: newId, angle: math.pi / 2);
 
-      expect(tool.onInput(ToolInput(p.position, hit: p)), isA<ToolAccepted>());
-      final result = tool.onInput(ToolInput(c.position, hit: c));
+      expect(tool.onInput(ToolInput(p.position!, hit: p)), isA<ToolAccepted>());
+      final result = tool.onInput(ToolInput(c.position!, hit: c));
 
       expect(result, isA<ToolCommitted>());
       final command = (result as ToolCommitted).command;
@@ -184,9 +184,9 @@ void main() {
       final tip = FreePoint(id: 't1', position: const Vec2(2, 1));
       final tool = TransformObjectTool.translate(newId: newId);
 
-      tool.onInput(ToolInput(p.position, hit: p));
-      tool.onInput(ToolInput(tail.position, hit: tail));
-      final result = tool.onInput(ToolInput(tip.position, hit: tip));
+      tool.onInput(ToolInput(p.position!, hit: p));
+      tool.onInput(ToolInput(tail.position!, hit: tail));
+      final result = tool.onInput(ToolInput(tip.position!, hit: tip));
 
       expect(result, isA<ToolCommitted>());
       final command = (result as ToolCommitted).command;
@@ -200,7 +200,7 @@ void main() {
       final seg = Segment(id: 's', point1: m1, point2: m2);
       final tool = TransformObjectTool.reflectAboutPoint(newId: newId);
 
-      tool.onInput(ToolInput(p.position, hit: p));
+      tool.onInput(ToolInput(p.position!, hit: p));
       final result = tool.onInput(
         ToolInput(const Vec2(2, 0.1), hit: seg),
       ) as ToolCommitted;
@@ -284,7 +284,7 @@ void main() {
         isA<ToolIgnored>(),
         reason: 'same line as transformee and mirror',
       );
-      final result = tool.onInput(ToolInput(p.position, hit: p));
+      final result = tool.onInput(ToolInput(p.position!, hit: p));
 
       expect(result, isA<ToolCommitted>());
       final command = (result as ToolCommitted).command;
@@ -306,7 +306,7 @@ void main() {
 
       tool.onInput(ToolInput(const Vec2(2, 0.01), hit: circle));
       final result =
-          tool.onInput(ToolInput(o.position, hit: o)) as ToolCommitted;
+          tool.onInput(ToolInput(o.position!, hit: o)) as ToolCommitted;
 
       (result.command as MacroCommand).apply(construction);
       final image = construction.objects.last as CircleCenterPoint;
@@ -336,9 +336,9 @@ void main() {
       final tool = TransformObjectTool.translate(newId: newId);
 
       tool.onInput(ToolInput(const Vec2(5, 7), hit: compass));
-      tool.onInput(ToolInput(r1.position, hit: r1));
+      tool.onInput(ToolInput(r1.position!, hit: r1));
       final result =
-          tool.onInput(ToolInput(tip.position, hit: tip)) as ToolCommitted;
+          tool.onInput(ToolInput(tip.position!, hit: tip)) as ToolCommitted;
 
       final macro = result.command as MacroCommand;
       expect(macro.commands, hasLength(4), reason: '3 image points + compass');
@@ -408,7 +408,7 @@ void main() {
       construction.add(conic);
       final tool = TransformObjectTool.reflectAboutLine(newId: newId);
 
-      tool.onInput(ToolInput(points.first.position, hit: conic));
+      tool.onInput(ToolInput(points.first.position!, hit: conic));
       final result = tool.onInput(
         ToolInput(const Vec2(2, 0), hit: xAxis),
       ) as ToolCommitted;
@@ -422,7 +422,7 @@ void main() {
       );
       final shape = ConicShape.of(image.conic!);
       for (final point in points) {
-        final p = point.position;
+        final p = point.position!;
         expect(shape.distanceTo(Vec2(p.x, -p.y)), lessThan(1e-9));
       }
     });
@@ -448,7 +448,7 @@ void main() {
 
       tool.onInput(ToolInput(const Vec2(1, 2), hit: circle));
       final result =
-          tool.onInput(ToolInput(o.position, hit: o)) as ToolCommitted;
+          tool.onInput(ToolInput(o.position!, hit: o)) as ToolCommitted;
 
       (result.command as MacroCommand).apply(construction);
       final image = construction.objects.last as NinePointCircle;
@@ -479,9 +479,9 @@ void main() {
       final tool = TransformObjectTool.translate(newId: newId);
 
       tool.onInput(ToolInput(const Vec2(1, 1), hit: circle));
-      tool.onInput(ToolInput(from.position, hit: from));
+      tool.onInput(ToolInput(from.position!, hit: from));
       final result =
-          tool.onInput(ToolInput(to.position, hit: to)) as ToolCommitted;
+          tool.onInput(ToolInput(to.position!, hit: to)) as ToolCommitted;
 
       (result.command as MacroCommand).apply(construction);
       final image = construction.objects.last as InscribedCircle;
@@ -512,7 +512,7 @@ void main() {
 
       tool.onInput(ToolInput(const Vec2(2, 0), hit: circle));
       final result =
-          tool.onInput(ToolInput(o.position, hit: o)) as ToolCommitted;
+          tool.onInput(ToolInput(o.position!, hit: o)) as ToolCommitted;
 
       // Source circle: center (4, 0), radius 2 — the image doubles both.
       (result.command as MacroCommand).apply(construction);
@@ -537,9 +537,9 @@ void main() {
       final tool = TransformObjectTool.translate(newId: newId);
 
       tool.onInput(ToolInput(const Vec2(3, 4), hit: circle));
-      tool.onInput(ToolInput(from.position, hit: from));
+      tool.onInput(ToolInput(from.position!, hit: from));
       final result =
-          tool.onInput(ToolInput(to.position, hit: to)) as ToolCommitted;
+          tool.onInput(ToolInput(to.position!, hit: to)) as ToolCommitted;
 
       (result.command as MacroCommand).apply(construction);
       final image = construction.objects.last as DiameterCircle;
@@ -628,7 +628,7 @@ void main() {
 
       tool.onInput(ToolInput(const Vec2(1, 1), hit: angle));
       final result =
-          tool.onInput(ToolInput(o.position, hit: o)) as ToolCommitted;
+          tool.onInput(ToolInput(o.position!, hit: o)) as ToolCommitted;
 
       (result.command as MacroCommand).apply(construction);
       final image = construction.objects.last as VertexAngle;
@@ -662,7 +662,7 @@ void main() {
       final rotate = TransformObjectTool.rotate(newId: newId, angle: 1);
       rotate.onInput(ToolInput(const Vec2(1, 0), hit: sector));
       final result =
-          rotate.onInput(ToolInput(o.position, hit: o)) as ToolCommitted;
+          rotate.onInput(ToolInput(o.position!, hit: o)) as ToolCommitted;
       (result.command as MacroCommand).apply(construction);
       final image = construction.objects.last as Sector;
       expect(image.sweep!, closeTo(sector.sweep!, 1e-12));
@@ -688,7 +688,7 @@ void main() {
         isA<ToolAccepted>(),
         reason: 'any line still serves as the mirror (Phase 15 parity)',
       );
-      final result = reflect.onInput(ToolInput(p.position, hit: p));
+      final result = reflect.onInput(ToolInput(p.position!, hit: p));
       expect(result, isA<ToolCommitted>());
       final image =
           ((result as ToolCommitted).command as AddObjectCommand).object
@@ -702,9 +702,9 @@ void main() {
       final c = FreePoint(id: 'c', position: const Vec2(1, 1));
       final tool = TransformObjectTool.rotate(newId: newId, angle: 1);
 
-      tool.onInput(ToolInput(p.position, hit: p, extraHits: [seg]));
+      tool.onInput(ToolInput(p.position!, hit: p, extraHits: [seg]));
       final result =
-          tool.onInput(ToolInput(c.position, hit: c)) as ToolCommitted;
+          tool.onInput(ToolInput(c.position!, hit: c)) as ToolCommitted;
 
       expect(
         result.command,
@@ -755,9 +755,9 @@ void main() {
       final tool = TransformObjectTool.translate(newId: newId);
 
       tool.onInput(ToolInput(const Vec2(1, 1), hit: angle));
-      tool.onInput(ToolInput(tail.position, hit: tail));
+      tool.onInput(ToolInput(tail.position!, hit: tail));
       final result =
-          tool.onInput(ToolInput(tip.position, hit: tip)) as ToolCommitted;
+          tool.onInput(ToolInput(tip.position!, hit: tip)) as ToolCommitted;
 
       final macro = result.command as MacroCommand;
       expect(
@@ -797,8 +797,8 @@ void main() {
       final c = FreePoint(id: 'c', position: const Vec2(0, 0));
       final existing = TransformObjectTool.translate(newId: newId);
 
-      existing.onInput(ToolInput(p.position, hit: p));
-      existing.onInput(ToolInput(c.position, hit: c));
+      existing.onInput(ToolInput(p.position!, hit: p));
+      existing.onInput(ToolInput(c.position!, hit: c));
       expect(existing.previewObjectIds, ['p', 'c']);
       expect(existing.previewPositions, isEmpty);
 
@@ -853,12 +853,12 @@ void main() {
         );
 
         tool.onInput(tapOn(ab, const Vec2(2, 2)));
-        final first = tool.onInput(tapOn(o, o.position)) as ToolCommitted;
+        final first = tool.onInput(tapOn(o, o.position!)) as ToolCommitted;
         first.command.apply(construction);
         final firstImage = construction.objects.last as Segment;
 
         tool.onInput(tapOn(bc, const Vec2(4, 4)));
-        final second = tool.onInput(tapOn(o, o.position)) as ToolCommitted;
+        final second = tool.onInput(tapOn(o, o.position!)) as ToolCommitted;
         final macro = second.command as MacroCommand;
         expect(
           macro.commands,
@@ -885,12 +885,12 @@ void main() {
         'the collected transformee survives', () {
       final tool = TransformObjectTool.rotate(newId: newId, angle: math.pi / 2);
       tool.onInput(tapOn(ab, const Vec2(2, 2)));
-      final first = tool.onInput(tapOn(o, o.position)) as ToolCommitted;
+      final first = tool.onInput(tapOn(o, o.position!)) as ToolCommitted;
       first.command.apply(construction);
 
       tool.onInput(tapOn(ab, const Vec2(2, 2)));
       expect(
-        tool.onInput(tapOn(o, o.position)),
+        tool.onInput(tapOn(o, o.position!)),
         isA<ToolIgnored>(),
         reason: 'the commit would add nothing',
       );
@@ -899,7 +899,7 @@ void main() {
       ], reason: 'the refused center tap unwinds; the transformee stays');
 
       expect(
-        tool.onInput(tapOn(c, c.position)),
+        tool.onInput(tapOn(c, c.position!)),
         isA<ToolCommitted>(),
         reason: 'a different center is not a duplicate',
       );
@@ -910,17 +910,17 @@ void main() {
         newId: newId,
         angle: math.pi / 2,
       );
-      quarter.onInput(tapOn(o, o.position));
-      final first = quarter.onInput(tapOn(a, a.position)) as ToolCommitted;
+      quarter.onInput(tapOn(o, o.position!));
+      final first = quarter.onInput(tapOn(a, a.position!)) as ToolCommitted;
       first.command.apply(construction);
 
       final third = TransformObjectTool.rotate(
         newId: newId,
         angle: math.pi / 3,
       );
-      third.onInput(tapOn(o, o.position));
+      third.onInput(tapOn(o, o.position!));
       expect(
-        third.onInput(tapOn(a, a.position)),
+        third.onInput(tapOn(a, a.position!)),
         isA<ToolCommitted>(),
         reason: 'same point and center, different angle',
       );
@@ -928,10 +928,10 @@ void main() {
       final otherAxis = LineThroughTwoPoints(id: 'y', point1: m1, point2: a);
       construction.add(otherAxis);
       final reflect = TransformObjectTool.reflectAboutLine(newId: newId);
-      reflect.onInput(tapOn(o, o.position));
+      reflect.onInput(tapOn(o, o.position!));
       final across = reflect.onInput(tapOn(xAxis, const Vec2(2, 0)));
       (across as ToolCommitted).command.apply(construction);
-      reflect.onInput(tapOn(o, o.position));
+      reflect.onInput(tapOn(o, o.position!));
       expect(
         reflect.onInput(tapOn(otherAxis, const Vec2(0, 1))),
         isA<ToolCommitted>(),
@@ -943,13 +943,13 @@ void main() {
       'point mode: the same reflection twice is refused in either order',
       () {
         final tool = TransformObjectTool.reflectAboutLine(newId: newId);
-        tool.onInput(tapOn(o, o.position));
+        tool.onInput(tapOn(o, o.position!));
         final first =
             tool.onInput(tapOn(xAxis, const Vec2(2, 0))) as ToolCommitted;
         first.command.apply(construction);
 
         // Point first: the committing mirror tap is refused, the point stays.
-        tool.onInput(tapOn(o, o.position));
+        tool.onInput(tapOn(o, o.position!));
         expect(
           tool.onInput(tapOn(xAxis, const Vec2(2, 0))),
           isA<ToolIgnored>(),
@@ -959,12 +959,12 @@ void main() {
 
         // Line first: the committing point tap is refused and unwound.
         tool.onInput(tapOn(xAxis, const Vec2(2, 0)));
-        expect(tool.onInput(tapOn(o, o.position)), isA<ToolIgnored>());
+        expect(tool.onInput(tapOn(o, o.position!)), isA<ToolIgnored>());
         expect(tool.previewObjectIds, [
           'x',
         ], reason: 'the point tap unwound, the pending mirror stays');
         expect(
-          tool.onInput(tapOn(c, c.position)),
+          tool.onInput(tapOn(c, c.position!)),
           isA<ToolCommitted>(),
           reason: 'a different point still commits',
         );
@@ -983,7 +983,7 @@ void main() {
 
       final tool = TransformObjectTool.rotate(newId: newId, angle: math.pi / 2);
       tool.onInput(tapOn(ab, const Vec2(2, 2)));
-      final result = tool.onInput(tapOn(o, o.position)) as ToolCommitted;
+      final result = tool.onInput(tapOn(o, o.position!)) as ToolCommitted;
       final macro = result.command as MacroCommand;
       expect(
         macro.commands,
@@ -1008,8 +1008,8 @@ void main() {
       final c = FreePoint(id: 'c', position: const Vec2(1, 1));
       final tool = TransformObjectTool.dilate(newId: newId, ratio: 2);
 
-      expect(tool.onInput(ToolInput(p.position, hit: p)), isA<ToolAccepted>());
-      final result = tool.onInput(ToolInput(c.position, hit: c));
+      expect(tool.onInput(ToolInput(p.position!, hit: p)), isA<ToolAccepted>());
+      final result = tool.onInput(ToolInput(c.position!, hit: c));
 
       expect(result, isA<ToolCommitted>());
       final command = (result as ToolCommitted).command;
@@ -1041,7 +1041,7 @@ void main() {
 
       tool.onInput(ToolInput(const Vec2(2, 0.01), hit: circle));
       final result =
-          tool.onInput(ToolInput(o.position, hit: o)) as ToolCommitted;
+          tool.onInput(ToolInput(o.position!, hit: o)) as ToolCommitted;
 
       (result.command as MacroCommand).apply(construction);
       final image = construction.objects.last as CircleCenterPoint;
@@ -1067,7 +1067,7 @@ void main() {
 
       tool.onInput(ToolInput(const Vec2(1, 0), hit: sector));
       final result =
-          tool.onInput(ToolInput(o.position, hit: o)) as ToolCommitted;
+          tool.onInput(ToolInput(o.position!, hit: o)) as ToolCommitted;
 
       (result.command as MacroCommand).apply(construction);
       final image = construction.objects.last as Sector;
@@ -1097,7 +1097,7 @@ void main() {
 
       tool.onInput(ToolInput(const Vec2(1, 1), hit: angle));
       final result =
-          tool.onInput(ToolInput(o.position, hit: o)) as ToolCommitted;
+          tool.onInput(ToolInput(o.position!, hit: o)) as ToolCommitted;
 
       (result.command as MacroCommand).apply(construction);
       final image = construction.objects.last as VertexAngle;
@@ -1130,11 +1130,11 @@ void main() {
 
       final tool = TransformObjectTool.dilate(newId: newId, ratio: 2);
       tool.onInput(tapOn(ab, const Vec2(2, 2)));
-      final first = tool.onInput(tapOn(o, o.position)) as ToolCommitted;
+      final first = tool.onInput(tapOn(o, o.position!)) as ToolCommitted;
       first.command.apply(construction);
 
       tool.onInput(tapOn(bc, const Vec2(4, 4)));
-      final second = tool.onInput(tapOn(o, o.position)) as ToolCommitted;
+      final second = tool.onInput(tapOn(o, o.position!)) as ToolCommitted;
       expect(
         (second.command as MacroCommand).commands,
         hasLength(2),
@@ -1149,7 +1149,7 @@ void main() {
 
       tool.onInput(tapOn(ab, const Vec2(2, 2)));
       expect(
-        tool.onInput(tapOn(o, o.position)),
+        tool.onInput(tapOn(o, o.position!)),
         isA<ToolIgnored>(),
         reason: 'repeating the same dilation adds nothing',
       );
@@ -1158,7 +1158,7 @@ void main() {
       final half = TransformObjectTool.dilate(newId: newId, ratio: 0.5);
       half.onInput(tapOn(ab, const Vec2(2, 2)));
       expect(
-        half.onInput(tapOn(o, o.position)),
+        half.onInput(tapOn(o, o.position!)),
         isA<ToolCommitted>(),
         reason: 'a different ratio is never falsely reused',
       );

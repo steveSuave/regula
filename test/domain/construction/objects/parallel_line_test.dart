@@ -21,10 +21,10 @@ void main() {
       final par = ParallelLine(id: 'k', through: p, reference: ref);
 
       expect(par.parents, [p, ref]);
-      expect(par.line!.contains(p.position), isTrue);
+      expect(par.line!.contains(p.position!), isTrue);
       expect(par.line!.isParallelTo(ref.line!), isTrue);
       expect(
-        par.line!.contains(a.position),
+        par.line!.contains(a.position!),
         isFalse,
         reason: 'a distinct parallel, not the reference itself',
       );
@@ -62,7 +62,7 @@ void main() {
 
         construction.moveFreePoint('b', const Vec2(0, 4));
         expect(par.isDefined, isTrue);
-        expect(par.line!.contains(p.position), isTrue);
+        expect(par.line!.contains(p.position!), isTrue);
         expect(par.line!.isParallelTo(ref.line!), isTrue);
       },
     );
@@ -82,7 +82,7 @@ void main() {
         ..add(par);
 
       construction.moveFreePoint('b', const Vec2(4, 4));
-      expect(par.line!.contains(p.position), isTrue);
+      expect(par.line!.contains(p.position!), isTrue);
       expect(par.line!.isParallelTo(ref.line!), isTrue);
     });
   });

@@ -24,7 +24,7 @@ void main() {
       final c = FreePoint(id: 'c', position: const Vec2(1.5, -2));
       final r = CentralReflectionPoint(id: 'r', point: p, center: c);
       expect(
-        p.position.lerp(r.position!, 0.5).closeTo(c.position, 1e-12),
+        p.position!.lerp(r.position!, 0.5).closeTo(c.position!, 1e-12),
         isTrue,
       );
     });
@@ -49,7 +49,7 @@ void main() {
       final p = FreePoint(id: 'p', position: const Vec2(1, 0));
       final c = FreePoint(id: 'c', position: const Vec2(0, 0));
       final r = CentralReflectionPoint(id: 'r', point: p, center: c);
-      c.position = const Vec2(3, 3);
+      c.chartPosition = const Vec2(3, 3);
       r.recompute();
       expect(r.position, const Vec2(5, 6));
     });
@@ -63,7 +63,7 @@ void main() {
       final r = CentralReflectionPoint(id: 'r', point: onLine, center: c);
       expect(r.isDefined, isFalse);
 
-      b.position = const Vec2(1, 0); // line and onLine come back: (2, 0)
+      b.chartPosition = const Vec2(1, 0); // line and onLine come back: (2, 0)
       line.recompute();
       onLine.recompute();
       r.recompute();

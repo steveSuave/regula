@@ -1427,7 +1427,7 @@ void main() {
                 .construction
                 .objects
                 .whereType<FreePoint>())
-          object.position,
+          object.position!,
       ];
 
       // Grab the segment between its endpoints and drag.
@@ -1574,7 +1574,7 @@ void main() {
               .construction
               .objects
               .whereType<FreePoint>())
-        object.position,
+        object.position!,
     ];
 
     // Grab the rim (radius 50, right of the center) and drag.
@@ -2238,7 +2238,7 @@ void main() {
         .whereType<FreePoint>()
         .toList();
     final onScreen = points
-        .map((p) => fitted.worldToScreen(p.position))
+        .map((p) => fitted.worldToScreen(p.position!))
         .toList();
     for (final screen in onScreen) {
       expect(screen.dx, inInclusiveRange(0, canvasSize.width));
@@ -3108,7 +3108,7 @@ void main() {
       await tester.tapAt(origin + tap);
       await tester.pump();
       expect(objectCount(), 3);
-      final placed = camera().worldToScreen(points().last.position);
+      final placed = camera().worldToScreen(points().last.position!);
       expect((placed - tap).distance, lessThan(1e-6));
     });
 
@@ -3128,7 +3128,7 @@ void main() {
       await tester.pump();
 
       expect(container.read(viewportProvider), viewport.state);
-      final moved = viewport.worldToScreen(points()[0].position);
+      final moved = viewport.worldToScreen(points()[0].position!);
       expect((moved - drop).distance, lessThan(1e-6));
 
       await tester.tap(find.byIcon(Icons.undo));
@@ -3140,7 +3140,7 @@ void main() {
       final origin = await pumpWithTwoPoints(tester);
       await enter(tester, const ViewportState(tilt: 1.2));
       final second = points()[1];
-      await tester.tapAt(origin + camera().worldToScreen(second.position));
+      await tester.tapAt(origin + camera().worldToScreen(second.position!));
       await tester.pump();
       expect(container.read(selectionProvider), {second.id});
     });
