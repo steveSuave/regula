@@ -90,3 +90,11 @@ Written 2026-11-24 from [spec](spec.md) · Status: approved 2026-11-24, in progr
   - The hyperbolic wash is a screen rectangle with the disc's sheet image cut out by even-odd, the Phase 126d formulation; at the identity it is still `outsideDiscPath`.
   - Gotcha: the arc length of a dash extracted from a transformed oval reads up to 0.13 px off its nominal 8 px (a flattened conic's metric). The dash test allows 0.3; cut before the map, the same dashes would be 4.3 px on the squashed side.
   - Gotcha: Dart records compare `List` fields by identity, so a recording canvas that logs `(name, [args])` records never equals an expected literal. The test canvas logs plain lists.
+- **Step 4, gestures.** 10 widget tests in `geometry_canvas_test.dart` (group "the space view"), 2 provider tests; `test/presentation` 722. Notes:
+  - `spaceViewProvider` only holds the flag. Moving the camera when it flips needs the canvas size, so that lives in presentation (`space_view.dart`, completed in step 5).
+  - Orbit direction: dragging right turns the figure counterclockwise seen from above (its near side follows the finger); dragging down lowers the tilt (the camera climbs). Half a degree per pixel, measured from the first-down position, so the recognizer's slop costs no travel.
+  - With a tool active, any one-finger drag orbits, including one that starts on an object: no drag moves an object while a tool is active.
+  - An interrupted orbit (a second finger lands, or the pointer is cancelled) keeps the camera where it got to and does not settle.
+  - `hitRadius` on `CanvasViewport` carries the tilt-widened radius; it also feeds `ToolInput.snapThreshold`, so snapping widens with it.
+  - Departure: a tap inside the edge-on band returns before the label-rectangle check, so a measurement or text cannot be selected by its label there either. Simpler than a second path for a view in which the figure is a line.
+  - Gotcha: in a two-finger widget test the fingers move one after the other, so the scale recognizer's baseline catches them a step apart and reports a pinch of about 1.1. The pan tests assert on the point between the fingers and allow that.

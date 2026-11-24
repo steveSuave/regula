@@ -398,6 +398,20 @@ class CanvasViewport {
   /// hit-test threshold expressed in world units.
   double screenToWorldLength(double screenLength) => screenLength / state.scale;
 
+  /// The world radius of a [screenRadius]-pixel hit target on the base
+  /// plane.
+  ///
+  /// Not tilted, it is [screenToWorldLength]. Tilted, a world disc is a
+  /// squashed ellipse on screen, and a radius sized for the unsquashed
+  /// axis would be too tight along the other. The radius is widened by
+  /// `1 / |cos tilt|`, capped at double: the target keeps its full size
+  /// along the foreshortened axis down to 60° of tilt and never grows
+  /// past twice it across. An approximation that holds until the hit
+  /// test itself works on screen (intent 004, milestone 2).
+  double hitRadius(double screenRadius) => isTilted
+      ? screenRadius / state.scale / math.max(math.cos(state.tilt).abs(), 0.5)
+      : screenToWorldLength(screenRadius);
+
   /// Axis-aligned world bounds enclosing a [canvasSize] canvas, grown by
   /// [margin] screen pixels on every side.
   ///
