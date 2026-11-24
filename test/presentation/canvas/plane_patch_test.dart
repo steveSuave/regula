@@ -85,6 +85,31 @@ void main() {
       expect(corners[2], const Vec3(40, 40, 70));
     });
 
+    test('a sloping face gets a patch with level sides, close around it', () {
+      final apex = _p('o', 100, 100, 150);
+      final a = c.byId('a')! as FreePoint;
+      final b = c.byId('b')! as FreePoint;
+      // The frame runs along OA, oblique to the triangle.
+      final face = ThreePointPlane(id: 'f', point1: apex, point2: a, point3: b);
+      c
+        ..add(apex)
+        ..add(face);
+      final corners = planePatch(face, c.objects, minHalfExtent: 1)!;
+      // Two sides are level, and parallel to the level edge AB.
+      expect(corners[0].z, closeTo(corners[1].z, 1e-9));
+      expect(corners[2].z, closeTo(corners[3].z, 1e-9));
+      expect((corners[1] - corners[0]).y.abs(), lessThan(1e-9));
+      // AB is 200 long and the slant height is √(100² + 150²): the patch
+      // is that box and its padding, not the oblique frame's.
+      final slant = math.sqrt(100 * 100 + 150 * 150);
+      final pad = patchPadding * 200;
+      expect(corners[0].distanceTo(corners[1]), closeTo(200 + 2 * pad, 1e-9));
+      expect(corners[1].distanceTo(corners[2]), closeTo(slant + 2 * pad, 1e-9));
+      for (final corner in corners) {
+        expect(face.frame!.heightOf(corner).abs(), lessThan(1e-9));
+      }
+    });
+
     test('is null for an undefined plane', () {
       c.moveFreePoint('d', const Vec2(400, 0));
       expect(base.isDefined, isFalse);
