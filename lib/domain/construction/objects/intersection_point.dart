@@ -519,6 +519,10 @@ List<ProjPoint> intersectionCandidates(
     case ((GeoMeasurement(), _) || (_, GeoMeasurement())):
     case ((GeoLocus(), _) || (_, GeoLocus())):
     case ((GeoText(), _) || (_, GeoText())):
+    // A plane meets a line or a plane in space, through its own kinds
+    // (`LinePlaneIntersectionPoint`, `PlaneIntersectionLine`); it has no
+    // planar candidates.
+    case ((GeoPlane(), _) || (_, GeoPlane())):
       throw ArgumentError('intersection candidates need two curves');
   }
 }

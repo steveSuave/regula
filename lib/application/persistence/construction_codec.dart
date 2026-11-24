@@ -28,14 +28,20 @@ import '../../domain/construction/objects/inscribed_circle.dart';
 import '../../domain/construction/objects/intersection_point.dart';
 import '../../domain/construction/objects/length_measurement.dart';
 import '../../domain/construction/objects/line_angle.dart';
+import '../../domain/construction/objects/line_plane_intersection_point.dart';
+import '../../domain/construction/objects/line_point_plane.dart';
 import '../../domain/construction/objects/line_through_two_points.dart';
 import '../../domain/construction/objects/locus.dart';
 import '../../domain/construction/objects/midpoint.dart';
 import '../../domain/construction/objects/nine_point_circle.dart';
 import '../../domain/construction/objects/orthocenter.dart';
 import '../../domain/construction/objects/parallel_line.dart';
+import '../../domain/construction/objects/parallel_plane.dart';
 import '../../domain/construction/objects/perpendicular_bisector_line.dart';
 import '../../domain/construction/objects/perpendicular_line.dart';
+import '../../domain/construction/objects/perpendicular_plane.dart';
+import '../../domain/construction/objects/perpendicular_to_plane_line.dart';
+import '../../domain/construction/objects/plane_intersection_line.dart';
 import '../../domain/construction/objects/point_on_object.dart';
 import '../../domain/construction/objects/polar_line.dart';
 import '../../domain/construction/objects/polygon.dart';
@@ -53,6 +59,7 @@ import '../../domain/construction/objects/slope_measurement.dart';
 import '../../domain/construction/objects/stated_radius_circle.dart';
 import '../../domain/construction/objects/tangent_line.dart';
 import '../../domain/construction/objects/three_point_circle.dart';
+import '../../domain/construction/objects/three_point_plane.dart';
 import '../../domain/construction/objects/translated_point.dart';
 import '../../domain/construction/objects/two_line_bisector_line.dart';
 import '../../domain/construction/objects/vertex_angle.dart';
@@ -192,8 +199,8 @@ Map<String, dynamic> encodeDocument(
 /// a misread, not a graceful degradation. A hyperbolic document at the
 /// canonical radius is still exactly the v2 file it always was.
 ///
-/// **v4 is space content** (intent 004, milestone 2): a free point's
-/// height `h`. A v3 reader skips the key and reads the point in its
+/// **v4 is space content** (intent 004, milestone 2): a plane, a line or
+/// point that planes give, or a free point's height `h`. A v3 reader skips the key and reads the point in its
 /// plane, so a pyramid's apex is drawn on its base and everything built
 /// on the apex is drawn with it — a misread. A document with no lifted
 /// point is the file it always was.
@@ -456,6 +463,20 @@ bool _decodeSettingFlag(Map<String, dynamic> json, String key) {
   return value;
 }
 
+/// The object types that exist only in space. A v3 reader refuses an
+/// unknown type outright, so these would be safe at any stamp — but a
+/// document holding one is a space document, and saying so in the
+/// version is what lets a reader decide before it starts.
+const Set<String> _spaceTypes = {
+  'ThreePointPlane',
+  'LinePointPlane',
+  'PerpendicularPlane',
+  'ParallelPlane',
+  'PerpendicularToPlaneLine',
+  'LinePlaneIntersectionPoint',
+  'PlaneIntersectionLine',
+};
+
 /// Whether an encoded [document] holds anything a planar reader would
 /// misread: see [requiredFormatVersion].
 bool _hasSpaceContent(Map<String, dynamic> document) {
@@ -471,6 +492,9 @@ bool _hasSpaceContent(Map<String, dynamic> document) {
     if (object['type'] == 'FreePoint' &&
         params is Map<String, dynamic> &&
         params.containsKey('h')) {
+      return true;
+    }
+    if (_spaceTypes.contains(object['type'])) {
       return true;
     }
   }
@@ -523,6 +547,13 @@ Map<String, dynamic> _encodeObject(GeoObject object) {
     Ray() => ('Ray', const {}),
     PerpendicularLine() => ('PerpendicularLine', const {}),
     ParallelLine() => ('ParallelLine', const {}),
+    ThreePointPlane() => ('ThreePointPlane', const {}),
+    LinePointPlane() => ('LinePointPlane', const {}),
+    PerpendicularPlane() => ('PerpendicularPlane', const {}),
+    ParallelPlane() => ('ParallelPlane', const {}),
+    PerpendicularToPlaneLine() => ('PerpendicularToPlaneLine', const {}),
+    LinePlaneIntersectionPoint() => ('LinePlaneIntersectionPoint', const {}),
+    PlaneIntersectionLine() => ('PlaneIntersectionLine', const {}),
     AngleBisectorLine() => ('AngleBisectorLine', const {}),
     PerpendicularBisectorLine() => ('PerpendicularBisectorLine', const {}),
     TwoLineBisectorLine(:final branch) => (
@@ -645,6 +676,7 @@ GeoObject _decodeObject(Map<String, dynamic> json, Construction construction) {
   GeoLine line(int index) => _typedParent<GeoLine>(id, parents, index);
   GeoCircle circle(int index) => _typedParent<GeoCircle>(id, parents, index);
   GeoObject any(int index) => _typedParent<GeoObject>(id, parents, index);
+  GeoPlane plane(int index) => _typedParent<GeoPlane>(id, parents, index);
 
   return switch (type) {
     'FreePoint' => FreePoint(
@@ -794,6 +826,49 @@ GeoObject _decodeObject(Map<String, dynamic> json, Construction construction) {
       id: id,
       through: point(0),
       reference: line(1),
+      attributes: attributes,
+    ),
+    'ThreePointPlane' => ThreePointPlane(
+      id: id,
+      point1: point(0),
+      point2: point(1),
+      point3: point(2),
+      attributes: attributes,
+    ),
+    'LinePointPlane' => LinePointPlane(
+      id: id,
+      line: line(0),
+      point: point(1),
+      attributes: attributes,
+    ),
+    'PerpendicularPlane' => PerpendicularPlane(
+      id: id,
+      through: point(0),
+      line: line(1),
+      attributes: attributes,
+    ),
+    'ParallelPlane' => ParallelPlane(
+      id: id,
+      through: point(0),
+      reference: plane(1),
+      attributes: attributes,
+    ),
+    'PerpendicularToPlaneLine' => PerpendicularToPlaneLine(
+      id: id,
+      through: point(0),
+      plane: plane(1),
+      attributes: attributes,
+    ),
+    'LinePlaneIntersectionPoint' => LinePlaneIntersectionPoint(
+      id: id,
+      line: line(0),
+      plane: plane(1),
+      attributes: attributes,
+    ),
+    'PlaneIntersectionLine' => PlaneIntersectionLine(
+      id: id,
+      plane1: plane(0),
+      plane2: plane(1),
       attributes: attributes,
     ),
     'AngleBisectorLine' => AngleBisectorLine(

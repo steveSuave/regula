@@ -71,6 +71,9 @@ class SpaceHitTester {
           GeoAngle() => 3,
           GeoMeasurement() || GeoText() => 4,
           GeoPolygon() => 5,
+          // Lowest: a plane's patch hits everywhere inside it, so
+          // anything drawn in or in front of it must win the tap.
+          GeoPlane() => 6,
         },
         distance: nearest.distance,
         depth: nearest.depth,

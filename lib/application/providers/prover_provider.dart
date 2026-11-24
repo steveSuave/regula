@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../domain/construction/geo_object.dart';
+import '../../domain/construction/space_content.dart';
 import '../../domain/math/rational.dart';
 import '../../domain/prover/auxiliary_search.dart';
 import '../../domain/prover/carriers.dart';
@@ -435,6 +436,15 @@ class ProverNotifier extends _$ProverNotifier {
       state = const ProverRefused(
         'the predicate vocabulary is Euclidean; a document under a proper '
         'absolute needs the CK re-founding',
+      );
+      return;
+    }
+    // The prover is planar (intent 004): its facts are about one chart,
+    // and a document with a plane or a lifted point has objects in none,
+    // or in several.
+    if (hasSpaceContent(objects)) {
+      state = const ProverRefused(
+        'the prover is planar; this document has objects in space',
       );
       return;
     }

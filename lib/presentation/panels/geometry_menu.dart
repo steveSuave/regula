@@ -6,6 +6,7 @@ import '../../application/providers/construction_provider.dart';
 import '../../application/providers/experimental_prover_provider.dart';
 import '../../domain/commands/set_geometry_command.dart';
 import '../../domain/construction/document_kernel.dart';
+import '../../domain/construction/space_content.dart';
 import 'intersection_report.dart';
 
 /// The document's geometry, as a menu (Phase 126).
@@ -104,6 +105,23 @@ class GeometryMenu extends ConsumerWidget {
   void _switchTo(BuildContext context, WidgetRef ref, FundamentalConic metric) {
     final construction = ref.read(constructionProvider).construction;
     if (construction.kernel.metric == metric) {
+      return;
+    }
+    // Space is Euclidean (intent 004): a plane's frame, a perpendicular
+    // to it and a height above it have no meaning under another
+    // absolute. So a document with objects in space keeps its geometry,
+    // and says why, rather than switching and leaving them undefined.
+    if (hasSpaceContent(construction.objects)) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Objects in space are Euclidean. Remove the planes and lifted '
+              'points to change the geometry.',
+            ),
+          ),
+        );
       return;
     }
     // Entering a proper geometry sizes its absolute to the figure (Phase

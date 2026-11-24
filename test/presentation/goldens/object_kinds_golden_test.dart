@@ -45,6 +45,7 @@ import 'package:regula/presentation/canvas/fit_viewport.dart';
 import 'package:regula/presentation/canvas/geometry_painter.dart';
 import 'package:regula/presentation/theme/app_theme.dart';
 
+import '../../kitchen_sink.dart';
 import '../../projective_stubs.dart';
 
 /// Pixel goldens for every concrete object kind, light + dark — one scene
@@ -1065,6 +1066,28 @@ void main() {
       );
     });
   }
+
+  // Intent 004, milestone 2: objects in space. The space kinds' own
+  // corpus — a square base, a lifted apex, four planes of four kinds, a
+  // height with its foot and the line two faces share — so the picture
+  // holds what the space pass must get right at once: translucent
+  // patches painted behind every stroke and far to near, lines of space
+  // run to the canvas edge, and a point with no sheet drawn where it is.
+  testWidgets('space kinds, oblique camera — light', (tester) async {
+    final construction = buildSpaceKinds();
+    await expectSceneGolden(
+      tester,
+      construction: construction,
+      theme: AppTheme.light(),
+      golden: 'space_kinds_light',
+      viewport: fittedViewport(
+        construction.objects,
+        canvasSize,
+        rotation: -math.pi / 6,
+        tilt: math.pi / 3,
+      ),
+    );
+  });
 
   testWidgets('circles scene, camera below the plane — light', (tester) async {
     final construction = circlesScene();

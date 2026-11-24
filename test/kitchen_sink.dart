@@ -29,14 +29,20 @@ import 'package:regula/domain/construction/objects/inscribed_circle.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
 import 'package:regula/domain/construction/objects/length_measurement.dart';
 import 'package:regula/domain/construction/objects/line_angle.dart';
+import 'package:regula/domain/construction/objects/line_plane_intersection_point.dart';
+import 'package:regula/domain/construction/objects/line_point_plane.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/locus.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
 import 'package:regula/domain/construction/objects/nine_point_circle.dart';
 import 'package:regula/domain/construction/objects/orthocenter.dart';
 import 'package:regula/domain/construction/objects/parallel_line.dart';
+import 'package:regula/domain/construction/objects/parallel_plane.dart';
 import 'package:regula/domain/construction/objects/perpendicular_bisector_line.dart';
 import 'package:regula/domain/construction/objects/perpendicular_line.dart';
+import 'package:regula/domain/construction/objects/perpendicular_plane.dart';
+import 'package:regula/domain/construction/objects/perpendicular_to_plane_line.dart';
+import 'package:regula/domain/construction/objects/plane_intersection_line.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
 import 'package:regula/domain/construction/objects/polar_line.dart';
 import 'package:regula/domain/construction/objects/polygon.dart';
@@ -54,6 +60,7 @@ import 'package:regula/domain/construction/objects/slope_measurement.dart';
 import 'package:regula/domain/construction/objects/stated_radius_circle.dart';
 import 'package:regula/domain/construction/objects/tangent_line.dart';
 import 'package:regula/domain/construction/objects/three_point_circle.dart';
+import 'package:regula/domain/construction/objects/three_point_plane.dart';
 import 'package:regula/domain/construction/objects/translated_point.dart';
 import 'package:regula/domain/construction/objects/two_line_bisector_line.dart';
 import 'package:regula/domain/construction/objects/vertex_angle.dart';
@@ -399,11 +406,67 @@ Construction buildPostV1Kinds() {
   return construction;
 }
 
+/// The kinds that exist in space (intent 004, milestone 2): a third
+/// construction, for the same reason [buildPostV1Kinds] is a second. A
+/// document holding any of these is version 4, so it cannot share a
+/// builder with the kinds whose documents must stay version 1.
+///
+/// A unit square ABCD on the base plane, an apex O lifted over it, and
+/// every space kind once: the planes OAB (three points), through the
+/// edge CD and O (line and point), through O perpendicular to OA, and
+/// through O parallel to the base's own plane ABC; the height from O to
+/// ABC and its foot; and the line where two faces meet.
+Construction buildSpaceKinds() {
+  final a = FreePoint(id: 'sa', position: const Vec2(0, 0));
+  final b = FreePoint(id: 'sb', position: const Vec2(4, 0));
+  final c = FreePoint(id: 'sc', position: const Vec2(4, 4));
+  final d = FreePoint(id: 'sd', position: const Vec2(0, 4));
+  final o = FreePoint(id: 'so', position: const Vec2(2, 2), height: 3);
+  final oa = Segment(id: 'soa', point1: o, point2: a);
+  final cd = LineThroughTwoPoints(id: 'scd', point1: c, point2: d);
+  final base = ThreePointPlane(id: 'sbase', point1: a, point2: b, point3: c);
+  final oab = ThreePointPlane(
+    id: 'soab',
+    point1: o,
+    point2: a,
+    point3: b,
+    attributes: const ObjectAttributes(name: 'α', fillAlpha: 0.3),
+  );
+  final ocd = LinePointPlane(id: 'socd', line: cd, point: o);
+  final across = PerpendicularPlane(id: 'sacross', through: o, line: oa);
+  final lid = ParallelPlane(id: 'slid', through: o, reference: base);
+  final height = PerpendicularToPlaneLine(id: 'sh', through: o, plane: base);
+  final foot = LinePlaneIntersectionPoint(
+    id: 'sfoot',
+    line: height,
+    plane: base,
+  );
+  final ridge = PlaneIntersectionLine(id: 'sridge', plane1: oab, plane2: ocd);
+  return Construction()
+    ..add(a)
+    ..add(b)
+    ..add(c)
+    ..add(d)
+    ..add(o)
+    ..add(oa)
+    ..add(cd)
+    ..add(base)
+    ..add(oab)
+    ..add(ocd)
+    ..add(across)
+    ..add(lid)
+    ..add(height)
+    ..add(foot)
+    ..add(ridge);
+}
+
 /// The current geometry of [object], by kind — what a round-trip must
 /// reproduce exactly (same parent doubles → same recompute output).
 Object? geometryOf(GeoObject object) => switch (object) {
-  GeoPoint(:final position) => position,
-  GeoLine(:final line) => line,
+  // A point or line with no value in its sheet is its space value.
+  GeoPoint(:final position) => position ?? object.spacePosition,
+  GeoLine(:final line) => line ?? object.spaceLine,
+  GeoPlane(:final frame) => frame,
   // A conic-valued kind has no circle projection; its value is the matrix,
   // so that is what a round-trip must reproduce.
   GeoCircle(:final circle) => circle ?? object.conic,

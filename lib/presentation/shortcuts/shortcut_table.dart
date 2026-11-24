@@ -62,6 +62,12 @@ enum AppAction {
   areaTool,
   slopeTool,
   locusTool,
+
+  // Space (intent 004): planes and what they give.
+  planeTool,
+  perpendicularToPlaneTool,
+  perpendicularPlaneTool,
+  parallelPlaneTool,
   // Constructions behind the G leader.
   centroidTool,
   orthocenterTool,
@@ -647,6 +653,32 @@ final List<ShortcutBinding> shortcutTable = [
     display: '⇧ L',
   ),
   // ── G leader: constructions ──────────────────────────────────────
+  _g(
+    LogicalKeyboardKey.keyW,
+    AppAction.planeTool,
+    'Plane (three points, or a line and a point)',
+    'G W',
+  ),
+  _g(
+    LogicalKeyboardKey.keyW,
+    AppAction.parallelPlaneTool,
+    'Parallel plane (point and plane)',
+    'G ⇧ W',
+    shift: true,
+  ),
+  _g(
+    LogicalKeyboardKey.keyJ,
+    AppAction.perpendicularToPlaneTool,
+    'Perpendicular to a plane (point and plane)',
+    'G J',
+  ),
+  _g(
+    LogicalKeyboardKey.keyJ,
+    AppAction.perpendicularPlaneTool,
+    'Plane perpendicular to a line (point and line)',
+    'G ⇧ J',
+    shift: true,
+  ),
   _g(LogicalKeyboardKey.keyC, AppAction.centroidTool, 'Centroid', 'G C'),
   _g(LogicalKeyboardKey.keyO, AppAction.orthocenterTool, 'Orthocenter', 'G O'),
   _g(LogicalKeyboardKey.keyI, AppAction.incenterTool, 'Incenter', 'G I'),

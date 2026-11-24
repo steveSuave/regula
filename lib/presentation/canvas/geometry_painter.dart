@@ -23,6 +23,7 @@ import 'grid_layout.dart';
 import 'label_layout.dart';
 import 'large_radius_arc.dart';
 import 'lift_handle.dart';
+import 'plane_patch.dart';
 import 'screen_figure.dart';
 import 'sheet_canvas.dart';
 
@@ -331,6 +332,8 @@ class GeometryPainter extends CustomPainter {
     }
     _drawAbsolute(canvas, size);
 
+    _drawPlanePatches(screen, size);
+
     for (final object in construction.objects) {
       final hidden = !object.attributes.visible;
       if ((hidden && !showHidden) || !object.isDefined) {
@@ -410,6 +413,56 @@ class GeometryPainter extends CustomPainter {
       final center = _flat.worldToScreen(marker);
       canvas.drawDot(center, _markerDotRadius, dot);
       canvas.drawDot(center, _markerRingRadius, ring);
+    }
+  }
+
+  /// The translucent fills of the planes (intent 004, milestone 2),
+  /// before everything else and from the farthest to the nearest, so a
+  /// nearer plane tints a farther one and no patch covers a stroke. The
+  /// outline of each patch is the plane's stroke and is drawn with the
+  /// other objects, in insertion order.
+  ///
+  /// The order is by the depth of the patch's centre. Two patches that
+  /// cross have no right order; hidden surfaces are milestone 3.
+  void _drawPlanePatches(Canvas screen, Size size) {
+    final patches = <({double depth, Path path, Paint paint})>[];
+    for (final object in construction.objects) {
+      if (object is! GeoPlane || !object.isDefined) {
+        continue;
+      }
+      final hidden = !object.attributes.visible;
+      if (hidden && !showHidden) {
+        continue;
+      }
+      final corners = planePatch(
+        object,
+        construction.objects,
+        minHalfExtent: viewport.screenToWorldLength(patchMinHalfExtentPx),
+      );
+      if (corners == null) {
+        continue;
+      }
+      final base = Color(
+        object.attributes.colorArgb ?? defaultColor.toARGB32(),
+      );
+      final alpha =
+          (object.attributes.fillAlpha ?? patchFillAlpha) *
+          (hidden ? _hiddenAlpha : 1.0);
+      final path = Path()
+        ..addPolygon([
+          for (final corner in corners) viewport.spaceToScreen(corner),
+        ], true);
+      patches.add((
+        depth: viewport.depthOf((corners[0] + corners[2]) * 0.5),
+        path: path,
+        paint: Paint()
+          ..color = base.withValues(alpha: alpha)
+          ..style = PaintingStyle.fill,
+      ));
+    }
+    patches.sort((a, b) => a.depth.compareTo(b.depth));
+    for (final patch in patches) {
+      screen.drawPath(patch.path, patch.paint);
     }
   }
 
@@ -779,6 +832,9 @@ class GeometryPainter extends CustomPainter {
         break;
       case GeoLocus():
         _drawLocus(canvas, size, object, paint, dashPeriod);
+      case GeoPlane():
+        // Never on a sheet: [drawnInSpace] sent it to [_drawInSpace].
+        break;
     }
   }
 

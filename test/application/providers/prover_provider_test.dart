@@ -236,6 +236,24 @@ void main() {
       expect(state.proofOf(Fact(PredicateKind.perp, [a, a, a, a])), isNull);
     });
 
+    test('declines a document with objects in space: it is planar', () async {
+      final construction = Construction()
+        ..add(FreePoint(id: 'sa', position: Vec2.zero))
+        ..add(FreePoint(id: 'sb', position: const Vec2(1, 0), height: 2));
+      container.read(constructionProvider.notifier).replace(construction);
+
+      await container.read(proverProvider.notifier).prove();
+
+      final state = container.read(proverProvider);
+      expect(state, isA<ProverRefused>());
+      expect((state as ProverRefused).reason, contains('space'));
+
+      // Back in its plane, the document is the prover's again.
+      construction.setFreePointHeight('sb', 0);
+      await container.read(proverProvider.notifier).prove();
+      expect(container.read(proverProvider), isNot(isA<ProverRefused>()));
+    });
+
     test(
       'refuses a non-Euclidean document rather than approximating',
       () async {

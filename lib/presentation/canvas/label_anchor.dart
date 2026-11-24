@@ -53,4 +53,6 @@ Vec2 labelAnchor(GeoObject object) => switch (object) {
   // on-screen. All-gap core (defined ink only far out) falls back
   // to the world origin, like the all-gap defined locus always has.
   GeoLocus() => object.coreSamples!.firstOrNull ?? Vec2.zero,
+  // A plane is on no sheet; its label hangs from `spaceLabelAnchor`.
+  GeoPlane() => Vec2.zero,
 };

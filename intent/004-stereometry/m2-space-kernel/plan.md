@@ -145,5 +145,16 @@ Three stages. Each ends green on the full gate, with a look, and merges to `main
   - Gotcha, again: the phone metrics override dies with the DevTools session, the layout goes wide, and the app bar's scroll offset resets. A run that scrolls the bar must tap in the same run.
 - **Stage A closed 2026-11-24.** Final gate: analyze clean; VM 3753 (baseline 3629); goldens 35, no diff; browser 17; `flutter build web --wasm` built. `git diff main --stat -- test/fixtures test/v1_oracle` is empty.
 
-**Next: stage B, step 9** (`GeoPlane` and the seven kinds).
+- **Stage A shipped**: merged and pushed to `main` (`65bc15b`); Deploy and Benchmarks green.
+- **Steps 9 to 12, planes** (stage B, in one working pass, committed together). Tests: 19 in `plane_kinds_test.dart`, 17 in `plane_tools_test.dart`, 15 in `plane_patch_test.dart`, 3 in `space_fixture_test.dart`, 3 more in `codec_space_test.dart`, the space kinds added to the codec's round-trip sweep, 3 toolbar tests, 2 canvas tests, 1 prover and 1 geometry-menu test; one new golden, `space_kinds_light`. VM 3815; goldens 36, the old 35 unchanged. Notes:
+  - **Steps 9 and 10 were not separated.** A plane with no picture is not a state worth a commit, and the arms in the exhaustive switches are where the picture is decided.
+  - `hasSpaceContent` moved to `lib/domain/construction/space_content.dart` so the prover provider can read it without importing presentation; `space_view.dart` re-exports it.
+  - **A third kitchen-sink builder, `buildSpaceKinds`**, beside `buildPostV1Kinds` and for the same reason: its documents are version 4, and the other two must stay version 1.
+  - The patch is the bounding box in the plane's *frame*, so a face whose frame is oblique to its triangle (`u` along OA) gets a patch larger than the triangle needs. Seen in the golden. Correct; a tighter rule (the hull, or a frame chosen for the patch) is a later choice.
+  - Shortcuts: `G W` plane, `G ⇧ W` parallel plane, `G J` perpendicular to a plane, `G ⇧ J` plane perpendicular to a line.
+  - **Not done from the plan: the `attributes_inspector` arm.** The inspector shows the common attributes for a plane (colour, stroke, fill, name, visibility) through its existing generic rows; nothing kind-specific was needed.
+  - Gotcha: with the space view on and the Space group present, the app bar is one button wider than the 1280 px test window shows, and Redo, the last button, is past the edge. A widget test that taps Redo there misses silently and fails later; go through the command stack.
+  - The fixture `test/space_fixtures/pyramid_skeleton.rgl` already reads the base-to-face dihedral as arctan √2 off the face's normal.
+
+**Next: stage B close** (browser gate, look, merge), then **stage C, step 13**.
 

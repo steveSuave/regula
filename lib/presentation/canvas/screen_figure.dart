@@ -12,6 +12,7 @@ import '../../domain/math/vec3.dart';
 import '../../domain/projective/conic_shape.dart';
 import 'canvas_viewport.dart';
 import 'label_anchor.dart';
+import 'plane_patch.dart';
 
 /// Sampling flatness (screen px) of a conic's chord chain. Coarser than
 /// the painter's: a label obstacle and a hit target need the ink's
@@ -25,6 +26,7 @@ const double _conicFlatness = 3;
 bool drawnInSpace(GeoObject object) => switch (object) {
   GeoPoint() => object.position == null,
   GeoLine() => object.line == null,
+  GeoPlane() => true,
   _ => false,
 };
 
@@ -36,6 +38,7 @@ Vec3? spaceLabelAnchor(GeoObject object) => switch (object) {
     (spaceStart + spaceEnd) * 0.5,
   Ray() => object.spaceStart,
   GeoLine() => object.spaceLine?.anchor,
+  GeoPlane() => object.labelAnchor,
   _ => null,
 };
 
@@ -62,6 +65,10 @@ class ScreenInk {
   List<(double, double)>? segmentDepths;
   double? dotDepth;
 
+  /// For a plane, the camera depth of the plane under a pointer: what a
+  /// tap inside its [fill] is compared by.
+  double Function(Offset pointer)? fillDepth;
+
   /// The nearest ink to [p]: its distance in pixels (infinite when
   /// there is no ink) and the camera depth there, larger for nearer.
   /// [sheetDepth] is the depth of the object's sheet under [p], which is
@@ -69,7 +76,7 @@ class ScreenInk {
   ({double distance, double depth}) nearest(Offset p, double sheetDepth) {
     final region = fill;
     if (region != null && _inside(region, p)) {
-      return (distance: 0, depth: sheetDepth);
+      return (distance: 0, depth: fillDepth?.call(p) ?? sheetDepth);
     }
     var best = double.infinity;
     var depth = sheetDepth;
@@ -137,7 +144,7 @@ ScreenInk screenInkOf(
 ) {
   final ink = ScreenInk();
   if (drawnInSpace(object)) {
-    _spaceInk(ink, viewport, canvasSize, object);
+    _spaceInk(ink, objects, viewport, canvasSize, object);
     return ink;
   }
   final flat = viewport.flat;
@@ -249,6 +256,9 @@ ScreenInk screenInkOf(
       ink.anchor = map(flat.worldToScreen(labelAnchor(object)));
     case GeoLocus():
       _addLocusRuns(flat, object, chords);
+    case GeoPlane():
+      // Never on a sheet: [drawnInSpace] sent it to [_spaceInk] above.
+      break;
   }
   return ink;
 }
@@ -269,6 +279,7 @@ double _reachGain(CanvasViewport viewport) => viewport.isTilted
 /// nearer of two that cross on screen.
 void _spaceInk(
   ScreenInk ink,
+  Iterable<GeoObject> objects,
   CanvasViewport viewport,
   Size canvasSize,
   GeoObject object,
@@ -320,6 +331,25 @@ void _spaceInk(
           stroke(on - unit * reach, on + unit * reach);
         }
       }
+    case GeoPlane():
+      final corners = planePatch(
+        object,
+        objects,
+        minHalfExtent: viewport.screenToWorldLength(patchMinHalfExtentPx),
+      );
+      final frame = object.frame;
+      if (corners == null || frame == null) {
+        break;
+      }
+      for (var i = 0; i < corners.length; i++) {
+        stroke(corners[i], corners[(i + 1) % corners.length]);
+      }
+      ink.fill = [for (final corner in corners) viewport.spaceToScreen(corner)];
+      final centre = (corners[0] + corners[2]) * 0.5;
+      ink.fillDepth = (pointer) {
+        final picked = viewport.pickPlane(pointer, frame);
+        return viewport.depthOf(picked == null ? centre : frame.lift(picked));
+      };
     default:
       break;
   }
