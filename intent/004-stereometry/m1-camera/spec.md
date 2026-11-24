@@ -1,6 +1,6 @@
 # Spec: stereometry milestone 1 — the 3D view and its camera
 
-Written 2026-11-24 from [intent](../intent.md) · Status: plan approved 2026-11-24; amended where the plan's progress notes say so
+Written 2026-11-24 from [intent](../intent.md) · Status: done with the plan, 2026-11-24; amended where the plan's progress notes say so
 
 Milestone 1 of five. It adds no object, tool or kernel type. An existing planar document can be turned around in space, and everything the user can do to it today still works while it is turned.
 

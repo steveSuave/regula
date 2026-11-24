@@ -1,6 +1,6 @@
 # Plan: stereometry milestone 1 — the 3D view and its camera
 
-Written 2026-11-24 from [spec](spec.md) · Status: approved 2026-11-24, in progress · Branch: `intent-004-stereometry`
+Written 2026-11-24 from [spec](spec.md) · Status: done 2026-11-24 · Branch: `intent-004-stereometry`
 
 ## Files that change
 
@@ -106,3 +106,16 @@ Written 2026-11-24 from [spec](spec.md) · Status: approved 2026-11-24, in progr
   - `fittedToAbsolute` takes the tilt too: a disc's width does not foreshorten under a turntable tilt, so the same scale frames it.
   - **Not tested: File > Open turning the view off.** It is the same two lines as New, which is tested; Open goes through the platform file picker.
   - `decision_citations_test` failed until the DECISIONS section existed, as it should.
+- **Step 6, browser gate and goldens.** `test/web` 17 passed (15 + 2): on the real renderer a circle through the sheet map is the ellipse it should be, at full stroke width, and a dashed one is inked along about half its rim in a dozen runs. Three new goldens rather than two: `space_oblique_light`, `space_oblique_dark`, `space_below_light` (the view from below, where the squash is negative and the figure is mirrored, in place of a front view, which for a planar figure is a line). `--update-goldens` rewrote the existing 32 to the same bytes: `git status` showed only the three new files.
+- **Step 7, README.**
+- **Step 8, looks.**
+  - **The Chrome extension was not connected**, so the look through it did not happen. Instead: the release wasm build served on 127.0.0.1, driven in a separate headless Chrome (158, temporary profile) over the DevTools protocol with real mouse and touch events, and read from screenshots.
+  - Seen at 1280 wide: two circles drawn with the circle tool; the 3D button turns them into ellipses with round dots and upright labels and shows the Views button; a mouse drag of (120, −40) on empty canvas turns the azimuth to 60° on the compass and flattens the figure.
+  - Seen at 400×800 with touch: a circle drawn by taps; the bar scrolled to the 3D button and it tapped on; a one-finger swipe of (90, 40) gives 45° on the compass and a rounder ellipse, the centre point staying put; a touch drag of the rim point ends with the point exactly under the finger (CSS 330, 340); two fingers moving together pan the figure; the Views menu lists Top, Front, Side, Oblique.
+  - **Not seen in a browser**: choosing a preset, turning the view off, and the edge-on refusal. Those rest on the widget tests.
+  - Gotcha: a device-metrics override belongs to the DevTools session and is gone when it detaches, so each scripted run sets it again; and a menu left open by one run swallows the next run's first inputs.
+  - Gotcha: coarse two-finger steps (10 px per event) read as a twist, because the two pointers' moves arrive one after the other; at 1.5 px per event the rotation holds. That is the scale recognizer's behaviour in the planar view as well.
+  - **Phone smokes did not run.** `flutter emulators` lists none, and Xcode is the command-line tools only (no `xcodebuild`, no `simctl`, no CocoaPods). The parked item stays parked with the same trigger; the phone evidence is the touch run above and the user's own device on the deployed build.
+- **Step 9.** Final gate before the merge: analyze clean; VM 3629 passed (baseline 3566); browser 17; goldens 35; `flutter build web --wasm` built. `git diff main --stat -- lib/domain test/fixtures lib/application/persistence` is empty.
+
+**Carried to milestone 2:** the screen-space hit test (the tilt-widened world radius is a stopgap); label declutter on projected shapes; a sheet map per plane; the save-format question; whether the rubber band needs a way back in the space view.
