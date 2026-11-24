@@ -1,6 +1,6 @@
 # Plan: stereometry milestone 2 — the space kernel, planes, and the active plane
 
-Written 2026-11-24 from [spec](spec.md) · Status: approved 2026-11-24, in progress · Branch: `intent-004-stereometry`
+Written 2026-11-24 from [spec](spec.md) · Status: done 2026-11-24 · Branch: `intent-004-stereometry`
 
 Three stages. Each ends green on the full gate, with a look, and merges to `main`.
 
@@ -163,7 +163,7 @@ Three stages. Each ends green on the full gate, with a look, and merges to `main
 - **Stage B closed 2026-11-24.** Final gate: analyze clean; VM 3816; goldens 36 (one new, the old 35 unchanged); browser 17; `flutter build web --wasm` built. `git diff main --stat -- test/fixtures test/v1_oracle` is empty.
 
 - **Stage B shipped**: merged and pushed to `main` (`020922c`).
-- **Steps 13 to 18, the active plane** (stage C, in two working passes: the domain, then the presentation). Tests: 35 in `active_plane_test.dart` (sheets, plane-hosted points, `liesIn`, adapters, `PlaneScope`, Intersection across sheets, the codec, the acceptance figure), 15 in `plane_viewport_test.dart`, 10 widget tests (group "the active plane"), one browser test. VM 3876 before the last additions; goldens 36, unchanged; browser 18. Departures and notes:
+- **Steps 13 to 18, the active plane** (stage C, in two working passes: the domain, then the presentation). Tests: 35 in `active_plane_test.dart` (sheets, plane-hosted points, `liesIn`, adapters, `PlaneScope`, Intersection across sheets, the codec, the acceptance figure), 15 in `plane_viewport_test.dart`, 10 widget tests (group "the active plane"), one browser test. VM 3876; goldens 36, unchanged; browser 18. Departures and notes:
   - **`sheetFor(frame)` became `PlaneViewport`, a subclass of `CanvasViewport`**, and `SheetCanvas` did not change at all: it already drew through `viewport.sheetToScreen` and `sheetMatrix`, which the subclass overrides. The painter creates one sub-painter per plane with objects on its sheet. The base plane is not routed through it (the plan's "for the base frame `sheetFor` is `flat` and `sheetMap` bitwise" is met by not touching the base path).
   - **`PlaneScopedTool` became `PlaneScope`**, an object the tool notifier holds beside the active tool, not a wrapper tool: the notifier is the one place every input and every commit already passes, and a wrapper would have hidden the tool's type from the toolbar's highlight checks.
   - **Tools declare a scope** (`ScopedTool`, `ToolScope.plane` by default). The builders for segment, line and ray live in `toolbar.dart`, so the scope is passed where those tools are created (`main.dart`, `toolbar.dart`) rather than inferred in the domain.
@@ -176,5 +176,11 @@ Three stages. Each ends green on the full gate, with a look, and merges to `main
   - Gotcha: a Python heredoc with a quoted delimiter passes `\\'` through as two backslashes, which Dart reads as an escaped backslash followed by the end of the string. One test file had to be repaired for it.
   - Gotcha: a plane chosen "at an angle" for the browser test faced the camera to within 1%, and its ellipse was a circle. The test now asserts the ellipse is eccentric before it trusts anything else.
 
-**Next: stage C close** (README, look, merge), then the milestone's status row.
+- **Stage C look.** Headless Chrome on the release wasm build, 1280 wide, mouse events, read from screenshots.
+  - Seen: with the face plane through E, A, B built, a tap inside its patch clear of the edges makes it active — the chip "In plane i ✕" appears at the top left and the patch takes an outline in the selection colour; a tap that falls on an edge selects the edge instead, as it should. With Circle through three points, taps on E, A and B draw the face's circumcircle through all three, in the face (an ellipse on screen). A tap on C with the tool still active adds nothing and the chip "That is not in the active plane by construction" appears at the bottom left. An orbit turns the pyramid, the patch and the circle together, the circle still through E, A and B.
+  - **Not seen in a browser**: the phone layout for stage C, the chip's return to the base plane, a new free point placed in a plane and dragged, the Intersection tool across sheets, a lift of a plane point. Those rest on the widget and unit tests.
+  - The patch does not grow to hold a circle built in it, only points: the circumcircle runs past the patch's lower edge. Honest, and a reason to give the patch a size control later.
+- **Stage C and milestone 2 closed 2026-11-24.** Final gate: analyze clean; VM 3876; goldens 36 (the 35 that predate the milestone unchanged); browser 18; `flutter build web --wasm` built. `git diff main --stat -- test/fixtures test/v1_oracle` is empty.
+
+**Carried to milestone 3** (solids, cross-sections, hidden edges): a point on an edge that lies in no plane object (`PointOnObject` in space, or face planes); `Polygon` in space, which is what a face and a section are; hidden-edge dashing and a depth order for crossing patches; a grid and a size control for the active patch; the patch growing for curves built in it; the incidence rules a real figure asks for and `liesIn` does not yet know; the rubber band in the space view, still unavailable; the phone look for stages B and C, which has not been done in a browser.
 
