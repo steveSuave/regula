@@ -98,3 +98,11 @@ Written 2026-11-24 from [spec](spec.md) · Status: approved 2026-11-24, in progr
   - `hitRadius` on `CanvasViewport` carries the tilt-widened radius; it also feeds `ToolInput.snapThreshold`, so snapping widens with it.
   - Departure: a tap inside the edge-on band returns before the label-rectangle check, so a measurement or text cannot be selected by its label there either. Simpler than a second path for a view in which the figure is a line.
   - Gotcha: in a two-finger widget test the fingers move one after the other, so the scale recognizer's baseline catches them a step apart and reports a pinch of about 1.1. The pan tests assert on the point between the fingers and allow that.
+- **Step 5, app bar, presets, Fit, Reset, export, DECISIONS.** 12 widget tests in `space_view_flow_test.dart` (six at wide, six at phone), 6 in `space_view_test.dart`, 3 in `fit_viewport_test.dart`, 3 in `png_exporter_test.dart`. Notes:
+  - **Leaving turns about the figure's centre**, like entering and the presets, not about the point at the canvas centre as the spec first said. It is total at edge-on and it makes "on, then off" return exactly the view the user started from. Spec requirement 4 is amended.
+  - The app bar scrolls horizontally on a phone (the Phase 47 unified bar), so the two new buttons cannot overflow it; the risk in the spec did not apply. The flow tests scroll the bar to each control.
+  - Fit export in the planar view keeps exporting the level plan (it never passed the rotation). In the space view it is given the camera's rotation and tilt.
+  - "Straighten the view" on the compass chip levels the azimuth and keeps the tilt.
+  - `fittedToAbsolute` takes the tilt too: a disc's width does not foreshorten under a turntable tilt, so the same scale frames it.
+  - **Not tested: File > Open turning the view off.** It is the same two lines as New, which is tested; Open goes through the platform file picker.
+  - `decision_citations_test` failed until the DECISIONS section existed, as it should.

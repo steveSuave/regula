@@ -1,6 +1,6 @@
 # Spec: stereometry milestone 1 — the 3D view and its camera
 
-Written 2026-11-24 from [intent](../intent.md) · Status: drafted, awaiting plan approval
+Written 2026-11-24 from [intent](../intent.md) · Status: plan approved 2026-11-24; amended where the plan's progress notes say so
 
 Milestone 1 of five. It adds no object, tool or kernel type. An existing planar document can be turned around in space, and everything the user can do to it today still works while it is turned.
 
@@ -9,12 +9,12 @@ Milestone 1 of five. It adds no object, tool or kernel type. An existing planar 
 1. **A 2D/3D button** in the app bar toggles the space view. It is session state, off at launch and off after File > New or Open.
 2. **Off is today's app.** With the space view off, every transform, gesture, paint call and hit test is the one `main` has now. The existing goldens are byte-identical.
 3. **The camera is a turntable under parallel projection.** Two angles: the existing view `rotation` (the azimuth about the vertical through the figure) and a new `tilt` (0 looks straight down at the base plane, which is today's view; 90° is edge-on; up to 180° looks from below). Vertical stays vertical on screen at every camera position.
-4. **Turning the view on** moves to the oblique preset (requirement 9) at the current rotation. **Turning it off** returns tilt to 0 and keeps pan, scale and rotation as near as the base-plane point at the canvas centre allows.
+4. **Turning the view on** moves to the oblique preset (requirement 9) at the current rotation. **Turning it off** returns tilt to 0 and keeps scale and rotation. Both turn the camera about the figure's centre, so the figure stays where it was on screen.
 5. **One-finger drag orbits.** In the space view, a one-pointer drag that today would open the rubber band or be ignored (it starts on empty canvas, or a tool is active) orbits instead: horizontal travel turns the azimuth, vertical travel changes the tilt. The orbit keeps the figure's centre fixed on screen. The same drag with a mouse orbits too.
 6. **Two fingers pan, zoom and twist** as today; the twist turns the azimuth. Scroll, Ctrl/Cmd+scroll, Alt+scroll and Space+drag keep their meaning.
 7. **Taps and object drags are unchanged in meaning.** A tap or drag lands on the base-plane point under the pointer. Tools, selection, long-press, label drags, point drags with tracing, and grid snap all work at any tilt where the base plane can be picked.
 8. **Near edge-on, the base plane cannot be picked.** Within about 3° of edge-on (|cos tilt| < 0.05) a tap or object drag on the plane does nothing; orbit, pan and zoom still work. Nothing is ever placed at a wildly distant point because the plane was seen at a grazing angle.
-9. **Preset views**: Top (tilt 0), Front (tilt 90°, rotation 0), Side (tilt 90°, rotation 90°), Oblique (tilt 60°, rotation kept on entry, −30° when chosen from the menu). A Views menu beside the button appears while the space view is on.
+9. **Preset views**: Top (tilt 0), Front (tilt 90°, rotation 0), Side (tilt 90°, rotation 90°), Oblique (tilt 60°, rotation kept on entry, −30° when chosen from the menu or by Reset). A Views menu beside the button appears while the space view is on.
 10. **The picture reads like a drawing, not a photographed sheet.** Under tilt, curves foreshorten (a circle is drawn as an ellipse) while stroke widths, point dots, labels, tick labels and dash lengths keep their screen size and stay upright.
 11. **Fit and Reset work in the space view.** Fit frames the figure at the current camera; Reset returns to the oblique preset at origin and 100 %.
 12. **PNG export** renders what the canvas shows, tilt included.
@@ -60,7 +60,7 @@ where `flat` is today's `worldToScreen` at the same pan, scale and rotation. A t
 - `sheetMap` exposes the flat-to-screen affine (identity at tilt 0), and `flat` exposes the same viewport with tilt removed.
 - `orbitedAbout(pivot, dRotation, dTilt)` returns the state whose camera is turned while the space point `pivot` keeps its screen position.
 - `worldToScreenLength`, `worldToScreenAngle` and `worldToScreenDirection` are flat-frame quantities and are documented as such.
-- `visibleWorldBox` near edge-on would be unbounded. It is capped at eight canvas diagonals around the canvas centre's flat image, which bounds grid lines and clip work.
+- `visibleWorldBox` near edge-on would be unbounded. The pull-back divides by `cos tilt` held at the pick floor (0.05), so the region is exact wherever the plane can be picked and at most twenty canvas heights tall inside the edge-on band; there the painter widens it to the figure's bounds.
 
 ### The painter: a sheet canvas
 

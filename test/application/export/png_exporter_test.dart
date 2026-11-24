@@ -343,4 +343,57 @@ void main() {
       image.dispose();
     });
   });
+
+  // Intent 004, milestone 1.
+  group('a tilted camera', () {
+    const tilted = ViewportState(pan: Vec2(-10, 20), scale: 1, tilt: 1.0);
+
+    test(
+      'the export draws the object where the tilted canvas shows it',
+      () async {
+        final image = await renderConstructionImage(
+          pointScene(),
+          viewport: tilted,
+          logicalSize: const ui.Size(30, 30),
+          background: white,
+          defaultColor: blue,
+        );
+        // Flat, the point is at (10, 20); the tilt scales y by cos 1.
+        final shown = const CanvasViewport(tilted).worldToScreen(Vec2.zero);
+        expect(shown.dx, 10);
+        expect(shown.dy, closeTo(20 * 0.5403023058681398, 1e-9));
+        expect(await pixelAt(image, 10, shown.dy.round()), red);
+        expect(await pixelAt(image, 10, 20), white);
+        image.dispose();
+      },
+    );
+
+    test('a region keeps the tilt and puts its corner at the origin', () {
+      const region = ui.Rect.fromLTWH(4, 6, 12, 10);
+      final framing = regionFraming(tilted, region);
+      expect(framing.logicalSize, region.size);
+      expect(framing.viewport.tilt, 1.0);
+      final moved = CanvasViewport(framing.viewport).worldToScreen(Vec2.zero);
+      final was = const CanvasViewport(tilted).worldToScreen(Vec2.zero);
+      expect((moved - (was - region.topLeft)).distance, lessThan(1e-9));
+    });
+
+    test('fit framing takes the camera it is given', () {
+      final framing = fitConstructionFraming(
+        pointScene().objects,
+        const ui.Size(200, 100),
+        rotation: 0.5,
+        tilt: 1.0,
+      )!;
+      expect(framing.viewport.rotation, 0.5);
+      expect(framing.viewport.tilt, 1.0);
+      expect(
+        fitConstructionFraming(
+          pointScene().objects,
+          const ui.Size(200, 100),
+        )!.viewport.tilt,
+        0,
+      );
+    });
+  });
 }
