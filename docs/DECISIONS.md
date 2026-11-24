@@ -810,6 +810,15 @@ The first milestone of stereometry adds a camera and nothing else: no object, no
 - **One finger on empty canvas orbits in the space view**, as accepted with the intent. It takes the place of the rubber band and of the drag an active tool ignores; long-press and shift-tap still select. Two fingers pan, zoom and twist as before, pinning a point of space.
 - **The hit radius under tilt is an approximation with an end date.** `CanvasHitTester` works in world coordinates with a world radius, and a world disc is a squashed ellipse on screen. `hitRadius` widens the radius by `1 / |cos tilt|`, capped at double. A screen-space hit test needs each kind projected to the screen and belongs to milestone 2, where objects leave the base plane and a world radius stops meaning anything.
 
+### Sheets: a plane is a chart of one space (intent 004, milestone 2; 2026-11-24)
+
+Milestone 2 puts objects in space. What it decides is how the planar kernel, which is complex and traced, and a space kernel, which is real, share one construction.
+
+- **The space kernel is real, and sits beside the planar one** (`lib/domain/projective/space/`). `Point3` and `Plane3` are dual homogeneous quadruples and `Line3` is six Plücker coordinates, so join and meet are uniform: point ∨ point, line ∨ point, plane ∧ plane, line ∧ plane. Each is total and answers the zero vector only on exact degeneracy (coincident points, a point on the line, one plane twice, a line in the plane); parallels meet at infinity, which is a value. Coplanar-versus-skew is the one bilinear quantity `Line3.reciprocal`. Nothing gates on it numerically: see the incidence bullet when stage C lands.
+- **A plane carries coordinates: `PlaneFrame`.** An origin and an orthonormal pair, so the plane's own Euclidean geometry is the space geometry restricted to it, and the planar kernel can run in the frame unchanged. `lift` takes frame coordinates to space; `pull` is the orthogonal projection back, total, zero only for a line perpendicular to the plane. A complex planar value has no image in space: `liftPoint` and `liftLine` answer null for it, which is why continuation cannot pass through a space value.
+- **The metric constructions are four functions** (`space_metric.dart`): the perpendicular to a plane, the plane perpendicular to a line, and the two parallels. They read a normal or a direction as a Euclidean direction, so space objects need a Euclidean document.
+- **A frame built from a normal alone takes a horizontal `u`** (`ẑ × n`, with `x̂` for a horizontal plane), so a vertical plane's coordinates read level and up. The choice is singular at horizontal. A frame through three points has no such choice: origin `a`, `u` along `ab`, normal along `ab × ac`.
+
 ## Risks & de-risking
 
 Three spikes are scheduled first in their tracks, each killing the biggest unknown before architecture hardens on it:

@@ -87,7 +87,7 @@ Every other kind is plane-bound in this milestone. `Polygon`, `VertexAngle` and 
 | `LinePlaneIntersectionPoint` (a `GeoPoint`) | line, plane | — |
 | `PlaneIntersectionLine` (a `GeoLine`) | plane, plane | — |
 
-"u horizontal" is n × ẑ normalised, with x̂ when the plane is itself horizontal. It is the one frame with a singular direction; see concerns. Parallel planes meet in a line at infinity and a line parallel to a plane meets it at a point at infinity: both are values, and neither projects.
+"u horizontal" is ẑ × n normalised, with x̂ when the plane is itself horizontal, so a vertical plane reads level and up. It is the one frame with a singular direction; see concerns. Parallel planes meet in a line at infinity and a line parallel to a plane meets it at a point at infinity: both are values, and neither projects.
 
 ### Lying in a plane by construction (`space_incidence.dart`)
 

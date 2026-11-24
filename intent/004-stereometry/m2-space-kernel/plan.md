@@ -107,4 +107,9 @@ Three stages. Each ends green on the full gate, with a look, and merges to `main
 
 ## Progress and gotchas
 
-(none yet)
+- **Step 1, baseline** (`main` at `d252525`). Analyze clean; VM 3629 passed; goldens 35 passed; browser gate green.
+- **Step 2, kernel.** 55 tests in `test/domain/projective/space/`. Notes:
+  - The metric helpers are top-level functions in `space_metric.dart`, like `metric.dart`. The frame constructors are statics on `PlaneFrame` (`throughPoints`, `withAxis`, `horizontal`).
+  - **The horizontal `u` is `ẑ × n`, not `n × ẑ`** as the spec first said: with it a vertical plane facing the viewer has `u` to the right and `v` up, and an upward horizontal plane gets the base axes. Spec amended.
+  - `Line3.joinPoint` is oriented so the plane through a, b, c has its normal along ab × ac, the same hand as `PlaneFrame.throughPoints`.
+  - The DECISIONS section is opened in this commit, because `decision_citations_test` needs a cited section to exist. It gains bullets as the steps land.
