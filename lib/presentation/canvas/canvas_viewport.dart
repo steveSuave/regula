@@ -146,9 +146,11 @@ class CanvasViewport {
   /// [pickFloor] bounds it at twenty canvas heights.
   Rect flatFrame(Size canvasSize, {double margin = 0}) {
     if (!isTilted) {
+      // `0 - margin`, not `-margin`: the unmargined frame's corner must
+      // be +0.0, the `Offset.zero` the planar painter always used.
       return Rect.fromLTRB(
-        -margin,
-        -margin,
+        0 - margin,
+        0 - margin,
         canvasSize.width + margin,
         canvasSize.height + margin,
       );

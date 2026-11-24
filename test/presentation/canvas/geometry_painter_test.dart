@@ -1063,6 +1063,98 @@ void main() {
       );
     });
   });
+  // Intent 004, milestone 1: the same document under a tilted camera.
+  group('under a tilted camera', () {
+    const size = Size(800, 600);
+
+    Construction scene() {
+      final construction = Construction();
+      final a = FreePoint(id: 'a', position: const Vec2(10, -8));
+      final b = FreePoint(id: 'b', position: const Vec2(14, -8));
+      final c = FreePoint(id: 'c', position: const Vec2(10, -5));
+      construction
+        ..add(a)
+        ..add(b)
+        ..add(c)
+        ..add(Segment(id: 's', point1: a, point2: b))
+        ..add(LineThroughTwoPoints(id: 'l', point1: a, point2: c))
+        ..add(Ray(id: 'r', origin: b, through: c))
+        ..add(CircleCenterPoint(id: 'k', center: a, onCircle: b))
+        ..add(VertexAngle(id: 'ang', arm1: b, vertex: a, arm2: c));
+      return construction;
+    }
+
+    CanvasViewport camera(double tilt, {double rotation = 0}) => CanvasViewport(
+      ViewportState(scale: 20, rotation: rotation, tilt: tilt),
+    );
+
+    test('paints at every tilt, edge-on and from below included', () {
+      for (final tilt in [0.3, 1.0, 1.5607, 3.14159 / 2, 1.58, 2.4, 3.14159]) {
+        final recorder = PictureRecorder();
+        painterFor(
+          scene(),
+          viewport: camera(tilt, rotation: 0.6),
+          showAxes: true,
+          showGrid: true,
+          selectedIds: const {'k', 'a'},
+        ).paint(Canvas(recorder), size);
+        recorder.endRecording();
+      }
+    });
+
+    test('a circle foreshortens; its point and its stroke do not', () {
+      const tilt = 1.0;
+      final viewport = camera(tilt);
+      final canvas = _EverythingRecordingCanvas();
+      painterFor(scene(), viewport: viewport).paint(canvas, size);
+
+      // The points are sprites: round, full size, at the projected spot.
+      final dots = canvas.circles;
+      expect(dots, hasLength(3));
+      final a = viewport.worldToScreen(const Vec2(10, -8));
+      expect(dots.first.$1.dx, closeTo(a.dx, 1e-9));
+      expect(dots.first.$1.dy, closeTo(a.dy, 1e-9));
+      expect(dots.first.$2, const ObjectAttributes().pointSize);
+
+      // The circle of radius 4 at scale 20 is 160 px across and
+      // 160·cos(tilt) tall, centred on its centre's projection.
+      final ellipse = canvas.paths
+          .map((entry) => entry.$1.getBounds())
+          .firstWhere((bounds) => (bounds.width - 160).abs() < 1e-3);
+      expect(ellipse.height, closeTo(160 * 0.5403023058681398, 1e-3));
+      expect(ellipse.center.dx, closeTo(a.dx, 1e-3));
+      expect(ellipse.center.dy, closeTo(a.dy, 1e-3));
+      for (final (_, paint) in canvas.paths) {
+        expect(paint.strokeWidth, const ObjectAttributes().strokeWidth);
+      }
+
+      // The segment is a line between the projected endpoints.
+      final b = viewport.worldToScreen(const Vec2(14, -8));
+      expect(
+        canvas.lines.any(
+          (line) =>
+              (line.$1 - a).distance < 1e-9 && (line.$2 - b).distance < 1e-9,
+        ),
+        isTrue,
+      );
+    });
+
+    test('at tilt 0 the same scene still draws its circle as a circle', () {
+      final canvas = _EverythingRecordingCanvas();
+      painterFor(scene(), viewport: camera(0)).paint(canvas, size);
+      expect(canvas.circles, hasLength(4), reason: 'three points and the rim');
+      expect(canvas.circles.last.$2, 80);
+    });
+
+    test('a tilt repaints', () {
+      final construction = scene();
+      final base = painterFor(construction, viewport: camera(0));
+      expect(
+        painterFor(construction, viewport: camera(0.5)).shouldRepaint(base),
+        isTrue,
+      );
+    });
+  });
 }
 
 /// A [GeoLocus] with hand-picked samples (cf. the hit-tester's stub):
@@ -1121,6 +1213,25 @@ class _CircleRecordingCanvas implements Canvas {
   void drawCircle(Offset centre, double radius, Paint paint) {
     circles.add((centre, radius));
   }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => null;
+}
+
+class _EverythingRecordingCanvas implements Canvas {
+  final List<(Offset, double)> circles = [];
+  final List<(Offset, Offset)> lines = [];
+  final List<(Path, Paint)> paths = [];
+
+  @override
+  void drawCircle(Offset centre, double radius, Paint paint) =>
+      circles.add((centre, radius));
+
+  @override
+  void drawLine(Offset p1, Offset p2, Paint paint) => lines.add((p1, p2));
+
+  @override
+  void drawPath(Path path, Paint paint) => paths.add((path, paint));
 
   @override
   dynamic noSuchMethod(Invocation invocation) => null;

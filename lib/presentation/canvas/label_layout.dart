@@ -85,12 +85,16 @@ Offset labelBaseTopLeft(
         0.5 *
         (textSize.width * direction.dx.abs() +
             textSize.height * direction.dy.abs());
-    final center =
-        viewport.worldToScreen(angle.vertex) +
-        direction *
-            (object.attributes.angleMarkerRadius +
-                _angleLabelClearance +
-                support);
+    // The marker lies in the plane, so the label's centre is placed in
+    // the planar frame and carried to the screen with it (intent 004).
+    // Not tilted, `flat` is the viewport and the sheet map the identity.
+    final center = viewport.sheetToScreen(
+      viewport.flat.worldToScreen(angle.vertex) +
+          direction *
+              (object.attributes.angleMarkerRadius +
+                  _angleLabelClearance +
+                  support),
+    );
     return center - Offset(textSize.width / 2, textSize.height / 2);
   }
   return viewport.worldToScreen(labelAnchor(object));

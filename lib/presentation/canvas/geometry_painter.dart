@@ -17,10 +17,11 @@ import '../../domain/math/vec2.dart';
 import '../../domain/projective/conic_matrix.dart';
 import '../../domain/projective/conic_shape.dart';
 import 'canvas_viewport.dart';
-import 'dash_path.dart';
+import 'fit_viewport.dart';
 import 'grid_layout.dart';
 import 'label_layout.dart';
 import 'large_radius_arc.dart';
+import 'sheet_canvas.dart';
 
 /// The canvas rect minus the disc — the region that is not part of the
 /// plane, as one even-odd path.
@@ -240,11 +241,80 @@ class GeometryPainter extends CustomPainter {
   /// because it is not chrome: it is the edge of the plane.
   static const double _absoluteStrokeWidth = 2;
 
+  /// The planar frame every coordinate below is computed in: [viewport]
+  /// with the camera looking straight down, and [viewport] itself when
+  /// it already is. The [SheetCanvas] carries the result to the screen.
+  late final CanvasViewport _flat = viewport.flat;
+
+  /// The figure's world bounds while the base plane is inside the
+  /// edge-on band, null otherwise. There the whole plane is on screen as
+  /// one line, so no pull-back of the canvas bounds what is visible; the
+  /// clip bounds below are widened to hold the figure instead, so that a
+  /// conic or a locus on that line is not trimmed away. Set per paint.
+  ({Vec2 min, Vec2 max})? _bandBox;
+
+  /// The part of the planar frame the canvas can see: `Offset.zero &
+  /// size` when the camera is not tilted.
+  Rect _frame(Size size) {
+    final frame = viewport.flatFrame(size);
+    final band = _bandBox;
+    if (band == null) {
+      return frame;
+    }
+    return frame
+        .expandToInclude(
+          Rect.fromPoints(
+            _flat.worldToScreen(band.min),
+            _flat.worldToScreen(Vec2(band.min.x, band.max.y)),
+          ),
+        )
+        .expandToInclude(
+          Rect.fromPoints(
+            _flat.worldToScreen(band.max),
+            _flat.worldToScreen(Vec2(band.max.x, band.min.y)),
+          ),
+        );
+  }
+
+  /// The world box unbounded curves are clipped to: the canvas grown by
+  /// [margin] screen px.
+  ({Vec2 min, Vec2 max}) _visibleBox(Size size, double margin) {
+    final box = viewport.visibleWorldBox(size, margin: margin);
+    final band = _bandBox;
+    if (band == null) {
+      return box;
+    }
+    return (
+      min: Vec2(
+        math.min(box.min.x, band.min.x),
+        math.min(box.min.y, band.min.y),
+      ),
+      max: Vec2(
+        math.max(box.max.x, band.max.x),
+        math.max(box.max.y, band.max.y),
+      ),
+    );
+  }
+
+  /// A screen-px [margin] in planar-frame px: the sheet map shrinks the
+  /// frame's y, so the same clearance on screen needs more of it.
+  double _frameMargin(double margin) => viewport.isTilted
+      ? margin /
+            math.max(
+              math.cos(viewport.state.tilt).abs(),
+              CanvasViewport.pickFloor,
+            )
+      : margin;
+
   @override
-  void paint(Canvas canvas, Size size) {
+  void paint(Canvas screen, Size size) {
     // Infinite lines are drawn with far-away endpoints; the clip keeps
     // that overdraw inside the canvas.
-    canvas.clipRect(Offset.zero & size);
+    screen.clipRect(Offset.zero & size);
+    final canvas = SheetCanvas(screen, viewport);
+    _bandBox = viewport.basePlanePickable
+        ? null
+        : visibleWorldBounds(construction.objects);
 
     if (showGrid || showAxes) {
       _drawBackground(canvas, size);
@@ -325,9 +395,9 @@ class GeometryPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
     for (final marker in previewMarkers) {
-      final center = viewport.worldToScreen(marker);
-      canvas.drawCircle(center, _markerDotRadius, dot);
-      canvas.drawCircle(center, _markerRingRadius, ring);
+      final center = _flat.worldToScreen(marker);
+      canvas.drawDot(center, _markerDotRadius, dot);
+      canvas.drawDot(center, _markerRingRadius, ring);
     }
   }
 
@@ -339,13 +409,27 @@ class GeometryPainter extends CustomPainter {
   /// Draws the document's fundamental conic and washes the region that is
   /// not part of the plane (Phase 126). See [absoluteDisc] for which
   /// geometries have anything to draw and why the other two do not.
-  void _drawAbsolute(Canvas canvas, Size size) {
-    final disc = absoluteDisc(construction.kernel, viewport);
+  void _drawAbsolute(SheetCanvas canvas, Size size) {
+    final disc = absoluteDisc(construction.kernel, _flat);
     if (disc == null) {
       return;
     }
-    canvas.drawPath(
-      outsideDiscPath(size, disc.centre, disc.radius),
+    // The wash covers the *canvas* outside the disc, so it is a screen
+    // shape with the disc's sheet image cut out of it.
+    canvas.screen.drawPath(
+      canvas.isIdentity
+          ? outsideDiscPath(size, disc.centre, disc.radius)
+          : (Path()
+              ..fillType = PathFillType.evenOdd
+              ..addRect(Offset.zero & size)
+              ..addPath(
+                canvas.mapPath(
+                  Path()..addOval(
+                    Rect.fromCircle(center: disc.centre, radius: disc.radius),
+                  ),
+                ),
+                Offset.zero,
+              )),
       Paint()..color = absoluteOutsideColor,
     );
     canvas.drawCircle(
@@ -358,18 +442,19 @@ class GeometryPainter extends CustomPainter {
     );
   }
 
-  void _drawBackground(Canvas canvas, Size size) {
-    final step = gridStep(viewport.state.scale);
+  void _drawBackground(SheetCanvas canvas, Size size) {
+    final step = gridStep(_flat.state.scale);
     // Grid and axes are world-space (Phase 43 decision): under view
     // rotation they rotate with the content, staying glued to the world
     // axes. The visible world region is then a rotated quad — cover its
     // axis-aligned bounding box (at rotation 0 this reduces exactly to
     // the two screen corners); the canvas clips the overhang.
+    final frame = _frame(size);
     final corners = [
-      viewport.screenToWorld(Offset.zero),
-      viewport.screenToWorld(Offset(size.width, 0)),
-      viewport.screenToWorld(Offset(0, size.height)),
-      viewport.screenToWorld(Offset(size.width, size.height)),
+      _flat.screenToWorld(frame.topLeft),
+      _flat.screenToWorld(frame.topRight),
+      _flat.screenToWorld(frame.bottomLeft),
+      _flat.screenToWorld(frame.bottomRight),
     ];
     final minX = corners.map((c) => c.x).reduce(math.min);
     final maxX = corners.map((c) => c.x).reduce(math.max);
@@ -382,15 +467,15 @@ class GeometryPainter extends CustomPainter {
         ..strokeWidth = _gridStrokeWidth;
       for (var i = (minX / step).ceil(); i * step <= maxX; i++) {
         canvas.drawLine(
-          viewport.worldToScreen(Vec2(i * step, maxY)),
-          viewport.worldToScreen(Vec2(i * step, minY)),
+          _flat.worldToScreen(Vec2(i * step, maxY)),
+          _flat.worldToScreen(Vec2(i * step, minY)),
           grid,
         );
       }
       for (var i = (minY / step).ceil(); i * step <= maxY; i++) {
         canvas.drawLine(
-          viewport.worldToScreen(Vec2(minX, i * step)),
-          viewport.worldToScreen(Vec2(maxX, i * step)),
+          _flat.worldToScreen(Vec2(minX, i * step)),
+          _flat.worldToScreen(Vec2(maxX, i * step)),
           grid,
         );
       }
@@ -404,15 +489,15 @@ class GeometryPainter extends CustomPainter {
       final yAxisVisible = minX <= 0 && 0 <= maxX;
       if (xAxisVisible) {
         canvas.drawLine(
-          viewport.worldToScreen(Vec2(minX, 0)),
-          viewport.worldToScreen(Vec2(maxX, 0)),
+          _flat.worldToScreen(Vec2(minX, 0)),
+          _flat.worldToScreen(Vec2(maxX, 0)),
           axis,
         );
       }
       if (yAxisVisible) {
         canvas.drawLine(
-          viewport.worldToScreen(Vec2(0, maxY)),
-          viewport.worldToScreen(Vec2(0, minY)),
+          _flat.worldToScreen(Vec2(0, maxY)),
+          _flat.worldToScreen(Vec2(0, minY)),
           axis,
         );
       }
@@ -436,7 +521,7 @@ class GeometryPainter extends CustomPainter {
   /// their axis — an off-screen axis shows none — and stay screen-upright
   /// at any view rotation (only the tick anchors transform).
   void _drawTickLabels(
-    Canvas canvas,
+    SheetCanvas canvas,
     Size size,
     double step, {
     required double minX,
@@ -454,7 +539,7 @@ class GeometryPainter extends CustomPainter {
         ),
         textDirection: TextDirection.ltr,
       )..layout();
-      textPainter.paint(canvas, place(textPainter.size));
+      textPainter.paint(canvas.screen, place(textPainter.size));
       textPainter.dispose();
     }
 
@@ -506,7 +591,7 @@ class GeometryPainter extends CustomPainter {
   /// is selection UI, not object style). Points fill regardless, and
   /// angle markers stay solid for the wedge's readability.
   void _drawObject(
-    Canvas canvas,
+    SheetCanvas canvas,
     Size size,
     GeoObject object,
     Paint paint, {
@@ -515,14 +600,14 @@ class GeometryPainter extends CustomPainter {
   }) {
     switch (object) {
       case GeoPoint():
-        canvas.drawCircle(
-          viewport.worldToScreen(object.position!),
+        canvas.drawDot(
+          _flat.worldToScreen(object.position!),
           object.attributes.pointSize + pointRadiusExtra,
           paint..style = PaintingStyle.fill,
         );
       case Segment():
-        final start = viewport.worldToScreen(object.start!);
-        final end = viewport.worldToScreen(object.end!);
+        final start = _flat.worldToScreen(object.start!);
+        final end = _flat.worldToScreen(object.end!);
         _drawStraight(canvas, start, end, paint, dashPeriod);
         _drawTickMarks(canvas, start, end, object.attributes.tickMarks, paint);
       case Ray():
@@ -530,8 +615,8 @@ class GeometryPainter extends CustomPainter {
         if (span != null) {
           _drawStraight(
             canvas,
-            viewport.worldToScreen(span.start),
-            viewport.worldToScreen(span.end),
+            _flat.worldToScreen(span.start),
+            _flat.worldToScreen(span.end),
             paint,
             dashPeriod,
           );
@@ -543,8 +628,8 @@ class GeometryPainter extends CustomPainter {
         if (span != null) {
           _drawStraight(
             canvas,
-            viewport.worldToScreen(span.start),
-            viewport.worldToScreen(span.end),
+            _flat.worldToScreen(span.start),
+            _flat.worldToScreen(span.end),
             paint,
             dashPeriod,
           );
@@ -582,14 +667,14 @@ class GeometryPainter extends CustomPainter {
           _drawConic(canvas, size, object.conic!, paint, dashPeriod);
           break;
         }
-        final center = viewport.worldToScreen(circle.center);
-        final radius = viewport.worldToScreenLength(circle.radius);
+        final center = _flat.worldToScreen(circle.center);
+        final radius = _flat.worldToScreenLength(circle.radius);
         if (radius > largeRadiusThreshold) {
           _drawLargeCircleRim(canvas, size, center, radius, paint, dashPeriod);
         } else if (dashPeriod > 0) {
           final rim = Path()
             ..addOval(Rect.fromCircle(center: center, radius: radius));
-          canvas.drawPath(dashPath(rim, dashPeriod), paint);
+          canvas.drawPath(rim, paint, dashPeriod: dashPeriod);
         } else {
           canvas.drawCircle(center, radius, paint);
         }
@@ -597,10 +682,7 @@ class GeometryPainter extends CustomPainter {
         _drawAngleMarker(canvas, object, paint);
       case GeoPolygon():
         final path = _polygonPath(object);
-        canvas.drawPath(
-          dashPeriod > 0 ? dashPath(path, dashPeriod) : path,
-          paint,
-        );
+        canvas.drawPath(path, paint, dashPeriod: dashPeriod);
       case GeoMeasurement() || GeoText():
         // Measurements and texts are pure text, painted by the label pass
         // — always with a value part (see labelText), so they never go
@@ -638,14 +720,14 @@ class GeometryPainter extends CustomPainter {
   /// a figure that fits on screen paints exactly what it painted before
   /// and the goldens do not move.
   void _drawLocus(
-    Canvas canvas,
+    SheetCanvas canvas,
     Size size,
     GeoLocus object,
     Paint paint,
     double dashPeriod,
   ) {
     final samples = object.samples!;
-    final box = viewport.visibleWorldBox(size, margin: _conicClipMargin);
+    final box = _visibleBox(size, _conicClipMargin);
     final runs = <Path>[];
     Path? run;
     Vec2? runEnd;
@@ -686,10 +768,10 @@ class GeometryPainter extends CustomPainter {
       }
       if (run == null || runEnd != start) {
         endRun();
-        final from = viewport.worldToScreen(start);
+        final from = _flat.worldToScreen(start);
         run = Path()..moveTo(from.dx, from.dy);
       }
-      final to = viewport.worldToScreen(end);
+      final to = _flat.worldToScreen(end);
       run!.lineTo(to.dx, to.dy);
       runEnd = end;
     }
@@ -706,10 +788,7 @@ class GeometryPainter extends CustomPainter {
       runs.single.close();
     }
     for (final path in runs) {
-      canvas.drawPath(
-        dashPeriod > 0 ? dashPath(path, dashPeriod) : path,
-        paint,
-      );
+      canvas.drawPath(path, paint, dashPeriod: dashPeriod);
     }
   }
 
@@ -769,35 +848,32 @@ class GeometryPainter extends CustomPainter {
   /// overshoot, while a join sitting on the boundary would show its
   /// mitre.
   void _drawConic(
-    Canvas canvas,
+    SheetCanvas canvas,
     Size size,
     ConicMatrix conic,
     Paint paint,
     double dashPeriod,
   ) {
-    final box = viewport.visibleWorldBox(size, margin: _conicClipMargin);
+    final box = _visibleBox(size, _conicClipMargin);
     final strokes = ConicShape.of(conic).polylines(
       min: box.min,
       max: box.max,
-      flatness: viewport.screenToWorldLength(_conicFlatness),
+      flatness: _flat.screenToWorldLength(_conicFlatness),
     );
     for (final stroke in strokes) {
       if (stroke.points.length < 2) {
         continue;
       }
-      final first = viewport.worldToScreen(stroke.points.first);
+      final first = _flat.worldToScreen(stroke.points.first);
       final path = Path()..moveTo(first.dx, first.dy);
       for (final point in stroke.points.skip(1)) {
-        final screen = viewport.worldToScreen(point);
+        final screen = _flat.worldToScreen(point);
         path.lineTo(screen.dx, screen.dy);
       }
       if (stroke.closed) {
         path.close();
       }
-      canvas.drawPath(
-        dashPeriod > 0 ? dashPath(path, dashPeriod) : path,
-        paint,
-      );
+      canvas.drawPath(path, paint, dashPeriod: dashPeriod);
     }
   }
 
@@ -805,10 +881,10 @@ class GeometryPainter extends CustomPainter {
   /// shared by the stroke, fill and halo passes.
   Path _polygonPath(GeoPolygon object) {
     final vertices = object.polygonVertices!;
-    final first = viewport.worldToScreen(vertices.first);
+    final first = _flat.worldToScreen(vertices.first);
     final path = Path()..moveTo(first.dx, first.dy);
     for (final vertex in vertices.skip(1)) {
-      final screen = viewport.worldToScreen(vertex);
+      final screen = _flat.worldToScreen(vertex);
       path.lineTo(screen.dx, screen.dy);
     }
     return path..close();
@@ -831,7 +907,7 @@ class GeometryPainter extends CustomPainter {
   /// A degenerate (coincident-endpoint) stretch has no perpendicular
   /// and draws none.
   void _drawTickMarks(
-    Canvas canvas,
+    SheetCanvas canvas,
     Offset from,
     Offset to,
     int count,
@@ -859,7 +935,7 @@ class GeometryPainter extends CustomPainter {
   /// One straight stroke — solid via `drawLine`, or rebuilt as a dashed
   /// path when [dashPeriod] > 0.
   void _drawStraight(
-    Canvas canvas,
+    SheetCanvas canvas,
     Offset from,
     Offset to,
     Paint paint,
@@ -869,7 +945,7 @@ class GeometryPainter extends CustomPainter {
       final path = Path()
         ..moveTo(from.dx, from.dy)
         ..lineTo(to.dx, to.dy);
-      canvas.drawPath(dashPath(path, dashPeriod), paint);
+      canvas.drawPath(path, paint, dashPeriod: dashPeriod);
     } else {
       canvas.drawLine(from, to, paint);
     }
@@ -879,7 +955,12 @@ class GeometryPainter extends CustomPainter {
   /// by the stored label offset (or the in-progress [labelDragPreview]).
   /// Like stroke widths, the font size and offset are in logical pixels
   /// and do not scale with zoom.
-  void _drawLabel(Canvas canvas, GeoObject object, String text, Color color) {
+  void _drawLabel(
+    SheetCanvas canvas,
+    GeoObject object,
+    String text,
+    Color color,
+  ) {
     final preview = labelDragPreview;
     final offset = preview != null && preview.id == object.id
         ? preview.offset
@@ -895,7 +976,7 @@ class GeometryPainter extends CustomPainter {
       textDirection: TextDirection.ltr,
     )..layout();
     textPainter.paint(
-      canvas,
+      canvas.screen,
       labelBaseTopLeft(object, viewport, textPainter.size) + offset,
     );
     textPainter.dispose();
@@ -905,16 +986,17 @@ class GeometryPainter extends CustomPainter {
   /// (the clip in [paint] trims it). Direction comes from the parent
   /// points, not the carrier — the carrier normalizes it away.
   void _drawRay(
-    Canvas canvas,
+    SheetCanvas canvas,
     Size size,
     Ray object,
     Paint paint,
     double dashPeriod,
   ) {
-    final start = viewport.worldToScreen(object.start!);
-    final along = viewport.worldToScreen(object.throughPosition!) - start;
+    final start = _flat.worldToScreen(object.start!);
+    final along = _flat.worldToScreen(object.throughPosition!) - start;
     final direction = along / along.distance;
-    final reach = start.distance + size.width + size.height;
+    final frame = _frame(size);
+    final reach = (start - frame.topLeft).distance + frame.width + frame.height;
     _drawStraight(canvas, start, start + direction * reach, paint, dashPeriod);
   }
 
@@ -925,7 +1007,7 @@ class GeometryPainter extends CustomPainter {
   /// y-flip. Sweeps only negate — the rotation term cancels in the
   /// difference.
   void _drawCarrierBranch(
-    Canvas canvas,
+    SheetCanvas canvas,
     Size size,
     CircleEq circle,
     double startAngle,
@@ -934,8 +1016,8 @@ class GeometryPainter extends CustomPainter {
     bool closeToCenter = false,
     double dashPeriod = 0,
   }) {
-    final center = viewport.worldToScreen(circle.center);
-    final radius = viewport.worldToScreenLength(circle.radius);
+    final center = _flat.worldToScreen(circle.center);
+    final radius = _flat.worldToScreenLength(circle.radius);
     if (radius > largeRadiusThreshold) {
       _drawLargeCarrierBranch(
         canvas,
@@ -951,7 +1033,7 @@ class GeometryPainter extends CustomPainter {
       return;
     }
     final rect = Rect.fromCircle(center: center, radius: radius);
-    final screenStart = viewport.worldToScreenAngle(startAngle);
+    final screenStart = _flat.worldToScreenAngle(startAngle);
     if (dashPeriod > 0) {
       // The same screen-angle mapping as the solid branch below; with
       // [closeToCenter] the path walks center → arc start → arc → back,
@@ -964,7 +1046,7 @@ class GeometryPainter extends CustomPainter {
       if (closeToCenter) {
         path.close();
       }
-      canvas.drawPath(dashPath(path, dashPeriod), paint);
+      canvas.drawPath(path, paint, dashPeriod: dashPeriod);
     } else {
       canvas.drawArc(rect, screenStart, -sweep, closeToCenter, paint);
     }
@@ -972,20 +1054,20 @@ class GeometryPainter extends CustomPainter {
 
   /// The rim of a screen-space circle too large for `drawCircle` (see
   /// [largeRadiusThreshold]): only the arc that can reach the canvas,
-  /// sampled into a polyline so every vertex stays near the viewport.
+  /// sampled into a polyline so every vertex stays near the _flat.
   void _drawLargeCircleRim(
-    Canvas canvas,
+    SheetCanvas canvas,
     Size size,
     Offset center,
     double radius,
     Paint paint,
     double dashPeriod,
   ) {
-    final window = visibleAngularWindow(
+    final window = visibleAngularWindowIn(
       center: center,
       radius: radius,
-      size: size,
-      margin: paint.strokeWidth + 1,
+      frame: _frame(size),
+      margin: _frameMargin(paint.strokeWidth + 1),
     );
     if (window == null) {
       return;
@@ -1003,7 +1085,7 @@ class GeometryPainter extends CustomPainter {
         window.center + window.halfWidth,
       );
     }
-    canvas.drawPath(dashPeriod > 0 ? dashPath(path, dashPeriod) : path, paint);
+    canvas.drawPath(path, paint, dashPeriod: dashPeriod);
   }
 
   /// [_drawCarrierBranch]'s fallback past [largeRadiusThreshold]: the
@@ -1013,7 +1095,7 @@ class GeometryPainter extends CustomPainter {
   /// outline becomes disjoint contours here, so its dash phase differs
   /// from the small-radius closed walk; invisible at these sizes.
   void _drawLargeCarrierBranch(
-    Canvas canvas,
+    SheetCanvas canvas,
     Size size,
     Offset center,
     double radius,
@@ -1023,13 +1105,13 @@ class GeometryPainter extends CustomPainter {
     required bool closeToCenter,
     required double dashPeriod,
   }) {
-    final window = visibleAngularWindow(
+    final window = visibleAngularWindowIn(
       center: center,
       radius: radius,
-      size: size,
-      margin: paint.strokeWidth + 1,
+      frame: _frame(size),
+      margin: _frameMargin(paint.strokeWidth + 1),
     );
-    final screenStart = viewport.worldToScreenAngle(startAngle);
+    final screenStart = _flat.worldToScreenAngle(startAngle);
     final screenSweep = -sweep;
     final path = Path();
     if (window != null) {
@@ -1049,7 +1131,7 @@ class GeometryPainter extends CustomPainter {
           ..lineTo(rim.dx, rim.dy);
       }
     }
-    canvas.drawPath(dashPeriod > 0 ? dashPath(path, dashPeriod) : path, paint);
+    canvas.drawPath(path, paint, dashPeriod: dashPeriod);
   }
 
   /// Fills the interior of a fillable kind — a sector's pie wedge, an
@@ -1057,19 +1139,19 @@ class GeometryPainter extends CustomPainter {
   /// disc — with [fill], drawn under the stroke pass. Other kinds have no
   /// filled form and are skipped; an arc's fill shape is ambiguous
   /// (wedge? circular segment?), so arcs deliberately don't fill.
-  void _drawFill(Canvas canvas, Size size, GeoObject object, Paint fill) {
+  void _drawFill(SheetCanvas canvas, Size size, GeoObject object, Paint fill) {
     switch (object) {
       case Sector():
         final circle = object.circle!;
-        final center = viewport.worldToScreen(circle.center);
-        final radius = viewport.worldToScreenLength(circle.radius);
+        final center = _flat.worldToScreen(circle.center);
+        final radius = _flat.worldToScreenLength(circle.radius);
         if (radius > largeRadiusThreshold) {
           canvas.drawPath(
             _largeSectorFillPath(
               size,
               center,
               radius,
-              viewport.worldToScreenAngle(object.startAngle!),
+              _flat.worldToScreenAngle(object.startAngle!),
               -object.sweep!,
             ),
             fill,
@@ -1078,7 +1160,7 @@ class GeometryPainter extends CustomPainter {
           final rect = Rect.fromCircle(center: center, radius: radius);
           canvas.drawArc(
             rect,
-            viewport.worldToScreenAngle(object.startAngle!),
+            _flat.worldToScreenAngle(object.startAngle!),
             -object.sweep!,
             true,
             fill,
@@ -1098,8 +1180,8 @@ class GeometryPainter extends CustomPainter {
           // inspector withholds the fill row to match.
           break;
         }
-        final center = viewport.worldToScreen(circle.center);
-        final radius = viewport.worldToScreenLength(circle.radius);
+        final center = _flat.worldToScreen(circle.center);
+        final radius = _flat.worldToScreenLength(circle.radius);
         if (radius > largeRadiusThreshold) {
           _drawLargeCircleFill(canvas, size, center, radius, fill);
         } else {
@@ -1121,22 +1203,23 @@ class GeometryPainter extends CustomPainter {
   /// (every canvas point of the disc lies inside the tangent cone the
   /// window comes from).
   void _drawLargeCircleFill(
-    Canvas canvas,
+    SheetCanvas canvas,
     Size size,
     Offset center,
     double radius,
     Paint fill,
   ) {
-    final window = visibleAngularWindow(
+    final window = visibleAngularWindowIn(
       center: center,
       radius: radius,
-      size: size,
-      margin: 1,
+      frame: _frame(size),
+      margin: _frameMargin(1),
     );
     if (window == null) {
-      final dist = (size.center(Offset.zero) - center).distance;
+      final frame = _frame(size);
+      final dist = (frame.center - center).distance;
       if (radius > dist) {
-        canvas.drawRect(Offset.zero & size, fill);
+        canvas.drawRect(frame, fill);
       }
       return;
     }
@@ -1172,11 +1255,11 @@ class GeometryPainter extends CustomPainter {
   ) {
     final a = screenSweep >= 0 ? screenStart : screenStart + screenSweep;
     final b = a + screenSweep.abs();
-    final window = visibleAngularWindow(
+    final window = visibleAngularWindowIn(
       center: center,
       radius: radius,
-      size: size,
-      margin: 1,
+      frame: _frame(size),
+      margin: _frameMargin(1),
     );
     Offset rim(double angle) =>
         center + Offset(math.cos(angle), math.sin(angle)) * radius;
@@ -1214,19 +1297,19 @@ class GeometryPainter extends CustomPainter {
   ///
   /// [paint]'s style decides outline vs interior: the stroke pass and the
   /// fill pass share this geometry.
-  void _drawAngleMarker(Canvas canvas, GeoAngle object, Paint paint) {
+  void _drawAngleMarker(SheetCanvas canvas, GeoAngle object, Paint paint) {
     final angle = object.angle!;
     if ((angle.sweep - math.pi / 2).abs() <= defaultEpsilon) {
       canvas.drawPath(_rightAngleSquarePath(object), paint);
       return;
     }
     final rect = Rect.fromCircle(
-      center: viewport.worldToScreen(angle.vertex),
+      center: _flat.worldToScreen(angle.vertex),
       radius: object.attributes.angleMarkerRadius,
     );
     canvas.drawArc(
       rect,
-      viewport.worldToScreenAngle(angle.startDirection.angle),
+      _flat.worldToScreenAngle(angle.startDirection.angle),
       -angle.sweep,
       true,
       paint,
@@ -1237,12 +1320,12 @@ class GeometryPainter extends CustomPainter {
   /// at 0.7 × the marker radius along each arm, and at their vector sum.
   Path _rightAngleSquarePath(GeoAngle object) {
     final angle = object.angle!;
-    final vertex = viewport.worldToScreen(angle.vertex);
+    final vertex = _flat.worldToScreen(angle.vertex);
     final side = 0.7 * object.attributes.angleMarkerRadius;
     final d1 = angle.startDirection;
     final d2 = d1.rotated(angle.sweep);
     // World directions rotate with the view, then the screen flips y.
-    Offset corner(Vec2 d) => vertex + viewport.worldToScreenDirection(d) * side;
+    Offset corner(Vec2 d) => vertex + _flat.worldToScreenDirection(d) * side;
     final c1 = corner(d1);
     final c12 = corner(d1 + d2);
     final c2 = corner(d2);
@@ -1257,22 +1340,24 @@ class GeometryPainter extends CustomPainter {
   /// Draws the visible stretch of an infinite line by extending far past
   /// the canvas on both sides (the clip in [paint] trims it).
   void _drawInfiniteLine(
-    Canvas canvas,
+    SheetCanvas canvas,
     Size size,
     GeoLine object,
     Paint paint,
     double dashPeriod,
   ) {
     final line = object.line!;
-    final anchor = viewport.worldToScreen(line.pointOnLine);
+    final anchor = _flat.worldToScreen(line.pointOnLine);
     // Screen-space direction; y-flip is handled by the transform.
     final along =
-        viewport.worldToScreen(line.pointOnLine + line.direction) - anchor;
+        _flat.worldToScreen(line.pointOnLine + line.direction) - anchor;
     final direction = along / along.distance;
     // Long enough to cross the whole canvas from wherever the anchor sits
     // (the anchor is the line's closest point to the *world* origin and
     // can be far off-screen when panned/zoomed away).
-    final reach = anchor.distance + size.width + size.height;
+    final frame = _frame(size);
+    final reach =
+        (anchor - frame.topLeft).distance + frame.width + frame.height;
     _drawStraight(
       canvas,
       anchor - direction * reach,
