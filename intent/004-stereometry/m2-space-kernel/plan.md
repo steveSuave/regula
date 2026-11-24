@@ -137,4 +137,13 @@ Three stages. Each ends green on the full gate, with a look, and merges to `main
   - The hint chip (`LiftedPointHint`) sits where the name-points chip sits; the two never show together, since one needs a tool and the other needs none.
   - Gotcha: in the widget harness the default camera puts the first test point 54 px from the top of the canvas, so its grip is off screen. The handle tests use the second point.
   - **Not tested: File > Open turning the space view on** for a version 4 document. `hasSpaceContent` is tested; the open path goes through the platform file picker, as in milestone 1.
+- **Step 8, stage A look.** The release wasm build on 127.0.0.1 in a separate headless Chrome over the DevTools protocol, with real mouse and touch events, read from screenshots. The Chrome extension was not used.
+  - Seen at 1280 wide: a quadrilateral ABCD and a point E inside it, joined by eight segments; the 3D button tilts it; a tap on E shows the grip above it with its stem; dragging the grip 150 px up raises E by 150 px and the four edges to it follow, with a dashed drop line and a ring at the foot; a drag on empty canvas turns the pyramid about its own centre (55° on the compass); dragging E by its body moves it under the pointer at the same height, the foot moving with it.
+  - Seen at 400×800 with touch: Fit frames the whole pyramid, apex included; a touch drag of the grip raises the apex, with 16 px of sideways travel ignored; a second touch drag lowers it again.
+  - **Not seen in a browser**: the snap back to exactly 0, the hint chip, opening a version 4 file, and the plan view with a lifted point. Those rest on the widget and unit tests.
+  - Fit on the phone leaves the pyramid at about a third of the canvas height: it frames the corners of the planar bounds' axis-aligned box, which is wider than the base itself once the camera has turned. Correct, and looser than it could be.
+  - Gotcha, again: the phone metrics override dies with the DevTools session, the layout goes wide, and the app bar's scroll offset resets. A run that scrolls the bar must tap in the same run.
+- **Stage A closed 2026-11-24.** Final gate: analyze clean; VM 3753 (baseline 3629); goldens 35, no diff; browser 17; `flutter build web --wasm` built. `git diff main --stat -- test/fixtures test/v1_oracle` is empty.
+
+**Next: stage B, step 9** (`GeoPlane` and the seven kinds).
 
