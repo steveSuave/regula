@@ -73,3 +73,4 @@ Each is carried into the spec of the milestone it belongs to.
 | Milestone | Spec | Plan |
 |---|---|---|
 | 1. 3D view and camera | [spec](m1-camera/spec.md) | [plan](m1-camera/plan.md) |
+| 2. Space kernel, points, lines, planes, the active plane | [spec](m2-space-kernel/spec.md) | [plan](m2-space-kernel/plan.md) |
