@@ -23,11 +23,14 @@ typedef PointAndPlaneBuilder = GeoObject Function({
 /// point; a tap on a plane takes the plane. A plane's patch is hit only
 /// where nothing else is in reach, so a point lying in the plane is still
 /// picked as the point.
-class PointAndPlaneTool implements ToolInputPreview {
+class PointAndPlaneTool implements ToolInputPreview, ScopedTool {
   PointAndPlaneTool({required this.newId, required this.build});
 
   final String Function() newId;
   final PointAndPlaneBuilder build;
+
+  @override
+  ToolScope get scope => ToolScope.space;
 
   GeoPoint? _point;
   bool _pointIsNew = false;
@@ -57,7 +60,11 @@ class PointAndPlaneTool implements ToolInputPreview {
         _plane = hit;
       case null:
         if (_point != null) return const ToolIgnored();
-        _point = FreePoint(id: newId(), position: input.position);
+        _point = FreePoint(
+          id: newId(),
+          position: input.position,
+          plane: input.plane,
+        );
         _pointIsNew = true;
       case GeoLine() ||
           GeoCircle() ||

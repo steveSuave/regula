@@ -84,7 +84,8 @@ class Segment extends GeoLine {
   /// planar carrier does not exist and the space one stands in. A
   /// planar degeneracy (coincident points) is not this: it stays
   /// undefined, as it always was.
-  bool get _offSheet => point1.projPoint == null || point2.projPoint == null;
+  bool get _offSheet =>
+      !sheet.exists || point1.projPoint == null || point2.projPoint == null;
 
   /// The carrier in space (intent 004): the join of the two points'
   /// space values when they have no common value in the sheet — one end
@@ -113,7 +114,9 @@ class Segment extends GeoLine {
 
   @override
   void recompute([Absolute absolute = Absolute.euclidean]) {
-    _carrier = carrierThrough(point1, point2);
+    // Two points on different sheets have no common coordinates: there
+    // is no planar carrier, only the space one ([spaceLine]).
+    _carrier = sheet.exists ? carrierThrough(point1, point2) : null;
     final p1 = point1.position;
     final p2 = point2.position;
     // The projection stays gated on the chart: a segment with an

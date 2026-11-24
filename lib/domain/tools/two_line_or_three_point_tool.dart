@@ -101,7 +101,11 @@ abstract class TwoLineOrThreePointTool implements ToolInputPreview {
         _points.add((point: hit, isNew: false));
       case null:
         _points.add((
-          point: FreePoint(id: newId(), position: input.position),
+          point: FreePoint(
+            id: newId(),
+            position: input.position,
+            plane: input.plane,
+          ),
           isNew: true,
         ));
       default:

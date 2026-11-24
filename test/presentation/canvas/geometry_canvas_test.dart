@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:regula/application/object_ids.dart';
+import 'package:regula/application/providers/active_plane_provider.dart';
 import 'package:regula/application/providers/command_stack_provider.dart';
 import 'package:regula/application/providers/construction_provider.dart';
 import 'package:regula/application/providers/selection_provider.dart';
@@ -15,11 +16,13 @@ import 'package:regula/application/providers/viewport_provider.dart';
 import 'package:regula/domain/commands/add_object_command.dart';
 import 'package:regula/domain/commands/macro_command.dart';
 import 'package:regula/domain/commands/set_geometry_command.dart';
+import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/document_kernel.dart';
 import 'package:regula/domain/construction/geo_object.dart';
 import 'package:regula/domain/construction/object_attributes.dart';
 import 'package:regula/domain/construction/objects/arc.dart';
 import 'package:regula/domain/construction/objects/bifocal_conic.dart';
+import 'package:regula/domain/construction/objects/chart_point.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/compass_circle.dart';
 import 'package:regula/domain/construction/objects/distance_measurement.dart';
@@ -47,8 +50,11 @@ import 'package:regula/domain/tools/delete_tool.dart';
 import 'package:regula/domain/tools/intersection_tool.dart';
 import 'package:regula/domain/tools/plane_tool.dart';
 import 'package:regula/domain/tools/point_tool.dart';
+import 'package:regula/domain/tools/tool.dart';
+import 'package:regula/domain/tools/two_point_tool.dart';
 import 'package:regula/domain/tools/visibility_tool.dart';
 import 'package:regula/main.dart';
+import 'package:regula/presentation/canvas/active_plane_chip.dart';
 import 'package:regula/presentation/canvas/canvas_viewport.dart';
 import 'package:regula/presentation/canvas/geometry_canvas.dart';
 import 'package:regula/presentation/canvas/geometry_painter.dart';
@@ -57,6 +63,7 @@ import 'package:regula/presentation/canvas/lift_handle.dart';
 import 'package:regula/presentation/canvas/lifted_point_hint.dart';
 import 'package:regula/presentation/panels/conic_icon.dart';
 import 'package:regula/presentation/panels/object_kind_label.dart';
+import 'package:regula/presentation/panels/toolbar.dart';
 
 import '../../editor_container.dart';
 import '../../wide_window.dart';
@@ -3154,16 +3161,21 @@ void main() {
       expect(container.read(selectionProvider), {second.id});
     });
 
-    testWidgets('near edge-on nothing on the plane is placed, selected or '
-        'moved', (tester) async {
+    testWidgets('near edge-on nothing on the plane is placed or moved; a '
+        'point drawn there can still be selected', (tester) async {
       final origin = await pumpWithTwoPoints(tester);
       await enter(tester, const ViewportState(tilt: 1.55));
       expect(camera().basePlanePickable, isFalse);
       final onPoint = camera().worldToScreen(const Vec2(100, -100));
 
+      // Selecting is by what is drawn under the pointer, not by a point
+      // of the plane (milestone 2): this is the view in which a point is
+      // picked up to be lifted.
       await tester.tapAt(origin + onPoint);
       await tester.pump();
-      expect(container.read(selectionProvider), isEmpty);
+      expect(container.read(selectionProvider), {points()[0].id});
+      container.read(selectionProvider.notifier).clear();
+      await tester.pump();
 
       await pickPointTool(tester);
       await tester.tapAt(origin + const Offset(400, 300));
@@ -3310,6 +3322,277 @@ void main() {
       await tester.pump();
       expect(container.read(selectionProvider), {points()[1].id});
       expect(construction.byId('plane'), isNotNull);
+    });
+
+    group('the active plane', () {
+      late FreePoint a;
+      late FreePoint b;
+      late FreePoint c;
+      late FreePoint apex;
+      late ThreePointPlane face;
+
+      /// A face through A, B and a lifted apex, and a base point C that
+      /// is not in it; the space view on, tilted, no tool.
+      Future<Offset> pumpWithFace(WidgetTester tester) async {
+        await pumpEditor(tester);
+        final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+        a = FreePoint(id: 'a', position: const Vec2(100, -500));
+        b = FreePoint(id: 'b', position: const Vec2(300, -500));
+        c = FreePoint(id: 'c', position: const Vec2(520, -420));
+        apex = FreePoint(id: 'o', position: const Vec2(200, -400), height: 100);
+        face = ThreePointPlane(id: 'face', point1: a, point2: b, point3: apex);
+        container
+            .read(commandStackProvider.notifier)
+            .execute(
+              MacroCommand([
+                for (final object in [a, b, c, apex, face])
+                  AddObjectCommand(object),
+              ]),
+            );
+        await enter(tester, const ViewportState(tilt: 1.0));
+        return origin;
+      }
+
+      Construction construction() =>
+          container.read(constructionProvider).construction;
+
+      Offset onScreen(GeoPoint point) =>
+          camera().spaceToScreen(point.spacePosition!);
+
+      /// A place inside the face's patch with nothing else in reach.
+      Offset inFace() => (onScreen(a) + onScreen(b) + onScreen(apex)) / 3;
+
+      Future<void> activate(WidgetTester tester, Offset origin) async {
+        await tester.tapAt(origin + inFace());
+        await tester.pump();
+      }
+
+      testWidgets('a tap on a plane selects it and makes it active; the chip '
+          'names it and goes back to the base plane', (tester) async {
+        final origin = await pumpWithFace(tester);
+        expect(find.byType(ActivePlaneChip), findsOneWidget);
+        expect(find.textContaining('In a plane'), findsNothing);
+
+        await activate(tester, origin);
+        expect(container.read(selectionProvider), {'face'});
+        expect(container.read(activePlaneProvider), 'face');
+        expect(find.text('In a plane'), findsOneWidget);
+        // A phone-sized target.
+        expect(
+          tester.getSize(find.byTooltip('Back to the base plane')).height,
+          greaterThanOrEqualTo(48),
+        );
+
+        await tester.tap(find.byTooltip('Back to the base plane'));
+        await tester.pump();
+        expect(container.read(activePlaneProvider), isNull);
+        expect(find.text('In a plane'), findsNothing);
+      });
+
+      testWidgets('a named plane is named on the chip', (tester) async {
+        final origin = await pumpWithFace(tester);
+        face.attributes = face.attributes.copyWith(name: 'α');
+        await activate(tester, origin);
+        expect(find.text('In plane α'), findsOneWidget);
+      });
+
+      testWidgets('with a tool, a tap on a plane does not change the active '
+          'plane', (tester) async {
+        final origin = await pumpWithFace(tester);
+        await pickPointTool(tester);
+        await tester.tapAt(origin + inFace());
+        await tester.pump();
+        expect(container.read(activePlaneProvider), isNull);
+        // It placed a point, on the base plane, under the finger.
+        final placed = construction().objects.whereType<FreePoint>().last;
+        expect(placed.plane, isNull);
+        expect((onScreen(placed) - inFace()).distance, lessThan(1e-6));
+      });
+
+      testWidgets('a tool\'s tap lands in the active plane: the new point '
+          'belongs to it, sits under the finger, and moves with it', (
+        tester,
+      ) async {
+        final origin = await pumpWithFace(tester);
+        await activate(tester, origin);
+        await pickPointTool(tester);
+        final where = inFace() + const Offset(20, 10);
+        await tester.tapAt(origin + where);
+        await tester.pump();
+
+        final placed = construction().objects.whereType<FreePoint>().last;
+        expect(placed.plane, same(face));
+        expect((onScreen(placed) - where).distance, lessThan(1e-6));
+        expect(face.spacePlane!.contains(placed.spacePoint!, 1e-9), isTrue);
+
+        // Raise the apex: the plane turns about AB and the point with it.
+        construction().setFreePointHeight('o', 160);
+        await tester.pump();
+        expect(face.spacePlane!.contains(placed.spacePoint!, 1e-9), isTrue);
+
+        container.read(commandStackProvider.notifier).undo();
+        await tester.pump();
+        expect(construction().contains(placed.id), isFalse);
+      });
+
+      testWidgets('a planar tool in the plane takes its defining points '
+          'through adapters, in one command', (tester) async {
+        final origin = await pumpWithFace(tester);
+        await activate(tester, origin);
+        container
+            .read(toolProvider.notifier)
+            .activate(TwoPointTool(newId: newObjectId, build: buildCircle));
+        await tester.pump();
+        final before = construction().objects.length;
+
+        await tester.tapAt(origin + onScreen(apex));
+        await tester.pump();
+        await tester.tapAt(origin + onScreen(a));
+        await tester.pump();
+
+        final added = construction().objects.skip(before).toList();
+        expect(added, hasLength(3));
+        expect(added.take(2).map((o) => o.runtimeType), [
+          ChartPoint,
+          ChartPoint,
+        ]);
+        expect(added.last, isA<GeoCircle>());
+        final circle = added.last as GeoCircle;
+        expect(circle.sheet, Sheet.of(face));
+        expect(circle.isDefined, isTrue);
+        expect(
+          circle.circle!.radius,
+          closeTo(apex.spacePosition!.distanceTo(a.spacePosition!), 1e-9),
+        );
+        // Nothing of the scaffolding is named, selectable or listed.
+        expect(added.take(2).every((o) => o.attributes.name.isEmpty), isTrue);
+        container.read(selectionProvider.notifier).selectAll();
+        expect(
+          container.read(selectionProvider).intersection({
+            added[0].id,
+            added[1].id,
+          }),
+          isEmpty,
+        );
+
+        container.read(commandStackProvider.notifier).undo();
+        await tester.pump();
+        expect(construction().objects, hasLength(before));
+      });
+
+      testWidgets('a tap on an object that is not in the active plane is '
+          'refused, and says so', (tester) async {
+        final origin = await pumpWithFace(tester);
+        await activate(tester, origin);
+        container
+            .read(toolProvider.notifier)
+            .activate(TwoPointTool(newId: newObjectId, build: buildCircle));
+        await tester.pump();
+        final before = construction().objects.length;
+
+        await tester.tapAt(origin + onScreen(c));
+        await tester.pump();
+        expect(construction().objects, hasLength(before));
+        expect(
+          find.text('That is not in the active plane by construction'),
+          findsOneWidget,
+        );
+        final tool = container.read(toolProvider).tool!;
+        expect(tool.hasPartialInput, isFalse);
+
+        // The next tap that goes through clears it.
+        await tester.tapAt(origin + onScreen(apex));
+        await tester.pump();
+        expect(find.textContaining('not in the active plane'), findsNothing);
+        expect(tool.hasPartialInput, isTrue);
+      });
+
+      testWidgets('a segment still joins any two points, whatever plane is '
+          'active', (tester) async {
+        final origin = await pumpWithFace(tester);
+        await activate(tester, origin);
+        container
+            .read(toolProvider.notifier)
+            .activate(
+              TwoPointTool(
+                newId: newObjectId,
+                build: buildSegment,
+                scope: ToolScope.space,
+              ),
+            );
+        await tester.pump();
+        await tester.tapAt(origin + onScreen(c));
+        await tester.pump();
+        await tester.tapAt(origin + onScreen(apex));
+        await tester.pump();
+        final segment = construction().objects.last as Segment;
+        expect(segment.point1, same(c));
+        expect(segment.point2, same(apex));
+        expect(segment.isDefined, isTrue);
+      });
+
+      testWidgets('a point in a plane drags in that plane, under the finger: '
+          'one command, one undo', (tester) async {
+        final origin = await pumpWithFace(tester);
+        final inPlane = FreePoint(
+          id: 'f',
+          position: const Vec2(60, 40),
+          plane: face,
+        );
+        container
+            .read(commandStackProvider.notifier)
+            .execute(AddObjectCommand(inPlane));
+        await tester.pump();
+        final start = onScreen(inPlane);
+        final drop = start + const Offset(45, -30);
+
+        final drag = await tester.startGesture(origin + start);
+        await drag.moveTo(origin + start + const Offset(25, -10));
+        await drag.moveTo(origin + drop);
+        await tester.pump();
+        await drag.up();
+        await tester.pump();
+
+        expect((onScreen(inPlane) - drop).distance, lessThan(1e-6));
+        expect(face.spacePlane!.contains(inPlane.spacePoint!, 1e-9), isTrue);
+        expect(inPlane.height, 0);
+        container.read(commandStackProvider.notifier).undo();
+        await tester.pump();
+        expect(inPlane.position, const Vec2(60, 40));
+      });
+
+      testWidgets('the active plane goes back to the base plane when the '
+          'view is turned off, the plane is undone, or the document is '
+          'replaced', (tester) async {
+        final origin = await pumpWithFace(tester);
+        await activate(tester, origin);
+        expect(find.text('In a plane'), findsOneWidget);
+
+        // Undo the construction of the face: the id names nothing.
+        container.read(commandStackProvider.notifier).undo();
+        await tester.pump();
+        expect(find.text('In a plane'), findsNothing);
+        container.read(commandStackProvider.notifier).redo();
+        await tester.pump();
+        expect(find.text('In a plane'), findsOneWidget);
+
+        container.read(constructionProvider.notifier).replace(Construction());
+        await tester.pump();
+        expect(container.read(activePlaneProvider), isNull);
+      });
+
+      testWidgets('turning the space view off returns to the base plane', (
+        tester,
+      ) async {
+        final origin = await pumpWithFace(tester);
+        await activate(tester, origin);
+        final toggle = find.byTooltip('3D view: on');
+        await tester.ensureVisible(toggle);
+        await tester.tap(toggle);
+        await tester.pump();
+        expect(container.read(spaceViewProvider), isFalse);
+        expect(container.read(activePlaneProvider), isNull);
+      });
     });
 
     group('the lift handle', () {

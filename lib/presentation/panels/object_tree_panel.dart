@@ -91,8 +91,13 @@ class _ObjectTreePanelState extends ConsumerState<ObjectTreePanel> {
       'Measurements': [],
       'Texts': [],
       'Loci': [],
+      'Planes': [],
     };
     for (final object in construction.objects) {
+      // Adapters are scaffolding, not part of the figure (intent 004).
+      if (object.isInternal) {
+        continue;
+      }
       if (query.isNotEmpty &&
           !_displayLabel(object).toLowerCase().contains(query)) {
         continue;

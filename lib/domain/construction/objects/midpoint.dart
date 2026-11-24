@@ -36,7 +36,8 @@ class Midpoint extends GeoPoint {
   @override
   Vec2? get position => _point?.toVec2();
 
-  bool get _offSheet => point1.projPoint == null || point2.projPoint == null;
+  bool get _offSheet =>
+      !sheet.exists || point1.projPoint == null || point2.projPoint == null;
 
   /// A midpoint needs no plane (intent 004): when the two points have
   /// no common value in the sheet, it is their midpoint in space.
@@ -65,7 +66,7 @@ class Midpoint extends GeoPoint {
   void recompute([Absolute absolute = Absolute.euclidean]) {
     final p1 = point1.projPoint;
     final p2 = point2.projPoint;
-    if (p1 == null || p2 == null) {
+    if (p1 == null || p2 == null || !sheet.exists) {
       _point = null;
       return;
     }

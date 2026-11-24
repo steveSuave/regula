@@ -80,8 +80,10 @@ class CanvasHitTester {
         continue;
       }
       // An object with no value in its sheet has nothing on the plane to
-      // measure against; the screen-space tester is the one that sees it.
-      if (drawnInSpace(object)) {
+      // measure against, and one on another plane's sheet has coordinates
+      // that are not the base plane's; the screen-space tester is the one
+      // that sees them. Adapters are never picked.
+      if (drawnInSpace(object) || !object.sheet.isBase || object.isInternal) {
         continue;
       }
       final distance = _distanceTo(objects, object, point, worldPerPx);
@@ -158,6 +160,8 @@ class CanvasHitTester {
       if (object.attributes.visible &&
           object.isDefined &&
           !drawnInSpace(object) &&
+          object.sheet.isBase &&
+          !object.isInternal &&
           _containedIn(object, within, cardinalAngle))
         object,
   ];

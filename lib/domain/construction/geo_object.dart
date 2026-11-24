@@ -14,6 +14,58 @@ import '../projective/space/plane_frame.dart';
 import '../projective/space/point3.dart';
 import 'object_attributes.dart';
 
+/// The plane an object's planar values are written in: the base plane, a
+/// plane of the construction, or none (see [GeoObject.sheet]).
+///
+/// Two sheets are the same exactly when they are the same plane *object*:
+/// a `ThreePointPlane` through three base points coincides with the base
+/// plane and is still another sheet, because whether two objects share
+/// coordinates is a matter of how they were built, not of where they
+/// are.
+final class Sheet {
+  const Sheet._(this.plane, this.exists);
+
+  /// The sheet that is the plane [plane].
+  const Sheet.of(GeoPlane this.plane) : exists = true;
+
+  /// The base plane, `z = 0`: where every planar document lives.
+  static const Sheet base = Sheet._(null, true);
+
+  /// No sheet: an object of space with no planar value.
+  static const Sheet none = Sheet._(null, false);
+
+  /// The plane, or null for [base] and [none].
+  final GeoPlane? plane;
+
+  /// False only for [none].
+  final bool exists;
+
+  bool get isBase => exists && plane == null;
+
+  /// The sheet's coordinates: the base frame, the plane's own frame
+  /// (null while the plane is undefined), or null for [none].
+  PlaneFrame? get frame => !exists
+      ? null
+      : switch (plane) {
+          null => PlaneFrame.base,
+          final plane => plane.frame,
+        };
+
+  @override
+  bool operator ==(Object other) =>
+      other is Sheet && other.exists == exists && identical(other.plane, plane);
+
+  @override
+  int get hashCode => Object.hash(exists, identityHashCode(plane));
+
+  @override
+  String toString() => !exists
+      ? 'Sheet.none'
+      : plane == null
+      ? 'Sheet.base'
+      : 'Sheet.of(${plane!.id})';
+}
+
 /// Base of every object in the construction graph.
 ///
 /// The hierarchy is sealed at the *kind* level: every object is a
@@ -84,17 +136,46 @@ sealed class GeoObject {
   /// Whether the object currently has valid geometry (see class doc).
   bool get isDefined;
 
-  /// The coordinates of this object's **sheet**: the plane its planar
-  /// values (`projPoint`, `projLine`, `conic`, and their projections)
-  /// are written in. Null for an object that lies in no one plane and
-  /// has only a space value.
+  /// This object's **sheet**: the plane its planar values (`projPoint`,
+  /// `projLine`, `conic`, and their projections) are written in — the
+  /// base plane, a [GeoPlane], or none.
   ///
   /// The planar kernel is the space kernel's chart (DECISIONS §"Sheets: a
   /// plane is a chart of one space"): a planar kind computes exactly as
   /// it always did, and its sheet says where in space that computation
-  /// sits. Every object is on the base plane until planes exist
-  /// (milestone 2, stage C).
-  PlaneFrame? get sheetFrame => PlaneFrame.base;
+  /// sits. The sheet is structure, fixed for the object's lifetime like
+  /// its [parents], and derived from them: an object with no parents is
+  /// on the base plane; one whose parents share a sheet is on it; one
+  /// whose parents do not has none, and so has no planar value. The few
+  /// kinds that choose their sheet (a free point placed in a plane, an
+  /// adapter into one) or have none by nature (a plane, a line two
+  /// planes share) override this.
+  Sheet get sheet => _sheet ??= _commonSheet();
+  Sheet? _sheet;
+
+  Sheet _commonSheet() {
+    final all = parents;
+    if (all.isEmpty) {
+      return Sheet.base;
+    }
+    final first = all.first.sheet;
+    for (final parent in all.skip(1)) {
+      if (parent.sheet != first) {
+        return Sheet.none;
+      }
+    }
+    return first;
+  }
+
+  /// The coordinates of the [sheet], or null: when there is no sheet, or
+  /// while the plane it is has no frame (it is undefined).
+  PlaneFrame? get sheetFrame => sheet.frame;
+
+  /// Whether this object is scaffolding rather than part of the figure:
+  /// in the graph so that undo, deletion and saving treat it like any
+  /// object, and never drawn, picked, named or listed. The adapters that
+  /// carry an object into another plane's coordinates are the only ones.
+  bool get isInternal => false;
 
   /// Recomputes this object's geometry from its parents' current state,
   /// in the geometry [absolute] names.
@@ -447,7 +528,7 @@ abstract class GeoPlane extends GeoObject {
   Vec3? get labelAnchor => frame?.origin;
 
   @override
-  PlaneFrame? get sheetFrame => null;
+  Sheet get sheet => Sheet.none;
 
   @override
   bool get isDefined => frame != null;

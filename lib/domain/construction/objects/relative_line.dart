@@ -59,7 +59,8 @@ abstract class RelativeLine extends GeoLine {
   void recompute([Absolute absolute = Absolute.euclidean]) {
     final p = through.projPoint;
     final ref = reference.projLine;
-    if (p == null || ref == null) {
+    // A point and a line on different sheets have no common coordinates.
+    if (p == null || ref == null || !sheet.exists) {
       _carrier = null;
       _line = null;
       return;

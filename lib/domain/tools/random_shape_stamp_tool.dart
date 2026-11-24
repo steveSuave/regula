@@ -86,7 +86,11 @@ class RandomShapeStampTool implements Tool {
     }
     final vertices = [
       for (final offset in offsets)
-        FreePoint(id: newId(), position: input.position + offset),
+        FreePoint(
+          id: newId(),
+          position: input.position + offset,
+          plane: input.plane,
+        ),
     ];
     final count = vertices.length;
     final commands = <Command>[

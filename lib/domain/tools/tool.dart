@@ -53,6 +53,7 @@ class ToolInput {
     this.viewExtent = 0,
     this.text,
     this.absolute = Absolute.euclidean,
+    this.plane,
   });
 
   final Vec2 position;
@@ -64,6 +65,27 @@ class ToolInput {
   final double viewExtent;
   final String? text;
   final Absolute absolute;
+
+  /// The active plane (intent 004, milestone 2): the plane [position] is
+  /// a point of, in that plane's own coordinates, and the plane a new
+  /// free point is placed in. Null is the base plane, which is every
+  /// planar document and the default.
+  final GeoPlane? plane;
+
+  /// This input with its hits replaced: what the active plane's scope
+  /// hands a tool once it has decided which hits the tool may see.
+  ToolInput withHits(List<GeoObject> hits) => ToolInput(
+    position,
+    hit: hits.firstOrNull,
+    extraHits: hits.length > 1 ? hits.sublist(1) : const [],
+    snapThreshold: snapThreshold,
+    objects: objects,
+    gridSnapStep: gridSnapStep,
+    viewExtent: viewExtent,
+    text: text,
+    absolute: absolute,
+    plane: plane,
+  );
 
   /// Every in-threshold candidate, best first: [hit] (when non-null)
   /// followed by [extraHits].
@@ -142,4 +164,26 @@ abstract interface class ToolInputPreview implements Tool {
   /// Ids of existing objects consumed as inputs so far; empty when the
   /// tool is idle.
   List<String> get previewObjectIds;
+}
+
+/// What a tool wants of objects that are not on the active plane's sheet
+/// (intent 004, milestone 2).
+enum ToolScope {
+  /// The tool builds in the active plane with the planar kernel. An
+  /// object from elsewhere reaches it only if it lies in the plane by
+  /// construction, and then through an adapter; anything else is
+  /// refused. Every tool that predates space is this, and it is the
+  /// default.
+  plane,
+
+  /// The tool builds from space values and takes whatever is tapped:
+  /// segment, line, ray, midpoint and parallel, which need no plane, and
+  /// the tools that build planes and what planes give.
+  space,
+}
+
+/// Optional capability: a tool that says which [ToolScope] it is. A tool
+/// that does not is [ToolScope.plane].
+abstract interface class ScopedTool implements Tool {
+  ToolScope get scope;
 }

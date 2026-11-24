@@ -509,6 +509,29 @@ class Construction {
         excluded.addAll(o.chain);
       }
     }
+    // An intersection reached from the dragged point only *through
+    // another sheet* does not trace (intent 004, milestone 2). Space is
+    // real: a detour's complex values have no image in it, so an object
+    // off the root's sheet is undefined for the length of an arc and
+    // everything past it would coast on a stale root — the Phase 136b
+    // failure, by construction. Those slots resolve canonically instead,
+    // which is what a structural double root does below, and the slots
+    // on the root's own sheet keep tracing. A drag inside one plane
+    // crosses nothing and is traced in full.
+    final rootSheet = _objects[id]?.sheet;
+    final offSheet = <String>{};
+    for (final o in _objects.values) {
+      if (!affected.contains(o.id)) {
+        continue;
+      }
+      if (o.sheet != rootSheet ||
+          o.parents.any((parent) => offSheet.contains(parent.id))) {
+        offSheet.add(o.id);
+        if (o is IntersectionPoint) {
+          excluded.add(o);
+        }
+      }
+    }
     // Seed at the path's *start* state, not at whatever state the
     // construction happens to be in (Phase 134). Every pass used to
     // assume its caller had left the point on `path.start`, which holds

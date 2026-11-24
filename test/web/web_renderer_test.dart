@@ -6,6 +6,9 @@ import 'dart:ui';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/application/providers/viewport_provider.dart';
+import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/math/vec3.dart';
+import 'package:regula/domain/projective/space/plane_frame.dart';
 import 'package:regula/presentation/canvas/canvas_viewport.dart';
 import 'package:regula/presentation/canvas/geometry_painter.dart';
 import 'package:regula/presentation/canvas/sheet_canvas.dart';
@@ -168,6 +171,96 @@ void main() {
       expect(inkedSamples / samples, inInclusiveRange(0.35, 0.65));
       // The squashed rim is about 480 px round: a dozen 40-px periods.
       expect(runs, inInclusiveRange(9, 15));
+    });
+  });
+
+  // Intent 004, milestone 2: a plane of the construction is drawn through
+  // a general affine sheet map — shear and rotation, not only the squash
+  // above. `Path.transform` of an oval under such a matrix is, again, the
+  // renderer's arithmetic.
+  group('a circle on a plane seen obliquely', () {
+    // A face leaning toward the viewer: strongly foreshortened, and
+    // turned by the azimuth, so the sheet map shears.
+    final frame = PlaneFrame.throughPoints(
+      const Vec3(60, -220, 0),
+      const Vec3(240, -220, 0),
+      const Vec3(150, -320, 120),
+    )!;
+    final view = PlaneViewport(
+      const CanvasViewport(
+        ViewportState(pan: Vec2(-20, 90), tilt: 1.0, rotation: 0.3),
+      ),
+      frame,
+    );
+    // In the plane's own frame at unit scale: the centre and a radius.
+    const centre = Offset(110, -50);
+    const radius = 60.0;
+    const ink = Color(0xFFFF0000);
+
+    Offset rim(double t) =>
+        view.sheetToScreen(centre + Offset(math.cos(t), math.sin(t)) * radius);
+
+    test('its rim is the ellipse the sheet map says, at full stroke '
+        'width', () async {
+      final recorder = PictureRecorder();
+      SheetCanvas(Canvas(recorder), view).drawCircle(
+        centre,
+        radius,
+        Paint()
+          ..color = ink
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 4
+          ..isAntiAlias = false,
+      );
+      final picture = recorder.endRecording();
+      final image = await picture.toImage(
+        size.width.round(),
+        size.height.round(),
+      );
+      final data = (await image.toByteData())!;
+      picture.dispose();
+      image.dispose();
+      bool isInk(Offset at) {
+        final x = at.dx.round();
+        final y = at.dy.round();
+        if (x < 0 || y < 0 || x >= size.width || y >= size.height) {
+          return false;
+        }
+        final offset = (y * size.width.round() + x) * 4;
+        return data.getUint8(offset) > 200 && data.getUint8(offset + 3) > 200;
+      }
+
+      // The picture is on the canvas, and it is not a circle.
+      final images = [for (var i = 0; i < 16; i++) rim(i * math.pi / 8)];
+      for (final at in images) {
+        expect(
+          (Offset.zero & size).deflate(4).contains(at),
+          isTrue,
+          reason: 'on the canvas: $at',
+        );
+      }
+      final mapped = view.sheetToScreen(centre);
+      final reaches = [for (final at in images) (at - mapped).distance];
+      expect(
+        reaches.reduce(math.max) / reaches.reduce(math.min),
+        greaterThan(1.3),
+        reason: 'a sheared ellipse, or this tests nothing',
+      );
+
+      for (var i = 0; i < images.length; i++) {
+        expect(isInk(images[i]), isTrue, reason: 'rim @$i');
+        // Full stroke width across the rim, wherever it is: measured
+        // along the ellipse's own normal there, 4.5 px either side of the
+        // centre line is clear. A transformed *canvas* would have fattened
+        // the stroke where the map stretches and thinned it where it
+        // squeezes.
+        final t = i * math.pi / 8;
+        final along = rim(t + 1e-3) - rim(t - 1e-3);
+        final normal = Offset(-along.dy, along.dx) / along.distance;
+        expect(isInk(images[i] + normal * 4.5), isFalse, reason: 'out @$i');
+        expect(isInk(images[i] - normal * 4.5), isFalse, reason: 'in @$i');
+      }
+      expect(isInk(mapped), isFalse, reason: 'the centre is not stroked');
     });
   });
 }

@@ -35,7 +35,6 @@ class SpaceHitTester {
     double thresholdPx, {
     bool includeHidden = false,
   }) {
-    final sheetDepth = viewport.depthOf(viewport.spaceUnder(pointer));
     final candidates =
         <
           ({
@@ -49,7 +48,9 @@ class SpaceHitTester {
     var index = 0;
     for (final object in objects) {
       index++;
-      if ((!object.attributes.visible && !includeHidden) || !object.isDefined) {
+      if ((!object.attributes.visible && !includeHidden) ||
+          !object.isDefined ||
+          object.isInternal) {
         continue;
       }
       final nearest = screenInkOf(
@@ -57,7 +58,7 @@ class SpaceHitTester {
         viewport,
         canvasSize,
         object,
-      ).nearest(pointer, sheetDepth);
+      ).nearest(pointer, viewport.forObject(object).sheetDepthAt(pointer));
       if (nearest.distance > thresholdPx) {
         continue;
       }

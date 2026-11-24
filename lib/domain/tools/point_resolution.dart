@@ -99,6 +99,7 @@ ResolvedPoint resolvePoint(ToolInput input, String Function() newId) {
     point: FreePoint(
       id: newId(),
       position: snapToGrid(input.position, input.gridSnapStep),
+      plane: input.plane,
     ),
     isNew: true,
   );

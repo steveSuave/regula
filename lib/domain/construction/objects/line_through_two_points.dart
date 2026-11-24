@@ -38,7 +38,8 @@ class LineThroughTwoPoints extends GeoLine {
   /// planar carrier does not exist and the space one stands in. A
   /// planar degeneracy (coincident points) is not this: it stays
   /// undefined, as it always was.
-  bool get _offSheet => point1.projPoint == null || point2.projPoint == null;
+  bool get _offSheet =>
+      !sheet.exists || point1.projPoint == null || point2.projPoint == null;
 
   /// A line through two points needs no plane (intent 004): when the
   /// two have no common value in the sheet, the carrier is their join in
@@ -55,7 +56,7 @@ class LineThroughTwoPoints extends GeoLine {
 
   @override
   void recompute([Absolute absolute = Absolute.euclidean]) {
-    _carrier = carrierThrough(point1, point2);
+    _carrier = sheet.exists ? carrierThrough(point1, point2) : null;
     // The join of w-positive representatives runs p1 → p2 by itself
     // (Phase 137): the chart direction of `p1 × p2` is `w₁w₂·(p2 − p1)`.
     _line = _carrier?.toOrientedLineEq();

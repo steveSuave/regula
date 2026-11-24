@@ -27,7 +27,8 @@ class ParallelLine extends RelativeLine {
     Absolute absolute,
   ) => parallelThrough(through, reference, absolute);
 
-  bool get _offSheet => through.projPoint == null || reference.projLine == null;
+  bool get _offSheet =>
+      !sheet.exists || through.projPoint == null || reference.projLine == null;
 
   /// A parallel needs no plane (intent 004): through a point of space,
   /// along a line of space. Used when the two have no common value in

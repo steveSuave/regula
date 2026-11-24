@@ -76,7 +76,8 @@ class Ray extends GeoLine {
   /// planar carrier does not exist and the space one stands in. A
   /// planar degeneracy (coincident points) is not this: it stays
   /// undefined, as it always was.
-  bool get _offSheet => origin.projPoint == null || through.projPoint == null;
+  bool get _offSheet =>
+      !sheet.exists || origin.projPoint == null || through.projPoint == null;
 
   /// The carrier in space (intent 004): the join of the two points'
   /// space values when they have no common value in the sheet — one end
@@ -105,7 +106,7 @@ class Ray extends GeoLine {
 
   @override
   void recompute([Absolute absolute = Absolute.euclidean]) {
-    _carrier = carrierThrough(origin, through);
+    _carrier = sheet.exists ? carrierThrough(origin, through) : null;
     final p1 = origin.position;
     final p2 = through.position;
     _line = (p1 == null || p2 == null) ? null : _carrier?.toOrientedLineEq();

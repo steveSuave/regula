@@ -23,7 +23,8 @@ import 'two_point_tool.dart';
 /// its center point) refuse the completing tap instead of stacking a
 /// duplicate ([dedupedDerivedPoint] / [coincidentExistingPoint]).
 class MidpointTool extends TwoPointTool {
-  MidpointTool({required super.newId}) : super(build: _buildMidpoint);
+  MidpointTool({required super.newId})
+    : super(build: _buildMidpoint, scope: ToolScope.space);
 
   static GeoObject _buildMidpoint(String id, GeoPoint a, GeoPoint b) =>
       Midpoint(id: id, point1: a, point2: b);

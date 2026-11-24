@@ -45,7 +45,9 @@ class SelectionNotifier extends _$SelectionNotifier {
   /// Selects every object currently in the construction (Ctrl/Cmd+A).
   void selectAll() => state = {
     for (final object in ref.read(constructionProvider).construction.objects)
-      object.id,
+      // Adapters are scaffolding: never selected, so never deleted or
+      // restyled by hand (intent 004).
+      if (!object.isInternal) object.id,
   };
 
   void clear() => state = const {};

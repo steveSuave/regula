@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'dart:ui';
 
 import '../../application/providers/viewport_provider.dart';
+import '../../domain/construction/geo_object.dart';
 import '../../domain/math/vec2.dart';
 import '../../domain/math/vec3.dart';
 import '../../domain/projective/space/plane_frame.dart';
@@ -92,6 +93,29 @@ class CanvasViewport {
 
   /// Whether the camera has left the planar view.
   bool get isTilted => state.tilt != 0;
+
+  /// How much the sheet map shrinks a length of the planar frame at its
+  /// most foreshortened: `|cos tilt|`, never less than [pickFloor], and 1
+  /// with no tilt. What a screen-pixel margin is divided by to hold in
+  /// the planar frame.
+  double get sheetShrink =>
+      isTilted ? math.max(math.cos(state.tilt).abs(), pickFloor) : 1;
+
+  /// This viewport as it sees [object]'s sheet: itself for an object on
+  /// the base plane or with no sheet, a [PlaneViewport] for an object on
+  /// a plane of the construction (intent 004, milestone 2). What the
+  /// label layout and the screen ink ask before they place a planar
+  /// object, so that both follow the object into its plane.
+  CanvasViewport forObject(GeoObject object) {
+    final sheet = object.sheet;
+    final frame = sheet.plane?.frame;
+    return frame == null ? this : PlaneViewport(this, frame);
+  }
+
+  /// The camera depth of this viewport's sheet under [screen]: what two
+  /// objects drawn on one sheet share, and what the hit test compares
+  /// across sheets.
+  double sheetDepthAt(Offset screen) => depthOf(spaceUnder(screen));
 
   /// Whether a pointer can be resolved to a base-plane point.
   bool get basePlanePickable =>
@@ -518,5 +542,148 @@ class CanvasViewport {
       maxY = math.max(maxY, corner.y);
     }
     return (min: Vec2(minX, minY), max: Vec2(maxX, maxY));
+  }
+}
+
+/// A camera as it sees one plane of space (intent 004, milestone 2): the
+/// viewport a planar object on that plane's sheet is drawn, placed and
+/// picked through.
+///
+/// Milestone 1 drew the tilted base plane as the planar picture carried
+/// through an affine **sheet map**, so the painter never learned 3D. A
+/// plane of the construction is the same idea with a general affine map
+/// in place of the squash: under parallel projection a plane's own
+/// coordinates reach the screen affinely. So this is a [CanvasViewport]
+/// whose [flat] frame is the plane's coordinates at the camera's scale —
+/// unrotated and unpanned, since the plane's frame has its own origin and
+/// axes — and whose sheet map sends that frame to where the camera sees
+/// the plane. Everything written against the base class's `flat` and
+/// `sheetToScreen` (the painter's per-kind code, the label layout, the
+/// screen ink) then works in any plane unchanged.
+///
+/// "Pickable" keeps its meaning: the plane is not within
+/// [CanvasViewport.pickFloor] of edge-on.
+class PlaneViewport extends CanvasViewport {
+  PlaneViewport(this.camera, this.frame) : super(camera.state) {
+    final scale = camera.state.scale;
+    _origin = camera.spaceToScreen(frame.origin);
+    // The screen image of one unit along each axis, per flat-frame pixel:
+    // the flat frame is y-down, so its second axis runs against `v`.
+    _across = (camera.spaceToScreen(frame.origin + frame.u) - _origin) / scale;
+    _down = (_origin - camera.spaceToScreen(frame.origin + frame.v)) / scale;
+    _det = _across.dx * _down.dy - _across.dy * _down.dx;
+  }
+
+  /// The camera this is a view of.
+  final CanvasViewport camera;
+
+  /// The plane's coordinates.
+  final PlaneFrame frame;
+
+  late final Offset _origin;
+  late final Offset _across;
+  late final Offset _down;
+  late final double _det;
+
+  @override
+  bool get isTilted => true;
+
+  @override
+  bool get basePlanePickable => _det.abs() >= CanvasViewport.pickFloor;
+
+  @override
+  CanvasViewport get flat =>
+      CanvasViewport(ViewportState(scale: camera.state.scale));
+
+  @override
+  CanvasViewport forObject(GeoObject object) => this;
+
+  @override
+  double get sheetShrink {
+    // The smaller singular value of the sheet map's linear part.
+    final a = _across.distanceSquared;
+    final d = _down.distanceSquared;
+    final b = _across.dx * _down.dx + _across.dy * _down.dy;
+    final mean = (a + d) / 2;
+    final spread = math.sqrt(math.max(0, (a - d) * (a - d) / 4 + b * b));
+    return math.max(
+      math.sqrt(math.max(0, mean - spread)),
+      CanvasViewport.pickFloor,
+    );
+  }
+
+  @override
+  Offset sheetToScreen(Offset flatScreen) =>
+      _origin + _across * flatScreen.dx + _down * flatScreen.dy;
+
+  @override
+  Float64List get sheetMatrix => Float64List(16)
+    ..[0] = _across.dx
+    ..[1] = _across.dy
+    ..[4] = _down.dx
+    ..[5] = _down.dy
+    ..[10] = 1
+    ..[12] = _origin.dx
+    ..[13] = _origin.dy
+    ..[15] = 1;
+
+  /// The flat-frame point the sheet map sends to [screen], with the
+  /// determinant held at [CanvasViewport.pickFloor] inside the edge-on
+  /// band so the answer stays bounded there.
+  Offset _unmap(Offset screen) {
+    final det = _det.abs() >= CanvasViewport.pickFloor
+        ? _det
+        : (_det < 0 ? -CanvasViewport.pickFloor : CanvasViewport.pickFloor);
+    final d = screen - _origin;
+    return Offset(
+      (d.dx * _down.dy - d.dy * _down.dx) / det,
+      (_across.dx * d.dy - _across.dy * d.dx) / det,
+    );
+  }
+
+  @override
+  Rect flatFrame(Size canvasSize, {double margin = 0}) {
+    final corners = [
+      _unmap(Offset(-margin, -margin)),
+      _unmap(Offset(canvasSize.width + margin, -margin)),
+      _unmap(Offset(-margin, canvasSize.height + margin)),
+      _unmap(Offset(canvasSize.width + margin, canvasSize.height + margin)),
+    ];
+    var box = Rect.fromPoints(corners[0], corners[1]);
+    for (final corner in corners.skip(2)) {
+      box = box.expandToInclude(Rect.fromPoints(corner, corner));
+    }
+    return box;
+  }
+
+  @override
+  Offset worldToScreen(Vec2 world) => sheetToScreen(flat.worldToScreen(world));
+
+  @override
+  Vec2 screenToWorld(Offset screen) => flat.screenToWorld(_unmap(screen));
+
+  @override
+  Vec2? pickBasePlane(Offset screen, {double height = 0}) =>
+      camera.pickPlane(screen, frame, height: height);
+
+  // Angles and directions of the planar frame are the flat frame's: the
+  // plane's coordinates are not turned by the camera's azimuth, which is
+  // already in the sheet map.
+  @override
+  double worldToScreenAngle(double worldAngle) =>
+      flat.worldToScreenAngle(worldAngle);
+
+  @override
+  Offset worldToScreenDirection(Vec2 direction) =>
+      flat.worldToScreenDirection(direction);
+
+  @override
+  double hitRadius(double screenRadius) =>
+      screenRadius / state.scale / math.max(sheetShrink, 0.5);
+
+  @override
+  double sheetDepthAt(Offset screen) {
+    final picked = camera.pickPlane(screen, frame);
+    return camera.depthOf(picked == null ? frame.origin : frame.lift(picked));
   }
 }
