@@ -232,7 +232,11 @@ class TransformObjectTool implements ToolInputPreview {
       }
       return const ToolIgnored();
     }
-    _point = FreePoint(id: newId(), position: input.position);
+    _point = FreePoint(
+      id: newId(),
+      position: input.position,
+      plane: input.plane,
+    );
     _pointIsNew = true;
     return const ToolAccepted();
   }
@@ -302,7 +306,11 @@ class TransformObjectTool implements ToolInputPreview {
         if (_point != null || mirror == null) {
           return const ToolIgnored();
         }
-        _point = FreePoint(id: newId(), position: input.position);
+        _point = FreePoint(
+          id: newId(),
+          position: input.position,
+          plane: input.plane,
+        );
         _pointIsNew = true;
         return _commitPoint(input.objects, mirror: mirror);
     }

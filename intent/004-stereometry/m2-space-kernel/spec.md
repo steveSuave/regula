@@ -1,6 +1,6 @@
 # Spec: stereometry milestone 2 — the space kernel, planes, and the active plane
 
-Written 2026-11-24 from [intent](../intent.md) · Status: approved 2026-11-24 with the [plan](plan.md)
+Written 2026-11-24 from [intent](../intent.md) · Status: approved 2026-11-24 with the [plan](plan.md); amended where noted below
 
 Milestone 2 of five. After it a user can lift a point off its plane, join points in space, build planes, intersect lines and planes, and use every existing 2D tool inside any plane. Solids, cross-sections and hidden-edge dashing are milestone 3; measurements in space are milestone 4.
 
@@ -183,6 +183,18 @@ Still open:
 
 - **The rubber band in the space view** stays unavailable. Long-press and shift-tap select. Nothing in this milestone makes it more needed.
 - **A point on a segment that lies in no plane object** (a point on a pyramid's edge) is not offered here. Milestone 3 needs it for cross-sections and decides between a space value for `PointOnObject` and face planes.
+
+## Amended while building (2026-11-24)
+
+The plan's progress notes say why; DECISIONS has the settled form.
+
+- **Requirement 7**: the active patch is outlined; it does not carry the grid yet.
+- **Requirement 9**: a tap on an object that is not in the active plane is refused with a message, not dropped.
+- **Requirement 14**: a tap with no tool selects whatever is drawn under it in the space view, even where its plane is edge-on. Placing and dragging there are still refused.
+- **The lift handle** snaps within 8 px, not the hit threshold.
+- **Plane patches** have level sides, not the sides of the plane's frame.
+- **The wrapper** is `PlaneScope`, held by the tool notifier, and tools declare a `ToolScope`.
+- **`sheetFor(frame)`** is `PlaneViewport`.
 
 ## Decisions taken at approval (2026-11-24)
 

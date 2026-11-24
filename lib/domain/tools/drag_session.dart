@@ -115,6 +115,13 @@ abstract class DragSession {
     if (points.isEmpty) {
       return null;
     }
+    // A rigid translation moves every free ancestor by one vector of
+    // plane coordinates. Ancestors in different planes have no such
+    // vector in common (intent 004): the object does not drag, and its
+    // points still do.
+    if ({for (final point in points) point.sheet}.length > 1) {
+      return null;
+    }
     return _TranslateDragSession(construction, target is FreePoint, grabStart, [
       ...points,
     ], gridSnapStep: target is FreePoint ? gridSnapStep : 0);

@@ -25,8 +25,17 @@ typedef PointAndLineBuilder = GeoObject Function({
 /// circles. As in `MultiPointTool`, a new free point is held privately
 /// until commit and grouped with the built object in one `MacroCommand`,
 /// so the step is a single undo unit.
-class PointAndLineTool implements ToolInputPreview {
-  PointAndLineTool({required this.newId, required this.build});
+class PointAndLineTool implements ToolInputPreview, ScopedTool {
+  PointAndLineTool({
+    required this.newId,
+    required this.build,
+    this.scope = ToolScope.plane,
+  });
+
+  /// [ToolScope.space] for the builders that need no plane: the parallel
+  /// through a point, and the plane perpendicular to a line.
+  @override
+  final ToolScope scope;
 
   /// Produces a fresh unique object id per call (see `PointTool.newId`).
   final String Function() newId;
@@ -71,7 +80,11 @@ class PointAndLineTool implements ToolInputPreview {
         return const ToolIgnored();
       case null:
         if (_point != null) return const ToolIgnored();
-        _point = FreePoint(id: newId(), position: input.position);
+        _point = FreePoint(
+          id: newId(),
+          position: input.position,
+          plane: input.plane,
+        );
         _pointIsNew = true;
     }
 

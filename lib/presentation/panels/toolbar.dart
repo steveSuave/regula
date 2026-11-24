@@ -436,11 +436,19 @@ class GeometryToolbar extends ConsumerWidget {
           active: linesActive,
           unavailable: euclidean ? const {} : euclideanOnlyConstants,
           items: [
-            ('Line', _twoPoint(buildLine), AppAction.lineTool),
-            ('Segment', _twoPoint(buildSegment), AppAction.segmentTool),
+            (
+              'Line',
+              _twoPoint(buildLine, scope: ToolScope.space),
+              AppAction.lineTool,
+            ),
+            (
+              'Segment',
+              _twoPoint(buildSegment, scope: ToolScope.space),
+              AppAction.segmentTool,
+            ),
             (
               'Ray (origin, then direction)',
-              _twoPoint(buildRay),
+              _twoPoint(buildRay, scope: ToolScope.space),
               AppAction.rayTool,
             ),
             (
@@ -469,6 +477,7 @@ class GeometryToolbar extends ConsumerWidget {
                 () => PointAndLineTool(
                   newId: newObjectId,
                   build: ParallelLine.new,
+                  scope: ToolScope.space,
                 ),
               ),
               AppAction.parallelTool,
@@ -819,6 +828,7 @@ class GeometryToolbar extends ConsumerWidget {
                   () => PointAndLineTool(
                     newId: newObjectId,
                     build: buildPerpendicularPlane,
+                    scope: ToolScope.space,
                   ),
                 ),
                 AppAction.perpendicularPlaneTool,
@@ -844,8 +854,10 @@ class GeometryToolbar extends ConsumerWidget {
 ToolPick _pick(Tool Function() create) =>
     () async => create();
 
-ToolPick _twoPoint(TwoPointBuilder build) =>
-    _pick(() => TwoPointTool(newId: newObjectId, build: build));
+ToolPick _twoPoint(
+  TwoPointBuilder build, {
+  ToolScope scope = ToolScope.plane,
+}) => _pick(() => TwoPointTool(newId: newObjectId, build: build, scope: scope));
 
 ToolPick _threePoint(ThreePointBuilder build) =>
     _pick(() => ThreePointTool(newId: newObjectId, build: build));

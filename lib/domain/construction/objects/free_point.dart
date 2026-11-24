@@ -34,8 +34,21 @@ class FreePoint extends GeoPoint {
     required super.id,
     required Vec2 position,
     this.height = 0,
+    this.plane,
     super.attributes,
   }) : _projPoint = ProjPoint.lift(position);
+
+  /// The plane the point was placed in, or null for the base plane. Its
+  /// coordinates are that plane's, so it moves with the plane; it is the
+  /// point's only parent, and nothing about it makes the point less
+  /// free: within its plane, and above it, it goes where it is put.
+  final GeoPlane? plane;
+
+  @override
+  Sheet get sheet => switch (plane) {
+    null => Sheet.base,
+    final plane => Sheet.of(plane),
+  };
 
   ProjPoint _projPoint;
 
@@ -92,7 +105,10 @@ class FreePoint extends GeoPoint {
   ProjPoint get storedPoint => _projPoint;
 
   @override
-  List<GeoObject> get parents => const [];
+  List<GeoObject> get parents => switch (plane) {
+    null => const [],
+    final plane => [plane],
+  };
 
   @override
   void recompute([Absolute absolute = Absolute.euclidean]) {

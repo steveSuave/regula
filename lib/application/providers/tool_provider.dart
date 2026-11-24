@@ -10,7 +10,9 @@ import '../../domain/construction/objects/free_point.dart';
 import '../../domain/math/vec2.dart';
 import '../../domain/tools/drag_session.dart';
 import '../../domain/tools/lift_session.dart';
+import '../../domain/tools/plane_scope.dart';
 import '../../domain/tools/tool.dart';
+import '../object_ids.dart';
 import 'command_stack_provider.dart';
 import 'construction_provider.dart';
 
@@ -52,6 +54,18 @@ class ToolNotifier extends _$ToolNotifier {
   DragSession? _drag;
   LiftSession? _lift;
 
+  /// The active plane's say over what the active tool is handed, with
+  /// the adapters the tool's collected inputs depend on (intent 004).
+  final PlaneScope _scope = PlaneScope();
+
+  /// Why the last tap went no further, or null: for the canvas to say.
+  ScopeRefusal? get lastRefusal => _lastRefusal;
+  ScopeRefusal? _lastRefusal;
+
+  /// The id to highlight for a collected input the tool reports: an
+  /// adapter the tool was handed stands for its source.
+  String previewSourceId(String id) => _scope.sourceIdOf(id);
+
   TraceFrameStats? _lastTraceStats;
 
   /// The most recent traced preview frame's step counts, retained past
@@ -89,6 +103,8 @@ class ToolNotifier extends _$ToolNotifier {
       _abandonDrag();
     }
     state.tool?.reset();
+    _scope.reset();
+    _lastRefusal = null;
     state = ActiveToolState(tool, 0);
   }
 
@@ -108,6 +124,8 @@ class ToolNotifier extends _$ToolNotifier {
       return;
     }
     tool.reset();
+    _scope.reset();
+    _lastRefusal = null;
     state = ActiveToolState(tool, state.revision + 1);
   }
 
@@ -192,16 +210,32 @@ class ToolNotifier extends _$ToolNotifier {
     if (tool == null) {
       return const ToolIgnored();
     }
-    final result = tool.onInput(input);
+    // The active plane decides what the tool may see: an object from
+    // elsewhere comes in through an adapter if it lies in the plane, and
+    // not at all if it does not (`PlaneScope`).
+    final scoped = _scope.adapt(input, tool, newObjectId);
+    final seen = scoped.input;
+    if (seen == null) {
+      _lastRefusal = scoped.refusal;
+      state = ActiveToolState(tool, state.revision + 1);
+      return const ToolIgnored();
+    }
+    final hadRefusal = _lastRefusal != null;
+    _lastRefusal = null;
+    final result = tool.onInput(seen);
     switch (result) {
       case ToolCommitted(:final command):
-        _autoNameNewObjects(command);
-        ref.read(commandStackProvider.notifier).execute(command);
+        final whole = _scope.commit(command);
+        _autoNameNewObjects(whole);
+        ref.read(commandStackProvider.notifier).execute(whole);
         state = ActiveToolState(tool, state.revision + 1);
+        return ToolCommitted(whole);
       case ToolAccepted():
         state = ActiveToolState(tool, state.revision + 1);
       case ToolIgnored():
-        break;
+        if (hadRefusal) {
+          state = ActiveToolState(tool, state.revision + 1);
+        }
     }
     return result;
   }

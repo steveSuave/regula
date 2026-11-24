@@ -92,7 +92,13 @@ Document and workspace:
 - **Planes** — through three points, through a line and a point, perpendicular
   to a line or parallel to another plane; the perpendicular from a point to a
   plane; and the Intersection tool meets a line with a plane and a plane with a
-  plane. Constructions inside a plane are the next step of stereometry
+  plane
+- **Working inside a plane** — tap a plane to make it active (a chip names it
+  and returns to the base plane) and every 2D tool builds in it: circles,
+  perpendiculars, bisectors, intersections, with new points belonging to the
+  plane and moving with it. An existing point or line can be used there when it
+  lies in the plane by construction; two lines of space intersect through a
+  plane that holds both, so skew lines never do
 - **Light/dark theme**
 
 Also built in, as an experimental feature that is off by default: a JGEX-style

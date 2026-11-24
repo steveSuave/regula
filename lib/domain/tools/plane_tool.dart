@@ -17,10 +17,13 @@ import 'tool.dart';
 /// [LinePointPlane]. A line tapped after two points is ignored — the
 /// two points already name a line, and the third tap is for the third
 /// point. A tap on a plane, a circle or anything else is ignored.
-class PlaneTool implements ToolInputPreview {
+class PlaneTool implements ToolInputPreview, ScopedTool {
   PlaneTool({required this.newId});
 
   final String Function() newId;
+
+  @override
+  ToolScope get scope => ToolScope.space;
 
   final List<ResolvedPoint> _points = [];
   GeoLine? _line;
@@ -55,7 +58,11 @@ class PlaneTool implements ToolInputPreview {
       final resolved = hit is GeoPoint
           ? (point: hit, isNew: false)
           : (
-              point: FreePoint(id: newId(), position: input.position),
+              point: FreePoint(
+                id: newId(),
+                position: input.position,
+                plane: input.plane,
+              ),
               isNew: true,
             );
       if (_points.any((p) => identical(p.point, resolved.point))) {

@@ -30,6 +30,7 @@ const double fitMarginPx = 48;
 ({Vec2 min, Vec2 max})? visibleWorldBounds(
   Iterable<GeoObject> objects, {
   double rotation = 0,
+  Sheet sheet = Sheet.base,
 }) {
   final cos = math.cos(rotation);
   final sin = math.sin(rotation);
@@ -49,6 +50,11 @@ const double fitMarginPx = 48;
 
   for (final object in objects) {
     if (!object.attributes.visible || !object.isDefined) {
+      continue;
+    }
+    // Positions are coordinates in a sheet (intent 004): the bounds are
+    // of one sheet's objects, the base plane's unless asked otherwise.
+    if (object.sheet != sheet) {
       continue;
     }
     switch (object) {
@@ -199,14 +205,15 @@ ViewportState? fittedToAbsolute(
 /// [tilt] is the space view's camera tilt (intent 004): the extent along
 /// the view frame's y is foreshortened by `|cos tilt|` on screen, so that
 /// is what has to fit the canvas height. Edge-on, only the width binds.
-/// The visible, defined points that are off the base plane: what
-/// [visibleWorldBounds] cannot see, because it is a box on the plane.
+/// The visible, defined points that are not on the base sheet — lifted
+/// off it, or on another plane's: what [visibleWorldBounds] cannot see,
+/// because it is a box of base-plane coordinates.
 /// A segment to a lifted point is covered by the point.
 List<Vec3> liftedPositions(Iterable<GeoObject> objects) => [
   for (final object in objects)
     if (object is GeoPoint &&
         object.attributes.visible &&
-        object.position == null)
+        (object.position == null || !object.sheet.isBase))
       ?object.spacePosition,
 ];
 

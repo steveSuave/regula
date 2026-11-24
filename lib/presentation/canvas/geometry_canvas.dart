@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../application/providers/active_plane_provider.dart';
 import '../../application/providers/command_stack_provider.dart';
 import '../../application/providers/construction_provider.dart';
 import '../../application/providers/document_settings_provider.dart';
@@ -17,13 +18,16 @@ import '../../application/providers/tool_provider.dart';
 import '../../application/providers/viewport_provider.dart';
 import '../../domain/commands/change_attributes_command.dart';
 import '../../domain/construction/construction.dart';
+import '../../domain/construction/free_point_ancestors.dart';
 import '../../domain/construction/geo_object.dart';
+import '../../domain/construction/objects/compass_circle.dart';
 import '../../domain/construction/objects/expression_text.dart';
 import '../../domain/construction/objects/free_point.dart';
 import '../../domain/construction/text_evaluator.dart';
 import '../../domain/construction/text_template.dart';
 import '../../domain/math/vec2.dart';
 import '../../domain/math/vec3.dart';
+import '../../domain/projective/space/plane_frame.dart';
 import '../../domain/tools/delete_tool.dart';
 import '../../domain/tools/text_tool.dart';
 import '../../domain/tools/tool.dart';
@@ -197,6 +201,10 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
   /// the pointer is read during the drag. 0 for anything unlifted.
   double _dragHeight = 0;
 
+  /// The view of the plane the dragged object's free points lie in, or
+  /// null for the base plane.
+  PlaneViewport? _dragView;
+
   /// The lift gesture in progress: the handle as it was grabbed, where
   /// the pointer went down, and the point's height then.
   ({LiftHandle handle, Offset start, double startHeight})? _lift;
@@ -262,8 +270,13 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
             previewMarkers: tool is ToolInputPreview
                 ? tool.previewPositions
                 : const [],
+            // An adapter the tool was handed stands for its source, which
+            // is the object the user tapped and the one to halo.
             previewObjectIds: tool is ToolInputPreview
-                ? tool.previewObjectIds.toSet()
+                ? {
+                    for (final id in tool.previewObjectIds)
+                      ref.read(toolProvider.notifier).previewSourceId(id),
+                  }
                 : const {},
             labelDragPreview: switch (_labelDrag) {
               null => null,
@@ -274,6 +287,12 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
               tool,
               constructionState.construction,
             ),
+            activePlaneId: ref.watch(spaceViewProvider)
+                ? activePlaneOf(
+                    ref.watch(activePlaneProvider),
+                    constructionState.construction.objects,
+                  )?.id
+                : null,
             showAxes: ref.watch(documentSettingsProvider).showAxes,
             showGrid: ref.watch(documentSettingsProvider).showGrid,
             // Theme-less hosts (bare-widget tests) keep the painter's
@@ -602,28 +621,48 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
       });
       return;
     }
-    final hit = world == null
+    // With the space view on, the base plane seen edge-on stops nothing
+    // but picks *on the base plane*: a point in another plane is still
+    // there to be grabbed, and its drag reads its own plane.
+    final hit = world == null && !spaceView
         ? null
         : _hitsAt(
             construction,
             viewport,
             screen,
-            world,
+            world ?? Vec2.zero,
             _firstDownKind,
           ).firstOrNull;
     if (hit != null) {
-      // A lifted point is dragged parallel to its plane: the pointer is
-      // read on the plane at the point's height, for the whole gesture.
+      // A drag moves free points in the coordinates of their own plane
+      // (intent 004, milestone 2), so the pointer is read on that plane
+      // for the whole gesture — and at the point's height, for a lifted
+      // point, which is dragged parallel to its plane. An object whose
+      // free points lie in more than one plane has no such plane and
+      // does not drag as a whole.
+      final frame = _dragFrameFor(hit);
+      if (frame == null) {
+        return;
+      }
+      _dragView = identical(frame, PlaneFrame.base)
+          ? null
+          : PlaneViewport(viewport, frame);
       _dragHeight = hit is FreePoint ? hit.height : 0;
-      final grab = viewport.pickBasePlane(screen, height: _dragHeight);
+      final grab = (_dragView ?? viewport).pickBasePlane(
+        screen,
+        height: _dragHeight,
+      );
       // May refuse (derived point): then the pan does nothing — starting
       // a band under an object the user visibly grabbed would surprise.
       if (grab != null) {
         ref
             .read(toolProvider.notifier)
             .startDrag(hit, grab, gridSnapStep: _gridSnapStep(viewport));
+        return;
       }
-      return;
+      // The object's plane is seen edge-on: nothing in it can be moved
+      // from here, and the drag turns the camera instead, which is how
+      // the user gets to a view where it can.
     }
     if (spaceView) {
       _startOrbit(screen);
@@ -655,6 +694,35 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
       viewport,
     );
     return handle != null && handle.grabs(screen) ? handle : null;
+  }
+
+  /// The plane the tools work in: the active plane while the space view
+  /// is on and that plane is still there and defined, else null — the
+  /// base plane.
+  GeoPlane? _activePlane(Construction construction) =>
+      ref.read(spaceViewProvider)
+      ? activePlaneOf(ref.read(activePlaneProvider), construction.objects)
+      : null;
+
+  /// The coordinates a drag of [hit] moves its free points in: its own
+  /// sheet's for a point, the common sheet of its free ancestors for
+  /// anything else. Null when there is none — the ancestors lie in more
+  /// than one plane, or the plane has collapsed.
+  PlaneFrame? _dragFrameFor(GeoObject hit) {
+    if (hit is GeoPoint) {
+      return hit.sheet.exists ? hit.sheet.frame : PlaneFrame.base;
+    }
+    final sheets = {
+      for (final point in freePointAncestors(
+        hit is CompassCircle ? hit.center : hit,
+      ))
+        point.sheet,
+    };
+    return switch (sheets.length) {
+      0 => PlaneFrame.base,
+      1 => sheets.single.frame,
+      _ => null,
+    };
   }
 
   /// Every object under the pointer, best first.
@@ -758,11 +826,25 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
       setState(() => _band = Rect.fromPoints(anchor, screen));
       return;
     }
-    ref
-        .read(toolProvider.notifier)
-        .updateDrag(
-          viewport.screenToWorld(viewport.footScreen(screen, _dragHeight)),
-        );
+    final dragView = _dragView;
+    if (dragView == null) {
+      ref
+          .read(toolProvider.notifier)
+          .updateDrag(
+            viewport.screenToWorld(viewport.footScreen(screen, _dragHeight)),
+          );
+      return;
+    }
+    // The plane was captured when the drag began; the camera does not
+    // move during one, and the plane does not move under a drag of a
+    // point that lies in it.
+    final at = PlaneViewport(
+      viewport,
+      dragView.frame,
+    ).pickBasePlane(screen, height: _dragHeight);
+    if (at != null) {
+      ref.read(toolProvider.notifier).updateDrag(at);
+    }
   }
 
   /// End-of-orbit settle: the azimuth as a twist settles it, and a tilt
@@ -877,7 +959,7 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
   /// drags that begin moving within the timeout are unaffected.
   void _handleLongPress(CanvasViewport viewport, Offset screen) {
     final world = viewport.pickBasePlane(screen);
-    if (world == null) {
+    if (world == null && !ref.read(spaceViewProvider)) {
       return;
     }
     final construction = ref.read(constructionProvider).construction;
@@ -885,7 +967,7 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
       construction,
       viewport,
       screen,
-      world,
+      world ?? Vec2.zero,
       _firstDownKind,
     ).firstOrNull;
     if (hit == null) {
@@ -990,15 +1072,34 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
     }
     // The base plane seen too close to edge-on cannot be picked: a tap
     // there would land tens of canvas widths away, so it lands nowhere.
-    final world = viewport.pickBasePlane(screen);
-    if (world == null) {
-      return;
-    }
+    //
     // Read (not the build-time capture): the construction mutates between
     // rebuilds, and the hit test must see the tap-time state.
     final construction = ref.read(constructionProvider).construction;
     final tool = ref.read(toolProvider).tool;
-    final threshold = viewport.hitRadius(GeometryCanvas.hitThresholdFor(kind));
+    // A tool's tap lands in the active plane (intent 004, milestone 2),
+    // in that plane's coordinates. A text is an annotation of the
+    // document and stays on the base plane, and so does a tap with no
+    // tool, which only selects.
+    final active = tool == null || tool is TextTool
+        ? null
+        : _activePlane(construction);
+    final activeView = active == null
+        ? viewport
+        : PlaneViewport(viewport, active.frame!);
+    final picked = activeView.pickBasePlane(screen);
+    // A tool's tap is a point of the active plane: seen edge-on there is
+    // none, and the tap lands nowhere. A tap with no tool only selects,
+    // and in the space view selecting is by what is drawn under the
+    // pointer, not by a point of any plane — so a point can be selected,
+    // and then lifted, in a view where its plane is a line.
+    if (picked == null && (tool != null || !ref.read(spaceViewProvider))) {
+      return;
+    }
+    final world = picked ?? Vec2.zero;
+    final threshold = activeView.hitRadius(
+      GeometryCanvas.hitThresholdFor(kind),
+    );
     final hits = _hitsAt(
       construction,
       viewport,
@@ -1024,6 +1125,7 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
         // that address is only meaningful against the absolute the
         // candidate list was filtered by (Phase 126).
         absolute: construction.kernel.absolute,
+        plane: active,
       );
       if (tool is DeleteTool) {
         // Deleting cascades, and the cascade warning is a dialog — a
@@ -1077,6 +1179,14 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
       selection.toggle(target.id);
     } else {
       selection.select(target.id);
+      // Tapping a plane is how it becomes the one the tools work in
+      // (intent 004, milestone 2). Only a plain tap with no tool active:
+      // a tap that belongs to a tool lands in the active plane and never
+      // changes which plane that is, so it cannot mean two things where
+      // patches overlap.
+      if (target is GeoPlane && ref.read(spaceViewProvider)) {
+        ref.read(activePlaneProvider.notifier).set(target.id);
+      }
     }
   }
 }

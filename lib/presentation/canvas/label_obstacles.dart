@@ -32,7 +32,7 @@ DeclutterScene buildDeclutterScene(
   final capsules = <Capsule>[];
 
   for (final object in construction.objects) {
-    if (!object.attributes.visible || !object.isDefined) {
+    if (!object.attributes.visible || !object.isDefined || object.isInternal) {
       continue;
     }
     final halfWidth = object.attributes.strokeWidth / 2 + 1;

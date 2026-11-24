@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'application/export/png_exporter.dart';
 import 'application/object_ids.dart';
 import 'application/persistence/file_io.dart';
+import 'application/providers/active_plane_provider.dart';
 import 'application/providers/command_stack_provider.dart';
 import 'application/providers/construction_provider.dart';
 import 'application/providers/document_settings_provider.dart';
@@ -85,6 +86,7 @@ import 'domain/tools/triangle_center_tool.dart';
 import 'domain/tools/triangle_circle_tool.dart';
 import 'domain/tools/two_point_tool.dart';
 import 'domain/tools/visibility_tool.dart';
+import 'presentation/canvas/active_plane_chip.dart';
 import 'presentation/canvas/canvas_viewport.dart';
 import 'presentation/canvas/fit_viewport.dart';
 import 'presentation/canvas/geometry_canvas.dart';
@@ -544,6 +546,10 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     final current = CanvasViewport(ref.read(viewportProvider));
     final objects = ref.read(constructionProvider).construction.objects;
     ref.read(spaceViewProvider.notifier).set(on);
+    if (!on) {
+      // The planar view works in the base plane.
+      ref.read(activePlaneProvider.notifier).set(null);
+    }
     ref
         .read(viewportProvider.notifier)
         .set(
@@ -988,11 +994,29 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
       case AppAction.pointTool:
         tools.activate(PointTool(newId: newObjectId));
       case AppAction.lineTool:
-        tools.activate(TwoPointTool(newId: newObjectId, build: buildLine));
+        tools.activate(
+          TwoPointTool(
+            newId: newObjectId,
+            build: buildLine,
+            scope: ToolScope.space,
+          ),
+        );
       case AppAction.segmentTool:
-        tools.activate(TwoPointTool(newId: newObjectId, build: buildSegment));
+        tools.activate(
+          TwoPointTool(
+            newId: newObjectId,
+            build: buildSegment,
+            scope: ToolScope.space,
+          ),
+        );
       case AppAction.rayTool:
-        tools.activate(TwoPointTool(newId: newObjectId, build: buildRay));
+        tools.activate(
+          TwoPointTool(
+            newId: newObjectId,
+            build: buildRay,
+            scope: ToolScope.space,
+          ),
+        );
       case AppAction.circleTool:
         tools.activate(TwoPointTool(newId: newObjectId, build: buildCircle));
       case AppAction.diameterCircleTool:
@@ -1026,6 +1050,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
           () => PointAndLineTool(
             newId: newObjectId,
             build: buildPerpendicularPlane,
+            scope: ToolScope.space,
           ),
         );
       case AppAction.perpendicularTool:
@@ -1034,7 +1059,11 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         );
       case AppAction.parallelTool:
         tools.activate(
-          PointAndLineTool(newId: newObjectId, build: ParallelLine.new),
+          PointAndLineTool(
+            newId: newObjectId,
+            build: ParallelLine.new,
+            scope: ToolScope.space,
+          ),
         );
       case AppAction.perpendicularBisectorTool:
         tools.activate(
@@ -1817,6 +1846,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                           GeometryCanvas(key: _canvasKey),
                           const NamePointsHint(),
                           const LiftedPointHint(),
+                          const ScopeRefusalHint(),
+                          const ActivePlaneChip(),
                           if (_showTraceOverlay) const TraceStatsOverlay(),
                           // Before the region-pick overlay, so an export
                           // pick owns the whole surface.

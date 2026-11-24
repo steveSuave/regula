@@ -79,9 +79,12 @@ const double _angleLabelClearance = 4.0;
 /// laid-out size of the text being placed; callers already measure it.
 Offset labelBaseTopLeft(
   GeoObject object,
-  CanvasViewport viewport,
+  CanvasViewport camera,
   Size textSize,
 ) {
+  // An object on a plane's sheet is placed through that plane's view
+  // (intent 004, milestone 2); for the base sheet this is [camera].
+  final viewport = camera.forObject(object);
   if (object case GeoAngle(:final angle?)) {
     final direction = viewport.worldToScreenDirection(
       angle.startDirection.rotated(angle.sweep / 2),

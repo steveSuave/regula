@@ -17,6 +17,7 @@ import '../../domain/math/circle_eq.dart';
 import '../../domain/math/vec2.dart';
 import '../../domain/projective/conic_matrix.dart';
 import '../../domain/projective/conic_shape.dart';
+import '../../domain/projective/space/plane_frame.dart';
 import 'canvas_viewport.dart';
 import 'fit_viewport.dart';
 import 'grid_layout.dart';
@@ -111,6 +112,7 @@ class GeometryPainter extends CustomPainter {
     this.labelDragPreview,
     this.showHidden = false,
     this.liftHandleEnabled = false,
+    this.activePlaneId,
     this.showAxes = false,
     this.showGrid = false,
     this.axisColor = const Color(0xFF757575),
@@ -228,6 +230,16 @@ class GeometryPainter extends CustomPainter {
   /// drawn regardless.
   final bool liftHandleEnabled;
 
+  /// The id of the active plane (intent 004, milestone 2), or null for
+  /// the base plane: its patch is outlined in the selection colour, and
+  /// the tool's preview markers are positions in it.
+  final String? activePlaneId;
+
+  /// The plane whose sheet this painter paints, or null for the painter
+  /// the canvas owns, which paints the base sheet, everything with no
+  /// sheet, and then one of these per plane that has something on it.
+  GeoPlane? _sheetPlane;
+
   /// Draws the coordinate axes / the background grid behind every object
   /// (the Phase 36 `DocumentSettings` toggles). Both default off, so
   /// existing callers — exporter included — render byte-identically.
@@ -309,13 +321,8 @@ class GeometryPainter extends CustomPainter {
 
   /// A screen-px [margin] in planar-frame px: the sheet map shrinks the
   /// frame's y, so the same clearance on screen needs more of it.
-  double _frameMargin(double margin) => viewport.isTilted
-      ? margin /
-            math.max(
-              math.cos(viewport.state.tilt).abs(),
-              CanvasViewport.pickFloor,
-            )
-      : margin;
+  double _frameMargin(double margin) =>
+      viewport.isTilted ? margin / viewport.sheetShrink : margin;
 
   @override
   void paint(Canvas screen, Size size) {
@@ -334,9 +341,94 @@ class GeometryPainter extends CustomPainter {
 
     _drawPlanePatches(screen, size);
 
+    // The base sheet and everything with no sheet, in insertion order.
+    _paintObjects(canvas, size, (object) => object.sheet.plane == null);
+    // Then each plane's own sheet, through that plane's viewport: the
+    // same per-kind code, with another sheet map (intent 004, milestone
+    // 2). A plane with nothing on it costs a lookup.
+    final onSheet = <GeoPlane>{
+      for (final object in construction.objects) ?object.sheet.plane,
+    };
+    final active = construction.byId(activePlaneId ?? '');
+    if (active is GeoPlane && previewMarkers.isNotEmpty) {
+      onSheet.add(active);
+    }
+    for (final plane in onSheet) {
+      final frame = plane.frame;
+      if (frame != null) {
+        _forSheet(plane, frame)._paintSheet(screen, size);
+      }
+    }
+
+    _drawLift(screen);
+    if (active is! GeoPlane) {
+      _drawPreviewMarkers(canvas);
+    }
+  }
+
+  /// This painter's settings on another sheet.
+  GeometryPainter _forSheet(GeoPlane plane, PlaneFrame frame) =>
+      GeometryPainter(
+        construction: construction,
+        viewport: PlaneViewport(viewport, frame),
+        revision: revision,
+        defaultColor: defaultColor,
+        selectionColor: selectionColor,
+        selectedIds: selectedIds,
+        highlightedIds: highlightedIds,
+        highlightColor: highlightColor,
+        highlightPulse: highlightPulse,
+        previewMarkers: previewMarkers,
+        previewObjectIds: previewObjectIds,
+        labelDragPreview: labelDragPreview,
+        showHidden: showHidden,
+        activePlaneId: activePlaneId,
+      ).._sheetPlane = plane;
+
+  /// Paints the objects on [_sheetPlane]'s sheet, and the tool's preview
+  /// markers when that plane is the active one.
+  void _paintSheet(Canvas screen, Size size) {
+    final plane = _sheetPlane!;
+    final canvas = SheetCanvas(screen, viewport);
+    _bandBox = viewport.basePlanePickable
+        ? null
+        : visibleWorldBounds(construction.objects, sheet: Sheet.of(plane));
+    _paintObjects(
+      canvas,
+      size,
+      (object) => identical(object.sheet.plane, plane),
+    );
+    if (plane.id == activePlaneId) {
+      _drawPreviewMarkers(canvas);
+    }
+  }
+
+  void _drawPreviewMarkers(SheetCanvas canvas) {
+    final dot = Paint()..color = defaultColor;
+    final ring = Paint()
+      ..color = defaultColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+    for (final marker in previewMarkers) {
+      final center = _flat.worldToScreen(marker);
+      canvas.drawDot(center, _markerDotRadius, dot);
+      canvas.drawDot(center, _markerRingRadius, ring);
+    }
+  }
+
+  /// Paints, in insertion order, every visible defined object [mine]
+  /// claims: halo, fill, stroke and label.
+  void _paintObjects(
+    SheetCanvas canvas,
+    Size size,
+    bool Function(GeoObject) mine,
+  ) {
     for (final object in construction.objects) {
       final hidden = !object.attributes.visible;
-      if ((hidden && !showHidden) || !object.isDefined) {
+      if ((hidden && !showHidden) ||
+          !object.isDefined ||
+          object.isInternal ||
+          !mine(object)) {
         continue;
       }
       // A hidden object drawn through [showHidden] dims everything it
@@ -401,19 +493,6 @@ class GeometryPainter extends CustomPainter {
         _drawLabel(canvas, object, text, color);
       }
     }
-
-    _drawLift(screen);
-
-    final dot = Paint()..color = defaultColor;
-    final ring = Paint()
-      ..color = defaultColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-    for (final marker in previewMarkers) {
-      final center = _flat.worldToScreen(marker);
-      canvas.drawDot(center, _markerDotRadius, dot);
-      canvas.drawDot(center, _markerRingRadius, ring);
-    }
   }
 
   /// The translucent fills of the planes (intent 004, milestone 2),
@@ -426,6 +505,7 @@ class GeometryPainter extends CustomPainter {
   /// cross have no right order; hidden surfaces are milestone 3.
   void _drawPlanePatches(Canvas screen, Size size) {
     final patches = <({double depth, Path path, Paint paint})>[];
+    Path? activeOutline;
     for (final object in construction.objects) {
       if (object is! GeoPlane || !object.isDefined) {
         continue;
@@ -452,6 +532,9 @@ class GeometryPainter extends CustomPainter {
         ..addPolygon([
           for (final corner in corners) viewport.spaceToScreen(corner),
         ], true);
+      if (object.id == activePlaneId) {
+        activeOutline = path;
+      }
       patches.add((
         depth: viewport.depthOf((corners[0] + corners[2]) * 0.5),
         path: path,
@@ -463,6 +546,17 @@ class GeometryPainter extends CustomPainter {
     patches.sort((a, b) => a.depth.compareTo(b.depth));
     for (final patch in patches) {
       screen.drawPath(patch.path, patch.paint);
+    }
+    // The active plane says so with its outline: the place the next tap
+    // lands is the one thing about a plane that cannot be left to guess.
+    if (activeOutline != null) {
+      screen.drawPath(
+        activeOutline,
+        Paint()
+          ..color = selectionColor
+          ..strokeWidth = _activePlaneStrokeWidth
+          ..style = PaintingStyle.stroke,
+      );
     }
   }
 
@@ -531,6 +625,7 @@ class GeometryPainter extends CustomPainter {
   }
 
   static const double _liftFootRadius = 3;
+  static const double _activePlaneStrokeWidth = 2.5;
 
   /// The Phase 36 background layer: grid hairlines at every multiple of
   /// the adaptive [gridStep], then 1.5-px axes through the world origin
@@ -1562,6 +1657,7 @@ class GeometryPainter extends CustomPainter {
       oldDelegate.labelDragPreview != labelDragPreview ||
       oldDelegate.showHidden != showHidden ||
       oldDelegate.liftHandleEnabled != liftHandleEnabled ||
+      oldDelegate.activePlaneId != activePlaneId ||
       oldDelegate.showAxes != showAxes ||
       oldDelegate.showGrid != showGrid ||
       oldDelegate.axisColor != axisColor ||

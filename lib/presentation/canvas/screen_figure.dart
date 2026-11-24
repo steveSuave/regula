@@ -138,10 +138,13 @@ class ScreenInk {
 /// `spaceToScreen`.
 ScreenInk screenInkOf(
   Iterable<GeoObject> objects,
-  CanvasViewport viewport,
+  CanvasViewport camera,
   Size canvasSize,
   GeoObject object,
 ) {
+  // An object on a plane's sheet is laid out through that plane's view;
+  // for the base sheet, and for anything with no sheet, this is [camera].
+  final viewport = camera.forObject(object);
   final ink = ScreenInk();
   if (drawnInSpace(object)) {
     _spaceInk(ink, objects, viewport, canvasSize, object);
@@ -266,13 +269,8 @@ ScreenInk screenInkOf(
 /// How much farther an unbounded line must reach in the planar frame to
 /// still cross the canvas once the sheet map has foreshortened it. 1
 /// with no tilt.
-double _reachGain(CanvasViewport viewport) => viewport.isTilted
-    ? 1 /
-          math.max(
-            math.cos(viewport.state.tilt).abs(),
-            CanvasViewport.pickFloor,
-          )
-    : 1;
+double _reachGain(CanvasViewport viewport) =>
+    viewport.isTilted ? 1 / viewport.sheetShrink : 1;
 
 /// The ink of an object with no value in its sheet, from its space
 /// value, with the camera depth at each end so a pointer can tell the

@@ -1,11 +1,15 @@
 import '../commands/add_object_command.dart';
+import '../commands/macro_command.dart';
 import '../construction/geo_object.dart';
 import '../construction/incidence.dart';
+import '../construction/objects/chart_line.dart';
 import '../construction/objects/intersection_point.dart';
 import '../construction/objects/line_plane_intersection_point.dart';
 import '../construction/objects/plane_intersection_line.dart';
+import '../construction/space_incidence.dart';
 import '../math/vec2.dart';
 import '../projective/absolute.dart';
+import 'plane_scope.dart';
 import 'point_coincidence.dart';
 import 'point_resolution.dart';
 import 'tool.dart';
@@ -38,13 +42,18 @@ import 'tool.dart';
 /// both inputs must
 /// be existing curves, so empty-canvas, point and angle taps are ignored.
 /// The first collected curve is haloed via [previewObjectIds].
-class IntersectionTool implements ToolInputPreview {
+class IntersectionTool implements ToolInputPreview, ScopedTool {
   IntersectionTool({required this.newId});
 
   /// Produces a fresh unique object id per call (see `PointTool.newId`).
   final String Function() newId;
 
-  /// A [GeoLine] or [GeoCircle] (enforced in [onInput]).
+  /// It finds the plane two curves meet in by itself, and takes planes:
+  /// it is handed whatever is tapped.
+  @override
+  ToolScope get scope => ToolScope.space;
+
+  /// A [GeoLine], [GeoCircle] or [GeoPlane] (enforced in [onInput]).
   GeoObject? _first;
 
   @override
@@ -98,28 +107,77 @@ class IntersectionTool implements ToolInputPreview {
       _first = null;
       return ToolCommitted(AddObjectCommand(meet));
     }
-    // Two lines of which one has no value in the sheet: they meet, if at
-    // all, in a plane that holds both, and that is found through the
-    // plane (stage C). There are no planar candidates to pick from.
-    if ((first is GeoLine && first.projLine == null) ||
-        (hit is GeoLine && hit.projLine == null)) {
-      return const ToolIgnored();
+    // Two curves on different sheets, or with no sheet: they meet, if
+    // at all, in a plane that holds both — and "holds" is by
+    // construction, so two lines of space that are merely close have no
+    // intersection here, which is what skew lines have. The active plane
+    // is asked first. Each curve is then read in that plane through an
+    // adapter, and from there on this is the planar tool.
+    var curve1 = first;
+    var curve2 = hit;
+    final adapters = <GeoObject>[];
+    // "Different sheets" includes a line that is on the sheet by
+    // structure and off it for now: a base segment with one end lifted.
+    bool inSpace(GeoObject curve) =>
+        curve is GeoLine && curve.projLine == null && curve.spaceLine != null;
+    if (!first.sheet.exists ||
+        first.sheet != hit.sheet ||
+        inSpace(first) ||
+        inSpace(hit)) {
+      final plane = planesHolding(input.objects, [
+        first,
+        hit,
+      ], preferred: input.plane).firstOrNull;
+      if (plane == null) {
+        return const ToolIgnored();
+      }
+      GeoObject? read(GeoObject curve) {
+        if (identical(curve.sheet.plane, plane) && !inSpace(curve)) {
+          return curve;
+        }
+        if (curve is! GeoLine) {
+          return null;
+        }
+        final existing = adapterOf(curve, plane, input.objects);
+        if (existing != null) {
+          return existing;
+        }
+        final adapter = ChartLine(id: newId(), source: curve, plane: plane);
+        adapters.add(adapter);
+        return adapter;
+      }
+
+      final read1 = read(first);
+      final read2 = read(hit);
+      if (read1 == null || read2 == null) {
+        return const ToolIgnored();
+      }
+      curve1 = read1;
+      curve2 = read2;
     }
+    // The tap names a branch only in the coordinates it was read in: the
+    // active plane's. In another plane a line pair has the one crossing
+    // anyway.
+    final sameChart =
+        curve1.sheet ==
+        (input.plane == null ? Sheet.base : Sheet.of(input.plane!));
     final index =
-        nearestIntersectionBranch(
-          first,
-          hit,
-          input.position,
-          absolute: input.absolute,
-        )?.index ??
+        (sameChart
+            ? nearestIntersectionBranch(
+                curve1,
+                curve2,
+                input.position,
+                absolute: input.absolute,
+              )?.index
+            : null) ??
         0;
     // Built before the duplicate check, not after: the constructor puts
     // the pair in canonical order and renumbers the branch onto it, so
     // the candidate's own address is the one to compare against — the tap
     // order it came from is not comparable to anything.
     final candidate = IntersectionPoint(
-      curve1: first,
-      curve2: hit,
+      curve1: curve1,
+      curve2: curve2,
       branchIndex: index,
       id: newId(),
       absolute: input.absolute,
@@ -140,7 +198,14 @@ class IntersectionTool implements ToolInputPreview {
       return const ToolIgnored();
     }
     _first = null;
-    return ToolCommitted(AddObjectCommand(candidate));
+    return ToolCommitted(
+      adapters.isEmpty
+          ? AddObjectCommand(candidate)
+          : MacroCommand([
+              for (final adapter in adapters) AddObjectCommand(adapter),
+              AddObjectCommand(candidate),
+            ]),
+    );
   }
 
   /// Whether a visible point in [objects] already occupies [candidate]'s

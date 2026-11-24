@@ -9,6 +9,8 @@ import '../../domain/construction/objects/area_measurement.dart';
 import '../../domain/construction/objects/bifocal_conic.dart';
 import '../../domain/construction/objects/central_reflection_point.dart';
 import '../../domain/construction/objects/centroid.dart';
+import '../../domain/construction/objects/chart_line.dart';
+import '../../domain/construction/objects/chart_point.dart';
 import '../../domain/construction/objects/circle_center.dart';
 import '../../domain/construction/objects/circle_center_point.dart';
 import '../../domain/construction/objects/circumcenter.dart';
@@ -171,7 +173,13 @@ Map<String, dynamic> encodeDocument(
         if (!kernel.isUnitRadius) 'radius': kernel.radius,
       },
     'objects': [
-      for (final object in construction.objects) _encodeObject(object),
+      for (final object in construction.objects)
+        // An adapter nothing was built on is scaffolding with no building:
+        // it is left out, so a long session's leftovers do not accumulate
+        // in the file (intent 004, milestone 2).
+        if (!(object.isInternal &&
+            construction.transitiveDependentsOf(object.id).isEmpty))
+          _encodeObject(object),
     ],
   };
   document['version'] = requiredFormatVersion(document);
@@ -272,7 +280,18 @@ DecodedDocument decodeDocument(Map<String, dynamic> json) {
       throw const FormatException('Every object must be a JSON object');
     }
     try {
-      construction.add(_decodeObject(entry, construction));
+      final object = _decodeObject(entry, construction);
+      // A planar kind computes in one sheet's coordinates. Parents on
+      // different sheets would hand it numbers from two charts, and it
+      // would compute with them: a document that says so is malformed.
+      // The kinds that need no plane (and the kinds of space) carry
+      // their own value and are exempt.
+      if (!object.sheet.exists && !_needsNoSheet(object)) {
+        throw FormatException(
+          'Object "${object.id}": its parents are not in one plane',
+        );
+      }
+      construction.add(object);
     } on ArgumentError catch (error) {
       // Constructor/graph validation (bad branch index, self-intersection,
       // duplicate id, …) — a malformed file, not a programming error.
@@ -463,6 +482,19 @@ bool _decodeSettingFlag(Map<String, dynamic> json, String key) {
   return value;
 }
 
+/// Whether [object] has a value with no sheet: the kinds of space, and
+/// the five planar kinds that follow their parents there.
+bool _needsNoSheet(GeoObject object) =>
+    object is GeoPlane ||
+    object is PerpendicularToPlaneLine ||
+    object is LinePlaneIntersectionPoint ||
+    object is PlaneIntersectionLine ||
+    object is Segment ||
+    object is Ray ||
+    object is LineThroughTwoPoints ||
+    object is Midpoint ||
+    object is ParallelLine;
+
 /// The object types that exist only in space. A v3 reader refuses an
 /// unknown type outright, so these would be safe at any stamp — but a
 /// document holding one is a space document, and saying so in the
@@ -475,6 +507,8 @@ const Set<String> _spaceTypes = {
   'PerpendicularToPlaneLine',
   'LinePlaneIntersectionPoint',
   'PlaneIntersectionLine',
+  'ChartPoint',
+  'ChartLine',
 };
 
 /// Whether an encoded [document] holds anything a planar reader would
@@ -554,6 +588,8 @@ Map<String, dynamic> _encodeObject(GeoObject object) {
     PerpendicularToPlaneLine() => ('PerpendicularToPlaneLine', const {}),
     LinePlaneIntersectionPoint() => ('LinePlaneIntersectionPoint', const {}),
     PlaneIntersectionLine() => ('PlaneIntersectionLine', const {}),
+    ChartPoint() => ('ChartPoint', const {}),
+    ChartLine() => ('ChartLine', const {}),
     AngleBisectorLine() => ('AngleBisectorLine', const {}),
     PerpendicularBisectorLine() => ('PerpendicularBisectorLine', const {}),
     TwoLineBisectorLine(:final branch) => (
@@ -686,6 +722,9 @@ GeoObject _decodeObject(Map<String, dynamic> json, Construction construction) {
         _doubleParam(id, params, 'y'),
       ),
       height: _optionalDoubleParam(id, params, 'h') ?? 0,
+      // A free point placed in a plane has that plane as its one parent
+      // (intent 004); in the base plane it has none, as it always did.
+      plane: parents.isEmpty ? null : plane(0),
       attributes: attributes,
     ),
     'Midpoint' => Midpoint(
@@ -869,6 +908,18 @@ GeoObject _decodeObject(Map<String, dynamic> json, Construction construction) {
       id: id,
       plane1: plane(0),
       plane2: plane(1),
+      attributes: attributes,
+    ),
+    'ChartPoint' => ChartPoint(
+      id: id,
+      source: point(0),
+      plane: plane(1),
+      attributes: attributes,
+    ),
+    'ChartLine' => ChartLine(
+      id: id,
+      source: line(0),
+      plane: plane(1),
       attributes: attributes,
     ),
     'AngleBisectorLine' => AngleBisectorLine(

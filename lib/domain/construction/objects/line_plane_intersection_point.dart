@@ -2,7 +2,6 @@ import '../../math/vec2.dart';
 import '../../math/vec3.dart';
 import '../../projective/absolute.dart';
 import '../../projective/proj_point.dart';
-import '../../projective/space/plane_frame.dart';
 import '../../projective/space/point3.dart';
 import '../geo_object.dart';
 
@@ -34,7 +33,7 @@ class LinePlaneIntersectionPoint extends GeoPoint {
   Vec2? get position => null;
 
   @override
-  PlaneFrame? get sheetFrame => null;
+  Sheet get sheet => Sheet.none;
 
   @override
   Point3? get spacePoint => _point;

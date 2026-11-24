@@ -2,7 +2,6 @@ import '../../math/line_eq.dart';
 import '../../projective/absolute.dart';
 import '../../projective/proj_line.dart';
 import '../../projective/space/line3.dart';
-import '../../projective/space/plane_frame.dart';
 import '../geo_object.dart';
 
 /// The line two planes share.
@@ -33,7 +32,7 @@ class PlaneIntersectionLine extends GeoLine {
   LineEq? get line => null;
 
   @override
-  PlaneFrame? get sheetFrame => null;
+  Sheet get sheet => Sheet.none;
 
   @override
   Line3? get spaceLine => _line;

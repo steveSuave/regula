@@ -91,6 +91,9 @@ GeoPoint? coincidentExistingPoint(
       if (object is GeoPoint &&
           !identical(object, candidate) &&
           object.attributes.visible &&
+          // Positions are coordinates in a sheet: two points on different
+          // sheets are not compared by them (intent 004).
+          object.sheet == candidate.sheet &&
           (object.position?.distanceTo(position) ?? double.infinity) <=
               _tolerance(position))
         object,

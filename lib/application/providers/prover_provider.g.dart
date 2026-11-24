@@ -149,7 +149,7 @@ final class ProverNotifierProvider
   }
 }
 
-String _$proverNotifierHash() => r'5f4ab899bf29360a46799c706cdf27dc440deeea';
+String _$proverNotifierHash() => r'f960cbcbf37f9fd928130c9a0b493284baba8dcf';
 
 /// Runs the DD prover over the live construction, and holds what it
 /// derived (DECISIONS §M-P4).
