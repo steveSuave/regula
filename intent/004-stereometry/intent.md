@@ -1,6 +1,6 @@
 # Intent: stereometry — construct, cut and measure solids, on a phone
 
-Author: SLevantis, drafted with Claude · Status: draft, awaiting review · 2026-11-17
+Author: SLevantis, drafted with Claude · Status: accepted 2026-11-24 (drafted 2026-11-17)
 
 ## Problem
 
@@ -52,13 +52,24 @@ Each milestone gets its own `spec.md` and `plan.md` under this intent, or its ow
 - Pyramid OABCD, square base of side a, equilateral lateral faces: ∠OAC = 45°, base-to-face dihedral = arctan √2 ≈ 54.7356°, face-to-face dihedral = arccos(−1/3) ≈ 109.4712°, stable under a drag of a base vertex.
 - A cube cut by a plane through three points on its edges: the section polygon, its side count and its area.
 
+## Answered at acceptance (2026-11-24)
+
+- **One finger on empty canvas orbits in 3D view.** Two fingers pan and zoom. In 2D the gesture keeps its present meaning.
+- **Parallel projection only in the first version.** Perspective is optional later; the camera keeps projection as one replaceable step so it can be added without touching the kernel.
+
 ## Open questions
 
-- How exactly does the lift handle work on touch, and how does the user see which plane is active?
-- One finger on empty canvas pans today in 2D. Is switching that to orbit in 3D view acceptable, or confusing?
-- Hidden-edge dashing is straightforward for convex solids. What is the rule for non-convex figures and for edges hidden by a sphere?
-- Branch identity for line ∩ sphere: a pinned ordering rule first; is continuation (as in 2D) needed later?
-- Does tracing run inside a non-base plane's chart in the first version, or only static solves there?
-- Which save-format version carries 3D, and what does an older reader do with it?
-- Perspective projection: optional later, or never?
+Each is carried into the spec of the milestone it belongs to.
+
+- How exactly does the lift handle work on touch, and how does the user see which plane is active? (milestone 2)
+- Hidden-edge dashing is straightforward for convex solids. What is the rule for non-convex figures and for edges hidden by a sphere? (milestones 3 and 5)
+- Branch identity for line ∩ sphere: a pinned ordering rule first; is continuation (as in 2D) needed later? (milestone 5)
+- Does tracing run inside a non-base plane's chart in the first version, or only static solves there? (milestone 2)
+- Which save-format version carries 3D, and what does an older reader do with it? (milestone 2; milestone 1 saves nothing new)
 - The unmerged branch `m-3d-planning` holds an earlier decision record (Phases 190–196). It is input only. It excluded line ∩ line in space, deferred off-plane free points, and used alt-scroll for the camera; this intent reverses all three.
+
+## Milestone documents
+
+| Milestone | Spec | Plan |
+|---|---|---|
+| 1. 3D view and camera | [spec](m1-camera/spec.md) | [plan](m1-camera/plan.md) |
