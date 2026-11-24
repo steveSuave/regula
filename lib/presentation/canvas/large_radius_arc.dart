@@ -39,12 +39,28 @@ const int maxArcSegments = 4096;
   required double radius,
   required Size size,
   required double margin,
+}) => visibleAngularWindowIn(
+  center: center,
+  radius: radius,
+  frame: Offset.zero & size,
+  margin: margin,
+);
+
+/// [visibleAngularWindow] for a canvas region that does not start at the
+/// origin: the painter's planar frame under a tilted camera (intent 004),
+/// which is the canvas pulled back through the sheet map. For
+/// `Offset.zero & size` the arithmetic is the same to the bit.
+({double center, double halfWidth})? visibleAngularWindowIn({
+  required Offset center,
+  required double radius,
+  required Rect frame,
+  required double margin,
 }) {
-  final viewCenter = size.center(Offset.zero);
+  final viewCenter = frame.center;
   final toView = viewCenter - center;
   final dist = toView.distance;
   // Half-diagonal of the canvas, padded: the canvas's bounding circle.
-  final reach = viewCenter.distance + margin;
+  final reach = (viewCenter - frame.topLeft).distance + margin;
   if ((dist - radius).abs() > reach) {
     return null;
   }

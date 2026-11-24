@@ -346,6 +346,67 @@ void main() {
       expect(bounds.max, const Vec2(4, 2));
     });
   });
+  // Intent 004, milestone 1.
+  group('fit under a tilted camera', () {
+    const size = Size(800, 600);
+
+    List<GeoObject> square() => [
+      FreePoint(id: 'a', position: const Vec2(0, 0)),
+      FreePoint(id: 'b', position: const Vec2(100, 0)),
+      FreePoint(id: 'c', position: const Vec2(100, 100)),
+      FreePoint(id: 'd', position: const Vec2(0, 100)),
+    ];
+
+    test('tilt 0 is the planar fit, to the bit', () {
+      for (final rotation in [0.0, 0.7]) {
+        expect(
+          fittedViewport(square(), size, rotation: rotation, tilt: 0),
+          fittedViewport(square(), size, rotation: rotation),
+        );
+      }
+    });
+
+    test('every object lands inside the canvas margin at any camera', () {
+      for (final rotation in [0.0, 0.7, -2.0]) {
+        for (final tilt in [0.4, math.pi / 3, 1.5, math.pi / 2, 2.6]) {
+          final state = fittedViewport(
+            square(),
+            size,
+            rotation: rotation,
+            tilt: tilt,
+          )!;
+          expect(state.tilt, tilt);
+          expect(state.rotation, rotation);
+          final viewport = CanvasViewport(state);
+          for (final object in square()) {
+            final screen = viewport.worldToScreen(
+              (object as FreePoint).position,
+            );
+            expect(
+              screen.dx,
+              inInclusiveRange(fitMarginPx - 1e-6, 800 - fitMarginPx + 1e-6),
+              reason: 'rotation $rotation tilt $tilt',
+            );
+            expect(
+              screen.dy,
+              inInclusiveRange(fitMarginPx - 1e-6, 600 - fitMarginPx + 1e-6),
+              reason: 'rotation $rotation tilt $tilt',
+            );
+          }
+        }
+      }
+    });
+
+    test('a foreshortened figure is fitted larger than the flat one', () {
+      // Flat, the square is bound by the canvas height; at 60° it is
+      // half as tall on screen, so the width binds and the scale grows.
+      final flat = fittedViewport(square(), size)!;
+      final tilted = fittedViewport(square(), size, tilt: math.pi / 3)!;
+      expect(tilted.scale, greaterThan(flat.scale));
+      final centre = CanvasViewport(tilted).worldToScreen(const Vec2(50, 50));
+      expect((centre - const Offset(400, 300)).distance, lessThan(1e-6));
+    });
+  });
 }
 
 /// A [GeoLocus] with hand-picked samples and core samples (cf. the

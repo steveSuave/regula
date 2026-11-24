@@ -82,13 +82,18 @@ Document and workspace:
 - **Object tree, attributes inspector, and keyboard shortcuts**
 - **Save/load** to `.rgl` (versioned JSON, with migrations for older documents) and
   **PNG export**
+- **3D view** — the cube button in the app bar unlocks the camera, so any
+  document can be turned around in space: one finger (or a drag on empty canvas)
+  orbits, two fingers pan and zoom, and a Views menu offers top, front, side and
+  oblique. Everything else works as before on the tilted figure. It is the first
+  step of stereometry: the figure is still planar
 - **Light/dark theme**
 
 Also built in, as an experimental feature that is off by default: a JGEX-style
 deductive-database theorem prover whose proofs replay step by step on the figure.
 Open it from the geometry menu (the globe): **Experimental → Prover**, which
-shows its panel. Next is stereometry; see
-`intent/README.md`.
+shows its panel. Stereometry is in progress (points, planes and solids in space
+come next); see `intent/README.md`.
 
 ## Non-goals
 

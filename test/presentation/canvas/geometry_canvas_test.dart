@@ -8,6 +8,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:regula/application/providers/command_stack_provider.dart';
 import 'package:regula/application/providers/construction_provider.dart';
 import 'package:regula/application/providers/selection_provider.dart';
+import 'package:regula/application/providers/space_view_provider.dart';
 import 'package:regula/application/providers/tool_provider.dart';
 import 'package:regula/application/providers/viewport_provider.dart';
 import 'package:regula/domain/commands/set_geometry_command.dart';
@@ -2982,6 +2983,255 @@ void main() {
         'b',
       }, reason: 'the active tool owns the tap; no selection clear');
       expect(container.read(commandStackProvider).canUndo, isFalse);
+    });
+  });
+
+  // Intent 004, milestone 1: gestures in the space view.
+  group('the space view', () {
+    /// Two free points at world (100, −100) and (300, −200), placed in
+    /// the planar view, with no tool left active.
+    Future<Offset> pumpWithTwoPoints(WidgetTester tester) async {
+      await pumpEditor(tester);
+      final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+      await tester.tap(find.byIcon(Icons.control_point));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Point'));
+      await tester.pumpAndSettle();
+      await tester.tapAt(origin + const Offset(100, 100));
+      await tester.pump();
+      await tester.tapAt(origin + const Offset(300, 200));
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pump();
+      return origin;
+    }
+
+    Future<void> pickPointTool(WidgetTester tester) async {
+      await tester.tap(find.byIcon(Icons.control_point));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Point'));
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> enter(WidgetTester tester, ViewportState viewport) async {
+      container.read(spaceViewProvider.notifier).set(true);
+      container.read(viewportProvider.notifier).set(viewport);
+      await tester.pump();
+    }
+
+    CanvasViewport camera() => CanvasViewport(container.read(viewportProvider));
+
+    List<FreePoint> points() => container
+        .read(constructionProvider)
+        .construction
+        .objects
+        .whereType<FreePoint>()
+        .toList();
+
+    const figureCentre = (x: 200.0, y: -150.0, z: 0.0);
+
+    testWidgets('off, a drag on empty canvas leaves the camera alone', (
+      tester,
+    ) async {
+      final origin = await pumpWithTwoPoints(tester);
+      final drag = await tester.startGesture(origin + const Offset(500, 400));
+      await drag.moveBy(const Offset(40, -30));
+      await drag.moveBy(const Offset(40, -30));
+      await tester.pump();
+      await drag.up();
+      await tester.pump();
+      expect(container.read(viewportProvider), const ViewportState());
+    });
+
+    testWidgets('on, the same drag turns the camera about the figure and '
+        'opens no band', (tester) async {
+      final origin = await pumpWithTwoPoints(tester);
+      await enter(tester, const ViewportState(tilt: 1.0));
+      final before = camera().spaceToScreen(figureCentre);
+
+      // Up-left across both points: as a band this would select them.
+      final drag = await tester.startGesture(origin + const Offset(500, 400));
+      await drag.moveBy(const Offset(-200, -150));
+      await drag.moveBy(const Offset(-260, -230));
+      await tester.pump();
+
+      final turned = camera();
+      expect(
+        turned.state.rotation,
+        closeTo(-460 * GeometryCanvas.orbitRadiansPerPixel, 1e-9),
+        reason: 'the turn is measured from where the finger went down',
+      );
+      expect(turned.state.tilt, math.pi, reason: 'clamped at straight up');
+      final after = turned.spaceToScreen(figureCentre);
+      expect((after - before).distance, lessThan(1e-6));
+
+      await drag.up();
+      await tester.pump();
+      expect(container.read(selectionProvider), isEmpty);
+      expect(objectCount(), 2);
+      expect(container.read(commandStackProvider).canUndo, isTrue);
+    });
+
+    testWidgets('a small orbit changes both angles by half a degree a '
+        'pixel', (tester) async {
+      final origin = await pumpWithTwoPoints(tester);
+      await enter(tester, const ViewportState(tilt: 1.0));
+      final drag = await tester.startGesture(origin + const Offset(500, 400));
+      await drag.moveBy(const Offset(30, 20));
+      await drag.moveBy(const Offset(30, 20));
+      await tester.pump();
+      expect(camera().state.rotation, closeTo(math.pi / 6, 1e-9));
+      expect(camera().state.tilt, closeTo(1.0 - math.pi * 40 / 360, 1e-9));
+      await drag.up();
+      await tester.pump();
+    });
+
+    testWidgets('with a tool active a drag orbits, and a tap lands under '
+        'the finger', (tester) async {
+      final origin = await pumpWithTwoPoints(tester);
+      await enter(tester, const ViewportState(rotation: 0.3, tilt: 0.9));
+      await pickPointTool(tester);
+
+      // Starting on a point: with a tool active no drag moves an object.
+      final start = camera().worldToScreen(const Vec2(100, -100));
+      final drag = await tester.startGesture(origin + start);
+      await drag.moveBy(const Offset(30, 0));
+      await drag.moveBy(const Offset(30, 0));
+      await tester.pump();
+      await drag.up();
+      await tester.pump();
+      expect(camera().state.rotation, closeTo(0.3 + math.pi / 6, 1e-9));
+      expect(points()[0].position, const Vec2(100, -100));
+      expect(objectCount(), 2);
+
+      const tap = Offset(420, 310);
+      await tester.tapAt(origin + tap);
+      await tester.pump();
+      expect(objectCount(), 3);
+      final placed = camera().worldToScreen(points().last.position);
+      expect((placed - tap).distance, lessThan(1e-6));
+    });
+
+    testWidgets('a dragged point stays under the finger: one command, one '
+        'undo', (tester) async {
+      final origin = await pumpWithTwoPoints(tester);
+      await enter(tester, const ViewportState(rotation: -0.4, tilt: 1.0));
+      final viewport = camera();
+      final grab = viewport.worldToScreen(const Vec2(100, -100));
+      const drop = Offset(450, 330);
+
+      final drag = await tester.startGesture(origin + grab);
+      await drag.moveTo(origin + const Offset(300, 250));
+      await drag.moveTo(origin + drop);
+      await tester.pump();
+      await drag.up();
+      await tester.pump();
+
+      expect(container.read(viewportProvider), viewport.state);
+      final moved = viewport.worldToScreen(points()[0].position);
+      expect((moved - drop).distance, lessThan(1e-6));
+
+      await tester.tap(find.byIcon(Icons.undo));
+      await tester.pump();
+      expect(points()[0].position, const Vec2(100, -100));
+    });
+
+    testWidgets('a tap selects through the tilt', (tester) async {
+      final origin = await pumpWithTwoPoints(tester);
+      await enter(tester, const ViewportState(tilt: 1.2));
+      final second = points()[1];
+      await tester.tapAt(origin + camera().worldToScreen(second.position));
+      await tester.pump();
+      expect(container.read(selectionProvider), {second.id});
+    });
+
+    testWidgets('near edge-on nothing on the plane is placed, selected or '
+        'moved', (tester) async {
+      final origin = await pumpWithTwoPoints(tester);
+      await enter(tester, const ViewportState(tilt: 1.55));
+      expect(camera().basePlanePickable, isFalse);
+      final onPoint = camera().worldToScreen(const Vec2(100, -100));
+
+      await tester.tapAt(origin + onPoint);
+      await tester.pump();
+      expect(container.read(selectionProvider), isEmpty);
+
+      await pickPointTool(tester);
+      await tester.tapAt(origin + const Offset(400, 300));
+      await tester.pump();
+      expect(objectCount(), 2);
+      container.read(toolProvider.notifier).deactivate();
+      await tester.pump();
+
+      // A drag that starts on the point turns the camera instead.
+      final drag = await tester.startGesture(origin + onPoint);
+      await drag.moveBy(const Offset(30, 0));
+      await drag.moveBy(const Offset(30, 0));
+      await tester.pump();
+      await drag.up();
+      await tester.pump();
+      expect(points()[0].position, const Vec2(100, -100));
+      expect(camera().state.rotation, closeTo(math.pi / 6, 1e-9));
+    });
+
+    for (final tilt in [math.pi / 3, math.pi / 2]) {
+      testWidgets('two fingers pan the picture at tilt '
+          '${(tilt * 180 / math.pi).round()}°', (tester) async {
+        final origin = await pumpWithTwoPoints(tester);
+        await enter(tester, ViewportState(tilt: tilt));
+        final centre = tester.getCenter(find.byType(GeometryCanvas));
+        // What sits between the fingers: defined at any tilt, edge-on
+        // included, where it is no longer a point of the base plane.
+        final under = camera().spaceUnder(centre - origin);
+
+        final g1 = await tester.createGesture();
+        await g1.down(centre - const Offset(40, 0));
+        final g2 = await tester.createGesture();
+        await g2.down(centre + const Offset(40, 0));
+        await tester.pump();
+        for (var step = 0; step < 10; step++) {
+          await g1.moveBy(const Offset(8, 6));
+          await g2.moveBy(const Offset(8, 6));
+          await tester.pump();
+        }
+        await g1.up();
+        await g2.up();
+        await tester.pump();
+
+        final after = camera();
+        expect(after.state.tilt, tilt);
+        // The fingers move one after the other, so the recognizer's
+        // baseline catches them a step apart and reads a slight pinch.
+        expect(after.state.scale, closeTo(1, 0.15));
+        // The baseline is taken where the recognizer's slop ran out, so
+        // the picture trails the fingers by at most that much.
+        final shift = after.spaceToScreen(under) - (centre - origin);
+        expect((shift - const Offset(80, 60)).distance, lessThan(25));
+      });
+    }
+
+    testWidgets('an orbit that ends almost level lands exactly level', (
+      tester,
+    ) async {
+      final origin = await pumpWithTwoPoints(tester);
+      await enter(tester, const ViewportState(tilt: 0.5));
+      // 55 px down is 27.5°: from 28.6° of tilt to about 1.1°.
+      final drag = await tester.startGesture(origin + const Offset(500, 300));
+      await drag.moveBy(const Offset(0, 30));
+      await drag.moveBy(const Offset(0, 25));
+      await tester.pump();
+      expect(camera().state.tilt, closeTo(0.5 - 55 * math.pi / 360, 1e-9));
+      final before = camera().spaceToScreen(figureCentre);
+      await drag.up();
+      await tester.pump();
+
+      expect(camera().state.tilt, 0);
+      expect(camera().state.panZ, 0);
+      expect(camera().isTilted, isFalse);
+      expect(
+        (camera().spaceToScreen(figureCentre) - before).distance,
+        lessThan(1e-6),
+      );
     });
   });
 }

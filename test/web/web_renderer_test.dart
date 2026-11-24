@@ -5,7 +5,10 @@ import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:regula/application/providers/viewport_provider.dart';
+import 'package:regula/presentation/canvas/canvas_viewport.dart';
 import 'package:regula/presentation/canvas/geometry_painter.dart';
+import 'package:regula/presentation/canvas/sheet_canvas.dart';
 
 /// Phase 126d: the handful of things whose answer differs between the VM
 /// harness and the renderer the app actually ships on.
@@ -74,6 +77,97 @@ void main() {
             'web path-ops difference leaves no hole for a contained '
             'shape; if this now fails the engine has been fixed',
       );
+    });
+  });
+
+  // Intent 004, milestone 1. The space view draws a circle by handing
+  // the renderer an oval path through an affine `Path.transform`, and
+  // dashes it by walking that transformed path's metrics. Both steps are
+  // the renderer's arithmetic, not ours, so they are checked here on the
+  // renderer the app ships on, by the pixels it produces.
+  group('a circle on a tilted sheet', () {
+    const tilt = 1.0;
+    const viewport = CanvasViewport(ViewportState(tilt: tilt));
+    final squash = math.cos(tilt);
+    const centre = Offset(200, 200);
+    const radius = 100.0;
+    const ink = Color(0xFFFF0000);
+
+    Future<bool Function(Offset)> inked(
+      void Function(SheetCanvas sheet, Paint paint) draw,
+    ) async {
+      final recorder = PictureRecorder();
+      final canvas = Canvas(recorder);
+      draw(
+        SheetCanvas(canvas, viewport),
+        Paint()
+          ..color = ink
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 4
+          ..isAntiAlias = false,
+      );
+      final picture = recorder.endRecording();
+      final image = await picture.toImage(
+        size.width.round(),
+        size.height.round(),
+      );
+      final data = (await image.toByteData())!;
+      picture.dispose();
+      image.dispose();
+      return (Offset at) {
+        final offset = (at.dy.round() * size.width.round() + at.dx.round()) * 4;
+        return data.getUint8(offset) > 200 && data.getUint8(offset + 3) > 200;
+      };
+    }
+
+    /// Where the rim point at flat angle [t] lands on screen.
+    Offset rim(double t) => viewport.sheetToScreen(
+      centre + Offset(math.cos(t), math.sin(t)) * radius,
+    );
+
+    test('its rim is the ellipse the sheet map says, at full stroke '
+        'width', () async {
+      final isInk = await inked(
+        (sheet, paint) => sheet.drawCircle(centre, radius, paint),
+      );
+      for (var i = 0; i < 16; i++) {
+        expect(isInk(rim(i * math.pi / 8)), isTrue, reason: 'rim @$i');
+      }
+      final mapped = viewport.sheetToScreen(centre);
+      expect(isInk(mapped), isFalse, reason: 'the centre is not stroked');
+      // Where an unsquashed circle's top and bottom would have been.
+      expect(isInk(mapped - const Offset(0, radius)), isFalse);
+      expect(isInk(mapped + const Offset(0, radius - 20)), isFalse);
+      // The stroke is 4 px wide across the squashed top as well: a
+      // transformed *canvas* would have thinned it to 4·cos(tilt) ≈ 2.
+      final top = rim(-math.pi / 2);
+      expect(top.dy, closeTo(200 * squash - 100 * squash, 1e-9));
+      expect(isInk(top + const Offset(0, 1.4)), isTrue);
+      expect(isInk(top - const Offset(0, 1.4)), isTrue);
+      expect(isInk(top + const Offset(0, 4)), isFalse);
+    });
+
+    test('dashed, about half of that ellipse is inked, in runs', () async {
+      final isInk = await inked(
+        (sheet, paint) => sheet.drawPath(
+          Path()..addOval(Rect.fromCircle(center: centre, radius: radius)),
+          paint,
+          dashPeriod: 40,
+        ),
+      );
+      const samples = 720;
+      var inkedSamples = 0;
+      var runs = 0;
+      var previous = isInk(rim(-2 * math.pi / samples));
+      for (var i = 0; i < samples; i++) {
+        final now = isInk(rim(i * 2 * math.pi / samples));
+        if (now) inkedSamples += 1;
+        if (now && !previous) runs += 1;
+        previous = now;
+      }
+      expect(inkedSamples / samples, inInclusiveRange(0.35, 0.65));
+      // The squashed rim is about 480 px round: a dozen 40-px periods.
+      expect(runs, inInclusiveRange(9, 15));
     });
   });
 }

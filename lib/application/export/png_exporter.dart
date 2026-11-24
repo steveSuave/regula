@@ -26,11 +26,22 @@ ExportFraming currentViewFraming(ViewportState viewport, ui.Size canvasSize) =>
 /// Frames every visible object centered with the standard fit margin,
 /// like the app bar's Fit button. Null when nothing is visible to frame
 /// (callers fall back to [currentViewFraming]).
+///
+/// [rotation] and [tilt] are the space view's camera (intent 004), so a
+/// turned figure exports turned; the planar caller leaves both at 0 and
+/// gets the level plan it always got.
 ExportFraming? fitConstructionFraming(
   Iterable<GeoObject> objects,
-  ui.Size canvasSize,
-) {
-  final fitted = fittedViewport(objects, canvasSize);
+  ui.Size canvasSize, {
+  double rotation = 0,
+  double tilt = 0,
+}) {
+  final fitted = fittedViewport(
+    objects,
+    canvasSize,
+    rotation: rotation,
+    tilt: tilt,
+  );
   if (fitted == null) {
     return null;
   }
@@ -43,6 +54,15 @@ ExportFraming? fitConstructionFraming(
 /// exactly what exports, at the angle the user sees it.
 ExportFraming regionFraming(ViewportState viewport, ui.Rect region) {
   final transform = CanvasViewport(viewport);
+  if (transform.isTilted) {
+    // The same move in space: what is at the region's corner goes to
+    // the output origin. Total edge-on, where the corner is not over a
+    // point of the base plane at all.
+    return (
+      viewport: transform.pannedByScreen(-region.topLeft),
+      logicalSize: region.size,
+    );
+  }
   return (
     viewport: ViewportState(
       pan: transform.screenToWorld(region.topLeft),

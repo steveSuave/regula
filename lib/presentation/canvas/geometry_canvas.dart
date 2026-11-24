@@ -12,6 +12,7 @@ import '../../application/providers/document_settings_provider.dart';
 import '../../application/providers/proof_highlight_provider.dart';
 import '../../application/providers/question_draft_provider.dart';
 import '../../application/providers/selection_provider.dart';
+import '../../application/providers/space_view_provider.dart';
 import '../../application/providers/tool_provider.dart';
 import '../../application/providers/viewport_provider.dart';
 import '../../domain/commands/change_attributes_command.dart';
@@ -32,6 +33,7 @@ import 'canvas_viewport.dart';
 import 'geometry_painter.dart';
 import 'grid_layout.dart';
 import 'label_layout.dart';
+import 'space_view.dart';
 import 'twist_gate.dart';
 
 /// The drawing surface: hosts the [GeometryPainter] and turns taps into
@@ -48,6 +50,13 @@ import 'twist_gate.dart';
 /// gesture navigates the viewport it stays navigation until every
 /// pointer lifts, so lifting one pinch finger keeps panning instead of
 /// suddenly rubber-banding.
+///
+/// In the **space view** (intent 004) the one-pointer drag that would
+/// open the rubber band, or that an active tool would ignore, turns the
+/// camera about the figure instead: horizontal travel is the azimuth,
+/// vertical travel the tilt. Taps and object drags resolve on the base
+/// plane under the pointer, and do nothing while that plane is too close
+/// to edge-on to be picked.
 class GeometryCanvas extends ConsumerStatefulWidget {
   const GeometryCanvas({super.key});
 
@@ -89,6 +98,10 @@ class GeometryCanvas extends ConsumerStatefulWidget {
   /// rotate, the view settles (normalize, and snap level when within
   /// [TwistGate.snapThreshold]).
   static const Duration wheelRotateSettleDelay = Duration(milliseconds: 250);
+
+  /// Camera turn per logical pixel of an orbit drag: half a degree, so a
+  /// thumb's travel across a phone (≈ 360 px) is a half turn.
+  static const double orbitRadiansPerPixel = math.pi / 360;
 
   @override
   ConsumerState<GeometryCanvas> createState() => _GeometryCanvasState();
@@ -169,6 +182,10 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
   /// local widget state — the construction is untouched until the one
   /// [ChangeAttributesCommand] commits on release (cancel just drops it).
   _LabelDrag? _labelDrag;
+
+  /// In-progress orbit of the space view's camera; null when none.
+  /// Computed from the baseline each frame, like [_nav].
+  _OrbitBaseline? _orbit;
 
   @override
   Widget build(BuildContext context) {
@@ -295,17 +312,20 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
             // counterclockwise, mirroring scroll-up-zooms-in. (Shift
             // can't be the modifier: browsers turn Shift+wheel into
             // horizontal deltas.)
+            final under = viewport.spaceUnder(scroll.localPosition);
             ref
                 .read(viewportProvider.notifier)
                 .set(
                   CanvasViewport.pinning(
-                    world: viewport.screenToWorld(scroll.localPosition),
+                    world: Vec2(under.x, under.y),
+                    worldZ: under.z,
                     focal: scroll.localPosition,
                     scale: viewport.state.scale,
                     rotation:
                         viewport.state.rotation -
                         scroll.scrollDelta.dy *
                             GeometryCanvas.scrollRotatePerPixel,
+                    tilt: viewport.state.tilt,
                   ),
                 );
             _scheduleWheelRotateSettle(scroll.localPosition);
@@ -393,7 +413,8 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
       _nav = _NavBaseline(
         startScale: current.state.scale,
         startRotation: current.state.rotation,
-        fixedWorld: current.screenToWorld(details.localFocalPoint),
+        startTilt: current.state.tilt,
+        fixedWorld: current.spaceUnder(details.localFocalPoint),
         // Twist mounts for gestures that carry real rotation data:
         // touch (Phase 43) and native trackpad pan-zoom (Phase 43b —
         // macOS folds the trackpad rotate gesture into PointerPanZoom).
@@ -427,11 +448,13 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
         .read(viewportProvider.notifier)
         .set(
           CanvasViewport.pinning(
-            world: nav.fixedWorld,
+            world: Vec2(nav.fixedWorld.x, nav.fixedWorld.y),
+            worldZ: nav.fixedWorld.z,
             focal: details.localFocalPoint,
             scale: nav.startScale * details.scale,
             rotation:
                 nav.startRotation - (nav.twist?.applied(details.rotation) ?? 0),
+            tilt: nav.startTilt,
           ),
         );
   }
@@ -469,6 +492,18 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
       return;
     }
     final viewport = CanvasViewport(current);
+    if (viewport.isTilted) {
+      ref
+          .read(viewportProvider.notifier)
+          .set(
+            viewport.orbitedAbout(
+              viewport.spaceUnder(focal ?? Offset.zero),
+              rotation: settled,
+              tilt: current.tilt,
+            ),
+          );
+      return;
+    }
     ref
         .read(viewportProvider.notifier)
         .set(
@@ -491,11 +526,20 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
   /// starting over an object moves it (the drag session lives in
   /// `toolProvider`), starting over empty canvas opens a rubber band.
   /// With a tool active the pan is ignored.
+  ///
+  /// In the space view the two exits that do nothing useful to a turned
+  /// figure — the ignored pan and the rubber band — start an orbit.
   void _panStart(CanvasViewport viewport, Offset screen) {
+    final spaceView = ref.read(spaceViewProvider);
     if (ref.read(toolProvider).tool != null) {
+      if (spaceView) {
+        _startOrbit(screen);
+      }
       return;
     }
-    final world = viewport.screenToWorld(screen);
+    // Null while the base plane is too close to edge-on to pick: then
+    // nothing on it can be grabbed, and the drag falls through to orbit.
+    final world = viewport.pickBasePlane(screen);
     final construction = ref.read(constructionProvider).construction;
     // Labels first — a label deliberately floats *off* its geometry, so
     // the geometry hit test below can never reach it. Reverse insertion
@@ -512,7 +556,9 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
       // caption offset — captions ride another object's anchor, a text
       // owns its own.
       if (object is GeoText) {
-        ref.read(toolProvider.notifier).startDrag(object, world);
+        if (world != null) {
+          ref.read(toolProvider.notifier).startDrag(object, world);
+        }
         return;
       }
       setState(() {
@@ -527,20 +573,24 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
       });
       return;
     }
-    final hit = const CanvasHitTester().hitTest(
-      construction.objects,
-      world,
-      viewport.screenToWorldLength(
-        GeometryCanvas.hitThresholdFor(_firstDownKind),
-      ),
-      worldPerPx: viewport.screenToWorldLength(1),
-    );
+    final hit = world == null
+        ? null
+        : const CanvasHitTester().hitTest(
+            construction.objects,
+            world,
+            viewport.hitRadius(GeometryCanvas.hitThresholdFor(_firstDownKind)),
+            worldPerPx: viewport.screenToWorldLength(1),
+          );
     if (hit != null) {
       // May refuse (derived point): then the pan does nothing — starting
       // a band under an object the user visibly grabbed would surprise.
       ref
           .read(toolProvider.notifier)
-          .startDrag(hit, world, gridSnapStep: _gridSnapStep(viewport));
+          .startDrag(hit, world!, gridSnapStep: _gridSnapStep(viewport));
+      return;
+    }
+    if (spaceView) {
+      _startOrbit(screen);
       return;
     }
     setState(() {
@@ -549,7 +599,42 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
     });
   }
 
+  /// Opens an orbit at [screen] about the figure's centre, from the
+  /// camera as it stands.
+  void _startOrbit(Offset screen) {
+    _wheelRotateSettle?.cancel();
+    final current = CanvasViewport(ref.read(viewportProvider));
+    _orbit = _OrbitBaseline(
+      start: screen,
+      camera: current,
+      pivot: figurePivot(ref.read(constructionProvider).construction.objects),
+    );
+  }
+
   void _panUpdate(CanvasViewport viewport, Offset screen) {
+    final orbit = _orbit;
+    if (orbit != null) {
+      // Dragging right carries the near side of the figure right, which
+      // seen from above is a counterclockwise turn; dragging down brings
+      // the top toward the viewer, a camera climbing to look from above.
+      final travel = screen - orbit.start;
+      ref
+          .read(viewportProvider.notifier)
+          .set(
+            orbit.camera.orbitedAbout(
+              orbit.pivot,
+              rotation:
+                  orbit.camera.state.rotation +
+                  travel.dx * GeometryCanvas.orbitRadiansPerPixel,
+              tilt:
+                  (orbit.camera.state.tilt -
+                          travel.dy * GeometryCanvas.orbitRadiansPerPixel)
+                      .clamp(0.0, math.pi)
+                      .toDouble(),
+            ),
+          );
+      return;
+    }
     final labelDrag = _labelDrag;
     if (labelDrag != null) {
       setState(() => _labelDrag = labelDrag.movedTo(screen));
@@ -563,7 +648,38 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
     ref.read(toolProvider.notifier).updateDrag(viewport.screenToWorld(screen));
   }
 
+  /// End-of-orbit settle: the azimuth as a twist settles it, and a tilt
+  /// within the same threshold of straight down, edge-on or straight up
+  /// lands exactly there — so "back to the plan view" is reachable by
+  /// hand, and a tilt of 1e-3 never leaves the planar painter switched
+  /// off for a picture indistinguishable from it.
+  void _settleOrbit(_OrbitBaseline orbit) {
+    final current = ref.read(viewportProvider);
+    var tilt = current.tilt;
+    for (final rest in const [0.0, math.pi / 2, math.pi]) {
+      if ((tilt - rest).abs() <= TwistGate.snapThreshold) {
+        tilt = rest;
+      }
+    }
+    final rotation = TwistGate.settled(current.rotation);
+    if (tilt == current.tilt && rotation == current.rotation) {
+      return;
+    }
+    ref
+        .read(viewportProvider.notifier)
+        .set(
+          CanvasViewport(current)
+              .orbitedAbout(orbit.pivot, rotation: rotation, tilt: tilt),
+        );
+  }
+
   void _panEnd(CanvasViewport viewport) {
+    final orbit = _orbit;
+    if (orbit != null) {
+      _orbit = null;
+      _settleOrbit(orbit);
+      return;
+    }
     final labelDrag = _labelDrag;
     if (labelDrag != null) {
       setState(() => _labelDrag = null);
@@ -621,6 +737,9 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
   }
 
   void _panCancel() {
+    // An interrupted orbit keeps the camera where it got to, like an
+    // interrupted pinch: it is view state, and there is nothing to undo.
+    _orbit = null;
     ref.read(toolProvider.notifier).cancelDrag();
     setState(() {
       _band = null;
@@ -638,13 +757,15 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
   /// before dragging toggles instead of starting the object drag / band —
   /// drags that begin moving within the timeout are unaffected.
   void _handleLongPress(CanvasViewport viewport, Offset screen) {
+    final world = viewport.pickBasePlane(screen);
+    if (world == null) {
+      return;
+    }
     final construction = ref.read(constructionProvider).construction;
     final hit = const CanvasHitTester().hitTest(
       construction.objects,
-      viewport.screenToWorld(screen),
-      viewport.screenToWorldLength(
-        GeometryCanvas.hitThresholdFor(_firstDownKind),
-      ),
+      world,
+      viewport.hitRadius(GeometryCanvas.hitThresholdFor(_firstDownKind)),
       worldPerPx: viewport.screenToWorldLength(1),
     );
     if (hit == null) {
@@ -742,14 +863,17 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
     Offset screen,
     PointerDeviceKind? kind,
   ) {
-    final world = viewport.screenToWorld(screen);
+    // The base plane seen too close to edge-on cannot be picked: a tap
+    // there would land tens of canvas widths away, so it lands nowhere.
+    final world = viewport.pickBasePlane(screen);
+    if (world == null) {
+      return;
+    }
     // Read (not the build-time capture): the construction mutates between
     // rebuilds, and the hit test must see the tap-time state.
     final construction = ref.read(constructionProvider).construction;
     final tool = ref.read(toolProvider).tool;
-    final threshold = viewport.screenToWorldLength(
-      GeometryCanvas.hitThresholdFor(kind),
-    );
+    final threshold = viewport.hitRadius(GeometryCanvas.hitThresholdFor(kind));
     final hits = const CanvasHitTester().hitTestAll(
       construction.objects,
       world,
@@ -872,15 +996,31 @@ class _NavBaseline {
   _NavBaseline({
     required this.startScale,
     required this.startRotation,
+    required this.startTilt,
     required this.fixedWorld,
     this.twist,
   });
 
   final double startScale;
   final double startRotation;
-  final Vec2 fixedWorld;
+  final double startTilt;
+  final SpacePoint fixedWorld;
   final TwistGate? twist;
   Offset? lastFocal;
+}
+
+/// Reference frame of one orbit: where the pointer went down, the camera
+/// as it stood, and the point it turns about.
+class _OrbitBaseline {
+  const _OrbitBaseline({
+    required this.start,
+    required this.camera,
+    required this.pivot,
+  });
+
+  final Offset start;
+  final CanvasViewport camera;
+  final SpacePoint pivot;
 }
 
 /// The in-progress rubber band: a hairline outline over a translucent

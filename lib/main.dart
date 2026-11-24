@@ -18,6 +18,7 @@ import 'application/providers/preferences_provider.dart';
 import 'application/providers/prover_provider.dart';
 import 'application/providers/question_draft_provider.dart';
 import 'application/providers/selection_provider.dart';
+import 'application/providers/space_view_provider.dart';
 import 'application/providers/theme_provider.dart';
 import 'application/providers/tool_provider.dart';
 import 'application/providers/viewport_provider.dart';
@@ -89,6 +90,7 @@ import 'presentation/canvas/label_declutter.dart';
 import 'presentation/canvas/label_obstacles.dart';
 import 'presentation/canvas/name_points_hint.dart';
 import 'presentation/canvas/region_pick_overlay.dart';
+import 'presentation/canvas/space_view.dart';
 import 'presentation/canvas/trace_stats_overlay.dart';
 import 'presentation/canvas/twist_gate.dart';
 import 'presentation/panels/attributes_inspector.dart';
@@ -291,6 +293,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
       }
     }
     ref.read(constructionProvider.notifier).replace(Construction());
+    // A new document starts as the planar figure it is (intent 004).
+    ref.read(spaceViewProvider.notifier).set(false);
     ref.read(viewportProvider.notifier).set(_centeredViewport());
     ref.read(documentSettingsProvider.notifier).reset();
     // The prover's held engine is about the document that just went
@@ -307,6 +311,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         return;
       }
       ref.read(constructionProvider.notifier).replace(decoded.construction);
+      // The file carries no camera: it opens in the planar view.
+      ref.read(spaceViewProvider.notifier).set(false);
       ref.read(viewportProvider.notifier).set(decoded.viewport);
       ref.read(documentSettingsProvider.notifier).set(decoded.settings);
       // Same as File > New: the held run is about the replaced document.
@@ -406,7 +412,14 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
       // Fit can be stale-selected against a construction that just went
       // empty; falling back beats surprising the user with an error.
       ExportFramingChoice.fitConstruction =>
-        fitConstructionFraming(construction.objects, canvasSize) ??
+        (ref.read(spaceViewProvider)
+                ? fitConstructionFraming(
+                    construction.objects,
+                    canvasSize,
+                    rotation: viewportState.rotation,
+                    tilt: viewportState.tilt,
+                  )
+                : fitConstructionFraming(construction.objects, canvasSize)) ??
             currentViewFraming(viewportState, canvasSize),
       ExportFramingChoice.currentView => currentViewFraming(
         viewportState,
@@ -458,6 +471,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
       ref.read(constructionProvider).construction.kernel,
       size,
       rotation: ref.read(viewportProvider).rotation,
+      tilt: ref.read(viewportProvider).tilt,
     );
     if (framed != null) {
       ref.read(viewportProvider.notifier).set(framed);
@@ -474,10 +488,76 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
       size,
       // Fit frames, the compass levels (Phase 61): keep the view angle.
       rotation: ref.read(viewportProvider).rotation,
+      tilt: ref.read(viewportProvider).tilt,
     );
     if (fitted != null) {
       ref.read(viewportProvider.notifier).set(fitted);
     }
+  }
+
+  /// Reset: the origin at 100 %. In the space view that is the oblique
+  /// preset about the canvas centre, since the view stays a space view.
+  void _resetView() {
+    final size = _canvasKey.currentContext?.size;
+    if (ref.read(spaceViewProvider) && size != null) {
+      ref.read(viewportProvider.notifier).set(resetSpaceView(size));
+    } else {
+      ref.read(viewportProvider.notifier).reset();
+    }
+  }
+
+  /// The 2D/3D button (intent 004). On unlocks the camera and tilts it
+  /// to the oblique view; off looks straight down again. Either way the
+  /// figure stays where it was on screen.
+  void _toggleSpaceView() {
+    final on = !ref.read(spaceViewProvider);
+    final current = CanvasViewport(ref.read(viewportProvider));
+    final objects = ref.read(constructionProvider).construction.objects;
+    ref.read(spaceViewProvider.notifier).set(on);
+    ref
+        .read(viewportProvider.notifier)
+        .set(
+          on
+              ? enterSpaceView(current, objects)
+              : leaveSpaceView(current, objects),
+        );
+  }
+
+  void _applySpaceViewPreset(SpaceViewPreset preset) {
+    ref
+        .read(viewportProvider.notifier)
+        .set(
+          presetSpaceView(
+            CanvasViewport(ref.read(viewportProvider)),
+            ref.read(constructionProvider).construction.objects,
+            preset,
+          ),
+        );
+  }
+
+  /// The space view's two app-bar controls: the toggle, and while it is
+  /// on, the preset views beside it.
+  List<Widget> _spaceViewControls() {
+    final on = ref.watch(spaceViewProvider);
+    return [
+      IconButton(
+        tooltip: on ? '3D view: on' : '3D view',
+        isSelected: on,
+        icon: const Icon(Icons.view_in_ar_outlined),
+        selectedIcon: const Icon(Icons.view_in_ar),
+        onPressed: _toggleSpaceView,
+      ),
+      if (on)
+        PopupMenuButton<SpaceViewPreset>(
+          tooltip: 'Views',
+          icon: const Icon(Icons.switch_video_outlined),
+          onSelected: _applySpaceViewPreset,
+          itemBuilder: (context) => [
+            for (final preset in SpaceViewPreset.values)
+              PopupMenuItem(value: preset, child: Text(preset.label)),
+          ],
+        ),
+    ];
   }
 
   /// One-shot declutter (Phase 55): move every overlapped label to the
@@ -1178,8 +1258,9 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                 IconButton(
                   tooltip: 'Reset view (origin at 100 %)',
                   icon: const Icon(Icons.filter_center_focus),
-                  onPressed: () => ref.read(viewportProvider.notifier).reset(),
+                  onPressed: _resetView,
                 ),
+                ..._spaceViewControls(),
                 _gridMenu(),
                 // The prover has no button of its own: "Prover" in this
                 // menu opens and closes its panel (intent 007).
@@ -1325,6 +1406,21 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   void _levelView() {
     final current = ref.read(viewportProvider);
     final center = _canvasCenter;
+    if (current.tilt != 0) {
+      // In a tilted space view "straighten" levels the azimuth and
+      // leaves the tilt: the camera turns about what is at the centre.
+      final viewport = CanvasViewport(current);
+      ref
+          .read(viewportProvider.notifier)
+          .set(
+            viewport.orbitedAbout(
+              viewport.spaceUnder(center ?? Offset.zero),
+              rotation: 0,
+              tilt: current.tilt,
+            ),
+          );
+      return;
+    }
     ref
         .read(viewportProvider.notifier)
         .set(

@@ -155,6 +155,7 @@ ViewportState? fittedToAbsolute(
   Size canvasSize, {
   double marginPx = fitMarginPx,
   double rotation = 0,
+  double tilt = 0,
 }) {
   if (kernel.metric != FundamentalConic.hyperbolic) {
     return null;
@@ -176,6 +177,9 @@ ViewportState? fittedToAbsolute(
     focal: Offset(canvasSize.width / 2, canvasSize.height / 2),
     scale: usable / (2 * kernel.radius),
     rotation: rotation,
+    // The disc's width does not foreshorten under a turntable tilt, so
+    // the same scale frames it at any camera (intent 004).
+    tilt: tilt,
   );
 }
 
@@ -188,18 +192,24 @@ ViewportState? fittedToAbsolute(
 /// [CanvasViewport.minScale]..[CanvasViewport.maxFitScale]; a zero-size
 /// extent (a single
 /// point) centers at 100 % instead of zooming to the clamp.
+///
+/// [tilt] is the space view's camera tilt (intent 004): the extent along
+/// the view frame's y is foreshortened by `|cos tilt|` on screen, so that
+/// is what has to fit the canvas height. Edge-on, only the width binds.
 ViewportState? fittedViewport(
   Iterable<GeoObject> objects,
   Size canvasSize, {
   double marginPx = fitMarginPx,
   double rotation = 0,
+  double tilt = 0,
 }) {
   final bounds = visibleWorldBounds(objects, rotation: rotation);
   if (bounds == null || canvasSize.shortestSide <= 0) {
     return null;
   }
   final width = bounds.max.x - bounds.min.x;
-  final height = bounds.max.y - bounds.min.y;
+  final depth = bounds.max.y - bounds.min.y;
+  final height = tilt == 0 ? depth : depth * math.cos(tilt).abs();
   final availableWidth = math.max(1.0, canvasSize.width - 2 * marginPx);
   final availableHeight = math.max(1.0, canvasSize.height - 2 * marginPx);
   final scale = (width <= 0 && height <= 0)
@@ -227,5 +237,6 @@ ViewportState? fittedViewport(
     focal: Offset(canvasSize.width / 2, canvasSize.height / 2),
     scale: scale,
     rotation: rotation,
+    tilt: tilt,
   );
 }

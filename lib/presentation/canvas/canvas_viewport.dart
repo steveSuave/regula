@@ -1,8 +1,15 @@
 import 'dart:math' as math;
+import 'dart:typed_data';
 import 'dart:ui';
 
 import '../../application/providers/viewport_provider.dart';
 import '../../domain/math/vec2.dart';
+
+/// A point of space, in world coordinates: the base plane is `z == 0` and
+/// a planar document's `Vec2(x, y)` is `(x, y, 0)`. A presentation-side
+/// record, for camera pivots; the space kernel (intent 004, milestone 2)
+/// brings the domain's own type.
+typedef SpacePoint = ({double x, double y, double z});
 
 /// World↔screen transforms for the canvas, built from a [ViewportState]
 /// (never duplicating its data — see the Phase 4 STATUS note).
@@ -22,6 +29,20 @@ import '../../domain/math/vec2.dart';
 ///   applied in the y-up frame *before* the flip, so `pan` keeps its
 ///   meaning at any angle (the origin is the rotation's fixed point).
 ///   Rotation preserves lengths, so the length helpers carry no term.
+///
+/// **The space view (intent 004).** With `state.tilt` nonzero this is a
+/// turntable camera under parallel projection, and the `Vec2` transforms
+/// are those of the **base plane**. Three things follow, and
+/// DECISIONS §"The space view is a camera over one document" argues them:
+/// - At tilt 0 every method takes the planar branch it always had, by an
+///   early return rather than by multiplying through `cos 0`, so no
+///   float differs from the planar app.
+/// - The tilted image of the base plane is the planar image with its
+///   screen y scaled by `cos tilt` and shifted — [sheetToScreen]. The
+///   painter computes in the planar frame ([flat]) and maps through it.
+/// - [worldToScreenLength], [worldToScreenAngle] and
+///   [worldToScreenDirection] are quantities of that planar frame: a
+///   tilted plane has no single pixels-per-unit.
 class CanvasViewport {
   const CanvasViewport(this.state);
 
@@ -60,7 +81,147 @@ class CanvasViewport {
   /// figure that happens to be small: it is the whole plane.
   static const double maxFitScale = 50;
 
+  /// `|cos tilt|` below which the base plane is too close to edge-on to
+  /// be picked (about 2.9° either side of it). A pointer there answers a
+  /// plane point tens of canvas widths from anything on screen, so
+  /// [pickBasePlane] refuses instead; panning and orbiting stay total.
+  static const double pickFloor = 0.05;
+
   final ViewportState state;
+
+  /// Whether the camera has left the planar view.
+  bool get isTilted => state.tilt != 0;
+
+  /// Whether a pointer can be resolved to a base-plane point.
+  bool get basePlanePickable =>
+      !isTilted || math.cos(state.tilt).abs() >= pickFloor;
+
+  /// This viewport with the camera looking straight down: the planar
+  /// frame the painter computes in. Itself when not tilted.
+  CanvasViewport get flat => isTilted
+      ? CanvasViewport(
+          ViewportState(
+            pan: state.pan,
+            scale: state.scale,
+            rotation: state.rotation,
+          ),
+        )
+      : this;
+
+  /// The screen-y shift of the sheet map: where the planar frame's
+  /// `y == 0` row lands.
+  double get _sheetShift => state.scale * math.sin(state.tilt) * state.panZ;
+
+  /// `cos tilt`, held away from zero by [pickFloor] with its sign kept —
+  /// the divisor of every pull-back from the screen to the base plane.
+  double get _pullbackCos {
+    final cosTilt = math.cos(state.tilt);
+    if (cosTilt.abs() >= pickFloor) {
+      return cosTilt;
+    }
+    return cosTilt < 0 ? -pickFloor : pickFloor;
+  }
+
+  /// The sheet map: carries a point of the [flat] frame's screen to this
+  /// camera's screen. The identity when not tilted.
+  Offset sheetToScreen(Offset flatScreen) => isTilted
+      ? Offset(
+          flatScreen.dx,
+          math.cos(state.tilt) * flatScreen.dy + _sheetShift,
+        )
+      : flatScreen;
+
+  /// The sheet map as a column-major 4×4, for `Path.transform`.
+  Float64List get sheetMatrix => Float64List(16)
+    ..[0] = 1
+    ..[5] = math.cos(state.tilt)
+    ..[10] = 1
+    ..[13] = _sheetShift
+    ..[15] = 1;
+
+  /// The part of the [flat] frame's screen this camera can see on a
+  /// [canvasSize] canvas grown by [margin] — the canvas rectangle pulled
+  /// back through the sheet map. `Offset.zero & canvasSize` (grown) when
+  /// not tilted. Inside the edge-on band the true region is unbounded;
+  /// [pickFloor] bounds it at twenty canvas heights.
+  Rect flatFrame(Size canvasSize, {double margin = 0}) {
+    if (!isTilted) {
+      // `0 - margin`, not `-margin`: the unmargined frame's corner must
+      // be +0.0, the `Offset.zero` the planar painter always used.
+      return Rect.fromLTRB(
+        0 - margin,
+        0 - margin,
+        canvasSize.width + margin,
+        canvasSize.height + margin,
+      );
+    }
+    final cosTilt = _pullbackCos;
+    final a = (-margin - _sheetShift) / cosTilt;
+    final b = (canvasSize.height + margin - _sheetShift) / cosTilt;
+    return Rect.fromLTRB(
+      -margin,
+      math.min(a, b),
+      canvasSize.width + margin,
+      math.max(a, b),
+    );
+  }
+
+  /// The screen image of a point of space.
+  Offset spaceToScreen(SpacePoint point) {
+    final dx = point.x - state.pan.x;
+    final dy = point.y - state.pan.y;
+    final dz = point.z - state.panZ;
+    final c = math.cos(state.rotation);
+    final s = math.sin(state.rotation);
+    final ux = dx * c - dy * s;
+    final uy = dx * s + dy * c;
+    return Offset(
+      ux * state.scale,
+      -(math.cos(state.tilt) * uy + math.sin(state.tilt) * dz) * state.scale,
+    );
+  }
+
+  /// The point of space under [screen]: on the base plane when it can be
+  /// picked, otherwise on the plane through the pan point that faces the
+  /// camera. Always defined — the anchor for gestures that must keep
+  /// "what is under the finger" there at any tilt.
+  SpacePoint spaceUnder(Offset screen) {
+    if (basePlanePickable) {
+      final world = screenToWorld(screen);
+      return (x: world.x, y: world.y, z: 0);
+    }
+    final vx = screen.dx / state.scale;
+    final vy = -screen.dy / state.scale;
+    final uy = math.cos(state.tilt) * vy;
+    final uz = math.sin(state.tilt) * vy;
+    final c = math.cos(state.rotation);
+    final s = math.sin(state.rotation);
+    return (
+      x: state.pan.x + vx * c + uy * s,
+      y: state.pan.y + uy * c - vx * s,
+      z: state.panZ + uz,
+    );
+  }
+
+  /// The base-plane point under [screen], or null when the plane is
+  /// within [pickFloor] of edge-on. What a tap or an object drag uses.
+  Vec2? pickBasePlane(Offset screen) =>
+      basePlanePickable ? screenToWorld(screen) : null;
+
+  /// The state with the camera turned to [rotation] and [tilt] while
+  /// [pivot] keeps its place on screen.
+  ViewportState orbitedAbout(
+    SpacePoint pivot, {
+    required double rotation,
+    required double tilt,
+  }) => pinning(
+    world: Vec2(pivot.x, pivot.y),
+    worldZ: pivot.z,
+    focal: spaceToScreen(pivot),
+    scale: state.scale,
+    rotation: rotation,
+    tilt: tilt,
+  );
 
   /// The state after multiplying scale by [factor] (> 1 zooms in) while
   /// keeping the world point under [focal] (screen coordinates) exactly
@@ -72,6 +233,17 @@ class CanvasViewport {
         .toDouble();
     if (newScale == state.scale) {
       return state;
+    }
+    if (isTilted) {
+      final under = spaceUnder(focal);
+      return pinning(
+        world: Vec2(under.x, under.y),
+        worldZ: under.z,
+        focal: focal,
+        scale: newScale,
+        rotation: state.rotation,
+        tilt: state.tilt,
+      );
     }
     return pinning(
       world: screenToWorld(focal),
@@ -85,26 +257,76 @@ class CanvasViewport {
   /// (y-down, like a pointer delta): content follows a rightward/downward
   /// delta, so the world point at the canvas origin moves the other way.
   /// Backs viewport nudging; scale and rotation are untouched.
-  ViewportState pannedByScreen(Offset delta) => ViewportState(
-    // The new origin world point is whatever currently sits delta
-    // *before* the origin — valid at any rotation, since
-    // screenToWorld already folds the angle in.
-    pan: screenToWorld(-delta),
-    scale: state.scale,
-    rotation: state.rotation,
-  );
+  ViewportState pannedByScreen(Offset delta) {
+    if (isTilted) {
+      // The same statement in space: whatever sits delta before the
+      // origin moves to the origin. Total at edge-on, where a vertical
+      // delta is a change of height rather than of plane point.
+      final under = spaceUnder(-delta);
+      return pinning(
+        world: Vec2(under.x, under.y),
+        worldZ: under.z,
+        focal: Offset.zero,
+        scale: state.scale,
+        rotation: state.rotation,
+        tilt: state.tilt,
+      );
+    }
+    return ViewportState(
+      // The new origin world point is whatever currently sits delta
+      // *before* the origin — valid at any rotation, since
+      // screenToWorld already folds the angle in.
+      pan: screenToWorld(-delta),
+      scale: state.scale,
+      rotation: state.rotation,
+    );
+  }
 
   /// The state with [scale] (clamped) and [rotation] whose pan puts the
   /// [world] point at the [focal] screen point — the shared solve behind
   /// scroll zoom and the pinch/pan gesture, where the anchor world point
   /// must track a moving focal.
+  ///
+  /// With a nonzero [tilt] the pinned point is the point of space
+  /// `(world, worldZ)`. The pan is only determined up to a slide along
+  /// the view direction, which no picture can show; it is slid onto the
+  /// base plane (`panZ == 0`) whenever the plane can be picked, so that
+  /// away from edge-on the pan stays what it is in the planar view: the
+  /// base-plane point at the canvas origin.
   static ViewportState pinning({
     required Vec2 world,
     required Offset focal,
     required double scale,
     double rotation = 0,
+    double tilt = 0,
+    double worldZ = 0,
   }) {
     final clamped = scale.clamp(minScale, maxScale).toDouble();
+    if (tilt != 0) {
+      final clampedTilt = tilt.clamp(0.0, math.pi).toDouble();
+      final cosTilt = math.cos(clampedTilt);
+      final sinTilt = math.sin(clampedTilt);
+      final c = math.cos(rotation);
+      final s = math.sin(rotation);
+      final vx = focal.dx / clamped;
+      final vy = -focal.dy / clamped;
+      // The focal's offset from the pan, in the camera-facing plane
+      // through the pan, turned back into world axes.
+      var uy = cosTilt * vy;
+      var panZ = worldZ - sinTilt * vy;
+      if (cosTilt.abs() >= pickFloor) {
+        // Slide along the view direction (0, −sin, cos) to height 0.
+        uy -= sinTilt * panZ / cosTilt;
+        panZ = 0;
+      }
+      return ViewportState(
+        pan: Vec2(world.x - (vx * c + uy * s), world.y - (uy * c - vx * s)),
+        scale: clamped,
+        rotation: rotation,
+        tilt: clampedTilt,
+        panZ: panZ,
+      );
+    }
     // Solve screenToWorld(focal) == world for pan: pan = world − R(−θ)·f,
     // where f is the focal in y-up world units.
     final fx = focal.dx / clamped;
@@ -125,13 +347,22 @@ class CanvasViewport {
     final s = math.sin(state.rotation);
     // Rotate by +θ in the y-up frame, then scale and flip. At θ = 0 the
     // products reduce exactly to the pre-rotation transform.
-    return Offset(
+    final flatScreen = Offset(
       (dx * c - dy * s) * state.scale,
       -(dx * s + dy * c) * state.scale,
     );
+    return isTilted ? sheetToScreen(flatScreen) : flatScreen;
   }
 
+  /// The base-plane point under [screen]. Total: inside the edge-on band
+  /// the pull-back is held at [pickFloor], which is right for a clip
+  /// bound and wrong for a pointer — those go through [pickBasePlane].
   Vec2 screenToWorld(Offset screen) {
+    if (isTilted) {
+      return flat.screenToWorld(
+        Offset(screen.dx, (screen.dy - _sheetShift) / _pullbackCos),
+      );
+    }
     final rx = screen.dx / state.scale;
     final ry = -screen.dy / state.scale;
     final c = math.cos(state.rotation);
@@ -167,6 +398,20 @@ class CanvasViewport {
   /// hit-test threshold expressed in world units.
   double screenToWorldLength(double screenLength) => screenLength / state.scale;
 
+  /// The world radius of a [screenRadius]-pixel hit target on the base
+  /// plane.
+  ///
+  /// Not tilted, it is [screenToWorldLength]. Tilted, a world disc is a
+  /// squashed ellipse on screen, and a radius sized for the unsquashed
+  /// axis would be too tight along the other. The radius is widened by
+  /// `1 / |cos tilt|`, capped at double: the target keeps its full size
+  /// along the foreshortened axis down to 60° of tilt and never grows
+  /// past twice it across. An approximation that holds until the hit
+  /// test itself works on screen (intent 004, milestone 2).
+  double hitRadius(double screenRadius) => isTilted
+      ? screenRadius / state.scale / math.max(math.cos(state.tilt).abs(), 0.5)
+      : screenToWorldLength(screenRadius);
+
   /// Axis-aligned world bounds enclosing a [canvasSize] canvas, grown by
   /// [margin] screen pixels on every side.
   ///
@@ -176,6 +421,9 @@ class CanvasViewport {
   /// right side to err on — it is a clip bound for unbounded curves, and
   /// the canvas trims whatever it over-includes.
   ({Vec2 min, Vec2 max}) visibleWorldBox(Size canvasSize, {double margin = 0}) {
+    if (isTilted) {
+      return flat.worldBoxOf(flatFrame(canvasSize, margin: margin));
+    }
     final corners = [
       screenToWorld(Offset(-margin, -margin)),
       screenToWorld(Offset(canvasSize.width + margin, -margin)),
@@ -183,6 +431,29 @@ class CanvasViewport {
       screenToWorld(
         Offset(canvasSize.width + margin, canvasSize.height + margin),
       ),
+    ];
+    var minX = corners.first.x, maxX = corners.first.x;
+    var minY = corners.first.y, maxY = corners.first.y;
+    for (final corner in corners.skip(1)) {
+      minX = math.min(minX, corner.x);
+      maxX = math.max(maxX, corner.x);
+      minY = math.min(minY, corner.y);
+      maxY = math.max(maxY, corner.y);
+    }
+    return (min: Vec2(minX, minY), max: Vec2(maxX, maxY));
+  }
+
+  /// [visibleWorldBox] for an arbitrary screen rectangle [frame] of this
+  /// viewport, which must not be tilted: the axis-aligned world bounds of
+  /// its four corners. For `Offset.zero & size` it is `visibleWorldBox`
+  /// to the bit.
+  ({Vec2 min, Vec2 max}) worldBoxOf(Rect frame) {
+    assert(!isTilted, 'worldBoxOf is a planar-frame question');
+    final corners = [
+      screenToWorld(frame.topLeft),
+      screenToWorld(frame.topRight),
+      screenToWorld(frame.bottomLeft),
+      screenToWorld(frame.bottomRight),
     ];
     var minX = corners.first.x, maxX = corners.first.x;
     var minY = corners.first.y, maxY = corners.first.y;
