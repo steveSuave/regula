@@ -36,6 +36,7 @@ import 'canvas_viewport.dart';
 import 'geometry_painter.dart';
 import 'grid_layout.dart';
 import 'label_layout.dart';
+import 'lift_handle.dart';
 import 'screen_figure.dart';
 import 'space_hit_tester.dart';
 import 'space_view.dart';
@@ -196,6 +197,10 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
   /// the pointer is read during the drag. 0 for anything unlifted.
   double _dragHeight = 0;
 
+  /// The lift gesture in progress: the handle as it was grabbed, where
+  /// the pointer went down, and the point's height then.
+  ({LiftHandle handle, Offset start, double startHeight})? _lift;
+
   @override
   Widget build(BuildContext context) {
     final constructionState = ref.watch(constructionProvider);
@@ -265,6 +270,10 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
               final drag => (id: drag.id, offset: drag.offset),
             },
             showHidden: _revealsHidden(tool),
+            liftHandleEnabled: _liftOffered(
+              tool,
+              constructionState.construction,
+            ),
             showAxes: ref.watch(documentSettingsProvider).showAxes,
             showGrid: ref.watch(documentSettingsProvider).showGrid,
             // Theme-less hosts (bare-widget tests) keep the painter's
@@ -546,10 +555,21 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
       }
       return;
     }
+    final construction = ref.read(constructionProvider).construction;
+    // The lift handle first: it floats off its point, over whatever is
+    // behind it, and it is what the user reached for.
+    final handle = _liftHandleAt(viewport, screen);
+    if (handle != null) {
+      final point = construction.byId(handle.pointId);
+      if (point is FreePoint &&
+          ref.read(toolProvider.notifier).startLift(point)) {
+        _lift = (handle: handle, start: screen, startHeight: point.height);
+      }
+      return;
+    }
     // Null while the base plane is too close to edge-on to pick: then
     // nothing on it can be grabbed, and the drag falls through to orbit.
     final world = viewport.pickBasePlane(screen);
-    final construction = ref.read(constructionProvider).construction;
     // Labels first — a label deliberately floats *off* its geometry, so
     // the geometry hit test below can never reach it. Reverse insertion
     // order picks the topmost of overlapping labels, like the painter's
@@ -613,6 +633,28 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
       _bandAnchor = screen;
       _band = Rect.fromPoints(screen, screen);
     });
+  }
+
+  /// Whether the lift handle is offered: in the space view, with no tool
+  /// active, in a Euclidean document (space is Euclidean; intent 004,
+  /// milestone 2, requirement 17).
+  bool _liftOffered(Tool? tool, Construction construction) =>
+      tool == null &&
+      construction.kernel.isDefault &&
+      ref.read(spaceViewProvider);
+
+  /// The lift handle under [screen], if one is offered and grabbed there.
+  LiftHandle? _liftHandleAt(CanvasViewport viewport, Offset screen) {
+    final construction = ref.read(constructionProvider).construction;
+    if (!_liftOffered(ref.read(toolProvider).tool, construction)) {
+      return null;
+    }
+    final handle = LiftHandle.forSelection(
+      construction,
+      ref.read(selectionProvider),
+      viewport,
+    );
+    return handle != null && handle.grabs(screen) ? handle : null;
   }
 
   /// Every object under the pointer, best first.
@@ -685,6 +727,23 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
                           travel.dy * GeometryCanvas.orbitRadiansPerPixel)
                       .clamp(0.0, math.pi)
                       .toDouble(),
+            ),
+          );
+      return;
+    }
+    final lift = _lift;
+    if (lift != null) {
+      // Measured from the gesture's start against the handle as it was
+      // then: the axis and the pixels per unit do not change while the
+      // camera is still, and the grip moving with the point must not
+      // feed back into the reading.
+      ref
+          .read(toolProvider.notifier)
+          .updateLift(
+            lift.handle.heightAt(
+              screen,
+              start: lift.start,
+              startHeight: lift.startHeight,
             ),
           );
       return;
@@ -763,6 +822,7 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
     }
     final band = _band;
     if (band == null) {
+      _lift = null;
       ref.read(toolProvider.notifier).endDrag();
       return;
     }
@@ -798,6 +858,7 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
     // An interrupted orbit keeps the camera where it got to, like an
     // interrupted pinch: it is view state, and there is nothing to undo.
     _orbit = null;
+    _lift = null;
     ref.read(toolProvider.notifier).cancelDrag();
     setState(() {
       _band = null;
@@ -922,6 +983,11 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
     Offset screen,
     PointerDeviceKind? kind,
   ) {
+    // A tap on the lift grip is not a tap on the canvas behind it: it
+    // must not clear the selection that put the grip there.
+    if (_liftHandleAt(viewport, screen) != null) {
+      return;
+    }
     // The base plane seen too close to edge-on cannot be picked: a tap
     // there would land tens of canvas widths away, so it lands nowhere.
     final world = viewport.pickBasePlane(screen);

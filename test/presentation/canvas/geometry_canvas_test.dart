@@ -11,6 +11,7 @@ import 'package:regula/application/providers/selection_provider.dart';
 import 'package:regula/application/providers/space_view_provider.dart';
 import 'package:regula/application/providers/tool_provider.dart';
 import 'package:regula/application/providers/viewport_provider.dart';
+import 'package:regula/domain/commands/add_object_command.dart';
 import 'package:regula/domain/commands/set_geometry_command.dart';
 import 'package:regula/domain/construction/document_kernel.dart';
 import 'package:regula/domain/construction/geo_object.dart';
@@ -21,6 +22,7 @@ import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/compass_circle.dart';
 import 'package:regula/domain/construction/objects/distance_measurement.dart';
 import 'package:regula/domain/construction/objects/five_point_conic.dart';
+import 'package:regula/domain/construction/objects/fixed_radius_circle.dart';
 import 'package:regula/domain/construction/objects/focal_conic.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/intersection_point.dart';
@@ -47,6 +49,8 @@ import 'package:regula/presentation/canvas/canvas_viewport.dart';
 import 'package:regula/presentation/canvas/geometry_canvas.dart';
 import 'package:regula/presentation/canvas/geometry_painter.dart';
 import 'package:regula/presentation/canvas/label_layout.dart';
+import 'package:regula/presentation/canvas/lift_handle.dart';
+import 'package:regula/presentation/canvas/lifted_point_hint.dart';
 import 'package:regula/presentation/panels/conic_icon.dart';
 import 'package:regula/presentation/panels/object_kind_label.dart';
 
@@ -3233,6 +3237,226 @@ void main() {
         (camera().spaceToScreen(figureCentre) - before).distance,
         lessThan(1e-6),
       );
+    });
+
+    group('the lift handle', () {
+      /// Selects the second point — the one with room above it on the
+      /// canvas — and returns its handle at the camera.
+      Future<LiftHandle> selectFirst(WidgetTester tester, Offset origin) async {
+        await tester.tapAt(
+          origin + camera().worldToScreen(points()[1].position!),
+        );
+        await tester.pump();
+        expect(container.read(selectionProvider), {points()[1].id});
+        final construction = container.read(constructionProvider).construction;
+        return LiftHandle.forSelection(
+          construction,
+          container.read(selectionProvider),
+          camera(),
+        )!;
+      }
+
+      for (final kind in [PointerDeviceKind.mouse, PointerDeviceKind.touch]) {
+        testWidgets('dragging the grip lifts the point with the finger: one '
+            'command, one undo ($kind)', (tester) async {
+          final origin = await pumpWithTwoPoints(tester);
+          await enter(tester, const ViewportState(rotation: -0.4, tilt: 1.0));
+          final handle = await selectFirst(tester, origin);
+          expect(handle.axis.dx, closeTo(0, 1e-12));
+          expect(handle.axis.dy, closeTo(-1, 1e-12));
+          expect(handle.pixelsPerUnit, closeTo(math.sin(1.0), 1e-12));
+          final before = handle.point;
+
+          final drag = await tester.startGesture(
+            origin + handle.grip,
+            kind: kind,
+          );
+          await drag.moveBy(const Offset(0, -40));
+          // Travel across the axis is ignored.
+          await drag.moveBy(const Offset(25, -60));
+          await tester.pump();
+          await drag.up();
+          await tester.pump();
+
+          final point = points()[1];
+          expect(point.height, closeTo(100 / math.sin(1.0), 1e-9));
+          expect(point.chartPosition, const Vec2(300, -200));
+          expect(point.position, isNull);
+          final after = camera().spaceToScreen(point.spacePosition!);
+          expect(
+            (after - (before + const Offset(0, -100))).distance,
+            lessThan(1e-9),
+          );
+          expect(
+            container.read(viewportProvider),
+            const ViewportState(rotation: -0.4, tilt: 1.0),
+          );
+          // Still selected, and the other point untouched.
+          expect(container.read(selectionProvider), {point.id});
+          expect(points()[0].height, 0);
+
+          await tester.tap(find.byIcon(Icons.undo));
+          await tester.pump();
+          expect(points()[1].height, 0);
+          expect(points()[1].position, const Vec2(300, -200));
+          await tester.tap(find.byIcon(Icons.redo));
+          await tester.pump();
+          expect(points()[1].height, closeTo(100 / math.sin(1.0), 1e-9));
+        });
+      }
+
+      testWidgets('released near the plane, the height is exactly 0', (
+        tester,
+      ) async {
+        final origin = await pumpWithTwoPoints(tester);
+        await enter(tester, const ViewportState(tilt: 1.0));
+        var handle = await selectFirst(tester, origin);
+        var drag = await tester.startGesture(origin + handle.grip);
+        await drag.moveBy(const Offset(0, -20));
+        await drag.moveBy(const Offset(0, -20));
+        await tester.pump();
+        await drag.up();
+        await tester.pump();
+        expect(points()[1].isLifted, isTrue);
+
+        // Back down to 5 px above the plane: inside the snap.
+        handle = LiftHandle.forSelection(
+          container.read(constructionProvider).construction,
+          container.read(selectionProvider),
+          camera(),
+        )!;
+        drag = await tester.startGesture(origin + handle.grip);
+        await drag.moveBy(const Offset(0, 20));
+        await drag.moveBy(const Offset(0, 15));
+        await tester.pump();
+        expect(points()[1].height, 0);
+        await drag.up();
+        await tester.pump();
+
+        expect(points()[1].height, 0);
+        expect(points()[1].isLifted, isFalse);
+        expect(points()[1].position, const Vec2(300, -200));
+      });
+
+      testWidgets('a lifted point is grabbed where it is drawn and dragged '
+          'parallel to its plane', (tester) async {
+        final origin = await pumpWithTwoPoints(tester);
+        await enter(tester, const ViewportState(rotation: 0.3, tilt: 1.0));
+        container
+            .read(constructionProvider)
+            .construction
+            .setFreePointHeight(points()[1].id, 40);
+        await tester.pump();
+        final drawn = camera().spaceToScreen(points()[1].spacePosition!);
+        const drop = Offset(420, 310);
+
+        final drag = await tester.startGesture(origin + drawn);
+        await drag.moveTo(origin + const Offset(300, 280));
+        await drag.moveTo(origin + drop);
+        await tester.pump();
+        await drag.up();
+        await tester.pump();
+
+        final point = points()[1];
+        expect(point.height, 40);
+        final landed = camera().spaceToScreen(point.spacePosition!);
+        expect((landed - drop).distance, lessThan(1e-6));
+        await tester.tap(find.byIcon(Icons.undo));
+        await tester.pump();
+        expect(points()[1].chartPosition, const Vec2(300, -200));
+        expect(points()[1].height, 40);
+      });
+
+      testWidgets('a tap on the grip keeps the selection', (tester) async {
+        final origin = await pumpWithTwoPoints(tester);
+        await enter(tester, const ViewportState(tilt: 1.0));
+        final handle = await selectFirst(tester, origin);
+        await tester.tapAt(origin + handle.grip);
+        await tester.pump();
+        expect(container.read(selectionProvider), {points()[1].id});
+        expect(points()[1].height, 0);
+      });
+
+      testWidgets('looking straight down there is no handle: the same drag '
+          'turns the camera', (tester) async {
+        final origin = await pumpWithTwoPoints(tester);
+        await enter(tester, const ViewportState());
+        await tester.tapAt(
+          origin + camera().worldToScreen(points()[0].position!),
+        );
+        await tester.pump();
+        final construction = container.read(constructionProvider).construction;
+        expect(
+          LiftHandle.forSelection(
+            construction,
+            container.read(selectionProvider),
+            camera(),
+          ),
+          isNull,
+        );
+        final where =
+            camera().worldToScreen(const Vec2(100, -100)) +
+            const Offset(0, -LiftHandle.gripDistance);
+        final drag = await tester.startGesture(origin + where);
+        await drag.moveBy(const Offset(0, -30));
+        await drag.moveBy(const Offset(0, -30));
+        await tester.pump();
+        await drag.up();
+        await tester.pump();
+        expect(points()[0].height, 0);
+        expect(camera().state.tilt, greaterThan(0));
+      });
+
+      testWidgets('with two points selected there is no handle and nothing is '
+          'lifted', (tester) async {
+        final origin = await pumpWithTwoPoints(tester);
+        await enter(tester, const ViewportState(tilt: 1.0));
+        final handle = await selectFirst(tester, origin);
+        container.read(selectionProvider.notifier).toggle(points()[0].id);
+        await tester.pump();
+        final drag = await tester.startGesture(origin + handle.grip);
+        await drag.moveBy(const Offset(0, -30));
+        await drag.moveBy(const Offset(0, -30));
+        await drag.up();
+        await tester.pump();
+        expect(points()[0].height, 0);
+        expect(points()[1].height, 0);
+      });
+
+      testWidgets('a lift that vanishes a circle says so, and the circle '
+          'returns with the point', (tester) async {
+        final origin = await pumpWithTwoPoints(tester);
+        final construction = container.read(constructionProvider).construction;
+        final circle = FixedRadiusCircle(
+          id: 'ring',
+          center: points()[1],
+          radius: 40,
+        );
+        container
+            .read(commandStackProvider.notifier)
+            .execute(AddObjectCommand(circle));
+        await tester.pump();
+        await enter(tester, const ViewportState(tilt: 1.0));
+        final handle = await selectFirst(tester, origin);
+        expect(find.textContaining('back in its plane'), findsNothing);
+
+        final drag = await tester.startGesture(origin + handle.grip);
+        await drag.moveBy(const Offset(0, -50));
+        await drag.moveBy(const Offset(0, -50));
+        await tester.pump();
+        expect(circle.isDefined, isFalse);
+        expect(constructionsWaitingOn(construction, points()[1].id), 1);
+        expect(
+          find.text('1 construction needs this point back in its plane'),
+          findsOneWidget,
+        );
+        await drag.moveBy(const Offset(0, 98));
+        await tester.pump();
+        await drag.up();
+        await tester.pump();
+        expect(circle.isDefined, isTrue);
+        expect(find.textContaining('back in its plane'), findsNothing);
+      });
     });
   });
 }

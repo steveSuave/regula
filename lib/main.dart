@@ -88,6 +88,7 @@ import 'presentation/canvas/fit_viewport.dart';
 import 'presentation/canvas/geometry_canvas.dart';
 import 'presentation/canvas/label_declutter.dart';
 import 'presentation/canvas/label_obstacles.dart';
+import 'presentation/canvas/lifted_point_hint.dart';
 import 'presentation/canvas/name_points_hint.dart';
 import 'presentation/canvas/region_pick_overlay.dart';
 import 'presentation/canvas/space_view.dart';
@@ -311,9 +312,22 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         return;
       }
       ref.read(constructionProvider.notifier).replace(decoded.construction);
-      // The file carries no camera: it opens in the planar view.
-      ref.read(spaceViewProvider.notifier).set(false);
-      ref.read(viewportProvider.notifier).set(decoded.viewport);
+      // The file carries no camera. A planar document opens in the
+      // planar view; one with anything off the base plane opens in the
+      // space view, tilted to the oblique preset about its figure, since
+      // seen from straight above its heights are invisible.
+      final inSpace = hasSpaceContent(decoded.construction.objects);
+      ref.read(spaceViewProvider.notifier).set(inSpace);
+      ref
+          .read(viewportProvider.notifier)
+          .set(
+            inSpace
+                ? enterSpaceView(
+                    CanvasViewport(decoded.viewport),
+                    decoded.construction.objects,
+                  )
+                : decoded.viewport,
+          );
       ref.read(documentSettingsProvider.notifier).set(decoded.settings);
       // Same as File > New: the held run is about the replaced document.
       ref.read(proverProvider.notifier).clear();
@@ -1765,6 +1779,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                         children: [
                           GeometryCanvas(key: _canvasKey),
                           const NamePointsHint(),
+                          const LiftedPointHint(),
                           if (_showTraceOverlay) const TraceStatsOverlay(),
                           // Before the region-pick overlay, so an export
                           // pick owns the whole surface.

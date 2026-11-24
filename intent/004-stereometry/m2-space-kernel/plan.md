@@ -129,3 +129,12 @@ Three stages. Each ends green on the full gate, with a look, and merges to `main
   - `SpacePoint` (a record) became `Vec3` throughout presentation.
   - A lifted point's drag reads the pointer at its height (`footScreen`), so nothing in the drag session changed. Rigid translation of an edge to a lifted point works as it is: all free points are on one sheet in stage A. The plan's "a translation needs all free ancestors on one sheet" belongs to stage C.
   - Fit with a lifted point frames the planar bounds' corners and the lifted points' images; a figure with nothing lifted takes the old code.
+- **Step 7, the lift gesture.** 8 widget tests (group "the lift handle" in `geometry_canvas_test.dart`, mouse and touch), 6 in `lift_session_test.dart`, 10 in `lift_handle_test.dart`. VM 3753; goldens 35, no diff; browser 17. Notes:
+  - The gesture's session is `LiftSession` in `lib/domain/tools/`, held by the tool notifier beside the drag session; `endDrag` and `cancelDrag` end whichever is live, so the canvas's pan end and cancel paths did not fork.
+  - The reading is taken against the handle as it was when grabbed, from the pointer's start. Reading against the live handle would feed the grip's own motion back into the height.
+  - The handle is checked before labels and objects in `_panStart`, and a tap on the grip is swallowed so it cannot clear the selection that shows it.
+  - **The snap is 8 px, not the hit threshold** the spec named. On touch the threshold is 16 px, and a point that will not leave its plane for the first 16 px of a drag feels stuck.
+  - The hint chip (`LiftedPointHint`) sits where the name-points chip sits; the two never show together, since one needs a tool and the other needs none.
+  - Gotcha: in the widget harness the default camera puts the first test point 54 px from the top of the canvas, so its grip is off screen. The handle tests use the second point.
+  - **Not tested: File > Open turning the space view on** for a version 4 document. `hasSpaceContent` is tested; the open path goes through the platform file picker, as in milestone 1.
+

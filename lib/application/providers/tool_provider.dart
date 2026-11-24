@@ -6,8 +6,10 @@ import '../../domain/commands/command.dart';
 import '../../domain/commands/macro_command.dart';
 import '../../domain/construction/geo_object.dart';
 import '../../domain/construction/object_naming.dart';
+import '../../domain/construction/objects/free_point.dart';
 import '../../domain/math/vec2.dart';
 import '../../domain/tools/drag_session.dart';
+import '../../domain/tools/lift_session.dart';
 import '../../domain/tools/tool.dart';
 import 'command_stack_provider.dart';
 import 'construction_provider.dart';
@@ -48,6 +50,7 @@ class ToolNotifier extends _$ToolNotifier {
   /// preview frames repaint through the construction's own revision, so
   /// nothing needs to watch the session itself.
   DragSession? _drag;
+  LiftSession? _lift;
 
   TraceFrameStats? _lastTraceStats;
 
@@ -129,6 +132,23 @@ class ToolNotifier extends _$ToolNotifier {
     return _drag != null;
   }
 
+  /// Starts a lift of [point]: a drag of its handle that changes its
+  /// height above its plane (intent 004). False with a tool active,
+  /// like [startDrag].
+  bool startLift(FreePoint point) {
+    if (state.tool != null) {
+      return false;
+    }
+    _lift = LiftSession(ref.read(constructionProvider).construction, point);
+    return true;
+  }
+
+  /// The lift in progress, for the canvas to read its start height.
+  LiftSession? get lift => _lift;
+
+  /// Previews the lift at [height]. No-op when nothing is being lifted.
+  void updateLift(double height) => _lift?.update(height);
+
   /// Previews the drag at [pointer] (world). No-op when nothing drags.
   void updateDrag(Vec2 pointer) {
     _drag?.update(pointer);
@@ -138,8 +158,9 @@ class ToolNotifier extends _$ToolNotifier {
   /// Ends the drag: the session's preview is rolled back and its single
   /// start → end command executed (none when the pointer never moved).
   void endDrag() {
-    final command = _drag?.end();
+    final command = _drag?.end() ?? _lift?.end();
     _drag = null;
+    _lift = null;
     if (command != null) {
       ref.read(commandStackProvider.notifier).execute(command);
     }
@@ -154,6 +175,8 @@ class ToolNotifier extends _$ToolNotifier {
   void _abandonDrag() {
     _drag?.cancel();
     _drag = null;
+    _lift?.cancel();
+    _lift = null;
   }
 
   /// Routes one canvas input to the active tool and returns its verdict.

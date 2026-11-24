@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import '../../application/providers/viewport_provider.dart';
 import '../../domain/construction/geo_object.dart';
+import '../../domain/construction/objects/free_point.dart';
 import '../../domain/math/vec2.dart';
 import '../../domain/math/vec3.dart';
 import 'canvas_viewport.dart';
@@ -32,6 +33,12 @@ enum SpaceViewPreset {
 /// The tilt the space view opens at: 60° from straight down, where a
 /// square on the base plane is drawn half as tall as it is wide.
 const double obliqueTilt = math.pi / 3;
+
+/// Whether a document holds anything off the base plane: what makes it a
+/// version 4 file, and what makes it open in the space view. Hidden
+/// objects count — the document is what it is whether or not it shows.
+bool hasSpaceContent(Iterable<GeoObject> objects) =>
+    objects.any((object) => object is FreePoint && object.isLifted);
 
 /// The point the space view's camera turns about: the centre of the
 /// figure's bounds — the planar bounds Fit frames, together with any
