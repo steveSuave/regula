@@ -1040,5 +1040,45 @@ void main() {
         viewport: const ViewportState(pan: Vec2(-8, 6), scale: 40),
       );
     });
+
+    // Intent 004, milestone 1: the space view. The circles scene, because
+    // it has what the sheet map must get right at once — rims that
+    // foreshorten, strokes and dots that do not, arcs, a dashed rim and
+    // upright labels — and the grid scene's axes under it. Oblique is the
+    // view the 3D button opens; from below, the squash is negative and
+    // the figure is seen mirrored.
+    testWidgets('circles scene, oblique camera — $themeName', (tester) async {
+      final construction = circlesScene();
+      await expectSceneGolden(
+        tester,
+        construction: construction,
+        theme: theme,
+        golden: 'space_oblique_$themeName',
+        showAxes: true,
+        showGrid: true,
+        viewport: fittedViewport(
+          construction.objects,
+          canvasSize,
+          rotation: -math.pi / 6,
+          tilt: math.pi / 3,
+        ),
+      );
+    });
   }
+
+  testWidgets('circles scene, camera below the plane — light', (tester) async {
+    final construction = circlesScene();
+    await expectSceneGolden(
+      tester,
+      construction: construction,
+      theme: AppTheme.light(),
+      golden: 'space_below_light',
+      viewport: fittedViewport(
+        construction.objects,
+        canvasSize,
+        rotation: 0.4,
+        tilt: 2.2,
+      ),
+    );
+  });
 }
