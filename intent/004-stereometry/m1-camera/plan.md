@@ -1,6 +1,6 @@
 # Plan: stereometry milestone 1 — the 3D view and its camera
 
-Written 2026-11-24 from [spec](spec.md) · Status: awaiting approval · Branch: `intent-004-stereometry`
+Written 2026-11-24 from [spec](spec.md) · Status: approved 2026-11-24, in progress · Branch: `intent-004-stereometry`
 
 ## Files that change
 
@@ -75,4 +75,9 @@ Written 2026-11-24 from [spec](spec.md) · Status: awaiting approval · Branch: 
 
 ## Progress and gotchas
 
-Nothing started. The intent was accepted on 2026-11-24 with two answers recorded in it (one-finger orbit; parallel projection only). This plan awaits approval.
+- **Step 1, baseline** (clean worktree at `main`, `b74dfa2`). Analyze clean; VM 3566 passed; goldens 32 passed.
+- **Step 2, camera state and transforms.** 12 new tests in `canvas_viewport_test.dart`. Departures from the plan:
+  - **The visible-region cap is the pick floor, not eight diagonals.** `flatFrame` pulls the canvas back through the sheet map with `|cos tilt|` held at `pickFloor` (0.05), so the frame is exact wherever the plane can be picked and at most twenty canvas heights tall inside the edge-on band. One constant now answers both "can this be picked" and "how far is the clip bound".
+  - **The pan is kept on the base plane away from edge-on.** `pinning` slides the pan along the view direction to `panZ == 0` whenever the plane is pickable, so `panZ` is nonzero only inside the edge-on band and the sheet map is a pure squash everywhere else.
+  - **Random states come from a seeded `Random`, not `glados`**: no presentation test uses glados, and the bit-for-bit comparison wants a fixed sample.
+  - `spaceUnder` anchors two-finger gestures: the base-plane point when pickable, else the point on the camera-facing plane through the pan (the spec said "at the pivot's depth"; the pan's depth needs no pivot and pins the same picture).

@@ -362,4 +362,307 @@ void main() {
       );
     });
   });
+
+  // Intent 004, milestone 1: the space view's camera.
+  group('the planar view is untouched by the camera', () {
+    // Today's formulas, copied here so that the comparison is against
+    // what the planar app computed and not against the code under test.
+    Offset planarWorldToScreen(ViewportState state, Vec2 world) {
+      final dx = world.x - state.pan.x;
+      final dy = world.y - state.pan.y;
+      final c = math.cos(state.rotation);
+      final s = math.sin(state.rotation);
+      return Offset(
+        (dx * c - dy * s) * state.scale,
+        -(dx * s + dy * c) * state.scale,
+      );
+    }
+
+    Vec2 planarScreenToWorld(ViewportState state, Offset screen) {
+      final rx = screen.dx / state.scale;
+      final ry = -screen.dy / state.scale;
+      final c = math.cos(state.rotation);
+      final s = math.sin(state.rotation);
+      return Vec2(state.pan.x + rx * c + ry * s, state.pan.y + ry * c - rx * s);
+    }
+
+    test('at tilt 0 every transform is the planar one, to the bit', () {
+      final random = math.Random(4);
+      double spread(double extent) => (random.nextDouble() * 2 - 1) * extent;
+      for (var i = 0; i < 500; i++) {
+        final state = ViewportState(
+          pan: Vec2(spread(500), spread(500)),
+          scale: 0.1 + random.nextDouble() * 80,
+          rotation: i.isEven ? 0 : spread(math.pi),
+        );
+        final viewport = CanvasViewport(state);
+        final world = Vec2(spread(300), spread(300));
+        final screen = Offset(spread(900), spread(900));
+
+        expect(viewport.isTilted, isFalse);
+        expect(identical(viewport.flat, viewport), isTrue);
+        expect(
+          viewport.worldToScreen(world),
+          planarWorldToScreen(state, world),
+        );
+        expect(
+          viewport.screenToWorld(screen),
+          planarScreenToWorld(state, screen),
+        );
+        expect(viewport.pickBasePlane(screen), viewport.screenToWorld(screen));
+        expect(viewport.sheetToScreen(screen), screen);
+        expect(
+          viewport.pannedByScreen(screen),
+          ViewportState(
+            pan: planarScreenToWorld(state, -screen),
+            scale: state.scale,
+            rotation: state.rotation,
+          ),
+        );
+        const size = Size(800, 600);
+        expect(viewport.flatFrame(size), Offset.zero & size);
+        final box = viewport.visibleWorldBox(size, margin: 8);
+        final boxOfFrame = viewport.worldBoxOf(
+          viewport.flatFrame(size, margin: 8),
+        );
+        expect(boxOfFrame.min, box.min);
+        expect(boxOfFrame.max, box.max);
+      }
+    });
+
+    test('a default state has no tilt and no height', () {
+      const state = ViewportState();
+      expect(state.tilt, 0);
+      expect(state.panZ, 0);
+      expect(state, const ViewportState(tilt: 0, panZ: 0));
+      expect(state == const ViewportState(tilt: 0.1), isFalse);
+      expect(state == const ViewportState(panZ: 1), isFalse);
+    });
+  });
+
+  group('the tilted camera', () {
+    const size = Size(800, 600);
+    final random = math.Random(7);
+    double spread(double extent) => (random.nextDouble() * 2 - 1) * extent;
+
+    ViewportState randomState({required double tilt, double panZ = 0}) =>
+        ViewportState(
+          pan: Vec2(spread(200), spread(200)),
+          scale: 0.5 + random.nextDouble() * 40,
+          rotation: spread(math.pi),
+          tilt: tilt,
+          panZ: panZ,
+        );
+
+    void expectOffset(Offset actual, Offset expected, {double within = 1e-7}) {
+      expect(actual.dx, closeTo(expected.dx, within));
+      expect(actual.dy, closeTo(expected.dy, within));
+    }
+
+    test('the base plane is the planar picture through the sheet map', () {
+      for (var i = 0; i < 200; i++) {
+        final viewport = CanvasViewport(
+          randomState(tilt: random.nextDouble() * math.pi, panZ: spread(50)),
+        );
+        final world = Vec2(spread(300), spread(300));
+        final flatScreen = viewport.flat.worldToScreen(world);
+        expectOffset(
+          viewport.worldToScreen(world),
+          viewport.sheetToScreen(flatScreen),
+        );
+        expectOffset(
+          viewport.worldToScreen(world),
+          viewport.spaceToScreen((x: world.x, y: world.y, z: 0)),
+        );
+        // x never moves; y is squashed by cos tilt.
+        expect(viewport.worldToScreen(world).dx, flatScreen.dx);
+        final matrix = viewport.sheetMatrix;
+        expectOffset(
+          Offset(flatScreen.dx, matrix[5] * flatScreen.dy + matrix[13]),
+          viewport.worldToScreen(world),
+        );
+      }
+    });
+
+    test('a pick inverts the projection outside the edge-on band', () {
+      for (var i = 0; i < 300; i++) {
+        var tilt = random.nextDouble() * math.pi;
+        if (math.cos(tilt).abs() < 0.1) {
+          tilt = 0.4;
+        }
+        final viewport = CanvasViewport(randomState(tilt: tilt));
+        expect(viewport.basePlanePickable, isTrue);
+        final world = Vec2(spread(300), spread(300));
+        final picked = viewport.pickBasePlane(viewport.worldToScreen(world))!;
+        expect(picked.x, closeTo(world.x, 1e-6));
+        expect(picked.y, closeTo(world.y, 1e-6));
+      }
+    });
+
+    test('inside the edge-on band nothing is picked, and bounds stay '
+        'finite', () {
+      for (final tilt in [
+        math.pi / 2,
+        math.pi / 2 - 0.04,
+        math.pi / 2 + 0.04,
+        math.acos(0.049),
+      ]) {
+        final viewport = CanvasViewport(
+          ViewportState(pan: const Vec2(3, -2), scale: 20, tilt: tilt),
+        );
+        expect(viewport.basePlanePickable, isFalse, reason: 'tilt $tilt');
+        expect(viewport.pickBasePlane(const Offset(100, 100)), isNull);
+        final frame = viewport.flatFrame(size, margin: 8);
+        expect(frame.isFinite, isTrue);
+        expect(
+          frame.height,
+          lessThanOrEqualTo((size.height + 16) / CanvasViewport.pickFloor + 1),
+        );
+        final box = viewport.visibleWorldBox(size, margin: 8);
+        for (final value in [box.min.x, box.min.y, box.max.x, box.max.y]) {
+          expect(value.isFinite, isTrue);
+        }
+      }
+      // Just outside the band the plane is pickable again.
+      expect(
+        CanvasViewport(ViewportState(tilt: math.acos(0.051))).basePlanePickable,
+        isTrue,
+      );
+    });
+
+    test('the flat frame is exactly what the canvas can see of the '
+        'plane', () {
+      final viewport = CanvasViewport(
+        const ViewportState(pan: Vec2(-10, 4), scale: 12, tilt: 1.0),
+      );
+      final frame = viewport.flatFrame(size);
+      expectOffset(viewport.sheetToScreen(frame.topLeft), Offset.zero);
+      expectOffset(
+        viewport.sheetToScreen(frame.bottomRight),
+        Offset(size.width, size.height),
+      );
+      // From below the pull-back flips, and the frame is still a
+      // well-formed rectangle over the same canvas.
+      final below = CanvasViewport(
+        const ViewportState(pan: Vec2(-10, 4), scale: 12, tilt: 2.4),
+      );
+      final flipped = below.flatFrame(size);
+      expect(flipped.top, lessThan(flipped.bottom));
+      expectOffset(below.sheetToScreen(flipped.bottomLeft), Offset.zero);
+    });
+
+    test('an orbit keeps its pivot where it was on screen, edge-on '
+        'included', () {
+      for (var i = 0; i < 200; i++) {
+        final from = CanvasViewport(
+          randomState(tilt: i.isEven ? 0 : random.nextDouble() * math.pi),
+        );
+        final pivot = (
+          x: spread(100),
+          y: spread(100),
+          z: i % 3 == 0 ? 0.0 : spread(40),
+        );
+        final before = from.spaceToScreen(pivot);
+        for (final tilt in [
+          0.0,
+          0.7,
+          math.pi / 2,
+          math.pi / 2 + 0.01,
+          2.5,
+          math.pi,
+        ]) {
+          final rotation = spread(math.pi);
+          final to = CanvasViewport(
+            from.orbitedAbout(pivot, rotation: rotation, tilt: tilt),
+          );
+          expect(to.state.tilt, tilt);
+          expect(to.state.rotation, rotation);
+          expect(to.state.scale, from.state.scale);
+          expectOffset(to.spaceToScreen(pivot), before, within: 1e-6);
+        }
+      }
+    });
+
+    test('an orbit clamps the tilt to straight down … straight up', () {
+      const viewport = CanvasViewport(ViewportState(scale: 10, tilt: 0.3));
+      const pivot = (x: 1.0, y: 2.0, z: 0.0);
+      expect(viewport.orbitedAbout(pivot, rotation: 0, tilt: 4).tilt, math.pi);
+      final level = viewport.orbitedAbout(pivot, rotation: 0, tilt: -0.2);
+      expect(level.tilt, 0);
+      expect(level.panZ, 0);
+    });
+
+    test('away from edge-on the pan stays on the base plane', () {
+      for (var i = 0; i < 100; i++) {
+        final viewport = CanvasViewport(randomState(tilt: 1.1));
+        final panned = viewport.pannedByScreen(
+          Offset(spread(300), spread(300)),
+        );
+        expect(panned.panZ, 0);
+        final zoomed = viewport.zoomedAbout(const Offset(120, 340), 1.7);
+        expect(zoomed.panZ, 0);
+        // …so the pan is still the base-plane point at the canvas origin.
+        expectOffset(
+          CanvasViewport(panned).worldToScreen(panned.pan),
+          Offset.zero,
+        );
+      }
+    });
+
+    test('a pan moves the picture by exactly its screen delta, edge-on '
+        'included', () {
+      for (final tilt in [0.6, math.pi / 2, math.pi / 2 - 0.02, 2.9]) {
+        final viewport = CanvasViewport(randomState(tilt: tilt));
+        final points = [
+          (x: 0.0, y: 0.0, z: 0.0),
+          (x: 7.0, y: -3.0, z: 0.0),
+          (x: -2.0, y: 5.0, z: 4.0),
+        ];
+        const delta = Offset(31, -17);
+        final panned = CanvasViewport(viewport.pannedByScreen(delta));
+        expect(panned.state.tilt, tilt);
+        for (final point in points) {
+          expectOffset(
+            panned.spaceToScreen(point),
+            viewport.spaceToScreen(point) + delta,
+            within: 1e-6,
+          );
+        }
+      }
+    });
+
+    test('a zoom pins what is under the focal, edge-on included', () {
+      for (final tilt in [0.6, math.pi / 2, 2.9]) {
+        final viewport = CanvasViewport(randomState(tilt: tilt));
+        const focal = Offset(260, 410);
+        final under = viewport.spaceUnder(focal);
+        expectOffset(viewport.spaceToScreen(under), focal, within: 1e-6);
+        final zoomed = CanvasViewport(viewport.zoomedAbout(focal, 1.5));
+        expect(zoomed.state.scale, closeTo(viewport.state.scale * 1.5, 1e-9));
+        expect(zoomed.state.tilt, tilt);
+        expectOffset(zoomed.spaceToScreen(under), focal, within: 1e-6);
+      }
+    });
+
+    test('the visible world box encloses every pickable canvas point', () {
+      final viewport = CanvasViewport(
+        const ViewportState(
+          pan: Vec2(-30, 20),
+          scale: 8,
+          rotation: 0.5,
+          tilt: 1.2,
+        ),
+      );
+      final box = viewport.visibleWorldBox(size);
+      for (var i = 0; i <= 10; i++) {
+        for (var j = 0; j <= 10; j++) {
+          final world = viewport.pickBasePlane(
+            Offset(size.width * i / 10, size.height * j / 10),
+          )!;
+          expect(world.x, inInclusiveRange(box.min.x - 1e-9, box.max.x + 1e-9));
+          expect(world.y, inInclusiveRange(box.min.y - 1e-9, box.max.y + 1e-9));
+        }
+      }
+    });
+  });
 }

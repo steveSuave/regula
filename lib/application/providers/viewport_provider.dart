@@ -13,6 +13,17 @@ part 'viewport_provider.g.dart';
 /// touched, and rotation preserves lengths, so hit thresholds and snap
 /// radii need no rotation term.
 ///
+/// **The space view (intent 004).** [tilt] and [panZ] make this a
+/// turntable camera under parallel projection. [rotation] is its azimuth
+/// about the vertical; [tilt] leans the camera from straight down (0,
+/// the planar view every document had before) through edge-on (π/2) to
+/// straight up from below (π). [panZ] is the height of the world point
+/// at the canvas origin: a translation along the view direction is
+/// invisible, so at tilt 0 it has no effect, and it exists so that a
+/// pan is expressible when the base plane is seen edge-on. Both default
+/// to 0, and at tilt 0 every transform is the planar one.
+/// DECISIONS §"The space view is a camera over one document".
+///
 /// This is the *state* only. World↔screen transforms (which need screen
 /// sizes, i.e. Flutter types) live in the presentation layer's `Viewport`
 /// (Phase 5), which is built from this.
@@ -21,25 +32,33 @@ class ViewportState {
     this.pan = Vec2.zero,
     this.scale = 1,
     this.rotation = 0,
+    this.tilt = 0,
+    this.panZ = 0,
   });
 
   final Vec2 pan;
   final double scale;
   final double rotation;
+  final double tilt;
+  final double panZ;
 
   @override
   bool operator ==(Object other) =>
       other is ViewportState &&
       other.pan == pan &&
       other.scale == scale &&
-      other.rotation == rotation;
+      other.rotation == rotation &&
+      other.tilt == tilt &&
+      other.panZ == panZ;
 
   @override
-  int get hashCode => Object.hash(pan, scale, rotation);
+  int get hashCode => Object.hash(pan, scale, rotation, tilt, panZ);
 
   @override
-  String toString() =>
-      'ViewportState(pan: $pan, scale: $scale, rotation: $rotation)';
+  String toString() => tilt == 0 && panZ == 0
+      ? 'ViewportState(pan: $pan, scale: $scale, rotation: $rotation)'
+      : 'ViewportState(pan: $pan, scale: $scale, rotation: $rotation, '
+            'tilt: $tilt, panZ: $panZ)';
 }
 
 /// Pan/zoom state for the canvas. Not undoable, not persisted with the
@@ -58,6 +77,8 @@ class ViewportNotifier extends _$ViewportNotifier {
     pan: state.pan + delta,
     scale: state.scale,
     rotation: state.rotation,
+    tilt: state.tilt,
+    panZ: state.panZ,
   );
 
   /// Multiplies the scale by [factor] (> 1 zooms in).
@@ -65,6 +86,8 @@ class ViewportNotifier extends _$ViewportNotifier {
     pan: state.pan,
     scale: state.scale * factor,
     rotation: state.rotation,
+    tilt: state.tilt,
+    panZ: state.panZ,
   );
 
   void set(ViewportState viewport) => state = viewport;
