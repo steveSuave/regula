@@ -9,6 +9,7 @@ import '../projective/conic_shape.dart';
 import '../projective/proj_line.dart';
 import '../projective/proj_point.dart';
 import '../projective/space/line3.dart';
+import '../projective/space/plane3.dart';
 import '../projective/space/plane_frame.dart';
 import '../projective/space/point3.dart';
 import 'object_attributes.dart';
@@ -17,8 +18,8 @@ import 'object_attributes.dart';
 ///
 /// The hierarchy is sealed at the *kind* level: every object is a
 /// [GeoPoint], a [GeoLine], a [GeoCircle], a [GeoAngle], a [GeoPolygon],
-/// a [GeoMeasurement], a [GeoLocus] or a [GeoText], so kind-switches are
-/// exhaustive.
+/// a [GeoMeasurement], a [GeoLocus], a [GeoText] or a [GeoPlane], so
+/// kind-switches are exhaustive.
 /// The kinds themselves are open — concrete objects
 /// (`FreePoint`, `Midpoint`, …) live one-per-file under `objects/`,
 /// which Dart's `sealed` would forbid on the root class directly.
@@ -418,4 +419,36 @@ abstract class GeoLocus extends GeoObject {
 
   @override
   bool get isDefined => samples != null;
+}
+
+/// A plane of space (intent 004, milestone 2): the ninth kind, and the
+/// first with no planar value at all.
+///
+/// [spacePlane] is the projective value, total like every other: null
+/// only when a parent's value is null or the join is the zero quadruple
+/// (three collinear points, a point on its own line). [frame] is its
+/// projection — coordinates on the plane, which exist only for a finite
+/// plane through real finite defining points — and is what the painter
+/// draws a patch in and what a sheet's planar kernel computes in.
+///
+/// A plane lies in no sheet: its [sheetFrame] is null.
+abstract class GeoPlane extends GeoObject {
+  GeoPlane({required super.id, super.attributes});
+
+  Plane3? get spacePlane;
+
+  /// Coordinates on the plane, or null while it is undefined. The choice
+  /// of origin and axes belongs to each kind and is part of what it is:
+  /// a free point placed in the plane is stored in them.
+  PlaneFrame? get frame;
+
+  /// Where the plane hangs its label: the frame's origin unless a kind
+  /// knows a better place.
+  Vec3? get labelAnchor => frame?.origin;
+
+  @override
+  PlaneFrame? get sheetFrame => null;
+
+  @override
+  bool get isDefined => frame != null;
 }

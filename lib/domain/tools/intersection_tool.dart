@@ -2,6 +2,8 @@ import '../commands/add_object_command.dart';
 import '../construction/geo_object.dart';
 import '../construction/incidence.dart';
 import '../construction/objects/intersection_point.dart';
+import '../construction/objects/line_plane_intersection_point.dart';
+import '../construction/objects/plane_intersection_line.dart';
 import '../math/vec2.dart';
 import '../projective/absolute.dart';
 import 'point_coincidence.dart';
@@ -59,7 +61,8 @@ class IntersectionTool implements ToolInputPreview {
     final hit = input.hit;
     // The null check is load-bearing: flow analysis won't promote
     // `GeoObject?` through the union of negative type tests alone.
-    if (hit == null || (hit is! GeoLine && hit is! GeoCircle)) {
+    if (hit == null ||
+        (hit is! GeoLine && hit is! GeoCircle && hit is! GeoPlane)) {
       return const ToolIgnored();
     }
     final first = _first;
@@ -68,6 +71,38 @@ class IntersectionTool implements ToolInputPreview {
       return const ToolAccepted();
     }
     if (identical(first, hit)) {
+      return const ToolIgnored();
+    }
+    // A plane meets a line in a point and a plane in a line (intent 004,
+    // milestone 2). Those are single-valued, so there is no branch to
+    // pick; the only refusal is an intersection that already exists.
+    if (first is GeoPlane || hit is GeoPlane) {
+      final meet = switch ((first, hit)) {
+        (final GeoPlane a, final GeoPlane b) => PlaneIntersectionLine(
+          id: newId(),
+          plane1: a,
+          plane2: b,
+        ),
+        (final GeoLine l, final GeoPlane p) ||
+        (
+          final GeoPlane p,
+          final GeoLine l,
+        ) => LinePlaneIntersectionPoint(id: newId(), line: l, plane: p),
+        // A circle and a plane: the circle's own plane meets the other
+        // in a line, and that line meets the circle. Not offered yet.
+        _ => null,
+      };
+      if (meet == null || _existingMeet(input.objects, meet)) {
+        return const ToolIgnored();
+      }
+      _first = null;
+      return ToolCommitted(AddObjectCommand(meet));
+    }
+    // Two lines of which one has no value in the sheet: they meet, if at
+    // all, in a plane that holds both, and that is found through the
+    // plane (stage C). There are no planar candidates to pick from.
+    if ((first is GeoLine && first.projLine == null) ||
+        (hit is GeoLine && hit.projLine == null)) {
       return const ToolIgnored();
     }
     final index =
@@ -137,6 +172,22 @@ class IntersectionTool implements ToolInputPreview {
   /// real, and with it complex the reversed-order tap built a fresh
   /// duplicate — which is how the reported file came to hold points on
   /// *both* orderings of one conic pair.
+  /// Whether [objects] already holds the meet of the same two parents,
+  /// in either order.
+  bool _existingMeet(Iterable<GeoObject> objects, GeoObject meet) {
+    final wanted = meet.parents;
+    for (final object in objects) {
+      if (object.runtimeType != meet.runtimeType) {
+        continue;
+      }
+      final parents = object.parents;
+      if (wanted.every((w) => parents.any((p) => identical(p, w)))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   bool _existingIntersection(
     Iterable<GeoObject> objects,
     IntersectionPoint candidate,

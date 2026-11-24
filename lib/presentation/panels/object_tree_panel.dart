@@ -115,6 +115,7 @@ class _ObjectTreePanelState extends ConsumerState<ObjectTreePanel> {
             GeoPolygon() => 'Polygons',
             GeoMeasurement() => 'Measurements',
             GeoText() => 'Texts',
+            GeoPlane() => 'Planes',
             GeoLocus() => 'Loci',
           }]!
           .add(object);

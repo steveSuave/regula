@@ -86,6 +86,34 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  testWidgets('a document with objects in space keeps its geometry, and '
+      'says why', (tester) async {
+    await pumpEditor(tester);
+    buildMidpoint();
+    final construction = container.read(constructionProvider).construction;
+    final apex = FreePoint(id: 'apex', position: const Vec2(0.2, 0.2));
+    container
+        .read(commandStackProvider.notifier)
+        .execute(AddObjectCommand(apex));
+    construction.setFreePointHeight('apex', 1);
+    await tester.pump();
+
+    await choose(tester, 'Hyperbolic');
+
+    expect(metric(), FundamentalConic.euclidean);
+    expect(
+      find.textContaining('Objects in space are Euclidean'),
+      findsOneWidget,
+    );
+
+    // In its plane again, the switch goes through.
+    construction.setFreePointHeight('apex', 0);
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+    await choose(tester, 'Hyperbolic');
+    expect(metric(), FundamentalConic.hyperbolic);
+  });
+
   testWidgets('switching redraws the document in the new geometry', (
     tester,
   ) async {

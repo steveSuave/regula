@@ -23,6 +23,7 @@ String nextAutoName(Set<String> usedNames, GeoObject object) {
     GeoPolygon() ||
     GeoMeasurement() ||
     GeoLocus() ||
+    GeoPlane() ||
     GeoText() => _lowerLatin,
     GeoAngle() => _lowerGreek,
   };

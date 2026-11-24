@@ -5,6 +5,7 @@ import 'dart:ui';
 import '../../application/providers/viewport_provider.dart';
 import '../../domain/math/vec2.dart';
 import '../../domain/math/vec3.dart';
+import '../../domain/projective/space/plane_frame.dart';
 
 /// A point of space, in world coordinates: the base plane is `z == 0` and
 /// a planar document's `Vec2(x, y)` is `(x, y, 0)`. A presentation-side
@@ -225,6 +226,31 @@ class CanvasViewport {
   /// to its plane.
   Vec2? pickBasePlane(Offset screen, {double height = 0}) =>
       basePlanePickable ? screenToWorld(footScreen(screen, height)) : null;
+
+  /// The point of a plane under [screen], in the plane's own [frame]
+  /// coordinates — or, with a [height], the foot of the point picked on
+  /// the parallel plane that far along the normal. Null when the plane is
+  /// seen within [pickFloor] of edge-on: the same refusal as
+  /// [pickBasePlane], for the same reason, at any plane.
+  ///
+  /// Under parallel projection a plane's coordinates map to the screen
+  /// affinely, so the pick is the inverse of a 2×2 map whose determinant
+  /// is `scale² · cos(angle between the normal and the view)`.
+  Vec2? pickPlane(Offset screen, PlaneFrame frame, {double height = 0}) {
+    final origin = spaceToScreen(frame.lift(Vec2.zero, height));
+    final base = spaceToScreen(frame.origin);
+    final u = spaceToScreen(frame.origin + frame.u) - base;
+    final v = spaceToScreen(frame.origin + frame.v) - base;
+    final det = u.dx * v.dy - u.dy * v.dx;
+    if (det.abs() < pickFloor * state.scale * state.scale) {
+      return null;
+    }
+    final d = screen - origin;
+    return Vec2(
+      (d.dx * v.dy - d.dy * v.dx) / det,
+      (u.dx * d.dy - u.dy * d.dx) / det,
+    );
+  }
 
   /// The screen image of the foot of a point seen at [screen] and known
   /// to be [height] above the base plane. [screen] itself at height 0.

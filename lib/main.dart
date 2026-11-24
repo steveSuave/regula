@@ -57,7 +57,9 @@ import 'domain/tools/locus_tool.dart';
 import 'domain/tools/midpoint_tool.dart';
 import 'domain/tools/name_points_tool.dart';
 import 'domain/tools/parallelogram_macro_tool.dart';
+import 'domain/tools/plane_tool.dart';
 import 'domain/tools/point_and_line_tool.dart';
+import 'domain/tools/point_and_plane_tool.dart';
 import 'domain/tools/point_tool.dart';
 import 'domain/tools/polar_line_tool.dart';
 import 'domain/tools/polygon_tool.dart';
@@ -518,6 +520,20 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     } else {
       ref.read(viewportProvider.notifier).reset();
     }
+  }
+
+  /// Activates a tool that builds in space (intent 004, milestone 2).
+  /// Space is Euclidean, so in another geometry the shortcut does
+  /// nothing; and a plane cannot be told from a parallelogram seen from
+  /// straight above, so the space view comes on with the tool.
+  void _activateSpaceTool(Tool Function() create) {
+    if (!ref.read(constructionProvider).construction.kernel.isDefault) {
+      return;
+    }
+    if (!ref.read(spaceViewProvider)) {
+      _toggleSpaceView();
+    }
+    ref.read(toolProvider.notifier).activate(create());
   }
 
   /// The 2D/3D button (intent 004). On unlocks the camera and tilts it
@@ -991,6 +1007,27 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         tools.activate(AngleBisectorTool(newId: newObjectId));
       case AppAction.angleTool:
         tools.activate(AngleTool(newId: newObjectId));
+      case AppAction.planeTool:
+        _activateSpaceTool(() => PlaneTool(newId: newObjectId));
+      case AppAction.perpendicularToPlaneTool:
+        _activateSpaceTool(
+          () => PointAndPlaneTool(
+            newId: newObjectId,
+            build: buildPerpendicularToPlane,
+          ),
+        );
+      case AppAction.parallelPlaneTool:
+        _activateSpaceTool(
+          () =>
+              PointAndPlaneTool(newId: newObjectId, build: buildParallelPlane),
+        );
+      case AppAction.perpendicularPlaneTool:
+        _activateSpaceTool(
+          () => PointAndLineTool(
+            newId: newObjectId,
+            build: buildPerpendicularPlane,
+          ),
+        );
       case AppAction.perpendicularTool:
         tools.activate(
           PointAndLineTool(newId: newObjectId, build: PerpendicularLine.new),

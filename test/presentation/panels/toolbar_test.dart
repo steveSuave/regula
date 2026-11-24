@@ -1,12 +1,17 @@
 import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:regula/application/providers/command_stack_provider.dart';
+import 'package:regula/application/providers/construction_provider.dart';
+import 'package:regula/application/providers/space_view_provider.dart';
 import 'package:regula/application/providers/tool_provider.dart';
+import 'package:regula/application/providers/viewport_provider.dart';
 import 'package:regula/domain/commands/set_geometry_command.dart';
+import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/document_kernel.dart';
 import 'package:regula/domain/construction/objects/inscribed_circle.dart';
 import 'package:regula/domain/construction/objects/nine_point_circle.dart';
@@ -30,7 +35,9 @@ import 'package:regula/domain/tools/kite_macro_tool.dart';
 import 'package:regula/domain/tools/multi_point_tool.dart';
 import 'package:regula/domain/tools/name_points_tool.dart';
 import 'package:regula/domain/tools/parallelogram_macro_tool.dart';
+import 'package:regula/domain/tools/plane_tool.dart';
 import 'package:regula/domain/tools/point_and_line_tool.dart';
+import 'package:regula/domain/tools/point_and_plane_tool.dart';
 import 'package:regula/domain/tools/polar_line_tool.dart';
 import 'package:regula/domain/tools/polygon_tool.dart';
 import 'package:regula/domain/tools/radical_axis_tool.dart';
@@ -218,6 +225,96 @@ void main() {
     final theme = Theme.of(tester.element(find.byType(AppBar)));
     expect(iconColor(tester, Icons.control_point), theme.colorScheme.primary);
     expect(iconColor(tester, Icons.timeline), isNot(theme.colorScheme.primary));
+  });
+
+  group('the Space group (intent 004)', () {
+    const tooltip = 'Space: planes, perpendiculars and parallels';
+
+    testWidgets('is offered only in the space view of a Euclidean document', (
+      tester,
+    ) async {
+      await pumpEditor(tester);
+      expect(find.byTooltip(tooltip), findsNothing);
+
+      container.read(spaceViewProvider.notifier).set(true);
+      await tester.pump();
+      expect(find.byTooltip(tooltip), findsOneWidget);
+
+      container
+          .read(constructionProvider.notifier)
+          .replace(
+            Construction(
+              kernel: const DocumentKernel(metric: FundamentalConic.hyperbolic),
+            ),
+          );
+      await tester.pump();
+      expect(find.byTooltip(tooltip), findsNothing);
+    });
+
+    testWidgets('every row activates its tool and highlights the group', (
+      tester,
+    ) async {
+      await pumpEditor(tester);
+      container.read(spaceViewProvider.notifier).set(true);
+      await tester.pump();
+      final theme = Theme.of(tester.element(find.byType(AppBar)));
+
+      Future<void> pick(String label) async {
+        await tester.tap(find.byIcon(Icons.layers_outlined));
+        await tester.pump(kDoubleTapTimeout);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(label));
+        await tester.pumpAndSettle();
+      }
+
+      await pick('Plane');
+      expect(container.read(toolProvider).tool, isA<PlaneTool>());
+      expect(
+        iconColor(tester, Icons.layers_outlined),
+        theme.colorScheme.primary,
+      );
+
+      await pick('Perpendicular to a plane');
+      expect(container.read(toolProvider).tool, isA<PointAndPlaneTool>());
+      expect(
+        iconColor(tester, Icons.layers_outlined),
+        theme.colorScheme.primary,
+      );
+
+      await pick('Parallel plane');
+      expect(container.read(toolProvider).tool, isA<PointAndPlaneTool>());
+
+      await pick('Plane perpendicular to a line');
+      expect(container.read(toolProvider).tool, isA<PointAndLineTool>());
+    });
+
+    testWidgets('the Plane shortcut turns the space view on with the tool, '
+        'and does nothing in another geometry', (tester) async {
+      await pumpEditor(tester);
+      expect(container.read(spaceViewProvider), isFalse);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyW);
+      await tester.pump();
+      expect(container.read(toolProvider).tool, isA<PlaneTool>());
+      expect(container.read(spaceViewProvider), isTrue);
+      expect(container.read(viewportProvider).tilt, greaterThan(0));
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      container.read(spaceViewProvider.notifier).set(false);
+      container
+          .read(constructionProvider.notifier)
+          .replace(
+            Construction(
+              kernel: const DocumentKernel(metric: FundamentalConic.elliptic),
+            ),
+          );
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyW);
+      await tester.pump();
+      expect(container.read(toolProvider).tool, isNull);
+      expect(container.read(spaceViewProvider), isFalse);
+    });
   });
 
   testWidgets('the Measure rows activate their tools and highlight the '

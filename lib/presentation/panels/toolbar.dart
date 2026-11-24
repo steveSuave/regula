@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../application/object_ids.dart';
 import '../../application/providers/construction_provider.dart';
+import '../../application/providers/space_view_provider.dart';
 import '../../application/providers/tool_provider.dart';
 import '../../domain/construction/geo_object.dart';
 import '../../domain/construction/objects/apollonius_circle.dart';
@@ -51,7 +52,9 @@ import '../../domain/tools/locus_tool.dart';
 import '../../domain/tools/midpoint_tool.dart';
 import '../../domain/tools/name_points_tool.dart';
 import '../../domain/tools/parallelogram_macro_tool.dart';
+import '../../domain/tools/plane_tool.dart';
 import '../../domain/tools/point_and_line_tool.dart';
+import '../../domain/tools/point_and_plane_tool.dart';
 import '../../domain/tools/point_tool.dart';
 import '../../domain/tools/polar_line_tool.dart';
 import '../../domain/tools/polygon_tool.dart';
@@ -270,6 +273,8 @@ class GeometryToolbar extends ConsumerWidget {
         tool is RightTriangleMacroTool ||
         tool is RegularPolygonMacroTool ||
         tool is RandomShapeStampTool;
+    final spaceTools = euclidean && ref.watch(spaceViewProvider);
+    final spaceActive = tool is PlaneTool || tool is PointAndPlaneTool;
     final measureActive =
         tool is AreaTool ||
         tool is SlopeTool ||
@@ -783,6 +788,53 @@ class GeometryToolbar extends ConsumerWidget {
             ),
           ],
         ),
+        // Planes and what they give (intent 004, milestone 2). Shown
+        // while the space view is on, in a Euclidean document: space is
+        // Euclidean, and seen from straight above a plane is a
+        // parallelogram.
+        if (spaceTools)
+          _ToolGroup(
+            icon: const Icon(Icons.layers_outlined),
+            tooltip: 'Space: planes, perpendiculars and parallels',
+            active: spaceActive,
+            items: [
+              (
+                'Plane (three points, or a line and a point)',
+                _pick(() => PlaneTool(newId: newObjectId)),
+                AppAction.planeTool,
+              ),
+              (
+                'Perpendicular to a plane (point and plane)',
+                _pick(
+                  () => PointAndPlaneTool(
+                    newId: newObjectId,
+                    build: buildPerpendicularToPlane,
+                  ),
+                ),
+                AppAction.perpendicularToPlaneTool,
+              ),
+              (
+                'Plane perpendicular to a line (point and line)',
+                _pick(
+                  () => PointAndLineTool(
+                    newId: newObjectId,
+                    build: buildPerpendicularPlane,
+                  ),
+                ),
+                AppAction.perpendicularPlaneTool,
+              ),
+              (
+                'Parallel plane (point and plane)',
+                _pick(
+                  () => PointAndPlaneTool(
+                    newId: newObjectId,
+                    build: buildParallelPlane,
+                  ),
+                ),
+                AppAction.parallelPlaneTool,
+              ),
+            ],
+          ),
       ],
     );
   }

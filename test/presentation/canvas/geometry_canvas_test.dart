@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:regula/application/object_ids.dart';
 import 'package:regula/application/providers/command_stack_provider.dart';
 import 'package:regula/application/providers/construction_provider.dart';
 import 'package:regula/application/providers/selection_provider.dart';
@@ -12,6 +13,7 @@ import 'package:regula/application/providers/space_view_provider.dart';
 import 'package:regula/application/providers/tool_provider.dart';
 import 'package:regula/application/providers/viewport_provider.dart';
 import 'package:regula/domain/commands/add_object_command.dart';
+import 'package:regula/domain/commands/macro_command.dart';
 import 'package:regula/domain/commands/set_geometry_command.dart';
 import 'package:regula/domain/construction/document_kernel.dart';
 import 'package:regula/domain/construction/geo_object.dart';
@@ -35,6 +37,7 @@ import 'package:regula/domain/construction/objects/sector.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/construction/objects/segment_ratio_point.dart';
 import 'package:regula/domain/construction/objects/three_point_circle.dart';
+import 'package:regula/domain/construction/objects/three_point_plane.dart';
 import 'package:regula/domain/construction/objects/vertex_angle.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/math/vec3.dart';
@@ -42,6 +45,7 @@ import 'package:regula/domain/projective/ck_measure.dart';
 import 'package:regula/domain/projective/conic_shape.dart';
 import 'package:regula/domain/tools/delete_tool.dart';
 import 'package:regula/domain/tools/intersection_tool.dart';
+import 'package:regula/domain/tools/plane_tool.dart';
 import 'package:regula/domain/tools/point_tool.dart';
 import 'package:regula/domain/tools/visibility_tool.dart';
 import 'package:regula/main.dart';
@@ -3239,6 +3243,75 @@ void main() {
       );
     });
 
+    testWidgets('three taps with the Plane tool build a plane through the '
+        'tapped points: one command, one undo', (tester) async {
+      final origin = await pumpWithTwoPoints(tester);
+      await enter(tester, const ViewportState(tilt: 1.0));
+      container
+          .read(toolProvider.notifier)
+          .activate(PlaneTool(newId: newObjectId));
+      await tester.pump();
+      final existing = points();
+
+      await tester.tapAt(
+        origin + camera().worldToScreen(existing[0].position!),
+      );
+      await tester.pump();
+      await tester.tapAt(
+        origin + camera().worldToScreen(existing[1].position!),
+      );
+      await tester.pump();
+      await tester.tapAt(origin + const Offset(520, 420));
+      await tester.pump();
+
+      final construction = container.read(constructionProvider).construction;
+      final plane = construction.objects.whereType<ThreePointPlane>().single;
+      expect(plane.point1, existing[0]);
+      expect(plane.point2, existing[1]);
+      expect(points(), hasLength(3));
+      expect(plane.isDefined, isTrue);
+      // The third point landed under the finger, on the base plane.
+      final third = camera().worldToScreen(points()[2].position!);
+      expect((third - const Offset(520, 420)).distance, lessThan(1e-6));
+
+      await tester.tap(find.byIcon(Icons.undo));
+      await tester.pump();
+      expect(construction.objects.whereType<ThreePointPlane>(), isEmpty);
+      expect(points(), hasLength(2));
+    });
+
+    testWidgets('a tap inside a plane selects it; a tap on a point in it '
+        'selects the point', (tester) async {
+      final origin = await pumpWithTwoPoints(tester);
+      final construction = container.read(constructionProvider).construction;
+      final third = FreePoint(id: 'third', position: const Vec2(300, -400));
+      final plane = ThreePointPlane(
+        id: 'plane',
+        point1: points()[0],
+        point2: points()[1],
+        point3: third,
+      );
+      container
+          .read(commandStackProvider.notifier)
+          .execute(
+            MacroCommand([AddObjectCommand(third), AddObjectCommand(plane)]),
+          );
+      await enter(tester, const ViewportState(tilt: 1.0));
+
+      await tester.tapAt(
+        origin + camera().worldToScreen(const Vec2(240, -240)),
+      );
+      await tester.pump();
+      expect(container.read(selectionProvider), {'plane'});
+
+      await tester.tapAt(
+        origin + camera().worldToScreen(points()[1].position!),
+      );
+      await tester.pump();
+      expect(container.read(selectionProvider), {points()[1].id});
+      expect(construction.byId('plane'), isNotNull);
+    });
+
     group('the lift handle', () {
       /// Selects the second point — the one with room above it on the
       /// canvas — and returns its handle at the camera.
@@ -3299,7 +3372,10 @@ void main() {
           await tester.pump();
           expect(points()[1].height, 0);
           expect(points()[1].position, const Vec2(300, -200));
-          await tester.tap(find.byIcon(Icons.redo));
+          // Through the stack, not the button: with the space view's
+          // extra controls the bar scrolls in the test window, and Redo,
+          // the last button, is past its edge.
+          container.read(commandStackProvider.notifier).redo();
           await tester.pump();
           expect(points()[1].height, closeTo(100 / math.sin(1.0), 1e-9));
         });

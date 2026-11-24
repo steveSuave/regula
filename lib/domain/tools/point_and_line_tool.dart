@@ -66,6 +66,7 @@ class PointAndLineTool implements ToolInputPreview {
           GeoPolygon() ||
           GeoMeasurement() ||
           GeoLocus() ||
+          GeoPlane() ||
           GeoText():
         return const ToolIgnored();
       case null:

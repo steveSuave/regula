@@ -145,5 +145,22 @@ Three stages. Each ends green on the full gate, with a look, and merges to `main
   - Gotcha, again: the phone metrics override dies with the DevTools session, the layout goes wide, and the app bar's scroll offset resets. A run that scrolls the bar must tap in the same run.
 - **Stage A closed 2026-11-24.** Final gate: analyze clean; VM 3753 (baseline 3629); goldens 35, no diff; browser 17; `flutter build web --wasm` built. `git diff main --stat -- test/fixtures test/v1_oracle` is empty.
 
-**Next: stage B, step 9** (`GeoPlane` and the seven kinds).
+- **Stage A shipped**: merged and pushed to `main` (`65bc15b`); Deploy and Benchmarks green.
+- **Steps 9 to 12, planes** (stage B, in one working pass, committed together). Tests: 19 in `plane_kinds_test.dart`, 17 in `plane_tools_test.dart`, 15 in `plane_patch_test.dart`, 3 in `space_fixture_test.dart`, 3 more in `codec_space_test.dart`, the space kinds added to the codec's round-trip sweep, 3 toolbar tests, 2 canvas tests, 1 prover and 1 geometry-menu test; one new golden, `space_kinds_light`. VM 3815; goldens 36, the old 35 unchanged. Notes:
+  - **Steps 9 and 10 were not separated.** A plane with no picture is not a state worth a commit, and the arms in the exhaustive switches are where the picture is decided.
+  - `hasSpaceContent` moved to `lib/domain/construction/space_content.dart` so the prover provider can read it without importing presentation; `space_view.dart` re-exports it.
+  - **A third kitchen-sink builder, `buildSpaceKinds`**, beside `buildPostV1Kinds` and for the same reason: its documents are version 4, and the other two must stay version 1.
+  - **The patch's sides are level and up the slope, not the frame's axes.** The first version boxed the points in the plane's frame; the stage look showed a face through O, A, B as a diamond three times the triangle, because that frame runs along OA. Level sides hug a face and are how a textbook draws a plane. The golden was regenerated for it.
+  - Shortcuts: `G W` plane, `G ⇧ W` parallel plane, `G J` perpendicular to a plane, `G ⇧ J` plane perpendicular to a line.
+  - **Not done from the plan: the `attributes_inspector` arm.** The inspector shows the common attributes for a plane (colour, stroke, fill, name, visibility) through its existing generic rows; nothing kind-specific was needed.
+  - Gotcha: with the space view on and the Space group present, the app bar is one button wider than the 1280 px test window shows, and Redo, the last button, is past the edge. A widget test that taps Redo there misses silently and fails later; go through the command stack.
+  - The fixture `test/space_fixtures/pyramid_skeleton.rgl` already reads the base-to-face dihedral as arctan √2 off the face's normal.
+
+- **Stage B look.** Headless Chrome on the release wasm build, 1280 wide, mouse events, read from screenshots.
+  - Seen: the Space group (a layers icon) appears in the bar once the 3D view is on, and its menu lists Plane, Perpendicular to a plane, Plane perpendicular to a line and Parallel plane with their shortcuts; three taps on E, A, B build the face plane and three on A, B, C the base plane, each a translucent patch with a blue outline, auto-named i and j, the overlap darker; the perpendicular from E to the base plane (tap E, then inside the base patch) is a line through E standing on the base; an orbit turns planes, edges and the height together.
+  - **Not seen in a browser**: the phone layout for the plane tools, tapping a plane to select it, the Intersection tool with planes, parallel and perpendicular planes, opening the fixture. Those rest on the widget and unit tests.
+  - The whole bar still fits at 1280 with the Space group and the Views button present.
+- **Stage B closed 2026-11-24.** Final gate: analyze clean; VM 3816; goldens 36 (one new, the old 35 unchanged); browser 17; `flutter build web --wasm` built. `git diff main --stat -- test/fixtures test/v1_oracle` is empty.
+
+**Next: stage C, step 13** (`FreePoint.plane` and per-plane sheets).
 

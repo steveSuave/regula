@@ -20,12 +20,15 @@ import '../../domain/construction/objects/inscribed_circle.dart';
 import '../../domain/construction/objects/intersection_point.dart';
 import '../../domain/construction/objects/length_measurement.dart';
 import '../../domain/construction/objects/line_angle.dart';
+import '../../domain/construction/objects/line_plane_intersection_point.dart';
 import '../../domain/construction/objects/midpoint.dart';
 import '../../domain/construction/objects/nine_point_circle.dart';
 import '../../domain/construction/objects/orthocenter.dart';
 import '../../domain/construction/objects/parallel_line.dart';
 import '../../domain/construction/objects/perpendicular_bisector_line.dart';
 import '../../domain/construction/objects/perpendicular_line.dart';
+import '../../domain/construction/objects/perpendicular_to_plane_line.dart';
+import '../../domain/construction/objects/plane_intersection_line.dart';
 import '../../domain/construction/objects/point_on_object.dart';
 import '../../domain/construction/objects/polar_line.dart';
 import '../../domain/construction/objects/projection_point.dart';
@@ -51,6 +54,9 @@ import '../../domain/math/rational.dart';
 /// for types added later — a new object shows its kind ("Point") until
 /// someone adds it here.
 String objectKindLabel(GeoObject object) => switch (object) {
+  LinePlaneIntersectionPoint() => 'Line meets plane',
+  PerpendicularToPlaneLine() => 'Perpendicular to plane',
+  PlaneIntersectionLine() => 'Planes meet',
   Midpoint() => 'Midpoint',
   IntersectionPoint() => 'Intersection point',
   PointOnObject() => 'Point on object',
@@ -107,5 +113,6 @@ String objectKindLabel(GeoObject object) => switch (object) {
   SlopeMeasurement() => 'Slope',
   GeoMeasurement() => 'Measurement',
   GeoText() => 'Text',
+  GeoPlane() => 'Plane',
   GeoLocus() => 'Locus',
 };

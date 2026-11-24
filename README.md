@@ -88,8 +88,11 @@ Document and workspace:
   oblique. Everything else works as before on the tilted figure
 - **Points in space** — in the 3D view a selected free point has a handle that
   lifts it off its plane; segments, lines, rays, midpoints and parallels follow
-  it, so a pyramid is a base, a lifted apex and the edges between them. Planes
-  and constructions inside them are the next steps of stereometry
+  it, so a pyramid is a base, a lifted apex and the edges between them
+- **Planes** — through three points, through a line and a point, perpendicular
+  to a line or parallel to another plane; the perpendicular from a point to a
+  plane; and the Intersection tool meets a line with a plane and a plane with a
+  plane. Constructions inside a plane are the next step of stereometry
 - **Light/dark theme**
 
 Also built in, as an experimental feature that is off by default: a JGEX-style
