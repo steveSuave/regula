@@ -33,15 +33,15 @@ void main() {
       final c = FreePoint(id: 'c', position: const Vec2(-1, 3));
       final r = RotatedPoint(id: 'r', point: p, center: c, angle: 0.75);
       expect(
-        r.position!.distanceTo(c.position),
-        closeTo(p.position.distanceTo(c.position), 1e-9),
+        r.position!.distanceTo(c.position!),
+        closeTo(p.position!.distanceTo(c.position!), 1e-9),
       );
 
-      p.position = const Vec2(-7, 0.5);
+      p.chartPosition = const Vec2(-7, 0.5);
       r.recompute();
       expect(
-        r.position!.distanceTo(c.position),
-        closeTo(p.position.distanceTo(c.position), 1e-9),
+        r.position!.distanceTo(c.position!),
+        closeTo(p.position!.distanceTo(c.position!), 1e-9),
       );
     });
 
@@ -54,7 +54,7 @@ void main() {
       );
       final forth = RotatedPoint(id: 'rf', point: p, center: c, angle: 1.2);
       final back = RotatedPoint(id: 'rb', point: forth, center: c, angle: -1.2);
-      expect(back.position!.closeTo(p.position, 1e-9), isTrue);
+      expect(back.position!.closeTo(p.position!, 1e-9), isTrue);
     });
 
     test('a point at the center is its own image', () {
@@ -69,7 +69,7 @@ void main() {
       final p = FreePoint(id: 'p', position: const Vec2(1, 0));
       final c = FreePoint(id: 'c', position: const Vec2(0, 0));
       final r = RotatedPoint(id: 'r', point: p, center: c, angle: math.pi);
-      c.position = const Vec2(2, 0);
+      c.chartPosition = const Vec2(2, 0);
       r.recompute();
       expect(r.position!.closeTo(const Vec2(3, 0), 1e-12), isTrue);
     });

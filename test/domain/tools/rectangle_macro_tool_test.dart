@@ -41,8 +41,8 @@ void main() {
   /// The rectangle invariant on the current corner positions.
   void expectRectangle(Construction construction) {
     final free = freeCorners(construction);
-    final a = free[0].position;
-    final b = free[1].position;
+    final a = free[0].position!;
+    final b = free[1].position!;
     final c = cornerC(construction).position!;
     final d = cornerD(construction).position!;
     final ab = b - a;
@@ -95,7 +95,7 @@ void main() {
       tool.onInput(const ToolInput(Vec2(0, 0)));
       tool.onInput(const ToolInput(Vec2(4, 0)));
       final result =
-          tool.onInput(ToolInput(e.position, hit: e)) as ToolCommitted;
+          tool.onInput(ToolInput(e.position!, hit: e)) as ToolCommitted;
       result.command.apply(construction);
 
       expect(

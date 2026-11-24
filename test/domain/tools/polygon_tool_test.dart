@@ -94,13 +94,13 @@ void main() {
         ..add(c)
         ..add(d);
 
-      tool.onInput(tap(a.position, hit: a));
-      tool.onInput(tap(b.position, hit: b));
-      tool.onInput(tap(c.position, hit: c));
-      tool.onInput(tap(d.position, hit: d));
+      tool.onInput(tap(a.position!, hit: a));
+      tool.onInput(tap(b.position!, hit: b));
+      tool.onInput(tap(c.position!, hit: c));
+      tool.onInput(tap(d.position!, hit: d));
       expect(tool.previewObjectIds, ['a', 'b', 'c', 'd']);
 
-      final result = tool.onInput(tap(a.position, hit: a)) as ToolCommitted;
+      final result = tool.onInput(tap(a.position!, hit: a)) as ToolCommitted;
       result.command.apply(construction);
       expect(construction.length, 5, reason: 'only the polygon is new');
 
@@ -114,11 +114,11 @@ void main() {
     test('a tap on a collected existing vertex (not the first) is ignored', () {
       final a = FreePoint(id: 'a', position: const Vec2(0, 0));
       final b = FreePoint(id: 'b', position: const Vec2(4, 0));
-      tool.onInput(tap(a.position, hit: a));
-      tool.onInput(tap(b.position, hit: b));
+      tool.onInput(tap(a.position!, hit: a));
+      tool.onInput(tap(b.position!, hit: b));
       tool.onInput(tap(const Vec2(2, 3)));
 
-      expect(tool.onInput(tap(b.position, hit: b)), isA<ToolIgnored>());
+      expect(tool.onInput(tap(b.position!, hit: b)), isA<ToolIgnored>());
       expect(tool.collectedVertices, hasLength(3));
     });
 

@@ -91,14 +91,14 @@ void main() {
       );
       expect(left.line, isNotNull);
 
-      external.position = const Vec2(0.5, 0);
+      external.chartPosition = const Vec2(0.5, 0);
       left.recompute();
       expect(left.line, isNull);
       expect(left.isDefined, isFalse);
 
       // Re-emerge on the other side of the circle: branch 0 is still the
       // touch point to the *left* of the (new) center → point direction.
-      external.position = const Vec2(-5, 0);
+      external.chartPosition = const Vec2(-5, 0);
       left.recompute();
       final touch = left.line!.project(Vec2.zero);
       // Left of the −x direction is −y.
@@ -112,12 +112,12 @@ void main() {
         circle: circle,
         branch: 0,
       );
-      rim.position = Vec2.zero;
+      rim.chartPosition = Vec2.zero;
       circle.recompute();
       tangent.recompute();
       expect(tangent.line, isNull);
 
-      rim.position = const Vec2(1, 0);
+      rim.chartPosition = const Vec2(1, 0);
       circle.recompute();
       tangent.recompute();
       expect(tangent.line, isNotNull);
@@ -126,7 +126,7 @@ void main() {
     test(
       'on the circle both branches collapse to the tangent at the point',
       () {
-        external.position = const Vec2(0, 1);
+        external.chartPosition = const Vec2(0, 1);
         final left = TangentLine(
           id: 'l',
           point: external,
@@ -158,11 +158,11 @@ void main() {
       );
       for (var i = 0; i <= 24; i++) {
         final angle = 2 * math.pi * i / 24;
-        external.position = Vec2(math.cos(angle), math.sin(angle)) * 3;
+        external.chartPosition = Vec2(math.cos(angle), math.sin(angle)) * 3;
         left.recompute();
         final touch = left.line!.project(Vec2.zero);
         expect(
-          external.position.cross(touch),
+          external.position!.cross(touch),
           isPositive,
           reason: 'orbit step $i: branch 0 touch point left of center→point',
         );

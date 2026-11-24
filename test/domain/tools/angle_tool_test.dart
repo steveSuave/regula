@@ -101,9 +101,9 @@ void main() {
   group('AngleTool — point mode', () {
     test('three existing points commit just the VertexAngle', () {
       final t = tool();
-      t.onInput(ToolInput(x.position, hit: x));
-      t.onInput(ToolInput(o.position, hit: o));
-      final result = t.onInput(ToolInput(y.position, hit: y));
+      t.onInput(ToolInput(x.position!, hit: x));
+      t.onInput(ToolInput(o.position!, hit: o));
+      final result = t.onInput(ToolInput(y.position!, hit: y));
 
       expect(result, isA<ToolCommitted>());
       final command = (result as ToolCommitted).command;
@@ -130,7 +130,7 @@ void main() {
 
     test('curve taps are ignored — no glued by-product points', () {
       final t = tool();
-      t.onInput(ToolInput(x.position, hit: x));
+      t.onInput(ToolInput(x.position!, hit: x));
 
       expect(
         t.onInput(
@@ -146,19 +146,19 @@ void main() {
       );
       // The collection is still just the first point; two more existing
       // points complete it.
-      t.onInput(ToolInput(o.position, hit: o));
-      expect(t.onInput(ToolInput(y.position, hit: y)), isA<ToolCommitted>());
+      t.onInput(ToolInput(o.position!, hit: o));
+      expect(t.onInput(ToolInput(y.position!, hit: y)), isA<ToolCommitted>());
     });
 
     test('an already-collected point is refused', () {
       final t = tool();
-      t.onInput(ToolInput(x.position, hit: x));
-      expect(t.onInput(ToolInput(x.position, hit: x)), isA<ToolIgnored>());
+      t.onInput(ToolInput(x.position!, hit: x));
+      expect(t.onInput(ToolInput(x.position!, hit: x)), isA<ToolIgnored>());
     });
 
     test('existing points are haloed, new free points keep the marker', () {
       final t = tool();
-      t.onInput(ToolInput(x.position, hit: x));
+      t.onInput(ToolInput(x.position!, hit: x));
       t.onInput(const ToolInput(Vec2(1, 1)));
 
       expect(t.previewObjectIds, ['x']);
@@ -171,7 +171,7 @@ void main() {
         ..reset();
       expect(t.previewObjectIds, isEmpty);
       // After reset a point tap enters point mode from scratch.
-      expect(t.onInput(ToolInput(x.position, hit: x)), isA<ToolAccepted>());
+      expect(t.onInput(ToolInput(x.position!, hit: x)), isA<ToolAccepted>());
 
       t.reset();
       expect(t.previewObjectIds, isEmpty);

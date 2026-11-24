@@ -11,6 +11,7 @@ import '../../domain/math/circle_eq.dart';
 import '../../domain/math/vec2.dart';
 import '../../domain/projective/conic_matrix.dart';
 import '../../domain/projective/conic_shape.dart';
+import 'screen_figure.dart';
 
 /// Finds the object under a tap.
 ///
@@ -76,6 +77,11 @@ class CanvasHitTester {
     for (final object in objects) {
       index++;
       if ((!object.attributes.visible && !includeHidden) || !object.isDefined) {
+        continue;
+      }
+      // An object with no value in its sheet has nothing on the plane to
+      // measure against; the screen-space tester is the one that sees it.
+      if (drawnInSpace(object)) {
         continue;
       }
       final distance = _distanceTo(objects, object, point, worldPerPx);
@@ -149,6 +155,7 @@ class CanvasHitTester {
     for (final object in objects)
       if (object.attributes.visible &&
           object.isDefined &&
+          !drawnInSpace(object) &&
           _containedIn(object, within, cardinalAngle))
         object,
   ];

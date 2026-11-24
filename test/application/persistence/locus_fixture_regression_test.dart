@@ -58,8 +58,8 @@ void main() {
     // units short of its driver-at-infinity limit on line b (39e).
     final free = <FreePoint>[];
     final locus = loadLocus('locus-miss.json', freeOut: free);
-    final a = free.singleWhere((p) => p.attributes.name == 'A').position;
-    final b = free.singleWhere((p) => p.attributes.name == 'B').position;
+    final a = free.singleWhere((p) => p.attributes.name == 'A').position!;
+    final b = free.singleWhere((p) => p.attributes.name == 'B').position!;
 
     final comps = components(locus);
     expect(
@@ -201,7 +201,7 @@ void main() {
     // line.
     final free = <FreePoint>[];
     final locus = loadLocus('apatitos-topos.rgl', freeOut: free);
-    final c = free.singleWhere((p) => p.attributes.name == 'C').position;
+    final c = free.singleWhere((p) => p.attributes.name == 'C').position!;
     // G is fixed (it does not depend on the driver), so read it off the
     // construction rather than re-deriving it.
     final samples = locus.samples!;

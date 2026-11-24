@@ -57,7 +57,7 @@ void main() {
       final checkpoints = [branch.checkpoint()];
 
       // Tiny move of B: the tracked root barely moves — accepted.
-      b.position = const Vec2(2.001, 0);
+      b.chartPosition = const Vec2(2.001, 0);
       c2.recompute();
       ip.recompute();
       expect(branch.motion, lessThan(checkpoints[0].separation / 2));
@@ -89,7 +89,7 @@ void main() {
       // Collapse the circles onto each other: coincident carriers have
       // no candidates (merely *complex* roots would still be followed —
       // the kernel is total), so the branch coasts.
-      b.position = Vec2.zero;
+      b.chartPosition = Vec2.zero;
       c2.recompute();
       ip.recompute();
       expect(branch.hasCandidates, isFalse);

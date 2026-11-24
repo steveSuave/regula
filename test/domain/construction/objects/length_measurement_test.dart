@@ -74,7 +74,7 @@ void main() {
       final length = LengthMeasurement(id: 'len', subject: circle);
       expect(length.value, closeTo(2 * math.pi, 1e-12));
 
-      rim.position = const Vec2(3, 0);
+      rim.chartPosition = const Vec2(3, 0);
       circle.recompute();
       length.recompute();
       expect(length.value, closeTo(6 * math.pi, 1e-12));
@@ -88,14 +88,14 @@ void main() {
       final length = LengthMeasurement(id: 'len', subject: arc);
       expect(length.isDefined, isTrue);
 
-      v.position = const Vec2(0, 0);
+      v.chartPosition = const Vec2(0, 0);
       arc.recompute();
       length.recompute();
       expect(length.isDefined, isFalse);
       expect(length.value, isNull);
       expect(length.anchor, isNull);
 
-      v.position = const Vec2(0, 1);
+      v.chartPosition = const Vec2(0, 1);
       arc.recompute();
       length.recompute();
       expect(length.isDefined, isTrue);

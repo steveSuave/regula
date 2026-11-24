@@ -16,11 +16,14 @@ import '../../application/providers/space_view_provider.dart';
 import '../../application/providers/tool_provider.dart';
 import '../../application/providers/viewport_provider.dart';
 import '../../domain/commands/change_attributes_command.dart';
+import '../../domain/construction/construction.dart';
 import '../../domain/construction/geo_object.dart';
 import '../../domain/construction/objects/expression_text.dart';
+import '../../domain/construction/objects/free_point.dart';
 import '../../domain/construction/text_evaluator.dart';
 import '../../domain/construction/text_template.dart';
 import '../../domain/math/vec2.dart';
+import '../../domain/math/vec3.dart';
 import '../../domain/tools/delete_tool.dart';
 import '../../domain/tools/text_tool.dart';
 import '../../domain/tools/tool.dart';
@@ -33,6 +36,9 @@ import 'canvas_viewport.dart';
 import 'geometry_painter.dart';
 import 'grid_layout.dart';
 import 'label_layout.dart';
+import 'lift_handle.dart';
+import 'screen_figure.dart';
+import 'space_hit_tester.dart';
 import 'space_view.dart';
 import 'twist_gate.dart';
 
@@ -187,6 +193,14 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
   /// Computed from the baseline each frame, like [_nav].
   _OrbitBaseline? _orbit;
 
+  /// The height of the object being dragged above the base plane: where
+  /// the pointer is read during the drag. 0 for anything unlifted.
+  double _dragHeight = 0;
+
+  /// The lift gesture in progress: the handle as it was grabbed, where
+  /// the pointer went down, and the point's height then.
+  ({LiftHandle handle, Offset start, double startHeight})? _lift;
+
   @override
   Widget build(BuildContext context) {
     final constructionState = ref.watch(constructionProvider);
@@ -256,6 +270,10 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
               final drag => (id: drag.id, offset: drag.offset),
             },
             showHidden: _revealsHidden(tool),
+            liftHandleEnabled: _liftOffered(
+              tool,
+              constructionState.construction,
+            ),
             showAxes: ref.watch(documentSettingsProvider).showAxes,
             showGrid: ref.watch(documentSettingsProvider).showGrid,
             // Theme-less hosts (bare-widget tests) keep the painter's
@@ -537,10 +555,21 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
       }
       return;
     }
+    final construction = ref.read(constructionProvider).construction;
+    // The lift handle first: it floats off its point, over whatever is
+    // behind it, and it is what the user reached for.
+    final handle = _liftHandleAt(viewport, screen);
+    if (handle != null) {
+      final point = construction.byId(handle.pointId);
+      if (point is FreePoint &&
+          ref.read(toolProvider.notifier).startLift(point)) {
+        _lift = (handle: handle, start: screen, startHeight: point.height);
+      }
+      return;
+    }
     // Null while the base plane is too close to edge-on to pick: then
     // nothing on it can be grabbed, and the drag falls through to orbit.
     final world = viewport.pickBasePlane(screen);
-    final construction = ref.read(constructionProvider).construction;
     // Labels first — a label deliberately floats *off* its geometry, so
     // the geometry hit test below can never reach it. Reverse insertion
     // order picks the topmost of overlapping labels, like the painter's
@@ -575,18 +604,25 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
     }
     final hit = world == null
         ? null
-        : const CanvasHitTester().hitTest(
-            construction.objects,
+        : _hitsAt(
+            construction,
+            viewport,
+            screen,
             world,
-            viewport.hitRadius(GeometryCanvas.hitThresholdFor(_firstDownKind)),
-            worldPerPx: viewport.screenToWorldLength(1),
-          );
+            _firstDownKind,
+          ).firstOrNull;
     if (hit != null) {
+      // A lifted point is dragged parallel to its plane: the pointer is
+      // read on the plane at the point's height, for the whole gesture.
+      _dragHeight = hit is FreePoint ? hit.height : 0;
+      final grab = viewport.pickBasePlane(screen, height: _dragHeight);
       // May refuse (derived point): then the pan does nothing — starting
       // a band under an object the user visibly grabbed would surprise.
-      ref
-          .read(toolProvider.notifier)
-          .startDrag(hit, world!, gridSnapStep: _gridSnapStep(viewport));
+      if (grab != null) {
+        ref
+            .read(toolProvider.notifier)
+            .startDrag(hit, grab, gridSnapStep: _gridSnapStep(viewport));
+      }
       return;
     }
     if (spaceView) {
@@ -597,6 +633,66 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
       _bandAnchor = screen;
       _band = Rect.fromPoints(screen, screen);
     });
+  }
+
+  /// Whether the lift handle is offered: in the space view, with no tool
+  /// active, in a Euclidean document (space is Euclidean; intent 004,
+  /// milestone 2, requirement 17).
+  bool _liftOffered(Tool? tool, Construction construction) =>
+      tool == null &&
+      construction.kernel.isDefault &&
+      ref.read(spaceViewProvider);
+
+  /// The lift handle under [screen], if one is offered and grabbed there.
+  LiftHandle? _liftHandleAt(CanvasViewport viewport, Offset screen) {
+    final construction = ref.read(constructionProvider).construction;
+    if (!_liftOffered(ref.read(toolProvider).tool, construction)) {
+      return null;
+    }
+    final handle = LiftHandle.forSelection(
+      construction,
+      ref.read(selectionProvider),
+      viewport,
+    );
+    return handle != null && handle.grabs(screen) ? handle : null;
+  }
+
+  /// Every object under the pointer, best first.
+  ///
+  /// In the plan view this is the world-space test on the base-plane
+  /// point [world], as it always was. In the space view the pointer is
+  /// measured in pixels against each object's screen ink
+  /// ([SpaceHitTester]): under a tilt a world radius is an ellipse on
+  /// screen, and an object off the plane has no base-plane point at all.
+  List<GeoObject> _hitsAt(
+    Construction construction,
+    CanvasViewport viewport,
+    Offset screen,
+    Vec2 world,
+    PointerDeviceKind? kind, {
+    bool includeHidden = false,
+  }) {
+    final thresholdPx = GeometryCanvas.hitThresholdFor(kind);
+    // Also with the view off while something is lifted: seen from
+    // straight above it is still drawn, and must still be reachable.
+    if (ref.read(spaceViewProvider) ||
+        construction.objects.any((o) => o.isDefined && drawnInSpace(o))) {
+      return const SpaceHitTester().hitTestAll(
+        construction.objects,
+        viewport,
+        context.size ?? Size.zero,
+        screen,
+        thresholdPx,
+        includeHidden: includeHidden,
+      );
+    }
+    return const CanvasHitTester().hitTestAll(
+      construction.objects,
+      world,
+      viewport.hitRadius(thresholdPx),
+      worldPerPx: viewport.screenToWorldLength(1),
+      includeHidden: includeHidden,
+    );
   }
 
   /// Opens an orbit at [screen] about the figure's centre, from the
@@ -635,6 +731,23 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
           );
       return;
     }
+    final lift = _lift;
+    if (lift != null) {
+      // Measured from the gesture's start against the handle as it was
+      // then: the axis and the pixels per unit do not change while the
+      // camera is still, and the grip moving with the point must not
+      // feed back into the reading.
+      ref
+          .read(toolProvider.notifier)
+          .updateLift(
+            lift.handle.heightAt(
+              screen,
+              start: lift.start,
+              startHeight: lift.startHeight,
+            ),
+          );
+      return;
+    }
     final labelDrag = _labelDrag;
     if (labelDrag != null) {
       setState(() => _labelDrag = labelDrag.movedTo(screen));
@@ -645,7 +758,11 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
       setState(() => _band = Rect.fromPoints(anchor, screen));
       return;
     }
-    ref.read(toolProvider.notifier).updateDrag(viewport.screenToWorld(screen));
+    ref
+        .read(toolProvider.notifier)
+        .updateDrag(
+          viewport.screenToWorld(viewport.footScreen(screen, _dragHeight)),
+        );
   }
 
   /// End-of-orbit settle: the azimuth as a twist settles it, and a tilt
@@ -705,6 +822,7 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
     }
     final band = _band;
     if (band == null) {
+      _lift = null;
       ref.read(toolProvider.notifier).endDrag();
       return;
     }
@@ -740,6 +858,7 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
     // An interrupted orbit keeps the camera where it got to, like an
     // interrupted pinch: it is view state, and there is nothing to undo.
     _orbit = null;
+    _lift = null;
     ref.read(toolProvider.notifier).cancelDrag();
     setState(() {
       _band = null;
@@ -762,12 +881,13 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
       return;
     }
     final construction = ref.read(constructionProvider).construction;
-    final hit = const CanvasHitTester().hitTest(
-      construction.objects,
+    final hit = _hitsAt(
+      construction,
+      viewport,
+      screen,
       world,
-      viewport.hitRadius(GeometryCanvas.hitThresholdFor(_firstDownKind)),
-      worldPerPx: viewport.screenToWorldLength(1),
-    );
+      _firstDownKind,
+    ).firstOrNull;
     if (hit == null) {
       return;
     }
@@ -863,6 +983,11 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
     Offset screen,
     PointerDeviceKind? kind,
   ) {
+    // A tap on the lift grip is not a tap on the canvas behind it: it
+    // must not clear the selection that put the grip there.
+    if (_liftHandleAt(viewport, screen) != null) {
+      return;
+    }
     // The base plane seen too close to edge-on cannot be picked: a tap
     // there would land tens of canvas widths away, so it lands nowhere.
     final world = viewport.pickBasePlane(screen);
@@ -874,11 +999,12 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
     final construction = ref.read(constructionProvider).construction;
     final tool = ref.read(toolProvider).tool;
     final threshold = viewport.hitRadius(GeometryCanvas.hitThresholdFor(kind));
-    final hits = const CanvasHitTester().hitTestAll(
-      construction.objects,
+    final hits = _hitsAt(
+      construction,
+      viewport,
+      screen,
       world,
-      threshold,
-      worldPerPx: viewport.screenToWorldLength(1),
+      kind,
       includeHidden: _revealsHidden(tool),
     );
     final hit = hits.firstOrNull;
@@ -1004,7 +1130,7 @@ class _NavBaseline {
   final double startScale;
   final double startRotation;
   final double startTilt;
-  final SpacePoint fixedWorld;
+  final Vec3 fixedWorld;
   final TwistGate? twist;
   Offset? lastFocal;
 }
@@ -1020,7 +1146,7 @@ class _OrbitBaseline {
 
   final Offset start;
   final CanvasViewport camera;
-  final SpacePoint pivot;
+  final Vec3 pivot;
 }
 
 /// The in-progress rubber band: a hairline outline over a translucent

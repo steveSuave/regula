@@ -28,9 +28,9 @@ void main() {
       final k = InscribedCircle(id: 'k', vertex1: a, vertex2: b, vertex3: c);
       final circle = k.circle!;
       final sides = [
-        LineEq.throughPoints(a.position, b.position),
-        LineEq.throughPoints(b.position, c.position),
-        LineEq.throughPoints(c.position, a.position),
+        LineEq.throughPoints(a.position!, b.position!),
+        LineEq.throughPoints(b.position!, c.position!),
+        LineEq.throughPoints(c.position!, a.position!),
       ];
       for (final side in sides) {
         expect(side.distanceTo(circle.center), closeTo(circle.radius, 1e-9));

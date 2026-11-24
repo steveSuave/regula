@@ -107,15 +107,15 @@ void main() {
       }
     });
 
-    test('v4 is refused, naming the newest version understood', () {
-      final json = encode(Construction())..['version'] = 4;
+    test('v5 is refused, naming the newest version understood', () {
+      final json = encode(Construction())..['version'] = 5;
       expect(
         () => decodeDocument(json),
         throwsA(
           isA<FormatException>().having(
             (e) => e.message,
             'message',
-            allOf(contains('version 4'), contains('latest known: 3')),
+            allOf(contains('version 5'), contains('latest known: 4')),
           ),
         ),
       );

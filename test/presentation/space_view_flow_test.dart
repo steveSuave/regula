@@ -10,6 +10,7 @@ import 'package:regula/application/providers/viewport_provider.dart';
 import 'package:regula/domain/commands/add_object_command.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/math/vec2.dart';
+import 'package:regula/domain/math/vec3.dart';
 import 'package:regula/main.dart';
 import 'package:regula/presentation/canvas/canvas_viewport.dart';
 import 'package:regula/presentation/canvas/fit_viewport.dart';
@@ -65,7 +66,7 @@ void main() {
 
   ViewportState view() => container.read(viewportProvider);
   bool spaceView() => container.read(spaceViewProvider);
-  const centre = (x: 200.0, y: -175.0, z: 0.0);
+  const centre = Vec3(200.0, -175.0, 0.0);
   Offset centreOnScreen() => CanvasViewport(view()).spaceToScreen(centre);
 
   for (final (name, screen) in const [
@@ -140,7 +141,7 @@ void main() {
                 .construction
                 .objects
                 .whereType<FreePoint>()) {
-          final shown = fitted.worldToScreen(object.position);
+          final shown = fitted.worldToScreen(object.position!);
           expect(
             shown.dx,
             inInclusiveRange(

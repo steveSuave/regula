@@ -3,7 +3,9 @@ import 'dart:ui';
 
 import '../../application/providers/viewport_provider.dart';
 import '../../domain/construction/geo_object.dart';
+import '../../domain/construction/objects/free_point.dart';
 import '../../domain/math/vec2.dart';
+import '../../domain/math/vec3.dart';
 import 'canvas_viewport.dart';
 import 'fit_viewport.dart';
 
@@ -32,25 +34,22 @@ enum SpaceViewPreset {
 /// square on the base plane is drawn half as tall as it is wide.
 const double obliqueTilt = math.pi / 3;
 
+/// Whether a document holds anything off the base plane: what makes it a
+/// version 4 file, and what makes it open in the space view. Hidden
+/// objects count — the document is what it is whether or not it shows.
+bool hasSpaceContent(Iterable<GeoObject> objects) =>
+    objects.any((object) => object is FreePoint && object.isLifted);
+
 /// The point the space view's camera turns about: the centre of the
-/// figure's bounds, on the base plane — the bounds Fit frames — or the
-/// world origin for an empty document.
+/// figure's bounds — the planar bounds Fit frames, together with any
+/// point lifted off the plane — or the world origin for an empty document.
 ///
 /// Not the point under the canvas centre. Near edge-on that point lies
 /// far away on the plane, and turning about it would swing the figure
 /// off screen; the figure's own centre keeps what the user is looking at
 /// where it is.
-SpacePoint figurePivot(Iterable<GeoObject> objects) {
-  final bounds = visibleWorldBounds(objects);
-  if (bounds == null) {
-    return (x: 0, y: 0, z: 0);
-  }
-  return (
-    x: (bounds.min.x + bounds.max.x) / 2,
-    y: (bounds.min.y + bounds.max.y) / 2,
-    z: 0,
-  );
-}
+Vec3 figurePivot(Iterable<GeoObject> objects) =>
+    figureCentre(objects) ?? Vec3.zero;
 
 /// The camera after the space view is switched on: tilted to
 /// [obliqueTilt] at the azimuth it had, the figure where it was.

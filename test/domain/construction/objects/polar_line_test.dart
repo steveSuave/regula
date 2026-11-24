@@ -218,7 +218,7 @@ void main() {
       for (final (p1, p2) in [(a, b), (b, a)]) {
         final k = ThreePointCircle(id: 'k', point1: p1, point2: p2, point3: c);
         final polar = PolarLine(id: 'pl', point: pole, circle: k);
-        final n = pole.position - k.circle!.center;
+        final n = pole.position! - k.circle!.center;
         expect(
           polar.line!.direction.dot(Vec2(n.y, -n.x)),
           greaterThan(0),

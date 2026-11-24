@@ -68,9 +68,9 @@ void main() {
         ..add(a)
         ..add(b);
 
-      tool.onInput(ToolInput(a.position, hit: a));
+      tool.onInput(ToolInput(a.position!, hit: a));
       final result =
-          tool.onInput(ToolInput(b.position, hit: b)) as ToolCommitted;
+          tool.onInput(ToolInput(b.position!, hit: b)) as ToolCommitted;
       result.command.apply(construction);
 
       expect(construction.length, 12, reason: 'no new free points');
@@ -147,8 +147,8 @@ void main() {
     test('the same existing point twice is ignored', () {
       final a = FreePoint(id: 'a', position: const Vec2(1, 1));
 
-      expect(tool.onInput(ToolInput(a.position, hit: a)), isA<ToolAccepted>());
-      expect(tool.onInput(ToolInput(a.position, hit: a)), isA<ToolIgnored>());
+      expect(tool.onInput(ToolInput(a.position!, hit: a)), isA<ToolAccepted>());
+      expect(tool.onInput(ToolInput(a.position!, hit: a)), isA<ToolIgnored>());
       expect(tool.collectedVertices, hasLength(1));
     });
   });
@@ -161,7 +161,7 @@ void main() {
       construction.add(a);
       construction.add(b);
       ToolResult tap(FreePoint point) => tool.onInput(
-        ToolInput(point.position, hit: point, objects: construction.objects),
+        ToolInput(point.position!, hit: point, objects: construction.objects),
       );
 
       tap(a);

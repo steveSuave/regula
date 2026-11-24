@@ -37,9 +37,9 @@ void main() {
   /// Equal legs + parallel bases on the current corner positions.
   void expectIsosceles(Construction construction) {
     final free = freeCorners(construction);
-    final a = free[0].position;
-    final b = free[1].position;
-    final c = free[2].position;
+    final a = free[0].position!;
+    final b = free[1].position!;
+    final c = free[2].position!;
     final d = cornerD(construction).position!;
     expect(
       (c - b).norm,
@@ -143,7 +143,7 @@ void main() {
         construction.add(point);
       }
       ToolResult tap(FreePoint point) => tool.onInput(
-        ToolInput(point.position, hit: point, objects: construction.objects),
+        ToolInput(point.position!, hit: point, objects: construction.objects),
       );
 
       tap(a);

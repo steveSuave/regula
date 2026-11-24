@@ -52,9 +52,9 @@ void main() {
       final b = FreePoint(id: 'b', position: const Vec2(3, 0));
       construction.add(a);
       construction.add(b);
-      tool.onInput(ToolInput(a.position, hit: a));
+      tool.onInput(ToolInput(a.position!, hit: a));
       final result =
-          tool.onInput(ToolInput(b.position, hit: b)) as ToolCommitted;
+          tool.onInput(ToolInput(b.position!, hit: b)) as ToolCommitted;
       expect(result.command, isA<AddObjectCommand>());
       result.command.apply(construction);
       final circle = construction.objects

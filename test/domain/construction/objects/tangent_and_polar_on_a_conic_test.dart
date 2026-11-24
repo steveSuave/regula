@@ -59,7 +59,7 @@ void main() {
     final atPoint = PolarLine(id: 'pl2', point: on, circle: ellipse);
     expect(atPoint.isDefined, isTrue);
     expect(
-      atPoint.projLine!.contains(on.projPoint, 1e-9),
+      atPoint.projLine!.contains(on.projPoint!, 1e-9),
       isTrue,
       reason: 'a point on the conic lies on its own polar',
     );
@@ -78,7 +78,7 @@ void main() {
       );
       expect(tangent.isDefined, isTrue, reason: 'branch $branch');
       expect(
-        tangent.projLine!.contains(pole.projPoint, 1e-9),
+        tangent.projLine!.contains(pole.projPoint!, 1e-9),
         isTrue,
         reason: 'branch $branch passes through the pole',
       );

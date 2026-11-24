@@ -399,7 +399,7 @@ void main() {
 
       for (final target in const [Vec2(1, 3), Vec2(-2, -5), Vec2(10, 0.5)]) {
         c.moveFreePoint('a', target);
-        final expected = target.lerp(b.position, 0.5);
+        final expected = target.lerp(b.position!, 0.5);
         expect(
           mid.position!.closeTo(expected, 1e-9),
           isTrue,

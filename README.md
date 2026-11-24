@@ -85,8 +85,11 @@ Document and workspace:
 - **3D view** — the cube button in the app bar unlocks the camera, so any
   document can be turned around in space: one finger (or a drag on empty canvas)
   orbits, two fingers pan and zoom, and a Views menu offers top, front, side and
-  oblique. Everything else works as before on the tilted figure. It is the first
-  step of stereometry: the figure is still planar
+  oblique. Everything else works as before on the tilted figure
+- **Points in space** — in the 3D view a selected free point has a handle that
+  lifts it off its plane; segments, lines, rays, midpoints and parallels follow
+  it, so a pyramid is a base, a lifted apex and the edges between them. Planes
+  and constructions inside them are the next steps of stereometry
 - **Light/dark theme**
 
 Also built in, as an experimental feature that is off by default: a JGEX-style

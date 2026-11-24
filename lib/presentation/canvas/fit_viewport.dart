@@ -5,6 +5,7 @@ import '../../application/providers/viewport_provider.dart';
 import '../../domain/construction/document_kernel.dart';
 import '../../domain/construction/geo_object.dart';
 import '../../domain/math/vec2.dart';
+import '../../domain/math/vec3.dart';
 import '../../domain/projective/conic_matrix.dart';
 import '../../domain/projective/conic_shape.dart';
 import 'canvas_viewport.dart';
@@ -196,6 +197,102 @@ ViewportState? fittedToAbsolute(
 /// [tilt] is the space view's camera tilt (intent 004): the extent along
 /// the view frame's y is foreshortened by `|cos tilt|` on screen, so that
 /// is what has to fit the canvas height. Edge-on, only the width binds.
+/// The visible, defined points that are off the base plane: what
+/// [visibleWorldBounds] cannot see, because it is a box on the plane.
+/// A segment to a lifted point is covered by the point.
+List<Vec3> liftedPositions(Iterable<GeoObject> objects) => [
+  for (final object in objects)
+    if (object is GeoPoint &&
+        object.attributes.visible &&
+        object.position == null)
+      ?object.spacePosition,
+];
+
+/// The centre of the figure in space: the centre of the box around the
+/// planar figure's bounds and every lifted point. Null for an empty
+/// figure. What the camera turns about.
+Vec3? figureCentre(Iterable<GeoObject> objects) {
+  final bounds = visibleWorldBounds(objects);
+  final lifted = liftedPositions(objects);
+  if (bounds == null && lifted.isEmpty) {
+    return null;
+  }
+  final points = [
+    if (bounds != null) ...[
+      Vec3(bounds.min.x, bounds.min.y, 0),
+      Vec3(bounds.max.x, bounds.max.y, 0),
+    ],
+    ...lifted,
+  ];
+  var min = points.first;
+  var max = points.first;
+  for (final p in points.skip(1)) {
+    min = Vec3(
+      math.min(min.x, p.x),
+      math.min(min.y, p.y),
+      math.min(min.z, p.z),
+    );
+    max = Vec3(
+      math.max(max.x, p.x),
+      math.max(max.y, p.y),
+      math.max(max.z, p.z),
+    );
+  }
+  return (min + max) * 0.5;
+}
+
+/// [fittedViewport] for a figure with points off the base plane: the
+/// screen images of the planar bounds' corners and of every lifted point
+/// are framed, since a box on the plane no longer bounds the picture.
+ViewportState? _fittedInSpace(
+  Iterable<GeoObject> objects,
+  List<Vec3> lifted,
+  Size canvasSize, {
+  required double marginPx,
+  required double rotation,
+  required double tilt,
+}) {
+  if (canvasSize.shortestSide <= 0) {
+    return null;
+  }
+  final bounds = visibleWorldBounds(objects);
+  final points = [
+    if (bounds != null) ...[
+      Vec3(bounds.min.x, bounds.min.y, 0),
+      Vec3(bounds.min.x, bounds.max.y, 0),
+      Vec3(bounds.max.x, bounds.min.y, 0),
+      Vec3(bounds.max.x, bounds.max.y, 0),
+    ],
+    ...lifted,
+  ];
+  // The picture at unit scale, to measure it.
+  final probe = CanvasViewport(ViewportState(rotation: rotation, tilt: tilt));
+  final images = [for (final p in points) probe.spaceToScreen(p)];
+  var box = Rect.fromPoints(images.first, images.first);
+  for (final image in images.skip(1)) {
+    box = box.expandToInclude(Rect.fromPoints(image, image));
+  }
+  final availableWidth = math.max(1.0, canvasSize.width - 2 * marginPx);
+  final availableHeight = math.max(1.0, canvasSize.height - 2 * marginPx);
+  final scale = (box.width <= 0 && box.height <= 0)
+      ? 1.0
+      : math
+            .min(
+              box.width > 0 ? availableWidth / box.width : double.infinity,
+              box.height > 0 ? availableHeight / box.height : double.infinity,
+            )
+            .clamp(CanvasViewport.minScale, CanvasViewport.maxFitScale)
+            .toDouble();
+  // Parallel projection scales about the pan, so the box's centre is at
+  // `box.center * scale`; slide it to the canvas centre.
+  final scaled = CanvasViewport(
+    ViewportState(scale: scale, rotation: rotation, tilt: tilt),
+  );
+  return scaled.pannedByScreen(
+    Offset(canvasSize.width / 2, canvasSize.height / 2) - box.center * scale,
+  );
+}
+
 ViewportState? fittedViewport(
   Iterable<GeoObject> objects,
   Size canvasSize, {
@@ -203,6 +300,17 @@ ViewportState? fittedViewport(
   double rotation = 0,
   double tilt = 0,
 }) {
+  final lifted = liftedPositions(objects);
+  if (lifted.isNotEmpty) {
+    return _fittedInSpace(
+      objects,
+      lifted,
+      canvasSize,
+      marginPx: marginPx,
+      rotation: rotation,
+      tilt: tilt,
+    );
+  }
   final bounds = visibleWorldBounds(objects, rotation: rotation);
   if (bounds == null || canvasSize.shortestSide <= 0) {
     return null;

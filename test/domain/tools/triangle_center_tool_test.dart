@@ -31,9 +31,9 @@ void main() {
       final b = FreePoint(id: 'b', position: const Vec2(6, 0));
       final c = FreePoint(id: 'c', position: const Vec2(0, 6));
 
-      expect(tool.onInput(ToolInput(a.position, hit: a)), isA<ToolAccepted>());
-      expect(tool.onInput(ToolInput(b.position, hit: b)), isA<ToolAccepted>());
-      final result = tool.onInput(ToolInput(c.position, hit: c));
+      expect(tool.onInput(ToolInput(a.position!, hit: a)), isA<ToolAccepted>());
+      expect(tool.onInput(ToolInput(b.position!, hit: b)), isA<ToolAccepted>());
+      final result = tool.onInput(ToolInput(c.position!, hit: c));
 
       expect(result, isA<ToolCommitted>());
       final command = (result as ToolCommitted).command;
@@ -74,7 +74,7 @@ void main() {
       final a = FreePoint(id: 'a', position: const Vec2(0, 0));
       construction.add(a);
 
-      tool.onInput(ToolInput(a.position, hit: a));
+      tool.onInput(ToolInput(a.position!, hit: a));
       tool.onInput(const ToolInput(Vec2(6, 0)));
       final result = tool.onInput(const ToolInput(Vec2(0, 6))) as ToolCommitted;
 
@@ -100,8 +100,8 @@ void main() {
     test('the same existing point twice is ignored', () {
       final a = FreePoint(id: 'a', position: const Vec2(1, 1));
 
-      expect(tool.onInput(ToolInput(a.position, hit: a)), isA<ToolAccepted>());
-      expect(tool.onInput(ToolInput(a.position, hit: a)), isA<ToolIgnored>());
+      expect(tool.onInput(ToolInput(a.position!, hit: a)), isA<ToolAccepted>());
+      expect(tool.onInput(ToolInput(a.position!, hit: a)), isA<ToolIgnored>());
       expect(tool.collectedVertices, hasLength(1));
     });
 
@@ -181,7 +181,7 @@ void main() {
     });
 
     ToolResult tap(TriangleCenterTool t, FreePoint point) => t.onInput(
-      ToolInput(point.position, hit: point, objects: construction.objects),
+      ToolInput(point.position!, hit: point, objects: construction.objects),
     );
 
     test('the same center twice refuses the completing tap', () {

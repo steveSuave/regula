@@ -102,7 +102,7 @@ void main() {
       final area = AreaMeasurement(id: 'ar', subject: circle);
       expect(area.value, closeTo(math.pi, 1e-12));
 
-      rim.position = const Vec2(3, 0);
+      rim.chartPosition = const Vec2(3, 0);
       circle.recompute();
       area.recompute();
       expect(area.value, closeTo(9 * math.pi, 1e-12));
@@ -142,7 +142,7 @@ void main() {
       final area = AreaMeasurement(id: 'ar', subject: polygon);
       expect(area.isDefined, isTrue);
 
-      rim.position = const Vec2(0, 2);
+      rim.chartPosition = const Vec2(0, 2);
       circle.recompute();
       crossing.recompute();
       polygon.recompute();
@@ -151,7 +151,7 @@ void main() {
       expect(area.value, isNull);
       expect(area.anchor, isNull);
 
-      rim.position = const Vec2(0, -1);
+      rim.chartPosition = const Vec2(0, -1);
       circle.recompute();
       crossing.recompute();
       polygon.recompute();

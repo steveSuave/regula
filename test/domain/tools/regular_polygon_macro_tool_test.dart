@@ -111,7 +111,7 @@ void main() {
       construction.add(b);
       final tool = toolFor(6);
       ToolResult tap(FreePoint point) => tool.onInput(
-        ToolInput(point.position, hit: point, objects: construction.objects),
+        ToolInput(point.position!, hit: point, objects: construction.objects),
       );
 
       tap(a);

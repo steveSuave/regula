@@ -6,6 +6,7 @@ import '../../domain/construction/objects/segment.dart';
 import 'canvas_viewport.dart';
 import 'label_anchor.dart';
 import 'measure_format.dart';
+import 'screen_figure.dart';
 
 /// The text [object]'s label paints, or null when it paints no label.
 ///
@@ -32,6 +33,10 @@ String? labelText(GeoObject object) {
   final value = switch (object) {
     Segment(:final start?, :final end?) when attributes.showValue =>
       formatLength(start.distanceTo(end), decimals: decimals),
+    // A segment with an end off its sheet still has a length.
+    Segment(:final spaceStart?, :final spaceEnd?)
+        when attributes.showValue && object.hasSpaceExtent =>
+      formatLength(spaceStart.distanceTo(spaceEnd), decimals: decimals),
     // `GeoAngle.measure`, **not** `angle.measure`: the first is the
     // measure, the second is the chart sweep of the drawn marker, and
     // under a proper absolute they are different numbers (Phase 126).
@@ -96,6 +101,12 @@ Offset labelBaseTopLeft(
                   support),
     );
     return center - Offset(textSize.width / 2, textSize.height / 2);
+  }
+  // An object with no value in its sheet hangs its label from its
+  // space value (intent 004, milestone 2).
+  if (drawnInSpace(object)) {
+    final anchor = spaceLabelAnchor(object);
+    return anchor == null ? Offset.zero : viewport.spaceToScreen(anchor);
   }
   return viewport.worldToScreen(labelAnchor(object));
 }

@@ -31,17 +31,17 @@ void main() {
       final tool = MidpointTool(newId: newId);
       expect(tool.hasPartialInput, isFalse);
 
-      tool.onInput(ToolInput(a.position, hit: a));
+      tool.onInput(ToolInput(a.position!, hit: a));
       expect(tool.hasPartialInput, isTrue);
 
-      tool.onInput(ToolInput(b.position, hit: b));
+      tool.onInput(ToolInput(b.position!, hit: b));
       expect(
         tool.hasPartialInput,
         isFalse,
         reason: 'the commit self-resets the tool',
       );
 
-      tool.onInput(ToolInput(a.position, hit: a));
+      tool.onInput(ToolInput(a.position!, hit: a));
       tool.reset();
       expect(tool.hasPartialInput, isFalse);
     });
@@ -53,7 +53,7 @@ void main() {
       expect(lineMode.hasPartialInput, isTrue);
 
       final pointMode = AngleTool(newId: newId);
-      pointMode.onInput(ToolInput(a.position, hit: a));
+      pointMode.onInput(ToolInput(a.position!, hit: a));
       expect(pointMode.hasPartialInput, isTrue);
     });
 
@@ -75,7 +75,7 @@ void main() {
         newId: newId,
         build: PerpendicularLine.new,
       );
-      pointFirst.onInput(ToolInput(a.position, hit: a));
+      pointFirst.onInput(ToolInput(a.position!, hit: a));
       expect(pointFirst.hasPartialInput, isTrue);
 
       final lineFirst = PointAndLineTool(
@@ -88,7 +88,7 @@ void main() {
 
     test('TangentTool: a lone collected point counts as partial', () {
       final tool = TangentTool(newId: newId);
-      tool.onInput(ToolInput(a.position, hit: a));
+      tool.onInput(ToolInput(a.position!, hit: a));
       expect(tool.hasPartialInput, isTrue);
     });
 

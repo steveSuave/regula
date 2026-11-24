@@ -69,7 +69,7 @@ void main() {
       final p = FreePoint(id: 'p', position: const Vec2(1, 1));
       construction.add(p);
 
-      tool.onInput(ToolInput(p.position, hit: p));
+      tool.onInput(ToolInput(p.position!, hit: p));
       final result =
           tool.onInput(ToolInput(const Vec2(2, 0), hit: line)) as ToolCommitted;
       expect(

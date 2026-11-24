@@ -27,8 +27,8 @@ void main() {
   /// All three sides equal on the current corner positions.
   void expectEquilateral(Construction construction) {
     final free = corners(construction);
-    final a = free[0].position;
-    final b = free[1].position;
+    final a = free[0].position!;
+    final b = free[1].position!;
     final c = apex(construction).position!;
     final side = a.distanceTo(b);
     expect(b.distanceTo(c), closeTo(side, 1e-9));
@@ -73,9 +73,9 @@ void main() {
         ..add(a)
         ..add(b);
 
-      tool.onInput(ToolInput(a.position, hit: a));
+      tool.onInput(ToolInput(a.position!, hit: a));
       final result =
-          tool.onInput(ToolInput(b.position, hit: b)) as ToolCommitted;
+          tool.onInput(ToolInput(b.position!, hit: b)) as ToolCommitted;
       result.command.apply(construction);
 
       expect(
@@ -112,7 +112,7 @@ void main() {
       construction.add(a);
       construction.add(b);
       ToolResult tap(FreePoint point) => tool.onInput(
-        ToolInput(point.position, hit: point, objects: construction.objects),
+        ToolInput(point.position!, hit: point, objects: construction.objects),
       );
 
       tap(a);

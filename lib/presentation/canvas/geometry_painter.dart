@@ -8,6 +8,7 @@ import '../../domain/construction/document_kernel.dart';
 import '../../domain/construction/geo_object.dart';
 import '../../domain/construction/line_clip.dart';
 import '../../domain/construction/objects/arc.dart';
+import '../../domain/construction/objects/free_point.dart';
 import '../../domain/construction/objects/locus.dart';
 import '../../domain/construction/objects/ray.dart';
 import '../../domain/construction/objects/sector.dart';
@@ -21,6 +22,8 @@ import 'fit_viewport.dart';
 import 'grid_layout.dart';
 import 'label_layout.dart';
 import 'large_radius_arc.dart';
+import 'lift_handle.dart';
+import 'screen_figure.dart';
 import 'sheet_canvas.dart';
 
 /// The canvas rect minus the disc — the region that is not part of the
@@ -106,6 +109,7 @@ class GeometryPainter extends CustomPainter {
     this.previewObjectIds = const {},
     this.labelDragPreview,
     this.showHidden = false,
+    this.liftHandleEnabled = false,
     this.showAxes = false,
     this.showGrid = false,
     this.axisColor = const Color(0xFF757575),
@@ -216,6 +220,12 @@ class GeometryPainter extends CustomPainter {
   /// persisted and never on in PNG export (which builds its own painter
   /// and leaves the default false).
   final bool showHidden;
+
+  /// Whether the lift handle is offered for a single selected free point
+  /// (intent 004): the space view is on, no tool is active, and the
+  /// document is Euclidean. The drop line of a lifted, selected point is
+  /// drawn regardless.
+  final bool liftHandleEnabled;
 
   /// Draws the coordinate axes / the background grid behind every object
   /// (the Phase 36 `DocumentSettings` toggles). Both default off, so
@@ -389,6 +399,8 @@ class GeometryPainter extends CustomPainter {
       }
     }
 
+    _drawLift(screen);
+
     final dot = Paint()..color = defaultColor;
     final ring = Paint()
       ..color = defaultColor
@@ -400,6 +412,72 @@ class GeometryPainter extends CustomPainter {
       canvas.drawDot(center, _markerRingRadius, ring);
     }
   }
+
+  /// The height of a lifted point, and the handle that changes it
+  /// (intent 004, milestone 2).
+  ///
+  /// Every selected free point that is off its plane gets a dashed drop
+  /// line to its foot and a ring at the foot: a parallel projection
+  /// cannot show height by itself, and a point floating over a figure is
+  /// unreadable without the place it floats over. The single selected
+  /// free point also gets the [LiftHandle] — a stem along the plane's
+  /// normal and a grip — when [liftHandleEnabled]. All of it is selection
+  /// chrome, in the selection colour, drawn over the objects.
+  void _drawLift(Canvas screen) {
+    final direct = SheetCanvas(screen, _flat);
+    final stroke = Paint()
+      ..color = selectionColor
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke;
+    for (final id in selectedIds) {
+      final object = construction.byId(id);
+      if (object is! FreePoint ||
+          !object.isDefined ||
+          (!object.attributes.visible && !showHidden)) {
+        continue;
+      }
+      final foot = LiftHandle.footOf(object, viewport);
+      final position = object.spacePosition;
+      if (foot == null || position == null) {
+        continue;
+      }
+      _drawStraight(direct, foot, viewport.spaceToScreen(position), stroke, 8);
+      screen.drawCircle(foot, _liftFootRadius, stroke);
+    }
+    if (!liftHandleEnabled) {
+      return;
+    }
+    final handle = LiftHandle.forSelection(construction, selectedIds, viewport);
+    if (handle == null) {
+      return;
+    }
+    final grip = handle.grip;
+    screen.drawLine(
+      handle.point,
+      grip - handle.axis * LiftHandle.gripRadius,
+      stroke,
+    );
+    screen.drawCircle(
+      grip,
+      LiftHandle.gripRadius,
+      Paint()..color = selectionColor,
+    );
+    // A double chevron along the axis: this moves both ways.
+    final across = Offset(-handle.axis.dy, handle.axis.dx);
+    final glyph = Paint()
+      ..color = const Color(0xFFFFFFFF)
+      ..strokeWidth = 2
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+    for (final side in const [1.0, -1.0]) {
+      final tip = grip + handle.axis * (7 * side);
+      final base = grip + handle.axis * (2.5 * side);
+      screen.drawLine(base + across * 4.5, tip, glyph);
+      screen.drawLine(base - across * 4.5, tip, glyph);
+    }
+  }
+
+  static const double _liftFootRadius = 3;
 
   /// The Phase 36 background layer: grid hairlines at every multiple of
   /// the adaptive [gridStep], then 1.5-px axes through the world origin
@@ -598,6 +676,17 @@ class GeometryPainter extends CustomPainter {
     double pointRadiusExtra = 0,
     double dashPeriod = 0,
   }) {
+    if (drawnInSpace(object)) {
+      _drawInSpace(
+        canvas,
+        size,
+        object,
+        paint,
+        pointRadiusExtra: pointRadiusExtra,
+        dashPeriod: dashPeriod,
+      );
+      return;
+    }
     switch (object) {
       case GeoPoint():
         canvas.drawDot(
@@ -690,6 +779,40 @@ class GeometryPainter extends CustomPainter {
         break;
       case GeoLocus():
         _drawLocus(canvas, size, object, paint, dashPeriod);
+    }
+  }
+
+  /// Draws an object that has no value in its sheet — a lifted point, a
+  /// segment to one — from its space value (intent 004, milestone 2).
+  ///
+  /// The geometry is the object's [screenInkOf], the same screen ink the
+  /// space view's hit test measures against, so what is drawn is what is
+  /// picked. It is already in screen coordinates, so it goes to the real
+  /// canvas through an identity sheet: strokes, dashes and dots keep
+  /// their screen size, as everywhere.
+  void _drawInSpace(
+    SheetCanvas canvas,
+    Size size,
+    GeoObject object,
+    Paint paint, {
+    required double pointRadiusExtra,
+    required double dashPeriod,
+  }) {
+    final direct = SheetCanvas(canvas.screen, _flat);
+    final ink = screenInkOf(construction.objects, viewport, size, object);
+    final dot = ink.dot;
+    if (dot != null) {
+      direct.drawDot(
+        dot,
+        object.attributes.pointSize + pointRadiusExtra,
+        paint..style = PaintingStyle.fill,
+      );
+    }
+    for (final (from, to) in ink.segments) {
+      _drawStraight(direct, from, to, paint, dashPeriod);
+      if (object is Segment) {
+        _drawTickMarks(direct, from, to, object.attributes.tickMarks, paint);
+      }
     }
   }
 
@@ -1382,6 +1505,7 @@ class GeometryPainter extends CustomPainter {
       !setEquals(oldDelegate.previewObjectIds, previewObjectIds) ||
       oldDelegate.labelDragPreview != labelDragPreview ||
       oldDelegate.showHidden != showHidden ||
+      oldDelegate.liftHandleEnabled != liftHandleEnabled ||
       oldDelegate.showAxes != showAxes ||
       oldDelegate.showGrid != showGrid ||
       oldDelegate.axisColor != axisColor ||

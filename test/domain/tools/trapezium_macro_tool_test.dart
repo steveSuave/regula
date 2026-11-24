@@ -78,7 +78,7 @@ void main() {
       tool.onInput(const ToolInput(Vec2(4, 0)));
       tool.onInput(const ToolInput(Vec2(5, 2)));
       final result =
-          tool.onInput(ToolInput(e.position, hit: e)) as ToolCommitted;
+          tool.onInput(ToolInput(e.position!, hit: e)) as ToolCommitted;
       result.command.apply(construction);
 
       expect(
@@ -117,11 +117,11 @@ void main() {
 
       construction.moveFreePoint(a.id, const Vec2(0, 1));
 
-      final b = free[1].position;
-      final c = free[2].position;
+      final b = free[1].position!;
+      final c = free[2].position!;
       final d = cornerOf(construction).position;
       expect(d, isNotNull);
-      final ab = b - a.position;
+      final ab = b - a.position!;
       final cd = d! - c;
       expect(
         ab.cross(cd).abs(),

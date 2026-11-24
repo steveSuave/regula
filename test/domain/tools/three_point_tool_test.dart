@@ -28,9 +28,9 @@ void main() {
       final b = FreePoint(id: 'b', position: const Vec2(0, 5));
       final tool = bisectorTool();
 
-      expect(tool.onInput(ToolInput(a.position, hit: a)), isA<ToolAccepted>());
-      expect(tool.onInput(ToolInput(v.position, hit: v)), isA<ToolAccepted>());
-      final result = tool.onInput(ToolInput(b.position, hit: b));
+      expect(tool.onInput(ToolInput(a.position!, hit: a)), isA<ToolAccepted>());
+      expect(tool.onInput(ToolInput(v.position!, hit: v)), isA<ToolAccepted>());
+      final result = tool.onInput(ToolInput(b.position!, hit: b));
 
       expect(result, isA<ToolCommitted>());
       final command = (result as ToolCommitted).command;
@@ -91,11 +91,14 @@ void main() {
 
       // A point on top of a line still collects — points outrank curves.
       expect(
-        tool.onInput(ToolInput(a.position, hit: a, extraHits: [line])),
+        tool.onInput(ToolInput(a.position!, hit: a, extraHits: [line])),
         isA<ToolAccepted>(),
       );
-      expect(tool.onInput(ToolInput(v.position, hit: v)), isA<ToolAccepted>());
-      expect(tool.onInput(ToolInput(b.position, hit: b)), isA<ToolCommitted>());
+      expect(tool.onInput(ToolInput(v.position!, hit: v)), isA<ToolAccepted>());
+      expect(
+        tool.onInput(ToolInput(b.position!, hit: b)),
+        isA<ToolCommitted>(),
+      );
     });
   });
 }

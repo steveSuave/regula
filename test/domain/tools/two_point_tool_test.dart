@@ -28,8 +28,8 @@ void main() {
         (id, p, q) => LineThroughTwoPoints(id: id, point1: p, point2: q),
       );
 
-      expect(tool.onInput(ToolInput(a.position, hit: a)), isA<ToolAccepted>());
-      final result = tool.onInput(ToolInput(b.position, hit: b));
+      expect(tool.onInput(ToolInput(a.position!, hit: a)), isA<ToolAccepted>());
+      final result = tool.onInput(ToolInput(b.position!, hit: b));
 
       expect(result, isA<ToolCommitted>());
       final command = (result as ToolCommitted).command;
@@ -67,8 +67,8 @@ void main() {
         (id, p, q) => Midpoint(id: id, point1: p, point2: q),
       );
 
-      expect(tool.onInput(ToolInput(a.position, hit: a)), isA<ToolAccepted>());
-      expect(tool.onInput(ToolInput(a.position, hit: a)), isA<ToolIgnored>());
+      expect(tool.onInput(ToolInput(a.position!, hit: a)), isA<ToolAccepted>());
+      expect(tool.onInput(ToolInput(a.position!, hit: a)), isA<ToolIgnored>());
       expect(tool.collectedVertices, hasLength(1));
     });
 
@@ -87,7 +87,7 @@ void main() {
 
       tool.onInput(ToolInput(const Vec2(1, 0.1), hit: line));
       final result =
-          tool.onInput(ToolInput(a.position, hit: a)) as ToolCommitted;
+          tool.onInput(ToolInput(a.position!, hit: a)) as ToolCommitted;
 
       expect(result.command, isA<MacroCommand>());
       result.command.apply(construction);
@@ -146,7 +146,7 @@ void main() {
         );
         expect(tool.previewObjectIds, isEmpty);
         final result =
-            tool.onInput(ToolInput(a.position, hit: a)) as ToolCommitted;
+            tool.onInput(ToolInput(a.position!, hit: a)) as ToolCommitted;
 
         result.command.apply(construction);
         final vertex = construction.objects
@@ -176,7 +176,7 @@ void main() {
         (id, p, q) => Midpoint(id: id, point1: p, point2: q),
       );
 
-      tool.onInput(ToolInput(a.position, hit: a));
+      tool.onInput(ToolInput(a.position!, hit: a));
       expect(tool.previewObjectIds, ['a']);
       expect(
         tool.previewPositions,

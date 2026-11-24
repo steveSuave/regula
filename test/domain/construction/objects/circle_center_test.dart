@@ -28,7 +28,7 @@ void main() {
       final b = FreePoint(id: 'b', position: const Vec2(5, 1));
       final circle = CircleCenterPoint(id: 'c', center: a, onCircle: b);
       final center = CircleCenter(id: 'cc', circle: circle);
-      a.position = const Vec2(-3, 4);
+      a.chartPosition = const Vec2(-3, 4);
       circle.recompute();
       center.recompute();
       expect(center.position, const Vec2(-3, 4));

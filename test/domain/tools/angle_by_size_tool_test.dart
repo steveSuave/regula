@@ -26,10 +26,10 @@ void main() {
       final tool = toolFor(math.pi / 3);
 
       expect(
-        tool.onInput(ToolInput(arm.position, hit: arm)),
+        tool.onInput(ToolInput(arm.position!, hit: arm)),
         isA<ToolAccepted>(),
       );
-      final result = tool.onInput(ToolInput(vertex.position, hit: vertex));
+      final result = tool.onInput(ToolInput(vertex.position!, hit: vertex));
 
       expect(result, isA<ToolCommitted>());
       final construction = Construction()
@@ -66,9 +66,9 @@ void main() {
       final vertex = FreePoint(id: 'v', position: const Vec2(0, 0));
       final tool = toolFor(-math.pi / 4);
 
-      tool.onInput(ToolInput(arm.position, hit: arm));
+      tool.onInput(ToolInput(arm.position!, hit: arm));
       final result = tool.onInput(
-        ToolInput(vertex.position, hit: vertex),
+        ToolInput(vertex.position!, hit: vertex),
       ) as ToolCommitted;
       final construction = Construction()
         ..add(arm)
@@ -124,9 +124,9 @@ void main() {
         ..add(vertex);
       final tool = toolFor(math.pi / 6);
 
-      tool.onInput(ToolInput(arm.position, hit: arm));
+      tool.onInput(ToolInput(arm.position!, hit: arm));
       final result = tool.onInput(
-        ToolInput(vertex.position, hit: vertex),
+        ToolInput(vertex.position!, hit: vertex),
       ) as ToolCommitted;
       result.command.apply(construction);
 
@@ -148,9 +148,9 @@ void main() {
         ..add(vertex);
       final tool = toolFor(1);
 
-      tool.onInput(ToolInput(arm.position, hit: arm));
+      tool.onInput(ToolInput(arm.position!, hit: arm));
       final result = tool.onInput(
-        ToolInput(vertex.position, hit: vertex),
+        ToolInput(vertex.position!, hit: vertex),
       ) as ToolCommitted;
       result.command.apply(construction);
 
@@ -166,8 +166,8 @@ void main() {
       final p = FreePoint(id: 'p', position: const Vec2(1, 1));
       final tool = toolFor(1);
 
-      expect(tool.onInput(ToolInput(p.position, hit: p)), isA<ToolAccepted>());
-      expect(tool.onInput(ToolInput(p.position, hit: p)), isA<ToolIgnored>());
+      expect(tool.onInput(ToolInput(p.position!, hit: p)), isA<ToolAccepted>());
+      expect(tool.onInput(ToolInput(p.position!, hit: p)), isA<ToolIgnored>());
       expect(tool.collectedVertices, hasLength(1));
     });
   });
@@ -181,7 +181,7 @@ void main() {
       construction.add(vertex);
       final tool = toolFor(1);
       ToolResult tap(FreePoint point) => tool.onInput(
-        ToolInput(point.position, hit: point, objects: construction.objects),
+        ToolInput(point.position!, hit: point, objects: construction.objects),
       );
 
       tap(arm);

@@ -65,7 +65,7 @@ import '../providers/viewport_provider.dart';
 
 /// The newest schema this build writes and reads. Bump on any breaking
 /// schema change and add a migration in [decodeDocument].
-const int constructionFormatVersion = 3;
+const int constructionFormatVersion = 4;
 
 /// The oldest schema still decodable.
 ///
@@ -191,7 +191,16 @@ Map<String, dynamic> encodeDocument(
 /// the whole document computes undefined. A file that draws as nothing is
 /// a misread, not a graceful degradation. A hyperbolic document at the
 /// canonical radius is still exactly the v2 file it always was.
+///
+/// **v4 is space content** (intent 004, milestone 2): a free point's
+/// height `h`. A v3 reader skips the key and reads the point in its
+/// plane, so a pyramid's apex is drawn on its base and everything built
+/// on the apex is drawn with it — a misread. A document with no lifted
+/// point is the file it always was.
 int requiredFormatVersion(Map<String, dynamic> document) {
+  if (_hasSpaceContent(document)) {
+    return 4;
+  }
   final kernel = document['kernel'];
   if (kernel is Map<String, dynamic> && kernel.containsKey('radius')) {
     return 3;
@@ -447,11 +456,38 @@ bool _decodeSettingFlag(Map<String, dynamic> json, String key) {
   return value;
 }
 
+/// Whether an encoded [document] holds anything a planar reader would
+/// misread: see [requiredFormatVersion].
+bool _hasSpaceContent(Map<String, dynamic> document) {
+  final objects = document['objects'];
+  if (objects is! List) {
+    return false;
+  }
+  for (final object in objects) {
+    if (object is! Map<String, dynamic>) {
+      continue;
+    }
+    final params = object['params'];
+    if (object['type'] == 'FreePoint' &&
+        params is Map<String, dynamic> &&
+        params.containsKey('h')) {
+      return true;
+    }
+  }
+  return false;
+}
+
 Map<String, dynamic> _encodeObject(GeoObject object) {
   final (String type, Map<String, Object?> params) = switch (object) {
-    FreePoint(:final position) => (
+    FreePoint(:final chartPosition, :final height) => (
       'FreePoint',
-      {'x': position.x, 'y': position.y},
+      {
+        'x': chartPosition.x,
+        'y': chartPosition.y,
+        // Written only when the point is lifted, so a planar document's
+        // bytes do not change (requirement 13 of milestone 2).
+        if (height != 0) 'h': height,
+      },
     ),
     Midpoint() => ('Midpoint', const {}),
     SegmentRatioPoint(:final ratio) => ('SegmentRatioPoint', {'ratio': ratio}),
@@ -617,6 +653,7 @@ GeoObject _decodeObject(Map<String, dynamic> json, Construction construction) {
         _doubleParam(id, params, 'x'),
         _doubleParam(id, params, 'y'),
       ),
+      height: _optionalDoubleParam(id, params, 'h') ?? 0,
       attributes: attributes,
     ),
     'Midpoint' => Midpoint(

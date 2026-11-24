@@ -65,8 +65,8 @@ void main() {
 
       construction.moveFreePoint('v', const Vec2(1, 1));
       expect(bisector.line!.contains(const Vec2(1, 1)), isTrue);
-      final u = (a.position - const Vec2(1, 1)).normalized();
-      final w = (b.position - const Vec2(1, 1)).normalized();
+      final u = (a.position! - const Vec2(1, 1)).normalized();
+      final w = (b.position! - const Vec2(1, 1)).normalized();
       expect(
         bisector.line!.distanceTo(const Vec2(1, 1) + u),
         closeTo(bisector.line!.distanceTo(const Vec2(1, 1) + w), 1e-9),

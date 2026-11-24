@@ -35,7 +35,7 @@ void main() {
       final circle = k.circle!;
       for (final p in [a, b, c]) {
         expect(
-          circle.center.distanceTo(p.position),
+          circle.center.distanceTo(p.position!),
           closeTo(circle.radius, 1e-9),
         );
       }

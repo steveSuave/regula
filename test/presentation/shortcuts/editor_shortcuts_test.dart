@@ -1328,7 +1328,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
     await gesture.moveBy(const Offset(60, 0));
     await tester.pump();
-    expect(p.position.x, closeTo(160, 1), reason: 'drag preview applied');
+    expect(p.position!.x, closeTo(160, 1), reason: 'drag preview applied');
 
     await tester.sendKeyEvent(LogicalKeyboardKey.keyH);
     await tester.pump();
@@ -1337,17 +1337,17 @@ void main() {
 
     expect(p.attributes.visible, isFalse, reason: 'the selection hid');
     expect(
-      p.position.x,
+      p.position!.x,
       closeTo(160, 1),
       reason: 'the move survived the tool switch (Phase 30b)',
     );
 
     container.read(commandStackProvider.notifier).undo();
     expect(p.attributes.visible, isTrue, reason: 'first undo = the hide');
-    expect(p.position.x, closeTo(160, 1));
+    expect(p.position!.x, closeTo(160, 1));
 
     container.read(commandStackProvider.notifier).undo();
-    expect(p.position.x, closeTo(100, 1), reason: 'second undo = the drag');
+    expect(p.position!.x, closeTo(100, 1), reason: 'second undo = the drag');
   });
 
   testWidgets(
@@ -1365,7 +1365,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 50));
       await gesture.moveBy(const Offset(60, 0));
       await tester.pump();
-      expect(p.position.x, closeTo(160, 1), reason: 'drag preview applied');
+      expect(p.position!.x, closeTo(160, 1), reason: 'drag preview applied');
 
       // The tool switch arrives while the pointer is still down — the
       // common "shortcut a beat before releasing" case.
@@ -1378,13 +1378,13 @@ void main() {
 
       expect(activeTool(), isA<VisibilityTool>());
       expect(
-        p.position.x,
+        p.position!.x,
         closeTo(160, 1),
         reason: 'the move must survive the tool switch',
       );
       container.read(commandStackProvider.notifier).undo();
       expect(
-        p.position.x,
+        p.position!.x,
         closeTo(100, 1),
         reason: 'the drag-so-far is one command',
       );
@@ -1404,14 +1404,14 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
     await gesture.moveBy(const Offset(60, 0));
     await tester.pump();
-    expect(p.position.x, closeTo(160, 1));
+    expect(p.position!.x, closeTo(160, 1));
 
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pump();
     await gesture.up();
     await tester.pump();
 
-    expect(p.position.x, closeTo(100, 1), reason: 'Esc aborts the drag');
+    expect(p.position!.x, closeTo(100, 1), reason: 'Esc aborts the drag');
     expect(
       container.read(commandStackProvider).canUndo,
       isFalse,

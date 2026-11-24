@@ -26,8 +26,8 @@ void main() {
       final a = FreePoint(id: 'a', position: const Vec2(-1, 2));
       final b = FreePoint(id: 'b', position: const Vec2(5, 7));
       final circle = DiameterCircle(id: 'k', point1: a, point2: b);
-      expect(circle.circle!.distanceTo(a.position), lessThan(1e-9));
-      expect(circle.circle!.distanceTo(b.position), lessThan(1e-9));
+      expect(circle.circle!.distanceTo(a.position!), lessThan(1e-9));
+      expect(circle.circle!.distanceTo(b.position!), lessThan(1e-9));
     });
 
     test('coincident endpoints give a defined zero-radius circle', () {
@@ -42,7 +42,7 @@ void main() {
       final a = FreePoint(id: 'a', position: Vec2.zero);
       final b = FreePoint(id: 'b', position: const Vec2(4, 0));
       final circle = DiameterCircle(id: 'k', point1: a, point2: b);
-      b.position = const Vec2(0, 10);
+      b.chartPosition = const Vec2(0, 10);
       circle.recompute();
       expect(circle.circle!.center, const Vec2(0, 5));
       expect(circle.circle!.radius, 5);

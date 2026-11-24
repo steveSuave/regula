@@ -125,7 +125,7 @@ void main() {
         reason: 'the named crossing is P, at r=(0, $y)',
       );
       expect(
-        deflated.position!.distanceTo(p.position),
+        deflated.position!.distanceTo(p.position!),
         greaterThan(1e-6),
         reason: 'and the deflated root is never P, at r=(0, $y)',
       );
@@ -432,7 +432,7 @@ void main() {
           'p',
           Vec2(rig.s + 0.35 * math.cos(t), rig.s + 0.35 * math.sin(t)),
         );
-        final target = rig.p.position;
+        final target = rig.p.position!;
         if (named.position!.distanceTo(target) > 1e-9) namedOff++;
         final now = blind.position!;
         if (now.distanceTo(target) > 1e-9) blindOff++;

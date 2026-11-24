@@ -362,7 +362,7 @@ void main() {
       final macro = tool();
       ToolResult tap(FreePoint at) => macro.onInput(
         ToolInput(
-          at.position,
+          at.position!,
           hit: at,
           objects: construction.objects,
           absolute: absolute,

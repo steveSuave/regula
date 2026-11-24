@@ -127,7 +127,25 @@ class Construction {
     if (object is! FreePoint) {
       throw ArgumentError('$id is not a FreePoint in this construction');
     }
-    object.position = position;
+    object.chartPosition = position;
+    _recomputeDependentsOf(id);
+    _notify();
+  }
+
+  /// Sets the height of the free point [id] above its sheet and
+  /// recomputes its transitive dependents — the lift sibling of
+  /// [moveFreePoint] (intent 004). A height of exactly 0 puts the point
+  /// back in its sheet. Throws [ArgumentError] when [id] is not a
+  /// [FreePoint] or [height] is not finite.
+  void setFreePointHeight(String id, double height) {
+    final object = _objects[id];
+    if (object is! FreePoint) {
+      throw ArgumentError('$id is not a FreePoint in this construction');
+    }
+    if (!height.isFinite) {
+      throw ArgumentError('Height must be finite, got $height');
+    }
+    object.height = height;
     _recomputeDependentsOf(id);
     _notify();
   }
@@ -264,7 +282,7 @@ class Construction {
     }
     return _traceAlong(
       id: id,
-      driveReal: (t) => object.position = path.at(t),
+      driveReal: (t) => object.chartPosition = path.at(t),
       driveComplex: (t) => object.tracedPosition = path.evaluate(t),
       stepBudget: stepBudget,
       startStep: startStep,

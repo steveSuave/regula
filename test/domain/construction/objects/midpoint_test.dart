@@ -21,7 +21,7 @@ void main() {
       final a = FreePoint(id: 'a', position: const Vec2(0, 0));
       final b = FreePoint(id: 'b', position: const Vec2(4, 0));
       final m = Midpoint(id: 'm', point1: a, point2: b);
-      b.position = const Vec2(0, 6);
+      b.chartPosition = const Vec2(0, 6);
       m.recompute();
       expect(m.position, const Vec2(0, 3));
     });

@@ -1,6 +1,7 @@
 import '../../math/line_eq.dart';
 import '../../projective/absolute.dart';
 import '../../projective/proj_line.dart';
+import '../../projective/space/line3.dart';
 import '../geo_object.dart';
 
 /// The infinite line through two points.
@@ -33,6 +34,22 @@ class LineThroughTwoPoints extends GeoLine {
   @override
   LineEq? get line => _line;
 
+  /// Whether the two points have no common value in the sheet, so the
+  /// planar carrier does not exist and the space one stands in. A
+  /// planar degeneracy (coincident points) is not this: it stays
+  /// undefined, as it always was.
+  bool get _offSheet => point1.projPoint == null || point2.projPoint == null;
+
+  /// A line through two points needs no plane (intent 004): when the
+  /// two have no common value in the sheet, the carrier is their join in
+  /// space. With a planar carrier this is its lift, as for any line.
+  @override
+  Line3? get spaceLine =>
+      _offSheet ? spaceCarrierThrough(point1, point2) : super.spaceLine;
+
+  @override
+  bool get hasSpaceExtent => _offSheet && (spaceLine?.isFinite() ?? false);
+
   @override
   List<GeoObject> get parents => [point1, point2];
 
@@ -51,6 +68,20 @@ class LineThroughTwoPoints extends GeoLine {
 ///
 /// Shared by [LineThroughTwoPoints], `Segment` and `Ray` so all three
 /// agree on what "degenerate" means.
+/// The space line through two points' space values: the carrier of a
+/// two-point line whose points do not both have a value in one sheet
+/// (one is lifted off it). Null when either has no real space value or
+/// the two coincide — the space sibling of [carrierThrough], with the
+/// same coincidence test.
+Line3? spaceCarrierThrough(GeoPoint point1, GeoPoint point2) {
+  final p1 = point1.spacePoint;
+  final p2 = point2.spacePoint;
+  if (p1 == null || p2 == null || p1.closeTo(p2)) {
+    return null;
+  }
+  return p1.join(p2);
+}
+
 ProjLine? carrierThrough(GeoPoint point1, GeoPoint point2) {
   final p1 = point1.projPoint;
   final p2 = point2.projPoint;

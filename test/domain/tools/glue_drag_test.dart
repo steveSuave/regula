@@ -128,7 +128,7 @@ void main() {
     test('the glued point stays continuous and the command carries the '
         're-expression', () {
       final startParameter = glued.parameter;
-      final grab = points[1].position;
+      final grab = points[1].position!;
       final session = DragSession.start(construction, points[1], grab)!;
       final worst = drive(session, grab, delta, 60);
       expect(worst, lessThan(0.5));

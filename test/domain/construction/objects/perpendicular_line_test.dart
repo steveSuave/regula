@@ -25,7 +25,7 @@ void main() {
         final perp = PerpendicularLine(id: 'k', through: p, reference: ref);
 
         expect(perp.parents, [p, ref]);
-        expect(perp.line!.contains(p.position), isTrue);
+        expect(perp.line!.contains(p.position!), isTrue);
         expect(
           perp.line!.direction.dot(ref.line!.direction),
           closeTo(0, 1e-12),
@@ -39,7 +39,7 @@ void main() {
       final ref = LineThroughTwoPoints(id: 'l', point1: a, point2: b);
       final perp = PerpendicularLine(id: 'k', through: a, reference: ref);
 
-      expect(perp.line!.contains(a.position), isTrue);
+      expect(perp.line!.contains(a.position!), isTrue);
       expect(perp.line!.direction.dot(ref.line!.direction), closeTo(0, 1e-12));
     });
 
@@ -77,7 +77,7 @@ void main() {
 
         construction.moveFreePoint('b', const Vec2(0, 4));
         expect(perp.isDefined, isTrue);
-        expect(perp.line!.contains(p.position), isTrue);
+        expect(perp.line!.contains(p.position!), isTrue);
         expect(
           perp.line!.direction.dot(ref.line!.direction),
           closeTo(0, 1e-12),

@@ -35,15 +35,15 @@ void main() {
         vectorFrom: from,
         vectorTo: to,
       );
-      expect(r.position! - p.position, to.position - from.position);
+      expect(r.position! - p.position!, to.position! - from.position!);
 
-      to.position = const Vec2(-6, 3);
+      to.chartPosition = const Vec2(-6, 3);
       r.recompute();
-      expect(r.position! - p.position, to.position - from.position);
+      expect(r.position! - p.position!, to.position! - from.position!);
 
-      p.position = const Vec2(9, 9);
+      p.chartPosition = const Vec2(9, 9);
       r.recompute();
-      expect(r.position! - p.position, to.position - from.position);
+      expect(r.position! - p.position!, to.position! - from.position!);
     });
 
     test('coincident vector points give the zero translation', () {
@@ -75,7 +75,7 @@ void main() {
       );
       expect(r.isDefined, isFalse);
 
-      b.position = const Vec2(0, 2); // onLine comes back at (0, 1)
+      b.chartPosition = const Vec2(0, 2); // onLine comes back at (0, 1)
       line.recompute();
       onLine.recompute();
       r.recompute();

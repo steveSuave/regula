@@ -41,7 +41,7 @@ void main() {
       final c = FreePoint(id: 'c', position: Vec2.zero);
       final p = FreePoint(id: 'p', position: const Vec2(2, 0));
       final circle = CircleCenterPoint(id: 'k', center: c, onCircle: p);
-      p.position = const Vec2(0, 7);
+      p.chartPosition = const Vec2(0, 7);
       circle.recompute();
       expect(circle.circle!.radius, 7);
     });

@@ -49,7 +49,7 @@ class MutableRoots {
     }
 
     from.forEach(visit);
-    _savedPositions = {for (final root in freePoints) root: root.position};
+    _savedPositions = {for (final root in freePoints) root: root.chartPosition};
     _savedParameters = {for (final root in gluedPoints) root: root.parameter};
   }
 
@@ -68,7 +68,8 @@ class MutableRoots {
       final base = _savedPositions[root]!;
       final radius = probeScale * math.max(1.0, base.norm);
       final angle = random.nextDouble() * 2 * math.pi;
-      root.position = base + Vec2(math.cos(angle), math.sin(angle)) * radius;
+      root.chartPosition =
+          base + Vec2(math.cos(angle), math.sin(angle)) * radius;
     }
     for (final root in gluedPoints) {
       final base = _savedParameters[root]!;
@@ -84,7 +85,7 @@ class MutableRoots {
   /// caller recomputes afterwards, which brings every derived value back
   /// bit-exactly too — recompute is a pure function of the roots.
   void restore() {
-    _savedPositions.forEach((root, saved) => root.position = saved);
+    _savedPositions.forEach((root, saved) => root.chartPosition = saved);
     _savedParameters.forEach((root, saved) => root.parameter = saved);
   }
 }

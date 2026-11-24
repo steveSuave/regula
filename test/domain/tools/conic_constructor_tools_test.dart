@@ -30,7 +30,7 @@ void main() {
       final tool = FocalConicTool(newId: newId);
 
       expect(
-        tool.onInput(ToolInput(focus.position, hit: focus)),
+        tool.onInput(ToolInput(focus.position!, hit: focus)),
         isA<ToolAccepted>(),
       );
       final result = tool.onInput(ToolInput(const Vec2(-1, 0), hit: line));
@@ -76,7 +76,7 @@ void main() {
         final focus = FreePoint(id: 'f', position: const Vec2(2, -1));
         final line = directrix();
         final tool = FocalConicTool(newId: newId, eccentricity: e);
-        tool.onInput(ToolInput(focus.position, hit: focus));
+        tool.onInput(ToolInput(focus.position!, hit: focus));
         final result = tool.onInput(
           ToolInput(const Vec2(-1, 0), hit: line),
         ) as ToolCommitted;
@@ -134,9 +134,9 @@ void main() {
       final b = FreePoint(id: 'b', position: f2);
       final p = FreePoint(id: 'p', position: on);
       final tool = BifocalConicTool(newId: newId, difference: false);
-      tool.onInput(ToolInput(a.position, hit: a));
-      tool.onInput(ToolInput(b.position, hit: b));
-      final result = tool.onInput(ToolInput(p.position, hit: p));
+      tool.onInput(ToolInput(a.position!, hit: a));
+      tool.onInput(ToolInput(b.position!, hit: b));
+      final result = tool.onInput(ToolInput(p.position!, hit: p));
 
       final conic =
           ((result as ToolCommitted).command as AddObjectCommand).object
@@ -151,8 +151,8 @@ void main() {
     test('the same point twice is ignored — three distinct inputs', () {
       final a = FreePoint(id: 'a', position: f1);
       final tool = BifocalConicTool(newId: newId, difference: false);
-      expect(tool.onInput(ToolInput(a.position, hit: a)), isA<ToolAccepted>());
-      expect(tool.onInput(ToolInput(a.position, hit: a)), isA<ToolIgnored>());
+      expect(tool.onInput(ToolInput(a.position!, hit: a)), isA<ToolAccepted>());
+      expect(tool.onInput(ToolInput(a.position!, hit: a)), isA<ToolIgnored>());
       expect(tool.collectedVertices, [a]);
     });
 

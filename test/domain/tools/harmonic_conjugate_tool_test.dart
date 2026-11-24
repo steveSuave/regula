@@ -23,9 +23,9 @@ void main() {
       final b = FreePoint(id: 'b', position: const Vec2(4, 0));
       final c = FreePoint(id: 'c', position: const Vec2(1, 0));
 
-      expect(tool.onInput(ToolInput(a.position, hit: a)), isA<ToolAccepted>());
-      expect(tool.onInput(ToolInput(b.position, hit: b)), isA<ToolAccepted>());
-      final result = tool.onInput(ToolInput(c.position, hit: c));
+      expect(tool.onInput(ToolInput(a.position!, hit: a)), isA<ToolAccepted>());
+      expect(tool.onInput(ToolInput(b.position!, hit: b)), isA<ToolAccepted>());
+      final result = tool.onInput(ToolInput(c.position!, hit: c));
 
       expect(result, isA<ToolCommitted>());
       final command = (result as ToolCommitted).command;
@@ -100,7 +100,7 @@ void main() {
       final objects = construction.objects.toList();
 
       ToolResult tap(FreePoint p) =>
-          tool.onInput(ToolInput(p.position, hit: p, objects: objects));
+          tool.onInput(ToolInput(p.position!, hit: p, objects: objects));
 
       expect(tap(a), isA<ToolAccepted>());
       expect(tap(b), isA<ToolAccepted>());
@@ -122,10 +122,10 @@ void main() {
       construction.add(e);
       final withE = construction.objects.toList();
       tool.reset();
-      tool.onInput(ToolInput(a.position, hit: a, objects: withE));
-      tool.onInput(ToolInput(b.position, hit: b, objects: withE));
+      tool.onInput(ToolInput(a.position!, hit: a, objects: withE));
+      tool.onInput(ToolInput(b.position!, hit: b, objects: withE));
       expect(
-        tool.onInput(ToolInput(e.position, hit: e, objects: withE)),
+        tool.onInput(ToolInput(e.position!, hit: e, objects: withE)),
         isA<ToolCommitted>(),
       );
     });

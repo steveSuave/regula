@@ -27,9 +27,9 @@ void main() {
       final c = FreePoint(id: 'c', position: const Vec2(2, 7));
       final o = Circumcenter(id: 'o', vertex1: a, vertex2: b, vertex3: c);
       final p = o.position!;
-      final r = p.distanceTo(a.position);
-      expect(p.distanceTo(b.position), closeTo(r, 1e-9));
-      expect(p.distanceTo(c.position), closeTo(r, 1e-9));
+      final r = p.distanceTo(a.position!);
+      expect(p.distanceTo(b.position!), closeTo(r, 1e-9));
+      expect(p.distanceTo(c.position!), closeTo(r, 1e-9));
     });
 
     test('drag through collinearity: undefined, then recovers', () {

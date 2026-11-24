@@ -24,8 +24,8 @@ void main() {
       final b = FreePoint(id: 'b', position: const Vec2(4, 2));
       final t = tool();
 
-      expect(t.onInput(ToolInput(a.position, hit: a)), isA<ToolAccepted>());
-      final result = t.onInput(ToolInput(b.position, hit: b));
+      expect(t.onInput(ToolInput(a.position!, hit: a)), isA<ToolAccepted>());
+      final result = t.onInput(ToolInput(b.position!, hit: b));
 
       expect(result, isA<ToolCommitted>());
       final command = (result as ToolCommitted).command;
@@ -82,7 +82,7 @@ void main() {
       final t = tool();
 
       final result = t.onInput(
-        ToolInput(b.position, hit: b, extraHits: [circle]),
+        ToolInput(b.position!, hit: b, extraHits: [circle]),
       );
 
       expect(
@@ -105,7 +105,7 @@ void main() {
         ..add(circle);
       final t = tool();
 
-      t.onInput(ToolInput(p.position, hit: p));
+      t.onInput(ToolInput(p.position!, hit: p));
       final result = t.onInput(
         ToolInput(const Vec2(5, 1.1), hit: circle),
       ) as ToolCommitted;
@@ -128,7 +128,7 @@ void main() {
       construction.add(b);
       final t = tool();
       ToolResult tap(FreePoint point) => t.onInput(
-        ToolInput(point.position, hit: point, objects: construction.objects),
+        ToolInput(point.position!, hit: point, objects: construction.objects),
       );
 
       tap(a);
@@ -157,7 +157,7 @@ void main() {
       construction.add(b);
       final t = tool();
       ToolResult tap(FreePoint point) => t.onInput(
-        ToolInput(point.position, hit: point, objects: construction.objects),
+        ToolInput(point.position!, hit: point, objects: construction.objects),
       );
 
       tap(a);

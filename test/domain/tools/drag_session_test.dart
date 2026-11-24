@@ -753,7 +753,7 @@ void main() {
 
     /// One gesture: grab [point], run the waypoints, release, commit.
     void gesture(Construction c, FreePoint point, List<Vec2> waypoints) {
-      final session = DragSession.start(c, c.byId(point.id)!, point.position)!;
+      final session = DragSession.start(c, c.byId(point.id)!, point.position!)!;
       for (final w in waypoints) {
         session.update(w);
       }
@@ -801,7 +801,7 @@ void main() {
     test('undo puts the pre-drag branches back', () {
       final (c, dragged, points) = fourWay();
       final before = [for (final p in points) p.branchIndex];
-      final session = DragSession.start(c, c.byId('a3')!, dragged.position)!;
+      final session = DragSession.start(c, c.byId('a3')!, dragged.position!)!;
       for (var i = 1; i <= 12; i++) {
         session.update(Vec2(527, -349.27 + 149.27 * i / 12));
       }
