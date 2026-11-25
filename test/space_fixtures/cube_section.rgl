@@ -1,0 +1,923 @@
+{
+  "version": 4,
+  "viewport": {
+    "pan": [
+      -300.0,
+      380.0
+    ],
+    "scale": 1.0,
+    "rotation": 0.0
+  },
+  "showAxes": false,
+  "showGrid": false,
+  "snapToGrid": false,
+  "objects": [
+    {
+      "id": "a",
+      "type": "FreePoint",
+      "parents": [],
+      "params": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "attributes": {
+        "name": "A",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "b",
+      "type": "FreePoint",
+      "parents": [],
+      "params": {
+        "x": 200.0,
+        "y": 0.0
+      },
+      "attributes": {
+        "name": "B",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "c",
+      "type": "RotatedPoint",
+      "parents": [
+        "a",
+        "b"
+      ],
+      "params": {
+        "angle": -1.5707963267948966
+      },
+      "attributes": {
+        "name": "C",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "d",
+      "type": "RotatedPoint",
+      "parents": [
+        "b",
+        "a"
+      ],
+      "params": {
+        "angle": 1.5707963267948966
+      },
+      "attributes": {
+        "name": "D",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "e",
+      "type": "ProportionalRaisedPoint",
+      "parents": [
+        "a",
+        "a",
+        "b"
+      ],
+      "params": {
+        "factor": 1.0
+      },
+      "attributes": {
+        "name": "E",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "f",
+      "type": "TranslatedPoint",
+      "parents": [
+        "b",
+        "a",
+        "e"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "F",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "g",
+      "type": "TranslatedPoint",
+      "parents": [
+        "c",
+        "a",
+        "e"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "G",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "h",
+      "type": "TranslatedPoint",
+      "parents": [
+        "d",
+        "a",
+        "e"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "H",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "ab",
+      "type": "Segment",
+      "parents": [
+        "a",
+        "b"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "bc",
+      "type": "Segment",
+      "parents": [
+        "b",
+        "c"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "cd",
+      "type": "Segment",
+      "parents": [
+        "c",
+        "d"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "da",
+      "type": "Segment",
+      "parents": [
+        "d",
+        "a"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "ef",
+      "type": "Segment",
+      "parents": [
+        "e",
+        "f"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "fg",
+      "type": "Segment",
+      "parents": [
+        "f",
+        "g"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "gh",
+      "type": "Segment",
+      "parents": [
+        "g",
+        "h"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "he",
+      "type": "Segment",
+      "parents": [
+        "h",
+        "e"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "ae",
+      "type": "Segment",
+      "parents": [
+        "a",
+        "e"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "bf",
+      "type": "Segment",
+      "parents": [
+        "b",
+        "f"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "cg",
+      "type": "Segment",
+      "parents": [
+        "c",
+        "g"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "dh",
+      "type": "Segment",
+      "parents": [
+        "d",
+        "h"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "cube",
+      "type": "Prism",
+      "parents": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "k",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": false,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "p",
+      "type": "PointOnObject",
+      "parents": [
+        "ab"
+      ],
+      "params": {
+        "parameter": 150.0
+      },
+      "attributes": {
+        "name": "P",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "q",
+      "type": "PointOnObject",
+      "parents": [
+        "da"
+      ],
+      "params": {
+        "parameter": -100.0
+      },
+      "attributes": {
+        "name": "Q",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "r",
+      "type": "PointOnObject",
+      "parents": [
+        "ae"
+      ],
+      "params": {
+        "parameter": 120.0
+      },
+      "attributes": {
+        "name": "R",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "cut",
+      "type": "ThreePointPlane",
+      "parents": [
+        "p",
+        "q",
+        "r"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "α",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": false,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "corner",
+      "type": "SectionPolygon",
+      "parents": [
+        "cut",
+        "cube"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "s",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": false,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": 0.35,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "cornerArea",
+      "type": "AreaMeasurement",
+      "parents": [
+        "corner"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "m1",
+      "type": "Midpoint",
+      "parents": [
+        "a",
+        "b"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "M",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "m2",
+      "type": "Midpoint",
+      "parents": [
+        "b",
+        "f"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "N",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "m3",
+      "type": "Midpoint",
+      "parents": [
+        "f",
+        "g"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "O",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "across",
+      "type": "ThreePointPlane",
+      "parents": [
+        "m1",
+        "m2",
+        "m3"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "β",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": false,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "hexagon",
+      "type": "SectionPolygon",
+      "parents": [
+        "across",
+        "cube"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "t",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": false,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": 0.35,
+        "lineClip": 0
+      }
+    },
+    {
+      "id": "hexagonArea",
+      "type": "AreaMeasurement",
+      "parents": [
+        "hexagon"
+      ],
+      "params": {},
+      "attributes": {
+        "name": "",
+        "colorArgb": null,
+        "visible": true,
+        "labelVisible": true,
+        "showValue": false,
+        "valueDecimals": null,
+        "labelDx": 6.0,
+        "labelDy": -18.0,
+        "labelFontSize": 16.0,
+        "strokeWidth": 2.0,
+        "dashPeriod": 0.0,
+        "tickMarks": 0,
+        "pointSize": 4.0,
+        "angleMarkerRadius": 28.0,
+        "fillAlpha": null,
+        "lineClip": 0
+      }
+    }
+  ]
+}

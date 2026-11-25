@@ -59,6 +59,41 @@ List<Vec3>? planePatch(
     maxX = math.max(maxX ?? x, x);
     maxY = math.max(maxY ?? y, y);
   }
+  // And what has been built in it: a circle or a polygon on the plane's
+  // own sheet reaches as far as it reaches, not only as far as its
+  // defining points (intent 004, milestone 3). A circle is its extreme
+  // points along the patch's two axes; lines are unbounded and frame
+  // nothing.
+  final reached = <Vec3>[];
+  for (final object in objects) {
+    if (!identical(object.sheet.plane, plane) || object.isInternal) {
+      continue;
+    }
+    switch (object) {
+      case GeoCircle(:final circle?):
+        final centre = frame.lift(circle.center);
+        reached
+          ..add(centre + across * circle.radius)
+          ..add(centre - across * circle.radius)
+          ..add(centre + up * circle.radius)
+          ..add(centre - up * circle.radius);
+      case GeoPolygon(:final polygonVertices?):
+        for (final vertex in polygonVertices) {
+          reached.add(frame.lift(vertex));
+        }
+      default:
+        break;
+    }
+  }
+  for (final at in reached) {
+    final r = at - frame.origin;
+    final x = r.dot(across);
+    final y = r.dot(up);
+    minX = math.min(minX ?? x, x);
+    minY = math.min(minY ?? y, y);
+    maxX = math.max(maxX ?? x, x);
+    maxY = math.max(maxY ?? y, y);
+  }
   final centreX = minX == null ? 0.0 : (minX + maxX!) / 2;
   final centreY = minY == null ? 0.0 : (minY + maxY!) / 2;
   final pad = minX == null

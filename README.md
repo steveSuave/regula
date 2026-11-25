@@ -99,13 +99,24 @@ Document and workspace:
   plane and moving with it. An existing point or line can be used there when it
   lies in the plane by construction; two lines of space intersect through a
   plane that holds both, so skew lines never do
+- **Solids** — pyramid and prism over a base polygon (tap its corners, the
+  first again, then the point it rises to, or anywhere to pull it up by a
+  handle), cube and regular tetrahedron from one base edge. A solid's edges are
+  ordinary segments, so points can be put on them and slid along; a tap on a
+  face makes that face the plane the 2D tools work in
+- **Cross-sections** — the Section tool takes a plane and a solid and gives the
+  polygon the plane cuts, which follows every drag, says how many sides it has
+  and is measured by the Area tool
+- **Hidden edges** — in the 3D view, whatever straight line passes behind a face
+  of a solid is drawn dashed there, as in a textbook; hide the solid for the
+  wireframe
 - **Light/dark theme**
 
 Also built in, as an experimental feature that is off by default: a JGEX-style
 deductive-database theorem prover whose proofs replay step by step on the figure.
 Open it from the geometry menu (the globe): **Experimental → Prover**, which
-shows its panel. Stereometry is in progress (points, planes and solids in space
-come next); see `intent/README.md`.
+shows its panel. Stereometry is in progress (angles, distances and volumes in
+space come next, then spheres, cones and cylinders); see `intent/README.md`.
 
 ## Non-goals
 

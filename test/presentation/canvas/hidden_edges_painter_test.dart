@@ -9,6 +9,7 @@ import 'package:regula/application/providers/viewport_provider.dart';
 import 'package:regula/domain/commands/change_attributes_command.dart';
 import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/geo_object.dart';
+import 'package:regula/domain/construction/objects/face_plane.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/prism.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
@@ -192,6 +193,38 @@ void main() {
     // more dashed stroke.
     expect(strokes.lines, hasLength(11));
     expect(strokes.dashed, hasLength(4));
+  });
+
+  group('the grid in the active plane', () {
+    int gridLines({required bool showGrid, GeoPlane? active}) {
+      final recorder = _StrokeRecorder();
+      GeometryPainter(
+        construction: c,
+        viewport: camera(),
+        revision: 0,
+        defaultColor: const Color(0xFF000000),
+        selectionColor: const Color(0xFF0000FF),
+        selectedIds: const {},
+        highlightedIds: const {},
+        showGrid: showGrid,
+        activePlaneId: active?.id,
+        activePlane: active,
+      ).paint(recorder, _size);
+      // Twelve edges, three of them dashed: nine whole lines are edges.
+      return recorder.lines.length - 9;
+    }
+
+    test('is drawn in an active face, in its own coordinates, and only '
+        'while the grid is shown', () {
+      final lid = FacePlane(id: 'lid', solid: cube, face: 1);
+      final baseOnly = gridLines(showGrid: true);
+      final withFace = gridLines(showGrid: true, active: lid);
+      expect(baseOnly, greaterThan(0));
+      // A face 100 across at the default step: a handful of lines each
+      // way, and not one more with the grid off.
+      expect(withFace - baseOnly, inInclusiveRange(4, 40));
+      expect(gridLines(showGrid: false, active: lid), 0);
+    });
   });
 
   test('a diagonal drawn in the nearest face is not hidden by it', () {

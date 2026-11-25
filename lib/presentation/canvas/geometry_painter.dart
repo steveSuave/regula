@@ -627,6 +627,11 @@ class GeometryPainter extends CustomPainter {
     }
     // The active plane says so with its outline: the place the next tap
     // lands is the one thing about a plane that cannot be left to guess.
+    // The grid of the active plane, in its own coordinates, inside its
+    // patch or face: where a tap will land, and how far apart.
+    if (showGrid && activeOutline != null) {
+      _drawActivePlaneGrid(screen, activeOutline);
+    }
     // An active face is tinted as well as outlined: a tap on a face
     // selects its solid, whose halo runs along every edge, and an
     // outline alone would be lost in it.
@@ -647,6 +652,62 @@ class GeometryPainter extends CustomPainter {
           ..style = PaintingStyle.stroke,
       );
     }
+  }
+
+  /// The document's grid, in the active plane's coordinates, clipped to
+  /// [region] — the plane's patch or the face (intent 004, milestone 3;
+  /// owed since milestone 2's requirement 7).
+  ///
+  /// The same step as the base grid, so a unit reads the same in every
+  /// plane; drawn through the camera, so it foreshortens with the plane.
+  /// Only the lines that cross the region: its corners, pulled into the
+  /// plane, bound them.
+  void _drawActivePlaneGrid(Canvas screen, Path region) {
+    final plane = _active;
+    final frame = plane is GeoPlane ? plane.frame : null;
+    if (frame == null) {
+      return;
+    }
+    final bounds = region.getBounds();
+    final corners = [
+      for (final corner in [
+        bounds.topLeft,
+        bounds.topRight,
+        bounds.bottomLeft,
+        bounds.bottomRight,
+      ])
+        viewport.pickPlane(corner, frame),
+    ];
+    if (corners.any((corner) => corner == null)) {
+      // Seen edge-on: there is no grid to see.
+      return;
+    }
+    final xs = [for (final corner in corners) corner!.x];
+    final ys = [for (final corner in corners) corner!.y];
+    final minX = xs.reduce(math.min);
+    final maxX = xs.reduce(math.max);
+    final minY = ys.reduce(math.min);
+    final maxY = ys.reduce(math.max);
+    final step = gridStep(viewport.state.scale);
+    if ((maxX - minX) / step > _planeGridMaxLines ||
+        (maxY - minY) / step > _planeGridMaxLines) {
+      return;
+    }
+    final grid = Paint()
+      ..color = gridColor
+      ..strokeWidth = _gridStrokeWidth;
+    Offset at(double x, double y) =>
+        viewport.spaceToScreen(frame.lift(Vec2(x, y)));
+    screen
+      ..save()
+      ..clipPath(region);
+    for (var i = (minX / step).ceil(); i * step <= maxX; i++) {
+      screen.drawLine(at(i * step, minY), at(i * step, maxY), grid);
+    }
+    for (var i = (minY / step).ceil(); i * step <= maxY; i++) {
+      screen.drawLine(at(minX, i * step), at(maxX, i * step), grid);
+    }
+    screen.restore();
   }
 
   /// The height of a lifted point, and the handle that changes it
@@ -718,6 +779,11 @@ class GeometryPainter extends CustomPainter {
 
   /// The tint of the active face of a solid, in the selection colour.
   static const double _activeFaceAlpha = 0.18;
+
+  /// More grid lines than this across an active plane's region are not
+  /// drawn: the plane is seen so nearly edge-on that its picked bounds
+  /// run away.
+  static const int _planeGridMaxLines = 400;
 
   /// The Phase 36 background layer: grid hairlines at every multiple of
   /// the adaptive [gridStep], then 1.5-px axes through the world origin
