@@ -5,8 +5,8 @@ import '../../domain/commands/add_object_command.dart';
 import '../../domain/commands/command.dart';
 import '../../domain/commands/macro_command.dart';
 import '../../domain/construction/geo_object.dart';
+import '../../domain/construction/liftable.dart';
 import '../../domain/construction/object_naming.dart';
-import '../../domain/construction/objects/free_point.dart';
 import '../../domain/construction/objects/point_on_object.dart';
 import '../../domain/math/vec2.dart';
 import '../../domain/tools/drag_session.dart';
@@ -17,6 +17,7 @@ import '../../domain/tools/tool.dart';
 import '../object_ids.dart';
 import 'command_stack_provider.dart';
 import 'construction_provider.dart';
+import 'selection_provider.dart';
 
 part 'tool_provider.g.dart';
 
@@ -156,7 +157,7 @@ class ToolNotifier extends _$ToolNotifier {
   /// Starts a lift of [point]: a drag of its handle that changes its
   /// height above its plane (intent 004). False with a tool active,
   /// like [startDrag].
-  bool startLift(FreePoint point) {
+  bool startLift(Liftable point) {
     if (state.tool != null) {
       return false;
     }
@@ -254,9 +255,23 @@ class ToolNotifier extends _$ToolNotifier {
         final whole = _scope.commit(command);
         _autoNameNewObjects(whole);
         ref.read(commandStackProvider.notifier).execute(whole);
-        state = ActiveToolState(tool, state.revision + 1);
+        // A tool that hands its result to the selection steps aside for
+        // it: the point a solid rose to is selected, with its lift
+        // handle, which is offered only with no tool active.
+        final handOver = tool is HandsOverSelection
+            ? tool.takeSelection()
+            : null;
+        if (handOver != null) {
+          activate(null);
+          ref.read(selectionProvider.notifier).select(handOver);
+        } else {
+          state = ActiveToolState(tool, state.revision + 1);
+        }
         return ToolCommitted(whole);
       case ToolAccepted():
+        state = ActiveToolState(tool, state.revision + 1);
+      case ToolRefused(:final reason):
+        _lastRefusal = reason;
         state = ActiveToolState(tool, state.revision + 1);
       case ToolIgnored():
         if (hadRefusal) {
@@ -292,7 +307,9 @@ class ToolNotifier extends _$ToolNotifier {
   void _nameObjectsIn(Command command, Set<String> used) {
     switch (command) {
       case AddObjectCommand(:final object)
-          when object.attributes.name.isEmpty && object.attributes.visible:
+          when object.attributes.name.isEmpty &&
+              object.attributes.visible &&
+              !object.isInternal:
         final name = nextAutoName(used, object);
         used.add(name);
         final hideLabel =

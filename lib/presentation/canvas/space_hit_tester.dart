@@ -74,7 +74,9 @@ class SpaceHitTester {
           GeoPolygon() => 5,
           // Lowest: a plane's patch hits everywhere inside it, so
           // anything drawn in or in front of it must win the tap.
-          GeoPlane() => 6,
+          // A solid's faces are regions too, and rank with planes: the
+          // nearer under the pointer wins.
+          GeoPlane() || GeoSolid() => 6,
         },
         distance: nearest.distance,
         depth: nearest.depth,

@@ -1,7 +1,7 @@
 import '../commands/command.dart';
 import '../commands/set_point_height_command.dart';
 import '../construction/construction.dart';
-import '../construction/objects/free_point.dart';
+import '../construction/liftable.dart';
 
 /// One lift gesture on a free point: the height sibling of `DragSession`
 /// (intent 004, milestone 2).
@@ -12,7 +12,7 @@ import '../construction/objects/free_point.dart';
 /// go through the command stack like any other edit. [cancel] rolls back
 /// and returns nothing.
 class LiftSession {
-  LiftSession(this._construction, FreePoint point)
+  LiftSession(this._construction, Liftable point)
     : pointId = point.id,
       startHeight = point.height,
       _height = point.height;
@@ -31,7 +31,7 @@ class LiftSession {
       return;
     }
     _height = height;
-    _construction.setFreePointHeight(pointId, height);
+    _construction.setPointHeight(pointId, height);
   }
 
   /// Rolls the preview back and returns the gesture's command, or null
@@ -49,10 +49,10 @@ class LiftSession {
   /// construction (an undo mid-gesture).
   void cancel() {
     if (_height != startHeight && _alive) {
-      _construction.setFreePointHeight(pointId, startHeight);
+      _construction.setPointHeight(pointId, startHeight);
     }
     _height = startHeight;
   }
 
-  bool get _alive => _construction.byId(pointId) is FreePoint;
+  bool get _alive => _construction.byId(pointId) is Liftable;
 }

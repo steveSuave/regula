@@ -18,6 +18,7 @@ import '../../domain/construction/objects/compass_circle.dart';
 import '../../domain/construction/objects/diameter_circle.dart';
 import '../../domain/construction/objects/distance_measurement.dart';
 import '../../domain/construction/objects/expression_text.dart';
+import '../../domain/construction/objects/face_plane.dart';
 import '../../domain/construction/objects/five_point_conic.dart';
 import '../../domain/construction/objects/fixed_angle_line.dart';
 import '../../domain/construction/objects/fixed_radius_circle.dart';
@@ -47,8 +48,12 @@ import '../../domain/construction/objects/plane_intersection_line.dart';
 import '../../domain/construction/objects/point_on_object.dart';
 import '../../domain/construction/objects/polar_line.dart';
 import '../../domain/construction/objects/polygon.dart';
+import '../../domain/construction/objects/prism.dart';
 import '../../domain/construction/objects/projection_point.dart';
+import '../../domain/construction/objects/proportional_raised_point.dart';
+import '../../domain/construction/objects/pyramid.dart';
 import '../../domain/construction/objects/radical_axis_line.dart';
+import '../../domain/construction/objects/raised_point.dart';
 import '../../domain/construction/objects/ratio_apollonius_circle.dart';
 import '../../domain/construction/objects/ray.dart';
 import '../../domain/construction/objects/reflected_point.dart';
@@ -178,7 +183,9 @@ Map<String, dynamic> encodeDocument(
         // it is left out, so a long session's leftovers do not accumulate
         // in the file (intent 004, milestone 2).
         if (!(object.isInternal &&
-            construction.transitiveDependentsOf(object.id).isEmpty))
+            construction
+                .transitiveDependentsOf(object.id)
+                .every((id) => construction.byId(id)?.isInternal ?? true)))
           _encodeObject(object),
     ],
   };
@@ -486,8 +493,11 @@ bool _decodeSettingFlag(Map<String, dynamic> json, String key) {
 /// the five planar kinds that follow their parents there.
 bool _needsNoSheet(GeoObject object) =>
     object is GeoPlane ||
+    object is GeoSolid ||
     object is PerpendicularToPlaneLine ||
     object is LinePlaneIntersectionPoint ||
+    object is RaisedPoint ||
+    object is ProportionalRaisedPoint ||
     object is PlaneIntersectionLine ||
     object is Segment ||
     object is Ray ||
@@ -512,6 +522,11 @@ const Set<String> _spaceTypes = {
   'PerpendicularToPlaneLine',
   'LinePlaneIntersectionPoint',
   'PlaneIntersectionLine',
+  'RaisedPoint',
+  'Pyramid',
+  'FacePlane',
+  'Prism',
+  'ProportionalRaisedPoint',
   'ChartPoint',
   'ChartLine',
 };
@@ -551,6 +566,14 @@ Map<String, dynamic> _encodeObject(GeoObject object) {
         // bytes do not change (requirement 13 of milestone 2).
         if (height != 0) 'h': height,
       },
+    ),
+    // A raised point's height is the number the lift handle sets; the
+    // plane it is measured over, when it is not the base plane, is its
+    // last parent (intent 004, milestone 3).
+    RaisedPoint(:final height) => ('RaisedPoint', {'h': height}),
+    ProportionalRaisedPoint(:final factor) => (
+      'ProportionalRaisedPoint',
+      {'factor': factor},
     ),
     Midpoint() => ('Midpoint', const {}),
     SegmentRatioPoint(:final ratio) => ('SegmentRatioPoint', {'ratio': ratio}),
@@ -653,6 +676,12 @@ Map<String, dynamic> _encodeObject(GeoObject object) {
     Arc() => ('Arc', const {}),
     Sector() => ('Sector', const {}),
     Polygon() => ('Polygon', const {}),
+    // A solid stores nothing: its parents are the base in order, then
+    // the apex or top, then the base's plane when that is not the base
+    // plane (intent 004, milestone 3).
+    Pyramid() => ('Pyramid', const {}),
+    FacePlane(:final face) => ('FacePlane', {'face': face}),
+    Prism() => ('Prism', const {}),
     DistanceMeasurement() => ('DistanceMeasurement', const {}),
     // Parents carry the expression references; decode re-binds them by
     // zipping the content's referenceNames (unique, first-occurrence
@@ -719,7 +748,47 @@ GeoObject _decodeObject(Map<String, dynamic> json, Construction construction) {
   GeoObject any(int index) => _typedParent<GeoObject>(id, parents, index);
   GeoPlane plane(int index) => _typedParent<GeoPlane>(id, parents, index);
 
+  // A solid's parents: the base loop, the apex or top, and last a plane
+  // when the base is not in the base plane.
+  ({List<GeoPoint> base, GeoPoint over, GeoPlane? plane}) solidParents() {
+    final hasPlane = parents.isNotEmpty && parents.last is GeoPlane;
+    final count = parents.length - (hasPlane ? 1 : 0);
+    if (count < 4) {
+      throw FormatException(
+        'Object "$id": a solid needs a base of 3 points and one more',
+      );
+    }
+    return (
+      base: [for (var i = 0; i < count - 1; i++) point(i)],
+      over: point(count - 1),
+      plane: hasPlane ? plane(parents.length - 1) : null,
+    );
+  }
+
   return switch (type) {
+    'FacePlane' => FacePlane(
+      id: id,
+      solid: _typedParent<GeoSolid>(id, parents, 0),
+      face: _intParam(id, params, 'face'),
+    ),
+    'Pyramid' => switch (solidParents()) {
+      (:final base, :final over, :final plane) => Pyramid(
+        id: id,
+        base: base,
+        apex: over,
+        plane: plane,
+        attributes: attributes,
+      ),
+    },
+    'Prism' => switch (solidParents()) {
+      (:final base, :final over, :final plane) => Prism(
+        id: id,
+        base: base,
+        top: over,
+        plane: plane,
+        attributes: attributes,
+      ),
+    },
     'FreePoint' => FreePoint(
       id: id,
       position: Vec2(
@@ -730,6 +799,22 @@ GeoObject _decodeObject(Map<String, dynamic> json, Construction construction) {
       // A free point placed in a plane has that plane as its one parent
       // (intent 004); in the base plane it has none, as it always did.
       plane: parents.isEmpty ? null : plane(0),
+      attributes: attributes,
+    ),
+    'RaisedPoint' => RaisedPoint(
+      id: id,
+      foot: point(0),
+      plane: parents.length > 1 ? plane(1) : null,
+      height: _doubleParam(id, params, 'h'),
+      attributes: attributes,
+    ),
+    'ProportionalRaisedPoint' => ProportionalRaisedPoint(
+      id: id,
+      foot: point(0),
+      from: point(1),
+      to: point(2),
+      plane: parents.length > 3 ? plane(3) : null,
+      factor: _doubleParam(id, params, 'factor'),
       attributes: attributes,
     ),
     'Midpoint' => Midpoint(

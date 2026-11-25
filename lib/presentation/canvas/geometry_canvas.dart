@@ -20,6 +20,7 @@ import '../../domain/commands/change_attributes_command.dart';
 import '../../domain/construction/construction.dart';
 import '../../domain/construction/free_point_ancestors.dart';
 import '../../domain/construction/geo_object.dart';
+import '../../domain/construction/liftable.dart';
 import '../../domain/construction/objects/compass_circle.dart';
 import '../../domain/construction/objects/expression_text.dart';
 import '../../domain/construction/objects/free_point.dart';
@@ -218,6 +219,15 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
   @override
   Widget build(BuildContext context) {
     final constructionState = ref.watch(constructionProvider);
+    // The plane the tools work in, for the painter: a plane of the
+    // construction, or a face's plane that is not in it yet.
+    final activeNow = ref.watch(spaceViewProvider)
+        ? activePlaneOf(
+            ref.watch(activePlaneProvider),
+            constructionState.construction.objects,
+            pending: ref.read(activePlaneProvider.notifier).pending,
+          )
+        : null;
     final viewport = CanvasViewport(ref.watch(viewportProvider));
     // The tool revision bumps on every accepted input, so in-progress
     // markers rebuild as the user collects.
@@ -293,12 +303,8 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
               tool,
               constructionState.construction,
             ),
-            activePlaneId: ref.watch(spaceViewProvider)
-                ? activePlaneOf(
-                    ref.watch(activePlaneProvider),
-                    constructionState.construction.objects,
-                  )?.id
-                : null,
+            activePlaneId: activeNow?.id,
+            activePlane: activeNow,
             showAxes: ref.watch(documentSettingsProvider).showAxes,
             showGrid: ref.watch(documentSettingsProvider).showGrid,
             // Theme-less hosts (bare-widget tests) keep the painter's
@@ -586,7 +592,7 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
     final handle = _liftHandleAt(viewport, screen);
     if (handle != null) {
       final point = construction.byId(handle.pointId);
-      if (point is FreePoint &&
+      if (point is Liftable &&
           ref.read(toolProvider.notifier).startLift(point)) {
         _lift = (handle: handle, start: screen, startHeight: point.height);
       }
@@ -724,7 +730,11 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
   /// base plane.
   GeoPlane? _activePlane(Construction construction) =>
       ref.read(spaceViewProvider)
-      ? activePlaneOf(ref.read(activePlaneProvider), construction.objects)
+      ? activePlaneOf(
+          ref.read(activePlaneProvider),
+          construction.objects,
+          pending: ref.read(activePlaneProvider.notifier).pending,
+        )
       : null;
 
   /// The coordinates a drag of [hit] moves its free points in: its own
@@ -972,6 +982,19 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
     ], additive: HardwareKeyboard.instance.isShiftPressed);
   }
 
+  /// Which side of the active plane the camera is on: +1 for the side
+  /// its normal points to. A solid rises on this side.
+  static double _viewerSide(CanvasViewport viewport, GeoPlane? active) {
+    final frame = active == null ? PlaneFrame.base : active.frame;
+    if (frame == null) {
+      return 1;
+    }
+    return viewport.depthOf(frame.origin + frame.normal) >=
+            viewport.depthOf(frame.origin)
+        ? 1
+        : -1;
+  }
+
   void _panCancel() {
     // An interrupted orbit keeps the camera where it got to, like an
     // interrupted pinch: it is view state, and there is nothing to undo.
@@ -1165,6 +1188,7 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
         plane: active,
         spaceParameterOn: (line) =>
             spaceLineParameterAt(viewport, line, screen),
+        viewerSide: _viewerSide(viewport, active),
       );
       if (tool is DeleteTool) {
         // Deleting cascades, and the cascade warning is a dialog — a
@@ -1225,6 +1249,21 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
       // patches overlap.
       if (target is GeoPlane && ref.read(spaceViewProvider)) {
         ref.read(activePlaneProvider.notifier).set(target.id);
+      }
+      // A face of a solid is a plane to work in as well (milestone 3):
+      // the one under the pointer nearest the viewer.
+      if (target is GeoSolid && ref.read(spaceViewProvider)) {
+        final face = screenInkOf(
+          construction.objects,
+          viewport,
+          context.size ?? Size.zero,
+          target,
+        ).faceAt(screen);
+        if (face != null) {
+          ref
+              .read(activePlaneProvider.notifier)
+              .setFace(target, face, construction.objects);
+        }
       }
     }
   }

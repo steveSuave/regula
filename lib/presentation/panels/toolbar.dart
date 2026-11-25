@@ -63,11 +63,13 @@ import '../../domain/tools/random_shape_stamp_tool.dart';
 import '../../domain/tools/ratio_apollonius_circle_tool.dart';
 import '../../domain/tools/rectangle_macro_tool.dart';
 import '../../domain/tools/regular_polygon_macro_tool.dart';
+import '../../domain/tools/regular_solid_tool.dart';
 import '../../domain/tools/rhombus_macro_tool.dart';
 import '../../domain/tools/right_trapezium_macro_tool.dart';
 import '../../domain/tools/right_triangle_macro_tool.dart';
 import '../../domain/tools/scaled_compass_circle_tool.dart';
 import '../../domain/tools/slope_tool.dart';
+import '../../domain/tools/solid_tool.dart';
 import '../../domain/tools/square_macro_tool.dart';
 import '../../domain/tools/stated_radius_circle_tool.dart';
 import '../../domain/tools/tangent_tool.dart';
@@ -274,7 +276,11 @@ class GeometryToolbar extends ConsumerWidget {
         tool is RegularPolygonMacroTool ||
         tool is RandomShapeStampTool;
     final spaceTools = euclidean && ref.watch(spaceViewProvider);
-    final spaceActive = tool is PlaneTool || tool is PointAndPlaneTool;
+    final spaceActive =
+        tool is PlaneTool ||
+        tool is PointAndPlaneTool ||
+        tool is SolidTool ||
+        tool is RegularSolidTool;
     final measureActive =
         tool is AreaTool ||
         tool is SlopeTool ||
@@ -804,7 +810,7 @@ class GeometryToolbar extends ConsumerWidget {
         if (spaceTools)
           _ToolGroup(
             icon: const Icon(Icons.layers_outlined),
-            tooltip: 'Space: planes, perpendiculars and parallels',
+            tooltip: 'Space: planes, perpendiculars, parallels and solids',
             active: spaceActive,
             items: [
               (
@@ -842,6 +848,27 @@ class GeometryToolbar extends ConsumerWidget {
                   ),
                 ),
                 AppAction.parallelPlaneTool,
+              ),
+              // Solids (milestone 3).
+              (
+                'Pyramid (base, close it, then the apex)',
+                _pick(() => PyramidTool(newId: newObjectId)),
+                AppAction.pyramidTool,
+              ),
+              (
+                'Prism (base, close it, then pull up)',
+                _pick(() => PrismTool(newId: newObjectId)),
+                AppAction.prismTool,
+              ),
+              (
+                'Cube (two corners)',
+                _pick(() => CubeTool(newId: newObjectId)),
+                AppAction.cubeTool,
+              ),
+              (
+                'Regular tetrahedron (two corners)',
+                _pick(() => RegularTetrahedronTool(newId: newObjectId)),
+                AppAction.regularTetrahedronTool,
               ),
             ],
           ),

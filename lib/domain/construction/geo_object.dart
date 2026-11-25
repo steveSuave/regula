@@ -70,8 +70,8 @@ final class Sheet {
 ///
 /// The hierarchy is sealed at the *kind* level: every object is a
 /// [GeoPoint], a [GeoLine], a [GeoCircle], a [GeoAngle], a [GeoPolygon],
-/// a [GeoMeasurement], a [GeoLocus], a [GeoText] or a [GeoPlane], so
-/// kind-switches are exhaustive.
+/// a [GeoMeasurement], a [GeoLocus], a [GeoText], a [GeoPlane] or a
+/// [GeoSolid], so kind-switches are exhaustive.
 /// The kinds themselves are open — concrete objects
 /// (`FreePoint`, `Midpoint`, …) live one-per-file under `objects/`,
 /// which Dart's `sealed` would forbid on the root class directly.
@@ -613,4 +613,50 @@ abstract class GeoPlane extends GeoObject {
 
   @override
   bool get isDefined => frame != null;
+}
+
+/// A solid: a closed surface of flat faces over points of space (intent
+/// 004, milestone 3). The tenth kind.
+///
+/// A solid is its [faces] — translucent, tappable, what hides an edge
+/// behind it and what a plane cuts — over [spaceVertices]. Its edges and
+/// corners are ordinary segments and points beside it in the
+/// construction, so they take glued points, labels and styles like any
+/// other; the solid strokes nothing of its own. This is the split the
+/// shape macros and `Polygon` already make.
+///
+/// The combinatorics ([faces], [edges]) are fixed for the object's
+/// lifetime and say nothing about which way a face looks: no reader in
+/// this milestone asks for an outward side, and a rule for one has no
+/// answer for a solid squashed flat.
+///
+/// A solid lies in no sheet. It is defined when it has real finite
+/// vertices and its kind's own conditions hold.
+abstract class GeoSolid extends GeoObject {
+  GeoSolid({required super.id, super.attributes});
+
+  /// The vertices in space; null while undefined.
+  List<Vec3>? get spaceVertices;
+
+  /// Each face as a loop of indices into [spaceVertices].
+  List<List<int>> get faces;
+
+  /// Each edge once, as a pair of indices into [spaceVertices].
+  List<(int, int)> get edges;
+
+  /// The corners of face [index] in space, in loop order; null while
+  /// undefined.
+  List<Vec3>? faceVertices(int index) {
+    final vertices = spaceVertices;
+    if (vertices == null) {
+      return null;
+    }
+    return [for (final i in faces[index]) vertices[i]];
+  }
+
+  @override
+  Sheet get sheet => Sheet.none;
+
+  @override
+  bool get isDefined => spaceVertices != null;
 }

@@ -76,6 +76,7 @@ class PointAndLineTool implements ToolInputPreview, ScopedTool {
           GeoMeasurement() ||
           GeoLocus() ||
           GeoPlane() ||
+          GeoSolid() ||
           GeoText():
         return const ToolIgnored();
       case null:

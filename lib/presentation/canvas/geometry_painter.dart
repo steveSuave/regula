@@ -6,9 +6,10 @@ import 'package:flutter/rendering.dart';
 import '../../domain/construction/construction.dart';
 import '../../domain/construction/document_kernel.dart';
 import '../../domain/construction/geo_object.dart';
+import '../../domain/construction/liftable.dart';
 import '../../domain/construction/line_clip.dart';
 import '../../domain/construction/objects/arc.dart';
-import '../../domain/construction/objects/free_point.dart';
+import '../../domain/construction/objects/face_plane.dart';
 import '../../domain/construction/objects/locus.dart';
 import '../../domain/construction/objects/ray.dart';
 import '../../domain/construction/objects/sector.dart';
@@ -113,6 +114,7 @@ class GeometryPainter extends CustomPainter {
     this.showHidden = false,
     this.liftHandleEnabled = false,
     this.activePlaneId,
+    this.activePlane,
     this.showAxes = false,
     this.showGrid = false,
     this.axisColor = const Color(0xFF757575),
@@ -235,6 +237,14 @@ class GeometryPainter extends CustomPainter {
   /// the tool's preview markers are positions in it.
   final String? activePlaneId;
 
+  /// The active plane itself, when it is one the construction does not
+  /// hold yet: the plane of a face tapped and not yet built in (intent
+  /// 004, milestone 3). Otherwise null, and [activePlaneId] finds it.
+  final GeoPlane? activePlane;
+
+  GeoObject? get _active =>
+      activePlane ?? construction.byId(activePlaneId ?? '');
+
   /// The plane whose sheet this painter paints, or null for the painter
   /// the canvas owns, which paints the base sheet, everything with no
   /// sheet, and then one of these per plane that has something on it.
@@ -349,7 +359,7 @@ class GeometryPainter extends CustomPainter {
     final onSheet = <GeoPlane>{
       for (final object in construction.objects) ?object.sheet.plane,
     };
-    final active = construction.byId(activePlaneId ?? '');
+    final active = _active;
     if (active is GeoPlane && previewMarkers.isNotEmpty) {
       onSheet.add(active);
     }
@@ -383,6 +393,7 @@ class GeometryPainter extends CustomPainter {
         labelDragPreview: labelDragPreview,
         showHidden: showHidden,
         activePlaneId: activePlaneId,
+        activePlane: activePlane,
       ).._sheetPlane = plane;
 
   /// Paints the objects on [_sheetPlane]'s sheet, and the tool's preview
@@ -506,8 +517,10 @@ class GeometryPainter extends CustomPainter {
   void _drawPlanePatches(Canvas screen, Size size) {
     final patches = <({double depth, Path path, Paint paint})>[];
     Path? activeOutline;
+    Path? activeFill;
     for (final object in construction.objects) {
-      if (object is! GeoPlane || !object.isDefined) {
+      // A face's plane is scaffolding: the face is its picture.
+      if (object is! GeoPlane || !object.isDefined || object.isInternal) {
         continue;
       }
       final hidden = !object.attributes.visible;
@@ -543,12 +556,70 @@ class GeometryPainter extends CustomPainter {
           ..style = PaintingStyle.fill,
       ));
     }
+    final activeFace = switch (_active) {
+      final FacePlane plane => plane,
+      _ => null,
+    };
+    // The faces of the solids, with the patches and by the same rule
+    // (intent 004, milestone 3). Every view ray through a convex solid
+    // crosses two faces, so its silhouette is one even tint.
+    for (final object in construction.objects) {
+      if (object is! GeoSolid || !object.isDefined) {
+        continue;
+      }
+      final hidden = !object.attributes.visible;
+      if (hidden && !showHidden) {
+        continue;
+      }
+      final base = Color(
+        object.attributes.colorArgb ?? defaultColor.toARGB32(),
+      );
+      final paint = Paint()
+        ..color = base.withValues(
+          alpha:
+              (object.attributes.fillAlpha ?? solidFaceAlpha) *
+              (hidden ? _hiddenAlpha : 1.0),
+        )
+        ..style = PaintingStyle.fill;
+      for (var i = 0; i < object.faces.length; i++) {
+        final corners = object.faceVertices(i)!;
+        final centre =
+            corners.reduce((sum, corner) => sum + corner) /
+            corners.length.toDouble();
+        final path = Path()
+          ..addPolygon([
+            for (final corner in corners) viewport.spaceToScreen(corner),
+          ], true);
+        if (activeFace != null &&
+            identical(activeFace.solid, object) &&
+            activeFace.face == i) {
+          activeOutline = path;
+          activeFill = path;
+        }
+        patches.add((
+          depth: viewport.depthOf(centre),
+          path: path,
+          paint: paint,
+        ));
+      }
+    }
     patches.sort((a, b) => a.depth.compareTo(b.depth));
     for (final patch in patches) {
       screen.drawPath(patch.path, patch.paint);
     }
     // The active plane says so with its outline: the place the next tap
     // lands is the one thing about a plane that cannot be left to guess.
+    // An active face is tinted as well as outlined: a tap on a face
+    // selects its solid, whose halo runs along every edge, and an
+    // outline alone would be lost in it.
+    if (activeFill != null) {
+      screen.drawPath(
+        activeFill,
+        Paint()
+          ..color = selectionColor.withValues(alpha: _activeFaceAlpha)
+          ..style = PaintingStyle.fill,
+      );
+    }
     if (activeOutline != null) {
       screen.drawPath(
         activeOutline,
@@ -578,7 +649,7 @@ class GeometryPainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
     for (final id in selectedIds) {
       final object = construction.byId(id);
-      if (object is! FreePoint ||
+      if (object is! Liftable ||
           !object.isDefined ||
           (!object.attributes.visible && !showHidden)) {
         continue;
@@ -626,6 +697,9 @@ class GeometryPainter extends CustomPainter {
 
   static const double _liftFootRadius = 3;
   static const double _activePlaneStrokeWidth = 2.5;
+
+  /// The tint of the active face of a solid, in the selection colour.
+  static const double _activeFaceAlpha = 0.18;
 
   /// The Phase 36 background layer: grid hairlines at every multiple of
   /// the adaptive [gridStep], then 1.5-px axes through the world origin
@@ -927,7 +1001,7 @@ class GeometryPainter extends CustomPainter {
         break;
       case GeoLocus():
         _drawLocus(canvas, size, object, paint, dashPeriod);
-      case GeoPlane():
+      case GeoPlane() || GeoSolid():
         // Never on a sheet: [drawnInSpace] sent it to [_drawInSpace].
         break;
     }
@@ -949,6 +1023,12 @@ class GeometryPainter extends CustomPainter {
     required double pointRadiusExtra,
     required double dashPeriod,
   }) {
+    // A solid strokes nothing of its own: its edges are segments beside
+    // it. Only the selection halo and the highlight trace them, so that
+    // a selected solid shows which one it is.
+    if (object is GeoSolid && pointRadiusExtra == 0) {
+      return;
+    }
     final direct = SheetCanvas(canvas.screen, _flat);
     final ink = screenInkOf(construction.objects, viewport, size, object);
     final dot = ink.dot;

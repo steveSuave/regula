@@ -1089,6 +1089,25 @@ void main() {
     );
   });
 
+  // Intent 004, milestone 3: solids. A prism and a pyramid, their faces
+  // as fills behind every stroke, a polygon over points of space and a
+  // point glued to an edge of space.
+  testWidgets('solids, oblique camera — light', (tester) async {
+    final construction = buildSolidKinds();
+    await expectSceneGolden(
+      tester,
+      construction: construction,
+      theme: AppTheme.light(),
+      golden: 'solid_kinds_light',
+      viewport: fittedViewport(
+        construction.objects,
+        canvasSize,
+        rotation: -math.pi / 6,
+        tilt: math.pi / 3,
+      ),
+    );
+  });
+
   testWidgets('circles scene, camera below the plane — light', (tester) async {
     final construction = circlesScene();
     await expectSceneGolden(

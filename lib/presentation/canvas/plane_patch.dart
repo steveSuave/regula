@@ -87,6 +87,11 @@ const double patchPadding = 0.2;
 /// one point still shows.
 const double patchMinHalfExtentPx = 56;
 
+/// The opacity of each face of a solid that has no fill of its own.
+/// Two faces lie along every view ray through a convex solid, so the
+/// solid reads at about twice this.
+const double solidFaceAlpha = 0.1;
+
 /// The opacity of a patch's fill when the plane has no fill of its own.
 const double patchFillAlpha = 0.12;
 

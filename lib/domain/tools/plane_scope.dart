@@ -7,11 +7,7 @@ import '../construction/objects/chart_point.dart';
 import '../construction/space_incidence.dart';
 import 'tool.dart';
 
-/// Why the active plane's scope turned a tap away.
-enum ScopeRefusal {
-  /// The tapped object is not in the active plane by construction.
-  notInPlane,
-}
+export 'tool.dart' show ScopeRefusal;
 
 /// What the scope made of one input: the input the tool should see, or
 /// the reason the tap goes no further.
@@ -48,6 +44,16 @@ class PlaneScope {
 
   /// The input [tool] should be given for [input], or a refusal.
   ScopedInput adapt(ToolInput input, Tool tool, String Function() newId) {
+    // The active plane may be a face's plane that nothing has been
+    // built in yet, and so not in the construction (intent 004,
+    // milestone 3). It rides in the commit of the first thing that
+    // needs it, ahead of any adapter into it.
+    final active = input.plane;
+    if (active != null &&
+        !_pending.any((o) => identical(o, active)) &&
+        !input.objects.any((o) => identical(o, active))) {
+      _pending.insert(0, active);
+    }
     if (tool is ScopedTool && tool.scope == ToolScope.space) {
       return (input: input, refusal: null);
     }

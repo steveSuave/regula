@@ -102,7 +102,7 @@ class CanvasHitTester {
         // drawn inside it must still win the tap.
         GeoPolygon() => 5,
         // Skipped above: a plane is never on the sheet this tester reads.
-        GeoPlane() => 6,
+        GeoPlane() || GeoSolid() => 6,
       };
       candidates.add((object, priority, distance, index));
     }
@@ -201,7 +201,7 @@ class CanvasHitTester {
     // Every recorded sample must be inside; an all-gap locus (no
     // drawn ink) can never be band-selected.
     GeoLocus() => _locusContained(object, within),
-    GeoPlane() => false,
+    GeoPlane() || GeoSolid() => false,
   };
 
   /// Whether a conic without a centre and radius is wholly inside the
@@ -314,7 +314,7 @@ class CanvasHitTester {
     // sample segments (gaps break the chain; isolated samples and an
     // all-gap locus are unreachable, matching the painter's ink).
     GeoLocus() => _locusDistance(object, point),
-    GeoPlane() => double.infinity,
+    GeoPlane() || GeoSolid() => double.infinity,
   };
 
   double _locusDistance(GeoLocus locus, Vec2 p) {

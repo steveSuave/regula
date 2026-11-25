@@ -14,6 +14,7 @@ import '../projective/tracing/traced_branch.dart';
 import 'document_kernel.dart';
 import 'geo_object.dart';
 import 'geometry_change.dart';
+import 'liftable.dart';
 import 'object_attributes.dart';
 import 'objects/expression_text.dart';
 import 'objects/free_point.dart';
@@ -138,14 +139,29 @@ class Construction {
   /// back in its sheet. Throws [ArgumentError] when [id] is not a
   /// [FreePoint] or [height] is not finite.
   void setFreePointHeight(String id, double height) {
-    final object = _objects[id];
-    if (object is! FreePoint) {
+    if (_objects[id] is! FreePoint) {
       throw ArgumentError('$id is not a FreePoint in this construction');
+    }
+    setPointHeight(id, height);
+  }
+
+  /// Sets the height of the [Liftable] point [id] — a free point over
+  /// its plane, or a `RaisedPoint` over its foot — and recomputes it and
+  /// its dependents (intent 004, milestone 3). The lift gesture's one
+  /// mutation, whichever kind it holds. Throws [ArgumentError] when [id]
+  /// has no height to set or [height] is not finite.
+  void setPointHeight(String id, double height) {
+    final object = _objects[id];
+    if (object is! Liftable) {
+      throw ArgumentError('$id has no height in this construction');
     }
     if (!height.isFinite) {
       throw ArgumentError('Height must be finite, got $height');
     }
     object.height = height;
+    // A free point reads its height in its accessors; a raised point
+    // caches its position.
+    object.recompute(kernel.absolute);
     _recomputeDependentsOf(id);
     _notify();
   }

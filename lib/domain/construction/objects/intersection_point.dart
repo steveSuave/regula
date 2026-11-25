@@ -523,6 +523,7 @@ List<ProjPoint> intersectionCandidates(
     // (`LinePlaneIntersectionPoint`, `PlaneIntersectionLine`); it has no
     // planar candidates.
     case ((GeoPlane(), _) || (_, GeoPlane())):
+    case ((GeoSolid(), _) || (_, GeoSolid())):
       throw ArgumentError('intersection candidates need two curves');
   }
 }

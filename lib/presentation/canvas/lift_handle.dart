@@ -1,7 +1,7 @@
 import 'dart:ui';
 
 import '../../domain/construction/construction.dart';
-import '../../domain/construction/objects/free_point.dart';
+import '../../domain/construction/liftable.dart';
 import 'canvas_viewport.dart';
 
 /// The handle that lifts a selected free point off its plane (intent
@@ -70,9 +70,9 @@ class LiftHandle {
 
   /// The handle for [point] under [viewport], or null when the point has
   /// no real position or its plane is seen too nearly face-on.
-  static LiftHandle? of(FreePoint point, CanvasViewport viewport) {
+  static LiftHandle? of(Liftable point, CanvasViewport viewport) {
     final position = point.spacePosition;
-    final normal = point.sheetFrame?.normal;
+    final normal = point.liftFrame?.normal;
     if (position == null || normal == null) {
       return null;
     }
@@ -101,7 +101,7 @@ class LiftHandle {
       return null;
     }
     final object = construction.byId(selectedIds.single);
-    if (object is! FreePoint || !object.attributes.visible) {
+    if (object is! Liftable || !object.attributes.visible) {
       return null;
     }
     return of(object, viewport);
@@ -109,11 +109,12 @@ class LiftHandle {
 
   /// The foot of a lifted [point] on its plane, on screen; null for a
   /// point in its plane.
-  static Offset? footOf(FreePoint point, CanvasViewport viewport) {
-    final frame = point.sheetFrame;
-    if (!point.isLifted || frame == null) {
+  static Offset? footOf(Liftable point, CanvasViewport viewport) {
+    final frame = point.liftFrame;
+    final position = point.spacePosition;
+    if (point.height == 0 || frame == null || position == null) {
       return null;
     }
-    return viewport.spaceToScreen(frame.lift(point.chartPosition));
+    return viewport.spaceToScreen(position - frame.normal * point.height);
   }
 }

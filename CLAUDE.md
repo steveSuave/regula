@@ -12,7 +12,7 @@ Auto-loaded into every session. A dynamic geometry app for web, Android and iOS,
 ## Invariants (do not violate)
 
 - **`lib/domain/` must not import `package:flutter/*`.** Cross the boundary only via `lib/application/`.
-- **Free points are the only directly-mutable objects**, and the `Construction` DAG is the single source of truth for rendering, hit testing, undo and save/load.
+- **Three stored numbers are the only things a gesture sets directly**: a free point's coordinates, a glued point's parameter (`PointOnObject`), and a height (`Liftable`: a free point over its plane, a `RaisedPoint` over its foot). Everything else is derived, and the `Construction` DAG is the single source of truth for rendering, hit testing, undo and save/load.
 - **All user actions are reversible `Command`s.** One carve-out: drag preview frames mutate directly, and the gesture ends by emitting exactly one command (or rolling back on cancel).
 - **The save format carries a `version`.** Bump `constructionFormatVersion` only for a change an older reader would misread, and add a migration; the encoder stamps the lowest version that reads back correctly. Version 1 is permanent and every file in `test/fixtures/` stays v1. (§"The version field is a requirement, not a build number")
 - **No new public API in `domain/` without a test.**
