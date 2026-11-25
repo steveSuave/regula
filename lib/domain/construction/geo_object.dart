@@ -284,6 +284,71 @@ abstract class GeoLine extends GeoObject {
   /// that override [spaceLine] answer it.
   bool get hasSpaceExtent => false;
 
+  /// Where a glued point's parameter is measured from **in space**, and
+  /// along which unit direction: the space sibling of
+  /// `LineEq.pointOnLine` and `LineEq.direction` (intent 004, milestone
+  /// 3). Null when the line has no finite space carrier.
+  ///
+  /// While the line has a value in its sheet this is that value's own
+  /// parameterization, lifted, so the parameter of a point of space is
+  /// the number `LineEq.parameterAt` answers for it. When it has none —
+  /// an end was lifted off the sheet — the origin is the foot of the
+  /// sheet's origin on the space carrier and the direction the carrier's
+  /// own, which is what the planar pair tends to as the lifted end comes
+  /// back: a glued point does not jump when its host leaves the plane by
+  /// a hair. A line with no sheet measures from the foot of the world
+  /// origin unless its kind says otherwise.
+  ({Vec3 origin, Vec3 direction})? get spaceParameterFrame {
+    final frame = sheetFrame;
+    final planar = line;
+    if (planar != null && frame != null) {
+      final origin = frame.lift(planar.pointOnLine);
+      return (
+        origin: origin,
+        direction: frame.lift(planar.pointOnLine + planar.direction) - origin,
+      );
+    }
+    final carrier = spaceLine;
+    final on = carrier?.anchor;
+    final direction = carrier?.direction.normalizedOrNull;
+    if (on == null || direction == null) {
+      return null;
+    }
+    final from = frame?.origin ?? Vec3.zero;
+    return (
+      origin: on + direction * (from - on).dot(direction),
+      direction: direction,
+    );
+  }
+
+  /// The parameter, in [spaceParameterFrame], of the point of the
+  /// carrier nearest [p]; null when there is no such frame.
+  double? spaceParameterOf(Vec3 p) {
+    final frame = spaceParameterFrame;
+    return frame == null ? null : (p - frame.origin).dot(frame.direction);
+  }
+
+  /// The span of the carrier this object occupies in
+  /// [spaceParameterFrame], as [parameterExtent] is in the sheet: a
+  /// segment's two ends, a ray's origin. Null for the whole carrier.
+  (double?, double?)? get spaceParameterExtent => null;
+
+  /// Clamps a space parameter into [spaceParameterExtent].
+  double clampSpaceParameter(double t) {
+    final extent = spaceParameterExtent;
+    if (extent == null) {
+      return t;
+    }
+    final (min, max) = extent;
+    if (min != null && t < min) {
+      return min;
+    }
+    if (max != null && t > max) {
+      return max;
+    }
+    return t;
+  }
+
   /// The parameter span of the carrier this object actually occupies, in
   /// the carrier's arc-length parameterization (`LineEq.parameterAt`), as
   /// `(min, max)` — a null bound is unbounded on that side. Null when the
@@ -432,8 +497,24 @@ abstract class GeoPolygon extends GeoObject {
 
   List<Vec2>? get polygonVertices;
 
+  /// The loop in space: the sheet's lift of [polygonVertices]. The kinds
+  /// whose loop needs no plane (a polygon over points of space) override
+  /// this and answer where [polygonVertices] cannot (intent 004,
+  /// milestone 3). Nothing here claims the loop is planar: three points
+  /// always are, and a skew loop is still a drawable outline.
+  List<Vec3>? get spaceVertices {
+    final vertices = polygonVertices;
+    final frame = sheetFrame;
+    if (vertices == null || frame == null) {
+      return null;
+    }
+    return [for (final vertex in vertices) frame.lift(vertex)];
+  }
+
+  /// Defined when the loop has real finite vertices, in its sheet or in
+  /// space. The first arm is the planar question and short-circuits.
   @override
-  bool get isDefined => polygonVertices != null;
+  bool get isDefined => polygonVertices != null || spaceVertices != null;
 }
 
 /// A measurement: a live number ([value]) displayed as canvas text at

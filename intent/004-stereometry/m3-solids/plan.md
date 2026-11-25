@@ -1,6 +1,6 @@
 # Plan: stereometry milestone 3 — solids, cross-sections, dashed hidden edges
 
-Written 2026-11-25 from [spec](spec.md) · Status: awaiting approval · Branch: `intent-004-stereometry`
+Written 2026-11-25 from [spec](spec.md) · Status: approved 2026-11-25, in progress · Branch: `intent-004-stereometry`
 
 Three stages. Each ends green on the full gate, with a look, and merges to `main`.
 
@@ -92,4 +92,14 @@ Three stages. Each ends green on the full gate, with a look, and merges to `main
 
 ## Progress and gotchas
 
-- Nothing built yet. The plan awaits approval.
+- **Step 1, baseline.** Not re-run as its own step: `main` was at milestone 2's closing gate (analyze clean; VM 3876; goldens 36; browser 18) with only documents committed since. The first run made here overlapped the first edits and is not a baseline.
+- **Steps 2 to 6, what solids rest on** (stage A, one working pass). Tests: 14 in `test/domain/construction/space_carriers_test.dart`, 12 in `test/domain/tools/space_slide_session_test.dart`, 9 in `test/presentation/canvas/space_carriers_view_test.dart`, 2 more in `codec_space_test.dart`, 3 widget tests (group "a point on an edge of space", mouse and touch). Full run 3916 with goldens, none moved; browser 18. Departures and notes:
+  - **The space drag is its own session, `SpaceSlideSession`**, as the risk list allowed. The planar slide projects a world point onto a chart form; an edge of space has none. The canvas reads one screen axis per line (`spaceLineScreenAxis`) and hands the session a parameter, the way it hands `LiftSession` a height.
+  - **The Point tool gets the reading through `ToolInput.spaceParameterOn`**, a callback, because `position` is a point of the active plane and such an edge is in none.
+  - **`GeoLine.spaceParameterFrame`** is one accessor (origin and unit direction), not the two the spec named. The continuity test passed for segment, line and ray on the base sheet and on a tilted plane with no per-kind override; only `PerpendicularToPlaneLine` overrides, to measure from its plane.
+  - **Found on the way: a planar tool was handed a lifted point or an edge to one** when its plane was active, since both are on that sheet by structure. `resolvePoint` then called `PointOnObject.near` on a line with no chart, which throws. `PlaneScope` now refuses them (DECISIONS), and `resolvePoint` no longer reaches `near` for such a line.
+  - **A third scope, `ToolScope.planeAndSpaceLines`**, for the Point tool only.
+  - `TranslatedPoint` in space is Euclidean by construction, like the planar one; a document with space content is Euclidean.
+  - The decoder's shared-sheet check admits `Polygon`, `TranslatedPoint`, and a `PointOnObject` whose host is a line.
+  - **Not tested: `PointOnObject.near` from a space position.** There is no such factory; a space position reaches the kind as a parameter (`PointOnObject.onSpaceLine`).
+  - Gotcha: a background gate started while editing reads half-edited files. Run it in the foreground or after the edits.

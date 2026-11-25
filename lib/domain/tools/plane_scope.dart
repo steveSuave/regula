@@ -51,6 +51,8 @@ class PlaneScope {
     if (tool is ScopedTool && tool.scope == ToolScope.space) {
       return (input: input, refusal: null);
     }
+    final takesSpaceLines =
+        tool is ScopedTool && tool.scope == ToolScope.planeAndSpaceLines;
     final plane = input.plane;
     final target = plane == null ? Sheet.base : Sheet.of(plane);
     final created = <GeoObject>[];
@@ -64,7 +66,17 @@ class PlaneScope {
       if (hit is GeoPlane) {
         continue;
       }
-      final adapted = hit.sheet == target
+      // A line with no planar value is its own host for a glued point.
+      if (takesSpaceLines && _drawnInSpace(hit)) {
+        seen.add(hit);
+        first = false;
+        continue;
+      }
+      // On the active sheet is not enough: a point lifted off it, or an
+      // edge to one, is on the sheet by structure and has no value in
+      // it, and a planar tool can build nothing on that (intent 004,
+      // milestone 3).
+      final adapted = hit.sheet == target && _hasValueInSheet(hit)
           ? hit
           : _adapt(hit, plane, input.objects, created, newId);
       if (adapted != null) {
@@ -109,6 +121,16 @@ class PlaneScope {
 
   /// [command] with the adapters it depends on added first, in one
   /// macro: what the tool committed, made whole. Clears the scope.
+  static bool _hasValueInSheet(GeoObject object) => switch (object) {
+    GeoPoint() => object.projPoint != null,
+    GeoLine() => object.projLine != null,
+    GeoPolygon() => object.polygonVertices != null,
+    _ => true,
+  };
+
+  static bool _drawnInSpace(GeoObject object) =>
+      object is GeoLine && object.line == null && object.hasSpaceExtent;
+
   Command commit(Command command) {
     final needed = <GeoObject>{};
     void need(GeoObject object) {

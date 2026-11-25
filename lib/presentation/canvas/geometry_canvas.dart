@@ -23,6 +23,7 @@ import '../../domain/construction/geo_object.dart';
 import '../../domain/construction/objects/compass_circle.dart';
 import '../../domain/construction/objects/expression_text.dart';
 import '../../domain/construction/objects/free_point.dart';
+import '../../domain/construction/objects/point_on_object.dart';
 import '../../domain/construction/text_evaluator.dart';
 import '../../domain/construction/text_template.dart';
 import '../../domain/math/vec2.dart';
@@ -208,6 +209,11 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
   /// The lift gesture in progress: the handle as it was grabbed, where
   /// the pointer went down, and the point's height then.
   ({LiftHandle handle, Offset start, double startHeight})? _lift;
+
+  /// A slide of a point along an edge of space in progress: the edge's
+  /// screen travel per unit of parameter and the pointer and parameter
+  /// at the grab (intent 004, milestone 3).
+  ({Offset perUnit, Offset start, double startParameter})? _slide;
 
   @override
   Widget build(BuildContext context) {
@@ -633,7 +639,24 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
             world ?? Vec2.zero,
             _firstDownKind,
           ).firstOrNull;
-    if (hit != null) {
+    if (hit is PointOnObject && hit.onSpaceLine) {
+      // A point glued to an edge of space slides along the edge as it
+      // is drawn (intent 004, milestone 3): the pointer's travel along
+      // the edge's screen image is the change in its parameter. Read
+      // against the image as it was when grabbed, like the lift.
+      final host = hit.curve;
+      final axis = host is GeoLine ? spaceLineScreenAxis(viewport, host) : null;
+      final notifier = ref.read(toolProvider.notifier);
+      if (axis != null && notifier.startSpaceSlide(hit)) {
+        _slide = (
+          perUnit: axis.perUnit,
+          start: screen,
+          startParameter: notifier.spaceSlide!.startParameter,
+        );
+        return;
+      }
+      // Seen end-on: the drag turns the camera, as for an edge-on plane.
+    } else if (hit != null) {
       // A drag moves free points in the coordinates of their own plane
       // (intent 004, milestone 2), so the pointer is read on that plane
       // for the whole gesture — and at the point's height, for a lifted
@@ -799,6 +822,18 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
           );
       return;
     }
+    final slide = _slide;
+    if (slide != null) {
+      final travel = screen - slide.start;
+      ref
+          .read(toolProvider.notifier)
+          .updateSpaceSlide(
+            slide.startParameter +
+                (travel.dx * slide.perUnit.dx + travel.dy * slide.perUnit.dy) /
+                    slide.perUnit.distanceSquared,
+          );
+      return;
+    }
     final lift = _lift;
     if (lift != null) {
       // Measured from the gesture's start against the handle as it was
@@ -905,6 +940,7 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
     final band = _band;
     if (band == null) {
       _lift = null;
+      _slide = null;
       ref.read(toolProvider.notifier).endDrag();
       return;
     }
@@ -941,6 +977,7 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
     // interrupted pinch: it is view state, and there is nothing to undo.
     _orbit = null;
     _lift = null;
+    _slide = null;
     ref.read(toolProvider.notifier).cancelDrag();
     setState(() {
       _band = null;
@@ -1126,6 +1163,8 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
         // candidate list was filtered by (Phase 126).
         absolute: construction.kernel.absolute,
         plane: active,
+        spaceParameterOn: (line) =>
+            spaceLineParameterAt(viewport, line, screen),
       );
       if (tool is DeleteTool) {
         // Deleting cascades, and the cascade warning is a dialog — a

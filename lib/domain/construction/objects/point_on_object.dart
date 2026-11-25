@@ -1,7 +1,9 @@
 import '../../math/vec2.dart';
+import '../../math/vec3.dart';
 import '../../projective/absolute.dart';
 import '../../projective/conic_shape.dart';
 import '../../projective/proj_point.dart';
+import '../../projective/space/point3.dart';
 import '../geo_object.dart';
 
 /// A point constrained to a curve (a [GeoLine] or [GeoCircle]).
@@ -124,6 +126,28 @@ class PointOnObject extends GeoPoint {
     return PointOnObject(id: id, curve: curve, parameter: parameter);
   }
 
+  /// The constrained point on a line of space that has no value in its
+  /// sheet — an edge to a lifted point, a perpendicular to a plane —
+  /// at [parameter] in the host's `spaceParameterFrame` (intent 004,
+  /// milestone 3). The caller reads the parameter off the screen: the
+  /// point of the drawn line nearest the pointer.
+  factory PointOnObject.onSpaceLine({
+    required String id,
+    required GeoLine curve,
+    required double parameter,
+  }) => PointOnObject(
+    id: id,
+    curve: curve,
+    parameter: curve.clampSpaceParameter(parameter),
+  );
+
+  /// Whether the host is a line drawn from its space value: this point
+  /// then has a space position and no planar one.
+  bool get onSpaceLine => switch (curve) {
+    GeoLine(line: null, hasSpaceExtent: true) => true,
+    _ => false,
+  };
+
   /// A [GeoLine] or [GeoCircle] (enforced in the constructor).
   final GeoObject curve;
 
@@ -137,8 +161,20 @@ class PointOnObject extends GeoPoint {
 
   ProjPoint? _point;
 
+  /// The position on a host with no planar value; null on any other.
+  Vec3? _space;
+
   @override
   ProjPoint? get projPoint => _point;
+
+  @override
+  Vec3? get spacePosition => _space ?? super.spacePosition;
+
+  @override
+  Point3? get spacePoint => switch (_space) {
+    null => super.spacePoint,
+    final at => Point3.lift(at),
+  };
 
   /// The sweep/detour mutation, mirroring `FreePoint`'s: stores a
   /// homogeneous position directly, bypassing the stored [parameter].
@@ -171,6 +207,20 @@ class PointOnObject extends GeoPoint {
 
   @override
   void recompute([Absolute absolute = Absolute.euclidean]) {
+    _space = null;
+    // A line drawn from its space value hosts the point in space: the
+    // same real arc length, measured in the host's space frame, clamped
+    // to its drawn extent. There is no planar value to store.
+    if (curve case final GeoLine host when onSpaceLine) {
+      _point = null;
+      final frame = host.spaceParameterFrame;
+      if (frame != null) {
+        _space =
+            frame.origin +
+            frame.direction * host.clampSpaceParameter(parameter);
+      }
+      return;
+    }
     final chartPoint = switch (curve) {
       GeoLine(:final line) && final GeoLine host => line?.pointAt(
         host.clampParameter(parameter),

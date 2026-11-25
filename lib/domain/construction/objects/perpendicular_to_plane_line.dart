@@ -1,4 +1,5 @@
 import '../../math/line_eq.dart';
+import '../../math/vec3.dart';
 import '../../projective/absolute.dart';
 import '../../projective/proj_line.dart';
 import '../../projective/space/line3.dart';
@@ -41,6 +42,20 @@ class PerpendicularToPlaneLine extends GeoLine {
 
   @override
   bool get hasSpaceExtent => _line?.isFinite() ?? false;
+
+  /// Measured from the plane, along its normal: a glued point's
+  /// parameter is its height over the plane, and it keeps that height
+  /// as [through] moves (intent 004, milestone 3).
+  @override
+  ({Vec3 origin, Vec3 direction})? get spaceParameterFrame {
+    final frame = plane.frame;
+    final p = through.spacePosition;
+    if (frame == null || p == null || _line == null) {
+      return null;
+    }
+    final normal = frame.normal;
+    return (origin: p - normal * frame.heightOf(p), direction: normal);
+  }
 
   @override
   List<GeoObject> get parents => [through, plane];

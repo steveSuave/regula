@@ -11,7 +11,7 @@ import 'tool.dart';
 ///
 /// Stateless: every usable input immediately commits an
 /// [AddObjectCommand].
-class PointTool implements Tool {
+class PointTool implements ScopedTool {
   PointTool({required this.newId});
 
   /// Produces a fresh unique object id per call. Injected because the
@@ -21,6 +21,11 @@ class PointTool implements Tool {
 
   @override
   bool get hasPartialInput => false;
+
+  /// A point glued to an edge of space needs no plane, so such an edge
+  /// reaches this tool whatever plane is active.
+  @override
+  ToolScope get scope => ToolScope.planeAndSpaceLines;
 
   @override
   ToolResult onInput(ToolInput input) {

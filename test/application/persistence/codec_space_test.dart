@@ -8,8 +8,11 @@ import 'package:regula/application/persistence/construction_codec.dart';
 import 'package:regula/application/providers/viewport_provider.dart';
 import 'package:regula/domain/construction/construction.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
+import 'package:regula/domain/construction/objects/point_on_object.dart';
+import 'package:regula/domain/construction/objects/polygon.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/construction/objects/three_point_plane.dart';
+import 'package:regula/domain/construction/objects/translated_point.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/math/vec3.dart';
 
@@ -58,6 +61,65 @@ void main() {
       jsonEncode(encodeDocument(decoded.construction, viewport: viewport)),
       encoded,
     );
+  });
+
+  test('a face over a lifted apex, a translation to it and a point glued to '
+      'its edge round-trip (milestone 3)', () {
+    final c = _pair(height: 2.5);
+    final a = c.byId('a')! as FreePoint;
+    final b = c.byId('b')! as FreePoint;
+    final d = FreePoint(id: 'd', position: const Vec2(1, 6));
+    c
+      ..add(d)
+      ..add(Polygon(id: 'p', vertices: [a, b, d]))
+      ..add(TranslatedPoint(id: 't', point: d, vectorFrom: a, vectorTo: b))
+      ..add(PointOnObject(id: 'g', curve: c.byId('s')!, parameter: 1.25));
+    final document = encodeDocument(c, viewport: viewport);
+    expect(document['version'], 4);
+    final encoded = jsonEncode(document);
+    final decoded = decodeDocument(jsonDecode(encoded) as Map<String, dynamic>)
+        .construction;
+    final p = decoded.byId('p')! as Polygon;
+    expect(p.polygonVertices, isNull);
+    expect(p.spaceVertices![1], const Vec3(5, 2, 2.5));
+    expect(
+      (decoded.byId('t')! as TranslatedPoint).spacePosition,
+      const Vec3(5, 6, 2.5),
+    );
+    final g = decoded.byId('g')! as PointOnObject;
+    expect(g.onSpaceLine, isTrue);
+    expect(g.spacePosition, (c.byId('g')! as PointOnObject).spacePosition);
+    expect(jsonEncode(encodeDocument(decoded, viewport: viewport)), encoded);
+  });
+
+  test('a polygon and a glued point across two planes are not a malformed '
+      'file; a circle across them still is', () {
+    final c = _pair();
+    final a = c.byId('a')! as FreePoint;
+    final b = c.byId('b')! as FreePoint;
+    final d = FreePoint(id: 'd', position: const Vec2(1, 6));
+    final wall = ThreePointPlane(id: 'w', point1: a, point2: b, point3: d);
+    final f = FreePoint(id: 'f', position: const Vec2(1, 1), plane: wall);
+    final across = Segment(id: 'x', point1: d, point2: f);
+    c
+      ..add(d)
+      ..add(wall)
+      ..add(f)
+      ..add(across)
+      ..add(Polygon(id: 'p', vertices: [a, b, f]))
+      ..add(PointOnObject(id: 'g', curve: across, parameter: 0.5));
+    final document = encodeDocument(c, viewport: viewport);
+    final again = decodeDocument(
+      jsonDecode(jsonEncode(document)) as Map<String, dynamic>,
+    ).construction;
+    expect(again.byId('p')!.sheet.exists, isFalse);
+    expect(again.byId('g')!.sheet.exists, isFalse);
+
+    final objects = (document['objects'] as List).cast<Map<String, dynamic>>();
+    final polygon = objects.firstWhere((o) => o['id'] == 'p');
+    objects.add({...polygon, 'id': 'k', 'type': 'ThreePointCircle'});
+    final asCircle = jsonDecode(jsonEncode(document)) as Map<String, dynamic>;
+    expect(() => decodeDocument(asCircle), throwsFormatException);
   });
 
   test('a height that is not a number is a format error', () {

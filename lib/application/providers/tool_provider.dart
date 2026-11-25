@@ -7,10 +7,12 @@ import '../../domain/commands/macro_command.dart';
 import '../../domain/construction/geo_object.dart';
 import '../../domain/construction/object_naming.dart';
 import '../../domain/construction/objects/free_point.dart';
+import '../../domain/construction/objects/point_on_object.dart';
 import '../../domain/math/vec2.dart';
 import '../../domain/tools/drag_session.dart';
 import '../../domain/tools/lift_session.dart';
 import '../../domain/tools/plane_scope.dart';
+import '../../domain/tools/space_slide_session.dart';
 import '../../domain/tools/tool.dart';
 import '../object_ids.dart';
 import 'command_stack_provider.dart';
@@ -53,6 +55,7 @@ class ToolNotifier extends _$ToolNotifier {
   /// nothing needs to watch the session itself.
   DragSession? _drag;
   LiftSession? _lift;
+  SpaceSlideSession? _slide;
 
   /// The active plane's say over what the active tool is handed, with
   /// the adapters the tool's collected inputs depend on (intent 004).
@@ -161,6 +164,26 @@ class ToolNotifier extends _$ToolNotifier {
     return true;
   }
 
+  /// Starts a slide of [point] along the line of space it is glued to
+  /// (intent 004, milestone 3). False with a tool active, or when the
+  /// point's host has a value in a sheet and [startDrag] is the way.
+  bool startSpaceSlide(PointOnObject point) {
+    if (state.tool != null) {
+      return false;
+    }
+    _slide = SpaceSlideSession.start(
+      ref.read(constructionProvider).construction,
+      point,
+    );
+    return _slide != null;
+  }
+
+  /// The slide in progress, for the canvas to read its start parameter.
+  SpaceSlideSession? get spaceSlide => _slide;
+
+  /// Previews the slide at [parameter]. No-op when nothing slides.
+  void updateSpaceSlide(double parameter) => _slide?.update(parameter);
+
   /// The lift in progress, for the canvas to read its start height.
   LiftSession? get lift => _lift;
 
@@ -176,9 +199,10 @@ class ToolNotifier extends _$ToolNotifier {
   /// Ends the drag: the session's preview is rolled back and its single
   /// start → end command executed (none when the pointer never moved).
   void endDrag() {
-    final command = _drag?.end() ?? _lift?.end();
+    final command = _drag?.end() ?? _lift?.end() ?? _slide?.end();
     _drag = null;
     _lift = null;
+    _slide = null;
     if (command != null) {
       ref.read(commandStackProvider.notifier).execute(command);
     }
@@ -195,6 +219,8 @@ class ToolNotifier extends _$ToolNotifier {
     _drag = null;
     _lift?.cancel();
     _lift = null;
+    _slide?.cancel();
+    _slide = null;
   }
 
   /// Routes one canvas input to the active tool and returns its verdict.

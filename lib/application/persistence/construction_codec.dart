@@ -493,7 +493,12 @@ bool _needsNoSheet(GeoObject object) =>
     object is Ray ||
     object is LineThroughTwoPoints ||
     object is Midpoint ||
-    object is ParallelLine;
+    object is ParallelLine ||
+    // Milestone 3: a loop and a translation need no plane, and a glued
+    // point lives on its host line wherever that is.
+    object is Polygon ||
+    object is TranslatedPoint ||
+    (object is PointOnObject && object.curve is GeoLine);
 
 /// The object types that exist only in space. A v3 reader refuses an
 /// unknown type outright, so these would be safe at any stamp — but a

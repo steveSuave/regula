@@ -1,6 +1,6 @@
 # Spec: stereometry milestone 3 — solids, cross-sections, dashed hidden edges
 
-Written 2026-11-25 from [intent](../intent.md) · Status: drafted, awaiting approval with the [plan](plan.md)
+Written 2026-11-25 from [intent](../intent.md) · Status: approved 2026-11-25 with the [plan](plan.md)
 
 Milestone 3 of five. After it a user can build a pyramid, a prism, a cube and a regular tetrahedron in a few taps, put points on their edges, work inside any face, cut a solid with a plane and get the section as a polygon, and read the figure like a textbook: edges behind a face are dashed. Angles, distances and volume in space are milestone 4; spheres, cones and cylinders are milestone 5.
 
@@ -155,7 +155,9 @@ Still open:
 - **A size control for a plane's patch.** The patch now holds everything built in it, which was the seen need.
 - **Sections in more than one loop.**
 
-## Decisions for approval
+## Decisions taken at approval (2026-11-25)
+
+The user approved the plan; each stands as drafted.
 
 1. **Solids are an object plus ordinary edges and points**, not a self-contained object that draws its own edges. Edges must be hosts for points (the cube fixture), and the shape macros already work this way.
 2. **The pull is commit-then-handle** (requirement 6), not a press-drag inside the tool. It reuses a gesture that exists and is tested on touch; the cost is two undo steps for "make a prism this tall".

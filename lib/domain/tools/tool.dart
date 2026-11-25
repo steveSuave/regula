@@ -54,6 +54,7 @@ class ToolInput {
     this.text,
     this.absolute = Absolute.euclidean,
     this.plane,
+    this.spaceParameterOn,
   });
 
   final Vec2 position;
@@ -72,6 +73,15 @@ class ToolInput {
   /// planar document and the default.
   final GeoPlane? plane;
 
+  /// For a line drawn from its space value (an edge to a lifted point),
+  /// the parameter in its `spaceParameterFrame` of the point of it drawn
+  /// nearest the tap, or null when the tap cannot name one — the line is
+  /// seen end-on (intent 004, milestone 3). [position] cannot say this:
+  /// it is a point of the active plane, and such a line is in none. Null
+  /// outside the space view, where nothing is drawn from a space value
+  /// that a tap could miss the plane of.
+  final double? Function(GeoLine line)? spaceParameterOn;
+
   /// This input with its hits replaced: what the active plane's scope
   /// hands a tool once it has decided which hits the tool may see.
   ToolInput withHits(List<GeoObject> hits) => ToolInput(
@@ -85,6 +95,7 @@ class ToolInput {
     text: text,
     absolute: absolute,
     plane: plane,
+    spaceParameterOn: spaceParameterOn,
   );
 
   /// Every in-threshold candidate, best first: [hit] (when non-null)
@@ -180,6 +191,11 @@ enum ToolScope {
   /// segment, line, ray, midpoint and parallel, which need no plane, and
   /// the tools that build planes and what planes give.
   space,
+
+  /// A [plane] tool that also takes a line drawn from its space value
+  /// as it is: the Point tool, whose glued point lives on its host and
+  /// needs no plane (intent 004, milestone 3).
+  planeAndSpaceLines,
 }
 
 /// Optional capability: a tool that says which [ToolScope] it is. A tool
