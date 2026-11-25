@@ -973,6 +973,19 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
     ], additive: HardwareKeyboard.instance.isShiftPressed);
   }
 
+  /// Which side of the active plane the camera is on: +1 for the side
+  /// its normal points to. A solid rises on this side.
+  static double _viewerSide(CanvasViewport viewport, GeoPlane? active) {
+    final frame = active == null ? PlaneFrame.base : active.frame;
+    if (frame == null) {
+      return 1;
+    }
+    return viewport.depthOf(frame.origin + frame.normal) >=
+            viewport.depthOf(frame.origin)
+        ? 1
+        : -1;
+  }
+
   void _panCancel() {
     // An interrupted orbit keeps the camera where it got to, like an
     // interrupted pinch: it is view state, and there is nothing to undo.
@@ -1166,6 +1179,7 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
         plane: active,
         spaceParameterOn: (line) =>
             spaceLineParameterAt(viewport, line, screen),
+        viewerSide: _viewerSide(viewport, active),
       );
       if (tool is DeleteTool) {
         // Deleting cascades, and the cascade warning is a dialog — a

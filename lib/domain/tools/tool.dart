@@ -55,6 +55,7 @@ class ToolInput {
     this.absolute = Absolute.euclidean,
     this.plane,
     this.spaceParameterOn,
+    this.viewerSide = 1,
   });
 
   final Vec2 position;
@@ -82,6 +83,12 @@ class ToolInput {
   /// that a tap could miss the plane of.
   final double? Function(GeoLine line)? spaceParameterOn;
 
+  /// Which side of the active plane the viewer is on: +1 for the side
+  /// its normal points to, −1 for the other (intent 004, milestone 3).
+  /// A solid built on the plane rises on this side, towards whoever is
+  /// building it. +1 outside the space view.
+  final double viewerSide;
+
   /// This input with its hits replaced: what the active plane's scope
   /// hands a tool once it has decided which hits the tool may see.
   ToolInput withHits(List<GeoObject> hits) => ToolInput(
@@ -96,6 +103,7 @@ class ToolInput {
     absolute: absolute,
     plane: plane,
     spaceParameterOn: spaceParameterOn,
+    viewerSide: viewerSide,
   );
 
   /// Every in-threshold candidate, best first: [hit] (when non-null)
@@ -122,6 +130,22 @@ class ToolCommitted extends ToolResult {
   const ToolCommitted(this.command);
 
   final Command command;
+}
+
+/// The input was refused, and the user should be told why: a tool that
+/// decides for itself what the active plane admits (the solids, whose
+/// base must lie in it) answers this where a planar tool is refused by
+/// the plane's scope before it is asked. Nothing changed.
+class ToolRefused extends ToolResult {
+  const ToolRefused(this.reason);
+
+  final ScopeRefusal reason;
+}
+
+/// Why an input was refused.
+enum ScopeRefusal {
+  /// The tapped object is not in the active plane by construction.
+  notInPlane,
 }
 
 /// The input is unusable in the tool's current state (e.g. a point tool
@@ -196,6 +220,16 @@ enum ToolScope {
   /// as it is: the Point tool, whose glued point lives on its host and
   /// needs no plane (intent 004, milestone 3).
   planeAndSpaceLines,
+}
+
+/// Optional capability: a tool whose commit leaves something for the
+/// selection, and steps aside for it. A solid pulled up from its base
+/// hands over the point it rose to, whose lift handle is how its height
+/// is set (intent 004, milestone 3).
+abstract interface class HandsOverSelection implements Tool {
+  /// The id to select after the commit just made, once; null when that
+  /// commit leaves nothing to select.
+  String? takeSelection();
 }
 
 /// Optional capability: a tool that says which [ToolScope] it is. A tool

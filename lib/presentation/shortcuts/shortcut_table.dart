@@ -68,6 +68,11 @@ enum AppAction {
   perpendicularToPlaneTool,
   perpendicularPlaneTool,
   parallelPlaneTool,
+  // Solids (intent 004, milestone 3).
+  pyramidTool,
+  prismTool,
+  cubeTool,
+  regularTetrahedronTool,
   // Constructions behind the G leader.
   centroidTool,
   orthocenterTool,
@@ -874,6 +879,26 @@ final List<ShortcutBinding> shortcutTable = [
     AppAction.polygonTool,
     'Polygon (tap the first vertex to close)',
     'X V',
+  ),
+  _x(
+    LogicalKeyboardKey.keyY,
+    AppAction.pyramidTool,
+    'Pyramid (base, close it, then the apex)',
+    'X Y',
+  ),
+  _x(
+    LogicalKeyboardKey.keyM,
+    AppAction.prismTool,
+    'Prism (base, close it, then pull up)',
+    'X M',
+  ),
+  _x(LogicalKeyboardKey.keyC, AppAction.cubeTool, 'Cube', 'X C'),
+  _x(
+    LogicalKeyboardKey.keyT,
+    AppAction.regularTetrahedronTool,
+    'Regular tetrahedron',
+    'X ⇧ T',
+    shift: true,
   ),
   _x(LogicalKeyboardKey.keyS, AppAction.squareMacroTool, 'Square', 'X S'),
   _x(

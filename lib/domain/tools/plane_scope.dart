@@ -7,11 +7,7 @@ import '../construction/objects/chart_point.dart';
 import '../construction/space_incidence.dart';
 import 'tool.dart';
 
-/// Why the active plane's scope turned a tap away.
-enum ScopeRefusal {
-  /// The tapped object is not in the active plane by construction.
-  notInPlane,
-}
+export 'tool.dart' show ScopeRefusal;
 
 /// What the scope made of one input: the input the tool should see, or
 /// the reason the tap goes no further.

@@ -69,11 +69,13 @@ import 'domain/tools/random_shape_stamp_tool.dart';
 import 'domain/tools/ratio_apollonius_circle_tool.dart';
 import 'domain/tools/rectangle_macro_tool.dart';
 import 'domain/tools/regular_polygon_macro_tool.dart';
+import 'domain/tools/regular_solid_tool.dart';
 import 'domain/tools/rhombus_macro_tool.dart';
 import 'domain/tools/right_trapezium_macro_tool.dart';
 import 'domain/tools/right_triangle_macro_tool.dart';
 import 'domain/tools/scaled_compass_circle_tool.dart';
 import 'domain/tools/slope_tool.dart';
+import 'domain/tools/solid_tool.dart';
 import 'domain/tools/square_macro_tool.dart';
 import 'domain/tools/stated_radius_circle_tool.dart';
 import 'domain/tools/tangent_tool.dart';
@@ -1033,6 +1035,14 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         tools.activate(AngleTool(newId: newObjectId));
       case AppAction.planeTool:
         _activateSpaceTool(() => PlaneTool(newId: newObjectId));
+      case AppAction.pyramidTool:
+        _activateSpaceTool(() => PyramidTool(newId: newObjectId));
+      case AppAction.prismTool:
+        _activateSpaceTool(() => PrismTool(newId: newObjectId));
+      case AppAction.cubeTool:
+        _activateSpaceTool(() => CubeTool(newId: newObjectId));
+      case AppAction.regularTetrahedronTool:
+        _activateSpaceTool(() => RegularTetrahedronTool(newId: newObjectId));
       case AppAction.perpendicularToPlaneTool:
         _activateSpaceTool(
           () => PointAndPlaneTool(

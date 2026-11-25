@@ -45,11 +45,13 @@ import 'package:regula/domain/tools/random_shape_stamp_tool.dart';
 import 'package:regula/domain/tools/ratio_apollonius_circle_tool.dart';
 import 'package:regula/domain/tools/rectangle_macro_tool.dart';
 import 'package:regula/domain/tools/regular_polygon_macro_tool.dart';
+import 'package:regula/domain/tools/regular_solid_tool.dart';
 import 'package:regula/domain/tools/rhombus_macro_tool.dart';
 import 'package:regula/domain/tools/right_trapezium_macro_tool.dart';
 import 'package:regula/domain/tools/right_triangle_macro_tool.dart';
 import 'package:regula/domain/tools/scaled_compass_circle_tool.dart';
 import 'package:regula/domain/tools/slope_tool.dart';
+import 'package:regula/domain/tools/solid_tool.dart';
 import 'package:regula/domain/tools/square_macro_tool.dart';
 import 'package:regula/domain/tools/stated_radius_circle_tool.dart';
 import 'package:regula/domain/tools/tangent_tool.dart';
@@ -228,7 +230,7 @@ void main() {
   });
 
   group('the Space group (intent 004)', () {
-    const tooltip = 'Space: planes, perpendiculars and parallels';
+    const tooltip = 'Space: planes, perpendiculars, parallels and solids';
 
     testWidgets('is offered only in the space view of a Euclidean document', (
       tester,
@@ -286,6 +288,35 @@ void main() {
 
       await pick('Plane perpendicular to a line');
       expect(container.read(toolProvider).tool, isA<PointAndLineTool>());
+
+      // The solids (milestone 3).
+      await pick('Pyramid');
+      expect(container.read(toolProvider).tool, isA<PyramidTool>());
+      expect(
+        iconColor(tester, Icons.layers_outlined),
+        theme.colorScheme.primary,
+      );
+      await pick('Prism');
+      expect(container.read(toolProvider).tool, isA<PrismTool>());
+      await pick('Cube');
+      expect(container.read(toolProvider).tool, isA<CubeTool>());
+      await pick('Regular tetrahedron');
+      expect(container.read(toolProvider).tool, isA<RegularTetrahedronTool>());
+      expect(
+        iconColor(tester, Icons.layers_outlined),
+        theme.colorScheme.primary,
+      );
+    });
+
+    testWidgets('the Prism shortcut turns the space view on with the tool', (
+      tester,
+    ) async {
+      await pumpEditor(tester);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyX);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyM);
+      await tester.pump();
+      expect(container.read(toolProvider).tool, isA<PrismTool>());
+      expect(container.read(spaceViewProvider), isTrue);
     });
 
     testWidgets('the Plane shortcut turns the space view on with the tool, '

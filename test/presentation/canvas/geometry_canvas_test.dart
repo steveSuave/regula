@@ -35,6 +35,8 @@ import 'package:regula/domain/construction/objects/line_angle.dart';
 import 'package:regula/domain/construction/objects/line_through_two_points.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
+import 'package:regula/domain/construction/objects/prism.dart';
+import 'package:regula/domain/construction/objects/raised_point.dart';
 import 'package:regula/domain/construction/objects/reflected_point.dart';
 import 'package:regula/domain/construction/objects/sector.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
@@ -50,6 +52,7 @@ import 'package:regula/domain/tools/delete_tool.dart';
 import 'package:regula/domain/tools/intersection_tool.dart';
 import 'package:regula/domain/tools/plane_tool.dart';
 import 'package:regula/domain/tools/point_tool.dart';
+import 'package:regula/domain/tools/solid_tool.dart';
 import 'package:regula/domain/tools/tool.dart';
 import 'package:regula/domain/tools/two_point_tool.dart';
 import 'package:regula/domain/tools/visibility_tool.dart';
@@ -3717,6 +3720,114 @@ void main() {
           glued().single.spacePosition!.distanceTo(apex.spacePosition!),
           lessThan(1e-9),
         );
+      });
+    });
+
+    group('a solid pulled up from its base', () {
+      for (final kind in [PointerDeviceKind.mouse, PointerDeviceKind.touch]) {
+        testWidgets('the Prism tool commits at a default height, steps aside '
+            'and hands its top to the lift handle; the pull is one more '
+            'command ($kind)', (tester) async {
+          await pumpEditor(tester);
+          final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+          await enter(tester, const ViewportState(tilt: 1.0));
+          container
+              .read(toolProvider.notifier)
+              .activate(PrismTool(newId: newObjectId));
+          await tester.pump();
+
+          Future<void> tapAt(Offset at) async {
+            final tap = await tester.startGesture(origin + at, kind: kind);
+            await tap.up();
+            await tester.pump();
+          }
+
+          const corners = [
+            Offset(200, 420),
+            Offset(420, 420),
+            Offset(420, 520),
+            Offset(200, 520),
+          ];
+          for (final corner in corners) {
+            await tapAt(corner);
+          }
+          await tapAt(corners.first);
+          expect(container.read(toolProvider).tool, isA<PrismTool>());
+          await tapAt(const Offset(600, 300));
+
+          final construction = container
+              .read(constructionProvider)
+              .construction;
+          final solid = construction.objects.whereType<Prism>().single;
+          final top = solid.top as RaisedPoint;
+          expect(solid.isDefined, isTrue);
+          expect(top.height, greaterThan(0));
+          // The tool stepped aside for the selection and its handle.
+          expect(container.read(toolProvider).tool, isNull);
+          expect(container.read(selectionProvider), {top.id});
+          final handle = LiftHandle.forSelection(
+            construction,
+            container.read(selectionProvider),
+            camera(),
+          )!;
+          expect(handle.pointId, top.id);
+
+          final before = top.height;
+          final drag = await tester.startGesture(
+            origin + handle.grip,
+            kind: kind,
+          );
+          await drag.moveBy(handle.axis * 30);
+          await drag.moveBy(handle.axis * 30);
+          await tester.pump();
+          await drag.up();
+          await tester.pump();
+          expect(top.height, closeTo(before + 60 / handle.pixelsPerUnit, 1e-9));
+          // Right, and still right: every far corner straight over its own.
+          final v = solid.spaceVertices!;
+          for (var i = 0; i < 4; i++) {
+            expect((v[4 + i] - v[i]).x.abs(), lessThan(1e-9));
+            expect((v[4 + i] - v[i]).y.abs(), lessThan(1e-9));
+          }
+
+          final stack = container.read(commandStackProvider.notifier);
+          stack.undo();
+          await tester.pump();
+          expect(top.height, before);
+          stack.undo();
+          await tester.pump();
+          expect(construction.objects, isEmpty);
+        });
+      }
+
+      testWidgets('a base corner off the active plane is refused, and said', (
+        tester,
+      ) async {
+        await pumpEditor(tester);
+        final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+        final lifted = FreePoint(
+          id: 'l',
+          position: const Vec2(300, -450),
+          height: 80,
+        );
+        container
+            .read(commandStackProvider.notifier)
+            .execute(AddObjectCommand(lifted));
+        await enter(tester, const ViewportState(tilt: 1.0));
+        container
+            .read(toolProvider.notifier)
+            .activate(PyramidTool(newId: newObjectId));
+        await tester.pump();
+        await tester.tapAt(
+          origin + camera().spaceToScreen(lifted.spacePosition!),
+        );
+        await tester.pump();
+        expect(
+          container.read(toolProvider.notifier).lastRefusal,
+          ScopeRefusal.notInPlane,
+        );
+        expect(find.textContaining('not in the base plane'), findsOneWidget);
+        expect(container.read(toolProvider).tool!.hasPartialInput, isFalse);
       });
     });
 
