@@ -176,3 +176,16 @@ The user approved the plan; each stands as drafted.
 - **A tenth sealed kind** touches every exhaustive switch again.
 - **Hidden-line cost** is segments × faces × face sides per frame. A textbook figure is hundreds of tests; a document with many solids and long loci is not measured yet.
 - **Lifting a base vertex of a cube** takes the solid away and leaves the wireframe, with the existing chip saying what is waiting.
+
+## Amended while building (2026-11-25)
+
+The plan's progress notes say why; DECISIONS has the settled form.
+
+- **Solids' faces are not wound outward.** Nothing in the milestone reads an outward side.
+- **The solid tools require every base corner in the active plane**, a base of three included; the kinds still let a triangular base go anywhere.
+- **`MutableRoots` was not taught heights.**
+- **Section vertices merge at rounding scale**, not bitwise.
+- **The hidden-edge pass runs only while the camera is tilted.**
+- **The active face is tinted as well as outlined.**
+- **`GeoLine.spaceParameterFrame`** is one accessor, and the space drag is its own session (`SpaceSlideSession`).
+- **A face over points of space is ground to a planar tool**; a lifted point or an edge to it on the active sheet is refused.

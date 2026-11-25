@@ -50,6 +50,7 @@ import 'package:regula/domain/tools/rhombus_macro_tool.dart';
 import 'package:regula/domain/tools/right_trapezium_macro_tool.dart';
 import 'package:regula/domain/tools/right_triangle_macro_tool.dart';
 import 'package:regula/domain/tools/scaled_compass_circle_tool.dart';
+import 'package:regula/domain/tools/section_tool.dart';
 import 'package:regula/domain/tools/slope_tool.dart';
 import 'package:regula/domain/tools/solid_tool.dart';
 import 'package:regula/domain/tools/square_macro_tool.dart';
@@ -306,6 +307,36 @@ void main() {
         iconColor(tester, Icons.layers_outlined),
         theme.colorScheme.primary,
       );
+    });
+
+    testWidgets('the Section and Regular tetrahedron chords, shifted, pick '
+        'their tools and not the unshifted ones', (tester) async {
+      await pumpEditor(tester);
+      Future<void> chord(LogicalKeyboardKey second) async {
+        await tester.sendKeyEvent(LogicalKeyboardKey.keyX);
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+        await tester.sendKeyEvent(second);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+        await tester.pump();
+      }
+
+      await chord(LogicalKeyboardKey.keyC);
+      expect(container.read(toolProvider).tool, isA<SectionTool>());
+      expect(container.read(spaceViewProvider), isTrue);
+      await chord(LogicalKeyboardKey.keyT);
+      expect(container.read(toolProvider).tool, isA<RegularTetrahedronTool>());
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyX);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyC);
+      await tester.pump();
+      expect(container.read(toolProvider).tool, isA<CubeTool>());
+
+      // And from the menu.
+      await tester.tap(find.byIcon(Icons.layers_outlined));
+      await tester.pump(kDoubleTapTimeout);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Section'));
+      await tester.pumpAndSettle();
+      expect(container.read(toolProvider).tool, isA<SectionTool>());
     });
 
     testWidgets('the Prism shortcut turns the space view on with the tool', (
