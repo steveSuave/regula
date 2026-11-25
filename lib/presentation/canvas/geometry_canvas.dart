@@ -20,6 +20,7 @@ import '../../domain/commands/change_attributes_command.dart';
 import '../../domain/construction/construction.dart';
 import '../../domain/construction/free_point_ancestors.dart';
 import '../../domain/construction/geo_object.dart';
+import '../../domain/construction/liftable.dart';
 import '../../domain/construction/objects/compass_circle.dart';
 import '../../domain/construction/objects/expression_text.dart';
 import '../../domain/construction/objects/free_point.dart';
@@ -586,7 +587,7 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
     final handle = _liftHandleAt(viewport, screen);
     if (handle != null) {
       final point = construction.byId(handle.pointId);
-      if (point is FreePoint &&
+      if (point is Liftable &&
           ref.read(toolProvider.notifier).startLift(point)) {
         _lift = (handle: handle, start: screen, startHeight: point.height);
       }

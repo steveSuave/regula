@@ -20,9 +20,9 @@ class SetPointHeightCommand implements Command {
 
   @override
   void apply(Construction construction) =>
-      construction.setFreePointHeight(pointId, to);
+      construction.setPointHeight(pointId, to);
 
   @override
   void undo(Construction construction) =>
-      construction.setFreePointHeight(pointId, from);
+      construction.setPointHeight(pointId, from);
 }

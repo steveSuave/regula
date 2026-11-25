@@ -32,7 +32,9 @@ import '../../domain/construction/objects/plane_intersection_line.dart';
 import '../../domain/construction/objects/point_on_object.dart';
 import '../../domain/construction/objects/polar_line.dart';
 import '../../domain/construction/objects/projection_point.dart';
+import '../../domain/construction/objects/proportional_raised_point.dart';
 import '../../domain/construction/objects/radical_axis_line.dart';
+import '../../domain/construction/objects/raised_point.dart';
 import '../../domain/construction/objects/ratio_apollonius_circle.dart';
 import '../../domain/construction/objects/ray.dart';
 import '../../domain/construction/objects/scaled_compass_circle.dart';
@@ -57,6 +59,8 @@ String objectKindLabel(GeoObject object) => switch (object) {
   LinePlaneIntersectionPoint() => 'Line meets plane',
   PerpendicularToPlaneLine() => 'Perpendicular to plane',
   PlaneIntersectionLine() => 'Planes meet',
+  RaisedPoint() => 'Raised point',
+  ProportionalRaisedPoint() => 'Raised point',
   Midpoint() => 'Midpoint',
   IntersectionPoint() => 'Intersection point',
   PointOnObject() => 'Point on object',

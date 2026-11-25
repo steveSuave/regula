@@ -48,7 +48,9 @@ import '../../domain/construction/objects/point_on_object.dart';
 import '../../domain/construction/objects/polar_line.dart';
 import '../../domain/construction/objects/polygon.dart';
 import '../../domain/construction/objects/projection_point.dart';
+import '../../domain/construction/objects/proportional_raised_point.dart';
 import '../../domain/construction/objects/radical_axis_line.dart';
+import '../../domain/construction/objects/raised_point.dart';
 import '../../domain/construction/objects/ratio_apollonius_circle.dart';
 import '../../domain/construction/objects/ray.dart';
 import '../../domain/construction/objects/reflected_point.dart';
@@ -488,6 +490,8 @@ bool _needsNoSheet(GeoObject object) =>
     object is GeoPlane ||
     object is PerpendicularToPlaneLine ||
     object is LinePlaneIntersectionPoint ||
+    object is RaisedPoint ||
+    object is ProportionalRaisedPoint ||
     object is PlaneIntersectionLine ||
     object is Segment ||
     object is Ray ||
@@ -512,6 +516,8 @@ const Set<String> _spaceTypes = {
   'PerpendicularToPlaneLine',
   'LinePlaneIntersectionPoint',
   'PlaneIntersectionLine',
+  'RaisedPoint',
+  'ProportionalRaisedPoint',
   'ChartPoint',
   'ChartLine',
 };
@@ -551,6 +557,14 @@ Map<String, dynamic> _encodeObject(GeoObject object) {
         // bytes do not change (requirement 13 of milestone 2).
         if (height != 0) 'h': height,
       },
+    ),
+    // A raised point's height is the number the lift handle sets; the
+    // plane it is measured over, when it is not the base plane, is its
+    // last parent (intent 004, milestone 3).
+    RaisedPoint(:final height) => ('RaisedPoint', {'h': height}),
+    ProportionalRaisedPoint(:final factor) => (
+      'ProportionalRaisedPoint',
+      {'factor': factor},
     ),
     Midpoint() => ('Midpoint', const {}),
     SegmentRatioPoint(:final ratio) => ('SegmentRatioPoint', {'ratio': ratio}),
@@ -730,6 +744,22 @@ GeoObject _decodeObject(Map<String, dynamic> json, Construction construction) {
       // A free point placed in a plane has that plane as its one parent
       // (intent 004); in the base plane it has none, as it always did.
       plane: parents.isEmpty ? null : plane(0),
+      attributes: attributes,
+    ),
+    'RaisedPoint' => RaisedPoint(
+      id: id,
+      foot: point(0),
+      plane: parents.length > 1 ? plane(1) : null,
+      height: _doubleParam(id, params, 'h'),
+      attributes: attributes,
+    ),
+    'ProportionalRaisedPoint' => ProportionalRaisedPoint(
+      id: id,
+      foot: point(0),
+      from: point(1),
+      to: point(2),
+      plane: parents.length > 3 ? plane(3) : null,
+      factor: _doubleParam(id, params, 'factor'),
       attributes: attributes,
     ),
     'Midpoint' => Midpoint(

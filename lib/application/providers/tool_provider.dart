@@ -5,8 +5,8 @@ import '../../domain/commands/add_object_command.dart';
 import '../../domain/commands/command.dart';
 import '../../domain/commands/macro_command.dart';
 import '../../domain/construction/geo_object.dart';
+import '../../domain/construction/liftable.dart';
 import '../../domain/construction/object_naming.dart';
-import '../../domain/construction/objects/free_point.dart';
 import '../../domain/construction/objects/point_on_object.dart';
 import '../../domain/math/vec2.dart';
 import '../../domain/tools/drag_session.dart';
@@ -156,7 +156,7 @@ class ToolNotifier extends _$ToolNotifier {
   /// Starts a lift of [point]: a drag of its handle that changes its
   /// height above its plane (intent 004). False with a tool active,
   /// like [startDrag].
-  bool startLift(FreePoint point) {
+  bool startLift(Liftable point) {
     if (state.tool != null) {
       return false;
     }

@@ -6,9 +6,9 @@ import 'package:flutter/rendering.dart';
 import '../../domain/construction/construction.dart';
 import '../../domain/construction/document_kernel.dart';
 import '../../domain/construction/geo_object.dart';
+import '../../domain/construction/liftable.dart';
 import '../../domain/construction/line_clip.dart';
 import '../../domain/construction/objects/arc.dart';
-import '../../domain/construction/objects/free_point.dart';
 import '../../domain/construction/objects/locus.dart';
 import '../../domain/construction/objects/ray.dart';
 import '../../domain/construction/objects/sector.dart';
@@ -578,7 +578,7 @@ class GeometryPainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
     for (final id in selectedIds) {
       final object = construction.byId(id);
-      if (object is! FreePoint ||
+      if (object is! Liftable ||
           !object.isDefined ||
           (!object.attributes.visible && !showHidden)) {
         continue;

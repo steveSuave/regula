@@ -2,8 +2,10 @@ import '../../math/vec2.dart';
 import '../../math/vec3.dart';
 import '../../projective/absolute.dart';
 import '../../projective/proj_point.dart';
+import '../../projective/space/plane_frame.dart';
 import '../../projective/space/point3.dart';
 import '../geo_object.dart';
+import '../liftable.dart';
 
 /// A user-placed point — the only directly mutable object in the graph.
 ///
@@ -29,7 +31,7 @@ import '../geo_object.dart';
 /// `GeoObject`: the test is exact, so only a height of exactly 0 is in
 /// the plane, and it is the lift gesture's snap that returns a point
 /// there.
-class FreePoint extends GeoPoint {
+class FreePoint extends Liftable {
   FreePoint({
     required super.id,
     required Vec2 position,
@@ -63,7 +65,12 @@ class FreePoint extends GeoPoint {
 
   /// The height above the sheet along its normal. Mutated only by
   /// `Construction.setFreePointHeight`.
+  @override
   double height;
+
+  /// The plane the height is measured over: the point's own sheet.
+  @override
+  PlaneFrame? get liftFrame => sheetFrame;
 
   /// Whether the point is off its sheet. Exact.
   bool get isLifted => height != 0;
