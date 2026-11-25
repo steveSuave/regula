@@ -72,6 +72,7 @@ class PointAndPlaneTool implements ToolInputPreview, ScopedTool {
           GeoPolygon() ||
           GeoMeasurement() ||
           GeoLocus() ||
+          GeoSolid() ||
           GeoText():
         return const ToolIgnored();
     }

@@ -119,6 +119,7 @@ class PointOnObject extends GeoPoint {
       GeoMeasurement() ||
       GeoLocus() ||
       GeoPlane() ||
+      GeoSolid() ||
       GeoText() => throw ArgumentError(
         'PointOnObject requires a line or circle parent',
       ),
@@ -240,6 +241,7 @@ class PointOnObject extends GeoPoint {
       GeoMeasurement() ||
       GeoLocus() ||
       GeoPlane() ||
+      GeoSolid() ||
       GeoText() => throw StateError('PointOnObject parent must be a curve'),
     };
     _point = switch (chartPoint) {

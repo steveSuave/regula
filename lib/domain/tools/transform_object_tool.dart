@@ -299,6 +299,7 @@ class TransformObjectTool implements ToolInputPreview {
           GeoMeasurement() ||
           GeoLocus() ||
           GeoPlane() ||
+          GeoSolid() ||
           GeoText():
         return const ToolIgnored();
       case null:

@@ -28,7 +28,7 @@ bool drawnInSpace(GeoObject object) => switch (object) {
   GeoPoint() => object.position == null,
   GeoLine() => object.line == null,
   GeoPolygon() => object.polygonVertices == null,
-  GeoPlane() => true,
+  GeoPlane() || GeoSolid() => true,
   _ => false,
 };
 
@@ -44,6 +44,9 @@ Vec3? spaceLabelAnchor(GeoObject object) => switch (object) {
     spaceVertices.reduce((sum, vertex) => sum + vertex) /
         spaceVertices.length.toDouble(),
   GeoPlane() => object.labelAnchor,
+  GeoSolid(:final spaceVertices?) =>
+    spaceVertices.reduce((sum, vertex) => sum + vertex) /
+        spaceVertices.length.toDouble(),
   _ => null,
 };
 
@@ -122,6 +125,30 @@ class ScreenInk {
   /// tap inside its [fill] is compared by.
   double Function(Offset pointer)? fillDepth;
 
+  /// For a solid, each face as a screen loop with the camera depth of
+  /// its plane under a pointer, in the solid's own face order (intent
+  /// 004, milestone 3). Empty for everything else.
+  final List<({List<Offset> loop, double Function(Offset pointer) depth})>
+  faces = [];
+
+  /// The face of a solid under [p] that is nearest the viewer, as an
+  /// index into [faces], or null when [p] is over none.
+  int? faceAt(Offset p) {
+    int? best;
+    var bestDepth = double.negativeInfinity;
+    for (var i = 0; i < faces.length; i++) {
+      if (!_inside(faces[i].loop, p)) {
+        continue;
+      }
+      final depth = faces[i].depth(p);
+      if (depth > bestDepth) {
+        bestDepth = depth;
+        best = i;
+      }
+    }
+    return best;
+  }
+
   /// The nearest ink to [p]: its distance in pixels (infinite when
   /// there is no ink) and the camera depth there, larger for nearer.
   /// [sheetDepth] is the depth of the object's sheet under [p], which is
@@ -130,6 +157,10 @@ class ScreenInk {
     final region = fill;
     if (region != null && _inside(region, p)) {
       return (distance: 0, depth: fillDepth?.call(p) ?? sheetDepth);
+    }
+    final face = faceAt(p);
+    if (face != null) {
+      return (distance: 0, depth: faces[face].depth(p));
     }
     var best = double.infinity;
     var depth = sheetDepth;
@@ -312,7 +343,7 @@ ScreenInk screenInkOf(
       ink.anchor = map(flat.worldToScreen(labelAnchor(object)));
     case GeoLocus():
       _addLocusRuns(flat, object, chords);
-    case GeoPlane():
+    case GeoPlane() || GeoSolid():
       // Never on a sheet: [drawnInSpace] sent it to [_spaceInk] above.
       break;
   }
@@ -393,20 +424,20 @@ void _spaceInk(
       ink.fill = [
         for (final vertex in spaceVertices) viewport.spaceToScreen(vertex),
       ];
-      final centre =
-          spaceVertices.reduce((sum, vertex) => sum + vertex) /
-          spaceVertices.length.toDouble();
-      final frame = PlaneFrame.throughPoints(
-        spaceVertices[0],
-        spaceVertices[1],
-        spaceVertices[2],
-      );
-      ink.fillDepth = (pointer) {
-        final picked = frame == null
-            ? null
-            : viewport.pickPlane(pointer, frame);
-        return viewport.depthOf(picked == null ? centre : frame!.lift(picked));
-      };
+      ink.fillDepth = _depthOver(viewport, spaceVertices);
+    case GeoSolid(:final spaceVertices?):
+      // Its faces as regions, and its edges as ink for the halo, the
+      // declutter and a tap that falls just outside a face.
+      for (final (i, j) in object.edges) {
+        stroke(spaceVertices[i], spaceVertices[j]);
+      }
+      for (var f = 0; f < object.faces.length; f++) {
+        final corners = [for (final i in object.faces[f]) spaceVertices[i]];
+        ink.faces.add((
+          loop: [for (final corner in corners) viewport.spaceToScreen(corner)],
+          depth: _depthOver(viewport, corners),
+        ));
+      }
     case GeoPlane():
       final corners = planePatch(
         object,
@@ -429,6 +460,30 @@ void _spaceInk(
     default:
       break;
   }
+}
+
+/// The camera depth, under a pointer, of the plane of a flat loop of
+/// [corners]: read off the plane through the first three that are not
+/// in line, and off the loop's centre when there are none or the plane
+/// is seen edge-on.
+double Function(Offset pointer) _depthOver(
+  CanvasViewport viewport,
+  List<Vec3> corners,
+) {
+  final centre =
+      corners.reduce((sum, corner) => sum + corner) / corners.length.toDouble();
+  PlaneFrame? frame;
+  for (var i = 2; i < corners.length && frame == null; i++) {
+    frame = PlaneFrame.throughPoints(corners[0], corners[1], corners[i]);
+  }
+  final plane = frame;
+  if (plane == null) {
+    return (_) => viewport.depthOf(centre);
+  }
+  return (pointer) {
+    final picked = viewport.pickPlane(pointer, plane);
+    return viewport.depthOf(picked == null ? centre : plane.lift(picked));
+  };
 }
 
 /// A clipped line/ray's drawn stretch as screen endpoints, or null for

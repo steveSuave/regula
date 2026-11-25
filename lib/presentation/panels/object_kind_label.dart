@@ -31,8 +31,10 @@ import '../../domain/construction/objects/perpendicular_to_plane_line.dart';
 import '../../domain/construction/objects/plane_intersection_line.dart';
 import '../../domain/construction/objects/point_on_object.dart';
 import '../../domain/construction/objects/polar_line.dart';
+import '../../domain/construction/objects/prism.dart';
 import '../../domain/construction/objects/projection_point.dart';
 import '../../domain/construction/objects/proportional_raised_point.dart';
+import '../../domain/construction/objects/pyramid.dart';
 import '../../domain/construction/objects/radical_axis_line.dart';
 import '../../domain/construction/objects/raised_point.dart';
 import '../../domain/construction/objects/ratio_apollonius_circle.dart';
@@ -117,6 +119,9 @@ String objectKindLabel(GeoObject object) => switch (object) {
   SlopeMeasurement() => 'Slope',
   GeoMeasurement() => 'Measurement',
   GeoText() => 'Text',
+  Pyramid() => 'Pyramid',
+  Prism() => 'Prism',
   GeoPlane() => 'Plane',
+  GeoSolid() => 'Solid',
   GeoLocus() => 'Locus',
 };

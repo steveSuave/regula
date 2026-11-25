@@ -47,8 +47,10 @@ import '../../domain/construction/objects/plane_intersection_line.dart';
 import '../../domain/construction/objects/point_on_object.dart';
 import '../../domain/construction/objects/polar_line.dart';
 import '../../domain/construction/objects/polygon.dart';
+import '../../domain/construction/objects/prism.dart';
 import '../../domain/construction/objects/projection_point.dart';
 import '../../domain/construction/objects/proportional_raised_point.dart';
+import '../../domain/construction/objects/pyramid.dart';
 import '../../domain/construction/objects/radical_axis_line.dart';
 import '../../domain/construction/objects/raised_point.dart';
 import '../../domain/construction/objects/ratio_apollonius_circle.dart';
@@ -488,6 +490,7 @@ bool _decodeSettingFlag(Map<String, dynamic> json, String key) {
 /// the five planar kinds that follow their parents there.
 bool _needsNoSheet(GeoObject object) =>
     object is GeoPlane ||
+    object is GeoSolid ||
     object is PerpendicularToPlaneLine ||
     object is LinePlaneIntersectionPoint ||
     object is RaisedPoint ||
@@ -517,6 +520,8 @@ const Set<String> _spaceTypes = {
   'LinePlaneIntersectionPoint',
   'PlaneIntersectionLine',
   'RaisedPoint',
+  'Pyramid',
+  'Prism',
   'ProportionalRaisedPoint',
   'ChartPoint',
   'ChartLine',
@@ -667,6 +672,11 @@ Map<String, dynamic> _encodeObject(GeoObject object) {
     Arc() => ('Arc', const {}),
     Sector() => ('Sector', const {}),
     Polygon() => ('Polygon', const {}),
+    // A solid stores nothing: its parents are the base in order, then
+    // the apex or top, then the base's plane when that is not the base
+    // plane (intent 004, milestone 3).
+    Pyramid() => ('Pyramid', const {}),
+    Prism() => ('Prism', const {}),
     DistanceMeasurement() => ('DistanceMeasurement', const {}),
     // Parents carry the expression references; decode re-binds them by
     // zipping the content's referenceNames (unique, first-occurrence
@@ -733,7 +743,42 @@ GeoObject _decodeObject(Map<String, dynamic> json, Construction construction) {
   GeoObject any(int index) => _typedParent<GeoObject>(id, parents, index);
   GeoPlane plane(int index) => _typedParent<GeoPlane>(id, parents, index);
 
+  // A solid's parents: the base loop, the apex or top, and last a plane
+  // when the base is not in the base plane.
+  ({List<GeoPoint> base, GeoPoint over, GeoPlane? plane}) solidParents() {
+    final hasPlane = parents.isNotEmpty && parents.last is GeoPlane;
+    final count = parents.length - (hasPlane ? 1 : 0);
+    if (count < 4) {
+      throw FormatException(
+        'Object "$id": a solid needs a base of 3 points and one more',
+      );
+    }
+    return (
+      base: [for (var i = 0; i < count - 1; i++) point(i)],
+      over: point(count - 1),
+      plane: hasPlane ? plane(parents.length - 1) : null,
+    );
+  }
+
   return switch (type) {
+    'Pyramid' => switch (solidParents()) {
+      (:final base, :final over, :final plane) => Pyramid(
+        id: id,
+        base: base,
+        apex: over,
+        plane: plane,
+        attributes: attributes,
+      ),
+    },
+    'Prism' => switch (solidParents()) {
+      (:final base, :final over, :final plane) => Prism(
+        id: id,
+        base: base,
+        top: over,
+        plane: plane,
+        attributes: attributes,
+      ),
+    },
     'FreePoint' => FreePoint(
       id: id,
       position: Vec2(

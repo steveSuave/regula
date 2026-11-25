@@ -87,7 +87,8 @@ const double fitMarginPx = 48;
         }
       case GeoLine():
       // A plane's patch follows the figure, so it must not frame it.
-      case GeoPlane():
+      // A solid's corners are points of their own, framed as points.
+      case GeoPlane() || GeoSolid():
         break;
       // A Cayley–Klein circle is a conic bitangent to the absolute, so
       // it projects to no centre and radius (Phase 126) and is framed by

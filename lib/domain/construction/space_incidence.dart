@@ -125,6 +125,19 @@ bool _definesAsLine(GeoPlane plane, GeoLine line) => switch (plane) {
   _ => false,
 };
 
+/// Whether [point] is in [plane] — null being the base plane — either
+/// on its sheet with a value there, or by construction ([liesIn]). What
+/// a solid asks of each vertex of a base that needs a plane (intent 004,
+/// milestone 3): exact, and asked again at every recompute, because a
+/// point placed in a plane and then lifted has left it.
+bool inPlaneOrSheet(GeoPoint point, GeoPlane? plane) {
+  final sheet = point.sheet;
+  if (plane == null) {
+    return sheet.isBase && point.projPoint != null;
+  }
+  return liesIn(point, plane);
+}
+
 /// The planes of [objects] in which every one of [things] lies by
 /// construction, [preferred] first when it is among them.
 List<GeoPlane> planesHolding(

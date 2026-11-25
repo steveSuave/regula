@@ -46,8 +46,12 @@ import 'package:regula/domain/construction/objects/plane_intersection_line.dart'
 import 'package:regula/domain/construction/objects/point_on_object.dart';
 import 'package:regula/domain/construction/objects/polar_line.dart';
 import 'package:regula/domain/construction/objects/polygon.dart';
+import 'package:regula/domain/construction/objects/prism.dart';
 import 'package:regula/domain/construction/objects/projection_point.dart';
+import 'package:regula/domain/construction/objects/proportional_raised_point.dart';
+import 'package:regula/domain/construction/objects/pyramid.dart';
 import 'package:regula/domain/construction/objects/radical_axis_line.dart';
+import 'package:regula/domain/construction/objects/raised_point.dart';
 import 'package:regula/domain/construction/objects/ratio_apollonius_circle.dart';
 import 'package:regula/domain/construction/objects/ray.dart';
 import 'package:regula/domain/construction/objects/reflected_point.dart';
@@ -460,6 +464,85 @@ Construction buildSpaceKinds() {
     ..add(ridge);
 }
 
+/// The solids and what they rest on (intent 004, milestone 3): a fourth
+/// construction, so that [buildSpaceKinds] keeps the picture its golden
+/// was taken of.
+///
+/// A right prism over a quadrilateral, pulled up from its first corner
+/// by a raised point, with the other three corners of its far end as
+/// translations and all twelve edges; beside it a pyramid on a triangle
+/// with a lifted apex, one face of it as a polygon over points of space,
+/// and a point glued to one of its edges; and a point raised over the
+/// pyramid's first corner by the length of a base side.
+Construction buildSolidKinds() {
+  final a = FreePoint(id: 'pa', position: const Vec2(0, 0));
+  final b = FreePoint(id: 'pb', position: const Vec2(4, 0));
+  final c = FreePoint(id: 'pc', position: const Vec2(5, 3));
+  final d = FreePoint(id: 'pd', position: const Vec2(1, 4));
+  final base = [a, b, c, d];
+  final top = RaisedPoint(id: 'pa1', foot: a, height: 5);
+  final tops = <GeoPoint>[
+    top,
+    for (final (i, corner) in base.indexed.skip(1))
+      TranslatedPoint(
+        id: 'p${'abcd'[i]}1',
+        point: corner,
+        vectorFrom: a,
+        vectorTo: top,
+      ),
+  ];
+  final prism = Prism(
+    id: 'prism',
+    base: base,
+    top: top,
+    attributes: const ObjectAttributes(name: 'p'),
+  );
+
+  final e = FreePoint(id: 'te', position: const Vec2(8, 0));
+  final f = FreePoint(id: 'tf', position: const Vec2(12, 1));
+  final g = FreePoint(id: 'tg', position: const Vec2(9, 4));
+  final apex = FreePoint(id: 'to', position: const Vec2(10, 2), height: 6);
+  final slant = Segment(id: 'teo', point1: e, point2: apex);
+  final pyramid = Pyramid(id: 'pyramid', base: [e, f, g], apex: apex);
+
+  final construction = Construction();
+  for (final point in [...base, ...tops]) {
+    construction.add(point);
+  }
+  for (var i = 0; i < 4; i++) {
+    final j = (i + 1) % 4;
+    construction
+      ..add(Segment(id: 'eb$i', point1: base[i], point2: base[j]))
+      ..add(Segment(id: 'et$i', point1: tops[i], point2: tops[j]))
+      ..add(Segment(id: 'ev$i', point1: base[i], point2: tops[i]));
+  }
+  construction
+    ..add(prism)
+    ..add(e)
+    ..add(f)
+    ..add(g)
+    ..add(apex)
+    ..add(Segment(id: 'tef', point1: e, point2: f))
+    ..add(Segment(id: 'tfg', point1: f, point2: g))
+    ..add(Segment(id: 'tge', point1: g, point2: e))
+    ..add(slant)
+    ..add(Segment(id: 'tfo', point1: f, point2: apex))
+    ..add(Segment(id: 'tgo', point1: g, point2: apex))
+    ..add(pyramid)
+    ..add(
+      Polygon(
+        id: 'tface',
+        vertices: [e, f, apex],
+        attributes: const ObjectAttributes(fillAlpha: 0.25),
+      ),
+    )
+    ..add(PointOnObject(id: 'tglue', curve: slant, parameter: 3))
+    ..add(
+      ProportionalRaisedPoint(id: 'tmast', foot: e, from: e, to: f, factor: 1),
+    );
+  return construction;
+}
+
 /// The current geometry of [object], by kind — what a round-trip must
 /// reproduce exactly (same parent doubles → same recompute output).
 Object? geometryOf(GeoObject object) => switch (object) {
@@ -467,6 +550,7 @@ Object? geometryOf(GeoObject object) => switch (object) {
   GeoPoint(:final position) => position ?? object.spacePosition,
   GeoLine(:final line) => line ?? object.spaceLine,
   GeoPlane(:final frame) => frame,
+  GeoSolid(:final spaceVertices) => spaceVertices,
   // A conic-valued kind has no circle projection; its value is the matrix,
   // so that is what a round-trip must reproduce.
   GeoCircle(:final circle) => circle ?? object.conic,

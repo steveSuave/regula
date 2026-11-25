@@ -24,6 +24,7 @@ String nextAutoName(Set<String> usedNames, GeoObject object) {
     GeoMeasurement() ||
     GeoLocus() ||
     GeoPlane() ||
+    GeoSolid() ||
     GeoText() => _lowerLatin,
     GeoAngle() => _lowerGreek,
   };

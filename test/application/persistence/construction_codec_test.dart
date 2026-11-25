@@ -48,6 +48,7 @@ void main() {
       ('the kitchen sink', buildKitchenSink),
       ('the post-v1 kinds', buildPostV1Kinds),
       ('the space kinds', buildSpaceKinds),
+      ('the solids', buildSolidKinds),
     ]) {
       test('reproduces every object kind in $name: ids, order, parents, '
           'geometry', () {

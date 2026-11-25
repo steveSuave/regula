@@ -92,6 +92,7 @@ class _ObjectTreePanelState extends ConsumerState<ObjectTreePanel> {
       'Texts': [],
       'Loci': [],
       'Planes': [],
+      'Solids': [],
     };
     for (final object in construction.objects) {
       // Adapters are scaffolding, not part of the figure (intent 004).
@@ -121,6 +122,7 @@ class _ObjectTreePanelState extends ConsumerState<ObjectTreePanel> {
             GeoMeasurement() => 'Measurements',
             GeoText() => 'Texts',
             GeoPlane() => 'Planes',
+            GeoSolid() => 'Solids',
             GeoLocus() => 'Loci',
           }]!
           .add(object);

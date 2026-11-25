@@ -543,6 +543,42 @@ class GeometryPainter extends CustomPainter {
           ..style = PaintingStyle.fill,
       ));
     }
+    // The faces of the solids, with the patches and by the same rule
+    // (intent 004, milestone 3). Every view ray through a convex solid
+    // crosses two faces, so its silhouette is one even tint.
+    for (final object in construction.objects) {
+      if (object is! GeoSolid || !object.isDefined) {
+        continue;
+      }
+      final hidden = !object.attributes.visible;
+      if (hidden && !showHidden) {
+        continue;
+      }
+      final base = Color(
+        object.attributes.colorArgb ?? defaultColor.toARGB32(),
+      );
+      final paint = Paint()
+        ..color = base.withValues(
+          alpha:
+              (object.attributes.fillAlpha ?? solidFaceAlpha) *
+              (hidden ? _hiddenAlpha : 1.0),
+        )
+        ..style = PaintingStyle.fill;
+      for (var i = 0; i < object.faces.length; i++) {
+        final corners = object.faceVertices(i)!;
+        final centre =
+            corners.reduce((sum, corner) => sum + corner) /
+            corners.length.toDouble();
+        patches.add((
+          depth: viewport.depthOf(centre),
+          path: Path()
+            ..addPolygon([
+              for (final corner in corners) viewport.spaceToScreen(corner),
+            ], true),
+          paint: paint,
+        ));
+      }
+    }
     patches.sort((a, b) => a.depth.compareTo(b.depth));
     for (final patch in patches) {
       screen.drawPath(patch.path, patch.paint);
@@ -927,7 +963,7 @@ class GeometryPainter extends CustomPainter {
         break;
       case GeoLocus():
         _drawLocus(canvas, size, object, paint, dashPeriod);
-      case GeoPlane():
+      case GeoPlane() || GeoSolid():
         // Never on a sheet: [drawnInSpace] sent it to [_drawInSpace].
         break;
     }
@@ -949,6 +985,12 @@ class GeometryPainter extends CustomPainter {
     required double pointRadiusExtra,
     required double dashPeriod,
   }) {
+    // A solid strokes nothing of its own: its edges are segments beside
+    // it. Only the selection halo and the highlight trace them, so that
+    // a selected solid shows which one it is.
+    if (object is GeoSolid && pointRadiusExtra == 0) {
+      return;
+    }
     final direct = SheetCanvas(canvas.screen, _flat);
     final ink = screenInkOf(construction.objects, viewport, size, object);
     final dot = ink.dot;
