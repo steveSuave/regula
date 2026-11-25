@@ -517,6 +517,7 @@ class GeometryPainter extends CustomPainter {
   void _drawPlanePatches(Canvas screen, Size size) {
     final patches = <({double depth, Path path, Paint paint})>[];
     Path? activeOutline;
+    Path? activeFill;
     for (final object in construction.objects) {
       // A face's plane is scaffolding: the face is its picture.
       if (object is! GeoPlane || !object.isDefined || object.isInternal) {
@@ -593,6 +594,7 @@ class GeometryPainter extends CustomPainter {
             identical(activeFace.solid, object) &&
             activeFace.face == i) {
           activeOutline = path;
+          activeFill = path;
         }
         patches.add((
           depth: viewport.depthOf(centre),
@@ -607,6 +609,17 @@ class GeometryPainter extends CustomPainter {
     }
     // The active plane says so with its outline: the place the next tap
     // lands is the one thing about a plane that cannot be left to guess.
+    // An active face is tinted as well as outlined: a tap on a face
+    // selects its solid, whose halo runs along every edge, and an
+    // outline alone would be lost in it.
+    if (activeFill != null) {
+      screen.drawPath(
+        activeFill,
+        Paint()
+          ..color = selectionColor.withValues(alpha: _activeFaceAlpha)
+          ..style = PaintingStyle.fill,
+      );
+    }
     if (activeOutline != null) {
       screen.drawPath(
         activeOutline,
@@ -684,6 +697,9 @@ class GeometryPainter extends CustomPainter {
 
   static const double _liftFootRadius = 3;
   static const double _activePlaneStrokeWidth = 2.5;
+
+  /// The tint of the active face of a solid, in the selection colour.
+  static const double _activeFaceAlpha = 0.18;
 
   /// The Phase 36 background layer: grid hairlines at every multiple of
   /// the adaptive [gridStep], then 1.5-px axes through the world origin

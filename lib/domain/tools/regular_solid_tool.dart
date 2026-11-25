@@ -75,17 +75,20 @@ class CubeTool extends RegularSolidTool {
   List<GeoObject> buildObjects(List<GeoPoint> points) {
     final a = points[0];
     final b = points[1];
+    // Each of the other two base corners is a quarter turn of one given
+    // corner about the other, so neither waits on the other and they
+    // are added, and named, in order around the square.
+    final c = RotatedPoint(
+      id: newId(),
+      point: a,
+      center: b,
+      angle: -math.pi / 2,
+    );
     final d = RotatedPoint(
       id: newId(),
       point: b,
       center: a,
       angle: math.pi / 2,
-    );
-    final c = TranslatedPoint(
-      id: newId(),
-      point: d,
-      vectorFrom: a,
-      vectorTo: b,
     );
     final base = <GeoPoint>[a, b, c, d];
     final top = ProportionalRaisedPoint(
@@ -108,8 +111,8 @@ class CubeTool extends RegularSolidTool {
     ];
     final solid = Prism(id: newId(), base: base, top: top, plane: plane);
     return [
-      d,
       c,
+      d,
       ...far,
       ...edgesOf(solid, [...base, ...far]),
       solid,
