@@ -6,6 +6,7 @@ import 'dart:ui';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/application/providers/viewport_provider.dart';
 import 'package:regula/domain/construction/construction.dart';
+import 'package:regula/domain/construction/objects/fixed_radius_circle.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/parallel_plane.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
@@ -50,6 +51,40 @@ void main() {
   });
 
   group('planePatch', () {
+    test('grows to hold a circle and a polygon built in the plane, not '
+        'only their points (milestone 3)', () {
+      final centre = FreePoint(
+        id: 'k',
+        position: const Vec2(100, 50),
+        plane: base,
+      );
+      final circle = FixedRadiusCircle(id: 'kc', center: centre, radius: 300);
+      c
+        ..add(centre)
+        ..add(circle);
+      final corners = planePatch(base, c.objects, minHalfExtent: 1)!;
+      // The circle spans 600 each way about (100, 50); a fifth of padding.
+      expect(corners[0].x, closeTo(-200 - 120, 1e-9));
+      expect(corners[2].x, closeTo(400 + 120, 1e-9));
+      expect(corners[0].y, closeTo(-250 - 120, 1e-9));
+      expect(corners[2].y, closeTo(350 + 120, 1e-9));
+
+      // A circle on the base sheet does not stretch this plane's patch,
+      // though the two planes coincide: it was not built in this one.
+      final other = Construction();
+      final a = _p('a', 0, 0);
+      final b = _p('b', 200, 0);
+      final d = _p('d', 0, 100);
+      final plane = ThreePointPlane(id: 'p', point1: a, point2: b, point3: d);
+      other
+        ..add(a)
+        ..add(b)
+        ..add(d)
+        ..add(plane)
+        ..add(FixedRadiusCircle(id: 'big', center: a, radius: 900));
+      expect(planePatch(plane, other.objects, minHalfExtent: 1)![2].x, 240);
+    });
+
     test('surrounds the points on the plane, padded by a fifth of the longer '
         'side', () {
       final corners = planePatch(base, c.objects, minHalfExtent: 1)!;

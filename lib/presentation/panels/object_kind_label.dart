@@ -40,6 +40,7 @@ import '../../domain/construction/objects/raised_point.dart';
 import '../../domain/construction/objects/ratio_apollonius_circle.dart';
 import '../../domain/construction/objects/ray.dart';
 import '../../domain/construction/objects/scaled_compass_circle.dart';
+import '../../domain/construction/objects/section_polygon.dart';
 import '../../domain/construction/objects/sector.dart';
 import '../../domain/construction/objects/segment.dart';
 import '../../domain/construction/objects/segment_ratio_point.dart';
@@ -58,6 +59,12 @@ import '../../domain/math/rational.dart';
 /// for types added later — a new object shows its kind ("Point") until
 /// someone adds it here.
 String objectKindLabel(GeoObject object) => switch (object) {
+  // A section says how many sides it has now: the count is the first
+  // thing asked of one, and it changes as the plane moves.
+  SectionPolygon(:final sideCount) => switch (sideCount) {
+    0 => 'Section (none)',
+    final n => 'Section ($n sides)',
+  },
   LinePlaneIntersectionPoint() => 'Line meets plane',
   PerpendicularToPlaneLine() => 'Perpendicular to plane',
   PlaneIntersectionLine() => 'Planes meet',

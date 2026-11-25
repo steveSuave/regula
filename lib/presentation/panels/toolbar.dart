@@ -68,6 +68,7 @@ import '../../domain/tools/rhombus_macro_tool.dart';
 import '../../domain/tools/right_trapezium_macro_tool.dart';
 import '../../domain/tools/right_triangle_macro_tool.dart';
 import '../../domain/tools/scaled_compass_circle_tool.dart';
+import '../../domain/tools/section_tool.dart';
 import '../../domain/tools/slope_tool.dart';
 import '../../domain/tools/solid_tool.dart';
 import '../../domain/tools/square_macro_tool.dart';
@@ -280,7 +281,8 @@ class GeometryToolbar extends ConsumerWidget {
         tool is PlaneTool ||
         tool is PointAndPlaneTool ||
         tool is SolidTool ||
-        tool is RegularSolidTool;
+        tool is RegularSolidTool ||
+        tool is SectionTool;
     final measureActive =
         tool is AreaTool ||
         tool is SlopeTool ||
@@ -869,6 +871,11 @@ class GeometryToolbar extends ConsumerWidget {
                 'Regular tetrahedron (two corners)',
                 _pick(() => RegularTetrahedronTool(newId: newObjectId)),
                 AppAction.regularTetrahedronTool,
+              ),
+              (
+                'Section (a plane and a solid)',
+                _pick(() => SectionTool(newId: newObjectId)),
+                AppAction.sectionTool,
               ),
             ],
           ),
