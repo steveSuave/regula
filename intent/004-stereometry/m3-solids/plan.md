@@ -110,3 +110,18 @@ Three stages. Each ends green on the full gate, with a look, and merges to `main
   - Seen at 400×800, touch: Fit frames the lifted triangle; a touch drag of the glued point slides it about 100 px down the edge.
   - **Not seen in a browser**: a point glued by a touch tap (the one touch tap tried fell inside the face, on no edge); the slide stopping at an end of the edge; an edge seen end-on; a translated point in space; opening a saved file with these in it. Those rest on the widget and unit tests.
 - **Stage A closed 2026-11-25.** Final gate: analyze clean; 3917 with goldens, none moved; browser 18; `flutter build web --wasm` built. `git diff main --stat -- test/fixtures test/v1_oracle` is empty.
+
+- **Stage A shipped**: merged and pushed to `main` (`0a6df4a`); Deploy and Benchmarks green.
+- **Steps 7 to 11, solids and faces** (stage B). Tests: 14 in `raised_point_test.dart`, 15 in `solid_kinds_test.dart` (two of them `glados` over the base size), 12 in `solid_tools_test.dart`, 15 in `face_plane_test.dart`, 9 widget tests (groups "a solid pulled up from its base" and "a face of a solid", mouse and touch), 2 toolbar tests, the solids added to the codec's round-trip sweep; one new golden, `solid_kinds_light`. Full run 3982 with goldens, the old 36 unchanged. Departures and notes:
+  - **`Liftable` is an abstract class under `GeoPoint`**, not an interface: a test for an interface does not promote a `GeoObject?` to something with `attributes` and `isDefined`, and every caller needs both.
+  - **`MutableRoots` was not taught heights.** It saves and restores free points' coordinates for the prover's probes and never knew a free point's height either; its one user declines a document with space content.
+  - **Faces are not wound outward** (the spec said they would be). Nothing reads an outward side in this milestone, and the rule had no answer at zero volume, which was on the risk list. `FacePlane`'s normal is the loop's own.
+  - **The solid tools require every base corner in the active plane**, a base of three included, though the kinds themselves let a triangular base go anywhere. A tool cannot know at the first tap how many corners will follow. A pyramid on three lifted points is made by building the plane through them and working in it.
+  - **A fourth kitchen-sink builder, `buildSolidKinds`**, so `buildSpaceKinds` keeps the picture its golden was taken of.
+  - **`ToolRefused`** is a fourth tool result, and `ScopeRefusal` moved to `tool.dart` (re-exported from `plane_scope.dart`).
+  - **Auto-naming now skips scaffolding**, so a face's plane burns no letter.
+  - The encoder drops scaffolding from which only scaffolding hangs (a face's plane with one orphan adapter), not only scaffolding with nothing on it.
+  - Cube and tetrahedron bases are rotations (`RotatedPoint`), not the square macro's perpendiculars and circles: fewer hidden objects and no intersection branch to hold.
+  - Shortcuts: `X Y` pyramid, `X M` prism, `X C` cube, `X ⇧ T` regular tetrahedron.
+  - Gotcha: a figure built in the plan view and then looked at with a rotated camera is turned about the world origin, not about itself, and can leave the test canvas. The face tests use tilt alone.
+  - Gotcha: an edit script that matches text after `dart format` has rewrapped it fails silently if its error is not read. One commit went in with a failing test for that and was amended before any push.

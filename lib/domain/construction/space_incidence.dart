@@ -1,6 +1,7 @@
 import 'geo_object.dart';
 import 'objects/chart_line.dart';
 import 'objects/chart_point.dart';
+import 'objects/face_plane.dart';
 import 'objects/intersection_point.dart';
 import 'objects/line_plane_intersection_point.dart';
 import 'objects/line_point_plane.dart';
@@ -11,9 +12,13 @@ import 'objects/parallel_plane.dart';
 import 'objects/perpendicular_plane.dart';
 import 'objects/plane_intersection_line.dart';
 import 'objects/point_on_object.dart';
+import 'objects/prism.dart';
+import 'objects/pyramid.dart';
 import 'objects/ray.dart';
 import 'objects/segment.dart';
+import 'objects/segment_ratio_point.dart';
 import 'objects/three_point_plane.dart';
+import 'objects/translated_point.dart';
 
 /// Whether [object] lies in [plane] **by construction** — the space
 /// sibling of `structurallyIncident` (intent 004, milestone 2).
@@ -84,6 +89,17 @@ bool _liesIn(GeoObject object, GeoPlane plane, Set<GeoObject> visiting) {
                 (curve1 is GeoLine && within(curve1)) ||
                     (curve2 is GeoLine && within(curve2)),
               ChartPoint(:final source) => within(source),
+              // A point dividing two points of the plane in a ratio is
+              // on their line; a point of the plane moved by a vector
+              // between two points of it has not left it.
+              SegmentRatioPoint(:final point1, :final point2) =>
+                within(point1) && within(point2),
+              TranslatedPoint(
+                point: final source,
+                :final vectorFrom,
+                :final vectorTo,
+              ) =>
+                within(source) && within(vectorFrom) && within(vectorTo),
               _ => false,
             },
       GeoLine() =>
@@ -109,7 +125,49 @@ bool _liesIn(GeoObject object, GeoPlane plane, Set<GeoObject> visiting) {
   }
 }
 
+/// Whether [point] is a corner of [plane]'s face by how the solid was
+/// built: one of the solid's own parents at that corner, or — for the
+/// far end of a prism — the translation of a base corner by the vector
+/// from the first base corner to the prism's top, which is the point the
+/// prism itself puts there.
+bool _isFaceCorner(FacePlane plane, GeoPoint point) {
+  final solid = plane.solid;
+  final corners = solid.faces[plane.face];
+  switch (solid) {
+    case Pyramid(:final base, :final apex):
+      final all = [...base, apex];
+      return corners.any((i) => identical(all[i], point));
+    case Prism(:final base, :final top):
+      final n = base.length;
+      for (final i in corners) {
+        if (i < n) {
+          if (identical(base[i], point)) {
+            return true;
+          }
+        } else if (i == n) {
+          if (identical(top, point)) {
+            return true;
+          }
+        } else if (point
+            case TranslatedPoint(
+              point: final source,
+              :final vectorFrom,
+              :final vectorTo,
+            )
+            when identical(source, base[i - n]) &&
+                identical(vectorFrom, base.first) &&
+                identical(vectorTo, top)) {
+          return true;
+        }
+      }
+      return false;
+    default:
+      return false;
+  }
+}
+
 bool _definesAsPoint(GeoPlane plane, GeoPoint point) => switch (plane) {
+  FacePlane() => _isFaceCorner(plane, point),
   ThreePointPlane(:final point1, :final point2, :final point3) =>
     identical(point1, point) ||
         identical(point2, point) ||

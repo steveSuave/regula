@@ -18,6 +18,7 @@ import '../../domain/construction/objects/compass_circle.dart';
 import '../../domain/construction/objects/diameter_circle.dart';
 import '../../domain/construction/objects/distance_measurement.dart';
 import '../../domain/construction/objects/expression_text.dart';
+import '../../domain/construction/objects/face_plane.dart';
 import '../../domain/construction/objects/five_point_conic.dart';
 import '../../domain/construction/objects/fixed_angle_line.dart';
 import '../../domain/construction/objects/fixed_radius_circle.dart';
@@ -182,7 +183,9 @@ Map<String, dynamic> encodeDocument(
         // it is left out, so a long session's leftovers do not accumulate
         // in the file (intent 004, milestone 2).
         if (!(object.isInternal &&
-            construction.transitiveDependentsOf(object.id).isEmpty))
+            construction
+                .transitiveDependentsOf(object.id)
+                .every((id) => construction.byId(id)?.isInternal ?? true)))
           _encodeObject(object),
     ],
   };
@@ -521,6 +524,7 @@ const Set<String> _spaceTypes = {
   'PlaneIntersectionLine',
   'RaisedPoint',
   'Pyramid',
+  'FacePlane',
   'Prism',
   'ProportionalRaisedPoint',
   'ChartPoint',
@@ -676,6 +680,7 @@ Map<String, dynamic> _encodeObject(GeoObject object) {
     // the apex or top, then the base's plane when that is not the base
     // plane (intent 004, milestone 3).
     Pyramid() => ('Pyramid', const {}),
+    FacePlane(:final face) => ('FacePlane', {'face': face}),
     Prism() => ('Prism', const {}),
     DistanceMeasurement() => ('DistanceMeasurement', const {}),
     // Parents carry the expression references; decode re-binds them by
@@ -761,6 +766,11 @@ GeoObject _decodeObject(Map<String, dynamic> json, Construction construction) {
   }
 
   return switch (type) {
+    'FacePlane' => FacePlane(
+      id: id,
+      solid: _typedParent<GeoSolid>(id, parents, 0),
+      face: _intParam(id, params, 'face'),
+    ),
     'Pyramid' => switch (solidParents()) {
       (:final base, :final over, :final plane) => Pyramid(
         id: id,

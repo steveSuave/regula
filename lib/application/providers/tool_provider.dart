@@ -307,7 +307,9 @@ class ToolNotifier extends _$ToolNotifier {
   void _nameObjectsIn(Command command, Set<String> used) {
     switch (command) {
       case AddObjectCommand(:final object)
-          when object.attributes.name.isEmpty && object.attributes.visible:
+          when object.attributes.name.isEmpty &&
+              object.attributes.visible &&
+              !object.isInternal:
         final name = nextAutoName(used, object);
         used.add(name);
         final hideLabel =

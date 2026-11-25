@@ -219,6 +219,15 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
   @override
   Widget build(BuildContext context) {
     final constructionState = ref.watch(constructionProvider);
+    // The plane the tools work in, for the painter: a plane of the
+    // construction, or a face's plane that is not in it yet.
+    final activeNow = ref.watch(spaceViewProvider)
+        ? activePlaneOf(
+            ref.watch(activePlaneProvider),
+            constructionState.construction.objects,
+            pending: ref.read(activePlaneProvider.notifier).pending,
+          )
+        : null;
     final viewport = CanvasViewport(ref.watch(viewportProvider));
     // The tool revision bumps on every accepted input, so in-progress
     // markers rebuild as the user collects.
@@ -294,12 +303,8 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
               tool,
               constructionState.construction,
             ),
-            activePlaneId: ref.watch(spaceViewProvider)
-                ? activePlaneOf(
-                    ref.watch(activePlaneProvider),
-                    constructionState.construction.objects,
-                  )?.id
-                : null,
+            activePlaneId: activeNow?.id,
+            activePlane: activeNow,
             showAxes: ref.watch(documentSettingsProvider).showAxes,
             showGrid: ref.watch(documentSettingsProvider).showGrid,
             // Theme-less hosts (bare-widget tests) keep the painter's
@@ -725,7 +730,11 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
   /// base plane.
   GeoPlane? _activePlane(Construction construction) =>
       ref.read(spaceViewProvider)
-      ? activePlaneOf(ref.read(activePlaneProvider), construction.objects)
+      ? activePlaneOf(
+          ref.read(activePlaneProvider),
+          construction.objects,
+          pending: ref.read(activePlaneProvider.notifier).pending,
+        )
       : null;
 
   /// The coordinates a drag of [hit] moves its free points in: its own
@@ -1240,6 +1249,21 @@ class _GeometryCanvasState extends ConsumerState<GeometryCanvas>
       // patches overlap.
       if (target is GeoPlane && ref.read(spaceViewProvider)) {
         ref.read(activePlaneProvider.notifier).set(target.id);
+      }
+      // A face of a solid is a plane to work in as well (milestone 3):
+      // the one under the pointer nearest the viewer.
+      if (target is GeoSolid && ref.read(spaceViewProvider)) {
+        final face = screenInkOf(
+          construction.objects,
+          viewport,
+          context.size ?? Size.zero,
+          target,
+        ).faceAt(screen);
+        if (face != null) {
+          ref
+              .read(activePlaneProvider.notifier)
+              .setFace(target, face, construction.objects);
+        }
       }
     }
   }

@@ -5,6 +5,7 @@ import '../../application/providers/active_plane_provider.dart';
 import '../../application/providers/construction_provider.dart';
 import '../../application/providers/space_view_provider.dart';
 import '../../application/providers/tool_provider.dart';
+import '../../domain/construction/objects/face_plane.dart';
 import '../../domain/tools/plane_scope.dart';
 
 /// Says which plane the tools are working in, and returns to the base
@@ -28,12 +29,22 @@ class ActivePlaneChip extends ConsumerWidget {
     final plane = activePlaneOf(
       ref.watch(activePlaneProvider),
       ref.watch(constructionProvider).construction.objects,
+      pending: ref.read(activePlaneProvider.notifier).pending,
     );
     if (plane == null) {
       return const SizedBox.shrink();
     }
     final theme = Theme.of(context);
     final name = plane.attributes.name;
+    // A face is named by its solid: its own plane is scaffolding and
+    // has no name.
+    final label = switch (plane) {
+      FacePlane(:final solid) =>
+        solid.attributes.name.isEmpty
+            ? 'In a face'
+            : 'In a face of ${solid.attributes.name}',
+      _ => name.isEmpty ? 'In a plane' : 'In plane $name',
+    };
     return Align(
       alignment: Alignment.topLeft,
       child: Padding(
@@ -60,7 +71,7 @@ class ActivePlaneChip extends ConsumerWidget {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        name.isEmpty ? 'In a plane' : 'In plane $name',
+                        label,
                         style: theme.textTheme.labelLarge!.copyWith(
                           color: theme.colorScheme.onTertiaryContainer,
                         ),
@@ -108,6 +119,7 @@ class ScopeRefusalHint extends ConsumerWidget {
         activePlaneOf(
               ref.watch(activePlaneProvider),
               ref.watch(constructionProvider).construction.objects,
+              pending: ref.read(activePlaneProvider.notifier).pending,
             ) ==
             null;
     final theme = Theme.of(context);

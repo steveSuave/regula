@@ -14,6 +14,7 @@ import 'package:regula/application/providers/space_view_provider.dart';
 import 'package:regula/application/providers/tool_provider.dart';
 import 'package:regula/application/providers/viewport_provider.dart';
 import 'package:regula/domain/commands/add_object_command.dart';
+import 'package:regula/domain/commands/delete_objects_command.dart';
 import 'package:regula/domain/commands/macro_command.dart';
 import 'package:regula/domain/commands/set_geometry_command.dart';
 import 'package:regula/domain/construction/construction.dart';
@@ -26,6 +27,7 @@ import 'package:regula/domain/construction/objects/chart_point.dart';
 import 'package:regula/domain/construction/objects/circle_center_point.dart';
 import 'package:regula/domain/construction/objects/compass_circle.dart';
 import 'package:regula/domain/construction/objects/distance_measurement.dart';
+import 'package:regula/domain/construction/objects/face_plane.dart';
 import 'package:regula/domain/construction/objects/five_point_conic.dart';
 import 'package:regula/domain/construction/objects/fixed_radius_circle.dart';
 import 'package:regula/domain/construction/objects/focal_conic.dart';
@@ -52,7 +54,9 @@ import 'package:regula/domain/tools/delete_tool.dart';
 import 'package:regula/domain/tools/intersection_tool.dart';
 import 'package:regula/domain/tools/plane_tool.dart';
 import 'package:regula/domain/tools/point_tool.dart';
+import 'package:regula/domain/tools/regular_solid_tool.dart';
 import 'package:regula/domain/tools/solid_tool.dart';
+import 'package:regula/domain/tools/three_point_tool.dart';
 import 'package:regula/domain/tools/tool.dart';
 import 'package:regula/domain/tools/two_point_tool.dart';
 import 'package:regula/domain/tools/visibility_tool.dart';
@@ -3720,6 +3724,172 @@ void main() {
           glued().single.spacePosition!.distanceTo(apex.spacePosition!),
           lessThan(1e-9),
         );
+      });
+    });
+
+    group('a face of a solid', () {
+      late Prism cube;
+
+      Construction construction() =>
+          container.read(constructionProvider).construction;
+
+      /// A cube on the base plane, built by its tool in the plan view,
+      /// then seen from the oblique side with no tool.
+      Future<Offset> pumpWithCube(WidgetTester tester) async {
+        await pumpEditor(tester);
+        final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+        container
+            .read(toolProvider.notifier)
+            .activate(CubeTool(newId: newObjectId));
+        await tester.pump();
+        await tester.tapAt(origin + const Offset(300, 420));
+        await tester.pump();
+        await tester.tapAt(origin + const Offset(460, 420));
+        await tester.pump();
+        container.read(toolProvider.notifier).deactivate();
+        await enter(tester, const ViewportState(tilt: 1.0));
+        cube = construction().objects.whereType<Prism>().single;
+        return origin;
+      }
+
+      /// The middle of face [face] on screen: inside it, clear of edges.
+      Offset inFace(int face) {
+        final corners = cube.faceVertices(face)!;
+        return camera().spaceToScreen(
+          corners.reduce((sum, corner) => sum + corner) /
+              corners.length.toDouble(),
+        );
+      }
+
+      GeoPlane? active() => activePlaneOf(
+        container.read(activePlaneProvider),
+        construction().objects,
+        pending: container.read(activePlaneProvider.notifier).pending,
+      );
+
+      testWidgets('a tap on a face selects the solid and makes the face the '
+          'active plane; the chip names it and goes back', (tester) async {
+        final origin = await pumpWithCube(tester);
+        expect(active(), isNull);
+        // The lid is the nearest face under its own middle.
+        await tester.tapAt(origin + inFace(1));
+        await tester.pump();
+        expect(container.read(selectionProvider), {cube.id});
+        final plane = active()! as FacePlane;
+        expect(plane.solid, same(cube));
+        expect(plane.face, 1);
+        // Nothing was added to the document by looking at a face.
+        expect(construction().objects.whereType<FacePlane>(), isEmpty);
+        expect(find.textContaining('In a face'), findsOneWidget);
+
+        // The same face again is the same plane.
+        await tester.tapAt(origin + inFace(1));
+        await tester.pump();
+        expect(active(), same(plane));
+
+        await tester.tap(find.textContaining('In a face'));
+        await tester.pump();
+        expect(active(), isNull);
+      });
+
+      testWidgets('a circle through three corners of the active face is one '
+          'command, in the face; undo removes the plane with it', (
+        tester,
+      ) async {
+        final origin = await pumpWithCube(tester);
+        await tester.tapAt(origin + inFace(1));
+        await tester.pump();
+        final plane = active()!;
+        final before = construction().objects.length;
+        container
+            .read(toolProvider.notifier)
+            .activate(
+              ThreePointTool(
+                newId: newObjectId,
+                build: (id, p1, p2, p3) => ThreePointCircle(
+                  id: id,
+                  point1: p1,
+                  point2: p2,
+                  point3: p3,
+                ),
+              ),
+            );
+        await tester.pump();
+        final lid = cube.faceVertices(1)!;
+        for (final corner in lid.take(3)) {
+          await tester.tapAt(origin + camera().spaceToScreen(corner));
+          await tester.pump();
+        }
+        final circle = construction().objects
+            .whereType<ThreePointCircle>()
+            .single;
+        expect(circle.sheet, Sheet.of(plane));
+        expect(circle.isDefined, isTrue);
+        expect(construction().objects.whereType<FacePlane>().single, plane);
+        // The plane, three adapters, the circle.
+        expect(construction().objects, hasLength(before + 5));
+        // Still the active plane, now as an object of the document.
+        expect(active(), same(plane));
+
+        container.read(commandStackProvider.notifier).undo();
+        await tester.pump();
+        expect(construction().objects, hasLength(before));
+        expect(active(), same(plane));
+      });
+
+      testWidgets('a corner of another face is refused in the active face', (
+        tester,
+      ) async {
+        final origin = await pumpWithCube(tester);
+        await tester.tapAt(origin + inFace(1));
+        await tester.pump();
+        container
+            .read(toolProvider.notifier)
+            .activate(
+              ThreePointTool(
+                newId: newObjectId,
+                build: (id, p1, p2, p3) => ThreePointCircle(
+                  id: id,
+                  point1: p1,
+                  point2: p2,
+                  point3: p3,
+                ),
+              ),
+            );
+        await tester.pump();
+        // A base corner the lid does not hide: the one nearest the viewer.
+        final base = cube.faceVertices(0)!;
+        final nearest = base.reduce(
+          (a, b) => camera().depthOf(a) >= camera().depthOf(b) ? a : b,
+        );
+        await tester.tapAt(origin + camera().spaceToScreen(nearest));
+        await tester.pump();
+        expect(
+          container.read(toolProvider.notifier).lastRefusal,
+          ScopeRefusal.notInPlane,
+        );
+      });
+
+      testWidgets('deleting the solid, a new document and leaving the space '
+          'view all return to the base plane', (tester) async {
+        final origin = await pumpWithCube(tester);
+        await tester.tapAt(origin + inFace(1));
+        await tester.pump();
+        expect(active(), isNotNull);
+
+        final stack = container.read(commandStackProvider.notifier);
+        stack.execute(DeleteObjectsCommand([cube.id]));
+        await tester.pump();
+        expect(active(), isNull);
+        expect(find.textContaining('In a face'), findsNothing);
+        stack.undo();
+        await tester.pump();
+        expect(active(), isNotNull);
+
+        container.read(constructionProvider.notifier).replace(Construction());
+        await tester.pump();
+        expect(active(), isNull);
+        expect(container.read(activePlaneProvider.notifier).pending, isNull);
       });
     });
 

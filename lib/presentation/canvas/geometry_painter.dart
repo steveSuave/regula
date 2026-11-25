@@ -9,6 +9,7 @@ import '../../domain/construction/geo_object.dart';
 import '../../domain/construction/liftable.dart';
 import '../../domain/construction/line_clip.dart';
 import '../../domain/construction/objects/arc.dart';
+import '../../domain/construction/objects/face_plane.dart';
 import '../../domain/construction/objects/locus.dart';
 import '../../domain/construction/objects/ray.dart';
 import '../../domain/construction/objects/sector.dart';
@@ -113,6 +114,7 @@ class GeometryPainter extends CustomPainter {
     this.showHidden = false,
     this.liftHandleEnabled = false,
     this.activePlaneId,
+    this.activePlane,
     this.showAxes = false,
     this.showGrid = false,
     this.axisColor = const Color(0xFF757575),
@@ -235,6 +237,14 @@ class GeometryPainter extends CustomPainter {
   /// the tool's preview markers are positions in it.
   final String? activePlaneId;
 
+  /// The active plane itself, when it is one the construction does not
+  /// hold yet: the plane of a face tapped and not yet built in (intent
+  /// 004, milestone 3). Otherwise null, and [activePlaneId] finds it.
+  final GeoPlane? activePlane;
+
+  GeoObject? get _active =>
+      activePlane ?? construction.byId(activePlaneId ?? '');
+
   /// The plane whose sheet this painter paints, or null for the painter
   /// the canvas owns, which paints the base sheet, everything with no
   /// sheet, and then one of these per plane that has something on it.
@@ -349,7 +359,7 @@ class GeometryPainter extends CustomPainter {
     final onSheet = <GeoPlane>{
       for (final object in construction.objects) ?object.sheet.plane,
     };
-    final active = construction.byId(activePlaneId ?? '');
+    final active = _active;
     if (active is GeoPlane && previewMarkers.isNotEmpty) {
       onSheet.add(active);
     }
@@ -383,6 +393,7 @@ class GeometryPainter extends CustomPainter {
         labelDragPreview: labelDragPreview,
         showHidden: showHidden,
         activePlaneId: activePlaneId,
+        activePlane: activePlane,
       ).._sheetPlane = plane;
 
   /// Paints the objects on [_sheetPlane]'s sheet, and the tool's preview
@@ -507,7 +518,8 @@ class GeometryPainter extends CustomPainter {
     final patches = <({double depth, Path path, Paint paint})>[];
     Path? activeOutline;
     for (final object in construction.objects) {
-      if (object is! GeoPlane || !object.isDefined) {
+      // A face's plane is scaffolding: the face is its picture.
+      if (object is! GeoPlane || !object.isDefined || object.isInternal) {
         continue;
       }
       final hidden = !object.attributes.visible;
@@ -543,6 +555,10 @@ class GeometryPainter extends CustomPainter {
           ..style = PaintingStyle.fill,
       ));
     }
+    final activeFace = switch (_active) {
+      final FacePlane plane => plane,
+      _ => null,
+    };
     // The faces of the solids, with the patches and by the same rule
     // (intent 004, milestone 3). Every view ray through a convex solid
     // crosses two faces, so its silhouette is one even tint.
@@ -569,12 +585,18 @@ class GeometryPainter extends CustomPainter {
         final centre =
             corners.reduce((sum, corner) => sum + corner) /
             corners.length.toDouble();
+        final path = Path()
+          ..addPolygon([
+            for (final corner in corners) viewport.spaceToScreen(corner),
+          ], true);
+        if (activeFace != null &&
+            identical(activeFace.solid, object) &&
+            activeFace.face == i) {
+          activeOutline = path;
+        }
         patches.add((
           depth: viewport.depthOf(centre),
-          path: Path()
-            ..addPolygon([
-              for (final corner in corners) viewport.spaceToScreen(corner),
-            ], true),
+          path: path,
           paint: paint,
         ));
       }

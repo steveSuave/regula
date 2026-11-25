@@ -44,6 +44,16 @@ class PlaneScope {
 
   /// The input [tool] should be given for [input], or a refusal.
   ScopedInput adapt(ToolInput input, Tool tool, String Function() newId) {
+    // The active plane may be a face's plane that nothing has been
+    // built in yet, and so not in the construction (intent 004,
+    // milestone 3). It rides in the commit of the first thing that
+    // needs it, ahead of any adapter into it.
+    final active = input.plane;
+    if (active != null &&
+        !_pending.any((o) => identical(o, active)) &&
+        !input.objects.any((o) => identical(o, active))) {
+      _pending.insert(0, active);
+    }
     if (tool is ScopedTool && tool.scope == ToolScope.space) {
       return (input: input, refusal: null);
     }
