@@ -59,6 +59,7 @@ import '../../domain/construction/objects/ray.dart';
 import '../../domain/construction/objects/reflected_point.dart';
 import '../../domain/construction/objects/rotated_point.dart';
 import '../../domain/construction/objects/scaled_compass_circle.dart';
+import '../../domain/construction/objects/section_polygon.dart';
 import '../../domain/construction/objects/sector.dart';
 import '../../domain/construction/objects/segment.dart';
 import '../../domain/construction/objects/segment_ratio_point.dart';
@@ -524,6 +525,7 @@ const Set<String> _spaceTypes = {
   'PlaneIntersectionLine',
   'RaisedPoint',
   'Pyramid',
+  'SectionPolygon',
   'FacePlane',
   'Prism',
   'ProportionalRaisedPoint',
@@ -680,6 +682,7 @@ Map<String, dynamic> _encodeObject(GeoObject object) {
     // the apex or top, then the base's plane when that is not the base
     // plane (intent 004, milestone 3).
     Pyramid() => ('Pyramid', const {}),
+    SectionPolygon() => ('SectionPolygon', const {}),
     FacePlane(:final face) => ('FacePlane', {'face': face}),
     Prism() => ('Prism', const {}),
     DistanceMeasurement() => ('DistanceMeasurement', const {}),
@@ -770,6 +773,12 @@ GeoObject _decodeObject(Map<String, dynamic> json, Construction construction) {
       id: id,
       solid: _typedParent<GeoSolid>(id, parents, 0),
       face: _intParam(id, params, 'face'),
+    ),
+    'SectionPolygon' => SectionPolygon(
+      id: id,
+      plane: plane(0),
+      solid: _typedParent<GeoSolid>(id, parents, 1),
+      attributes: attributes,
     ),
     'Pyramid' => switch (solidParents()) {
       (:final base, :final over, :final plane) => Pyramid(

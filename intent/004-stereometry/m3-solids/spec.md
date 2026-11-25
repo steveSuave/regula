@@ -95,7 +95,7 @@ The sign of a new raised point is chosen at creation so that the solid rises on 
 `SectionPolygon(plane, solid)` is a `GeoPolygon` on the plane's sheet; its `polygonVertices` are in the plane's coordinates, so the painter, the hit test and `AreaMeasurement` take it as any polygon.
 
 - Each solid vertex is classed above or below the plane by the sign of its height, zero counting as above. An edge whose ends differ is cut; each face contributes the segments between its cuts; the segments chain into loops. Classing zero one way is what keeps every loop closed when the plane passes exactly through a vertex or an edge, with no tolerance.
-- Coincident consecutive vertices are merged by exact equality, so a plane through a cube's vertex gives a polygon with that vertex once.
+- Coincident consecutive vertices are merged, so a plane through a cube's vertex gives a polygon with that vertex once. *Amended while building:* coincident means within rounding at the solid's size (1e-12, relative), not bitwise equal. A plane built through a point glued at a corner passes through the corner only to the last bit.
 - **One loop or nothing.** The solids of this milestone over a convex base give at most one loop. A prism over a non-convex base can be cut in two; then the section is undefined. See concerns.
 - A loop of fewer than three distinct vertices is no polygon (requirement 10).
 

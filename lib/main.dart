@@ -74,6 +74,7 @@ import 'domain/tools/rhombus_macro_tool.dart';
 import 'domain/tools/right_trapezium_macro_tool.dart';
 import 'domain/tools/right_triangle_macro_tool.dart';
 import 'domain/tools/scaled_compass_circle_tool.dart';
+import 'domain/tools/section_tool.dart';
 import 'domain/tools/slope_tool.dart';
 import 'domain/tools/solid_tool.dart';
 import 'domain/tools/square_macro_tool.dart';
@@ -1035,6 +1036,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         tools.activate(AngleTool(newId: newObjectId));
       case AppAction.planeTool:
         _activateSpaceTool(() => PlaneTool(newId: newObjectId));
+      case AppAction.sectionTool:
+        _activateSpaceTool(() => SectionTool(newId: newObjectId));
       case AppAction.pyramidTool:
         _activateSpaceTool(() => PyramidTool(newId: newObjectId));
       case AppAction.prismTool:

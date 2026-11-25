@@ -73,6 +73,7 @@ enum AppAction {
   prismTool,
   cubeTool,
   regularTetrahedronTool,
+  sectionTool,
   // Constructions behind the G leader.
   centroidTool,
   orthocenterTool,
@@ -893,6 +894,13 @@ final List<ShortcutBinding> shortcutTable = [
     'X M',
   ),
   _x(LogicalKeyboardKey.keyC, AppAction.cubeTool, 'Cube', 'X C'),
+  _x(
+    LogicalKeyboardKey.keyC,
+    AppAction.sectionTool,
+    'Section (a plane and a solid)',
+    'X ⇧ C',
+    shift: true,
+  ),
   _x(
     LogicalKeyboardKey.keyT,
     AppAction.regularTetrahedronTool,
