@@ -1,7 +1,9 @@
 import '../../math/vec2.dart';
+import '../../math/vec3.dart';
 import '../../projective/absolute.dart';
 import '../../projective/proj_point.dart';
 import '../../projective/proj_transform.dart';
+import '../../projective/space/point3.dart';
 import '../geo_object.dart';
 
 /// [point] translated by the vector from [vectorFrom] to [vectorTo].
@@ -39,6 +41,39 @@ class TranslatedPoint extends GeoPoint {
   @override
   Vec2? get position => _point?.toVec2();
 
+  bool get _offSheet =>
+      !sheet.exists ||
+      point.projPoint == null ||
+      vectorFrom.projPoint == null ||
+      vectorTo.projPoint == null;
+
+  /// A translation needs no plane (intent 004, milestone 3): when the
+  /// three points have no common value in one sheet, the image is taken
+  /// in space. Euclidean only, like the planar value; a document with
+  /// space content is Euclidean.
+  @override
+  Vec3? get spacePosition {
+    if (!_offSheet) {
+      return super.spacePosition;
+    }
+    final p = point.spacePosition;
+    final from = vectorFrom.spacePosition;
+    final to = vectorTo.spacePosition;
+    if (p == null || from == null || to == null) {
+      return null;
+    }
+    return p + (to - from);
+  }
+
+  @override
+  Point3? get spacePoint {
+    if (!_offSheet) {
+      return super.spacePoint;
+    }
+    final at = spacePosition;
+    return at == null ? null : Point3.lift(at);
+  }
+
   @override
   List<GeoObject> get parents => [point, vectorFrom, vectorTo];
 
@@ -54,7 +89,7 @@ class TranslatedPoint extends GeoPoint {
     final p = point.projPoint;
     final from = vectorFrom.projPoint;
     final to = vectorTo.projPoint;
-    if (p == null || from == null || to == null) {
+    if (p == null || from == null || to == null || !sheet.exists) {
       _point = null;
       return;
     }

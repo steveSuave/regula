@@ -77,6 +77,26 @@ ResolvedPoint resolvePoint(ToolInput input, String Function() newId) {
     );
   }
   for (final curve in curves) {
+    // A line drawn from its space value has no chart to project the tap
+    // onto: the canvas reads the parameter off its screen image (intent
+    // 004, milestone 3). It was hit, so it is within reach by the hit
+    // test's own measure.
+    if (curve is GeoLine && curve.line == null) {
+      final parameter = curve.hasSpaceExtent
+          ? input.spaceParameterOn?.call(curve)
+          : null;
+      if (parameter == null) {
+        continue;
+      }
+      return (
+        point: PointOnObject.onSpaceLine(
+          id: newId(),
+          curve: curve,
+          parameter: parameter,
+        ),
+        isNew: true,
+      );
+    }
     final glued = PointOnObject.near(
       id: 'glue-probe',
       curve: curve,

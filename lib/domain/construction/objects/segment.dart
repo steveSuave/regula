@@ -109,6 +109,19 @@ class Segment extends GeoLine {
     return a != null && b != null && a != b;
   }
 
+  /// Both ends' parameters on the space carrier, ordered.
+  @override
+  (double?, double?)? get spaceParameterExtent {
+    final a = spaceStart;
+    final b = spaceEnd;
+    final t1 = a == null ? null : spaceParameterOf(a);
+    final t2 = b == null ? null : spaceParameterOf(b);
+    if (t1 == null || t2 == null) {
+      return null;
+    }
+    return t1 <= t2 ? (t1, t2) : (t2, t1);
+  }
+
   @override
   List<GeoObject> get parents => [point1, point2];
 

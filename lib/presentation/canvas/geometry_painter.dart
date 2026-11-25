@@ -967,6 +967,30 @@ class GeometryPainter extends CustomPainter {
     }
   }
 
+  /// The interior of a polygon over points of space (intent 004,
+  /// milestone 3): the screen polygon of its vertices, from the same ink
+  /// the hit test reads.
+  void _fillInSpace(
+    SheetCanvas canvas,
+    Size size,
+    GeoObject object,
+    Paint fill,
+  ) {
+    final region = screenInkOf(
+      construction.objects,
+      viewport,
+      size,
+      object,
+    ).fill;
+    if (region == null) {
+      return;
+    }
+    SheetCanvas(
+      canvas.screen,
+      _flat,
+    ).drawPath(Path()..addPolygon(region, true), fill);
+  }
+
   /// A locus paints one polyline per non-null sample run — gaps where
   /// the traced point was undefined split the stroke, and a length-1 run
   /// draws no ink (a stroke needs two ends). A gapless full-circle-host
@@ -1414,6 +1438,10 @@ class GeometryPainter extends CustomPainter {
   /// filled form and are skipped; an arc's fill shape is ambiguous
   /// (wedge? circular segment?), so arcs deliberately don't fill.
   void _drawFill(SheetCanvas canvas, Size size, GeoObject object, Paint fill) {
+    if (object is GeoPolygon && drawnInSpace(object)) {
+      _fillInSpace(canvas, size, object, fill);
+      return;
+    }
     switch (object) {
       case Sector():
         final circle = object.circle!;

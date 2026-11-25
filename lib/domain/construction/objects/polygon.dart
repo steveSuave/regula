@@ -1,4 +1,5 @@
 import '../../math/vec2.dart';
+import '../../math/vec3.dart';
 import '../../projective/absolute.dart';
 import '../geo_object.dart';
 
@@ -35,15 +36,44 @@ class Polygon extends GeoPolygon {
   final List<GeoPoint> vertices;
 
   List<Vec2>? _polygonVertices;
+  List<Vec3>? _spaceVertices;
 
   @override
   List<Vec2>? get polygonVertices => _polygonVertices;
+
+  /// Whether the vertices have no common value in the sheet, so there is
+  /// no planar loop and the space one stands in (intent 004, milestone
+  /// 3). A vertex at infinity or complex in its sheet is not this: the
+  /// polygon stays undefined, as it always was.
+  bool get _offSheet =>
+      !sheet.exists || vertices.any((vertex) => vertex.projPoint == null);
+
+  /// A polygon needs no plane: when its vertices have no common value in
+  /// one sheet (one is lifted, or they sit in different planes) the loop
+  /// is their space positions.
+  @override
+  List<Vec3>? get spaceVertices =>
+      _offSheet ? _spaceVertices : super.spaceVertices;
 
   @override
   List<GeoObject> get parents => vertices;
 
   @override
   void recompute([Absolute absolute = Absolute.euclidean]) {
+    _spaceVertices = null;
+    if (_offSheet) {
+      _polygonVertices = null;
+      final positions = <Vec3>[];
+      for (final vertex in vertices) {
+        final position = vertex.spacePosition;
+        if (position == null) {
+          return;
+        }
+        positions.add(position);
+      }
+      _spaceVertices = List.unmodifiable(positions);
+      return;
+    }
     final positions = <Vec2>[];
     for (final vertex in vertices) {
       final position = vertex.projPoint?.toVec2();

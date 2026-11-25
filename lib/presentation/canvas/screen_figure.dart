@@ -10,6 +10,7 @@ import '../../domain/construction/objects/segment.dart';
 import '../../domain/math/vec2.dart';
 import '../../domain/math/vec3.dart';
 import '../../domain/projective/conic_shape.dart';
+import '../../domain/projective/space/plane_frame.dart';
 import 'canvas_viewport.dart';
 import 'label_anchor.dart';
 import 'plane_patch.dart';
@@ -26,6 +27,7 @@ const double _conicFlatness = 3;
 bool drawnInSpace(GeoObject object) => switch (object) {
   GeoPoint() => object.position == null,
   GeoLine() => object.line == null,
+  GeoPolygon() => object.polygonVertices == null,
   GeoPlane() => true,
   _ => false,
 };
@@ -38,9 +40,60 @@ Vec3? spaceLabelAnchor(GeoObject object) => switch (object) {
     (spaceStart + spaceEnd) * 0.5,
   Ray() => object.spaceStart,
   GeoLine() => object.spaceLine?.anchor,
+  GeoPolygon(:final spaceVertices?) =>
+    spaceVertices.reduce((sum, vertex) => sum + vertex) /
+        spaceVertices.length.toDouble(),
   GeoPlane() => object.labelAnchor,
   _ => null,
 };
+
+/// A line of space as the screen sees its parameter: where parameter 0
+/// is drawn and how far one unit of it travels, or null when the line
+/// has no space frame or is seen so nearly end-on that a pointer cannot
+/// name a point of it (one unit of it travels less than
+/// [spaceLineAxisFloor] of the scale).
+///
+/// The point of the drawn line nearest a pointer is the point of the
+/// line nearest the pointer's view ray, because under a parallel
+/// projection the shortest way between the two is across the view. So
+/// this axis is all a tap or a drag needs to glue a point to an edge
+/// that lies in no plane (intent 004, milestone 3).
+({Offset origin, Offset perUnit})? spaceLineScreenAxis(
+  CanvasViewport viewport,
+  GeoLine line,
+) {
+  final frame = line.spaceParameterFrame;
+  if (frame == null) {
+    return null;
+  }
+  final origin = viewport.spaceToScreen(frame.origin);
+  final perUnit =
+      viewport.spaceToScreen(frame.origin + frame.direction) - origin;
+  if (perUnit.distance < spaceLineAxisFloor * viewport.worldToScreenLength(1)) {
+    return null;
+  }
+  return (origin: origin, perUnit: perUnit);
+}
+
+/// The parameter, in [line]'s space frame, of the point of it drawn
+/// nearest [pointer]; null as [spaceLineScreenAxis] is.
+double? spaceLineParameterAt(
+  CanvasViewport viewport,
+  GeoLine line,
+  Offset pointer,
+) {
+  final axis = spaceLineScreenAxis(viewport, line);
+  if (axis == null) {
+    return null;
+  }
+  final along = pointer - axis.origin;
+  return (along.dx * axis.perUnit.dx + along.dy * axis.perUnit.dy) /
+      axis.perUnit.distanceSquared;
+}
+
+/// The foreshortening below which a line of space is too nearly end-on
+/// to pick a point of: the edge-on floor of a plane, for a line.
+const double spaceLineAxisFloor = 0.05;
 
 /// One object's ink on the screen, as the painter draws it
 /// (`GeometryPainter._drawObject`): a [dot] for a point, [segments] for
@@ -329,6 +382,31 @@ void _spaceInk(
           stroke(on - unit * reach, on + unit * reach);
         }
       }
+    case GeoPolygon(:final spaceVertices?):
+      // A loop over points of space (intent 004, milestone 3): its
+      // outline, and its interior as the screen polygon. The depth under
+      // a pointer is read off the plane of its first three vertices,
+      // which is the loop's own plane whenever it has one.
+      for (var i = 0; i < spaceVertices.length; i++) {
+        stroke(spaceVertices[i], spaceVertices[(i + 1) % spaceVertices.length]);
+      }
+      ink.fill = [
+        for (final vertex in spaceVertices) viewport.spaceToScreen(vertex),
+      ];
+      final centre =
+          spaceVertices.reduce((sum, vertex) => sum + vertex) /
+          spaceVertices.length.toDouble();
+      final frame = PlaneFrame.throughPoints(
+        spaceVertices[0],
+        spaceVertices[1],
+        spaceVertices[2],
+      );
+      ink.fillDepth = (pointer) {
+        final picked = frame == null
+            ? null
+            : viewport.pickPlane(pointer, frame);
+        return viewport.depthOf(picked == null ? centre : frame!.lift(picked));
+      };
     case GeoPlane():
       final corners = planePatch(
         object,

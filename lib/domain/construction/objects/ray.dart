@@ -101,6 +101,20 @@ class Ray extends GeoLine {
     return a != null && b != null && a != b;
   }
 
+  /// Bounded at the origin's parameter on the space carrier, unbounded
+  /// past [through].
+  @override
+  (double?, double?)? get spaceParameterExtent {
+    final a = spaceStart;
+    final b = spaceThrough;
+    final t0 = a == null ? null : spaceParameterOf(a);
+    final tThrough = b == null ? null : spaceParameterOf(b);
+    if (t0 == null || tThrough == null) {
+      return null;
+    }
+    return tThrough >= t0 ? (t0, null) : (null, t0);
+  }
+
   @override
   List<GeoObject> get parents => [origin, through];
 

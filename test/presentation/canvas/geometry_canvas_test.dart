@@ -61,6 +61,7 @@ import 'package:regula/presentation/canvas/geometry_painter.dart';
 import 'package:regula/presentation/canvas/label_layout.dart';
 import 'package:regula/presentation/canvas/lift_handle.dart';
 import 'package:regula/presentation/canvas/lifted_point_hint.dart';
+import 'package:regula/presentation/canvas/screen_figure.dart';
 import 'package:regula/presentation/panels/conic_icon.dart';
 import 'package:regula/presentation/panels/object_kind_label.dart';
 import 'package:regula/presentation/panels/toolbar.dart';
@@ -3592,6 +3593,130 @@ void main() {
         await tester.pump();
         expect(container.read(spaceViewProvider), isFalse);
         expect(container.read(activePlaneProvider), isNull);
+      });
+    });
+
+    group('a point on an edge of space', () {
+      late FreePoint a;
+      late FreePoint apex;
+      late Segment edge;
+
+      /// A base point, a lifted apex and the edge between them; the
+      /// space view on, tilted, no tool.
+      Future<Offset> pumpWithEdge(WidgetTester tester) async {
+        await pumpEditor(tester);
+        final origin = tester.getTopLeft(find.byType(GeometryCanvas));
+        a = FreePoint(id: 'a', position: const Vec2(150, -450));
+        apex = FreePoint(id: 'o', position: const Vec2(450, -350), height: 150);
+        edge = Segment(id: 'e', point1: a, point2: apex);
+        container
+            .read(commandStackProvider.notifier)
+            .execute(
+              MacroCommand([
+                for (final object in [a, apex, edge]) AddObjectCommand(object),
+              ]),
+            );
+        await enter(tester, const ViewportState(tilt: 1.0));
+        return origin;
+      }
+
+      List<PointOnObject> glued() => container
+          .read(constructionProvider)
+          .construction
+          .objects
+          .whereType<PointOnObject>()
+          .toList();
+
+      Offset onEdge(double fraction) => camera().spaceToScreen(
+        a.spacePosition! + (apex.spacePosition! - a.spacePosition!) * fraction,
+      );
+
+      for (final kind in [PointerDeviceKind.mouse, PointerDeviceKind.touch]) {
+        testWidgets('the Point tool glues it where the edge was tapped, and a '
+            'drag slides it along the edge: one command each ($kind)', (
+          tester,
+        ) async {
+          final origin = await pumpWithEdge(tester);
+          await pickPointTool(tester);
+          final tap = await tester.startGesture(
+            origin + onEdge(0.4),
+            kind: kind,
+          );
+          await tap.up();
+          await tester.pump();
+          final point = glued().single;
+          expect(point.curve, same(edge));
+          expect(point.position, isNull);
+          expect(
+            (camera().spaceToScreen(point.spacePosition!) - onEdge(0.4))
+                .distance,
+            lessThan(1e-6),
+          );
+          await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+          await tester.pump();
+
+          final before = point.parameter;
+          final axis = spaceLineScreenAxis(camera(), edge)!.perUnit;
+          final along = axis / axis.distance;
+          final across = Offset(-along.dy, along.dx);
+          final drag = await tester.startGesture(
+            origin + onEdge(0.4),
+            kind: kind,
+          );
+          await drag.moveBy(along * 30);
+          // Travel across the edge is ignored.
+          await drag.moveBy(along * 30 + across * 25);
+          await tester.pump();
+          expect(glued().single.parameter, isNot(before));
+          await drag.up();
+          await tester.pump();
+
+          expect(
+            glued().single.parameter,
+            closeTo(before + 60 / axis.distance, 1e-9),
+          );
+          expect(
+            (camera().spaceToScreen(glued().single.spacePosition!) -
+                    (onEdge(0.4) + along * 60))
+                .distance,
+            lessThan(1e-6),
+          );
+          // The camera did not turn, and the ends did not move.
+          expect(
+            container.read(viewportProvider),
+            const ViewportState(tilt: 1.0),
+          );
+          expect(a.chartPosition, const Vec2(150, -450));
+          expect(apex.height, 150);
+
+          final stack = container.read(commandStackProvider.notifier);
+          stack.undo();
+          await tester.pump();
+          expect(glued().single.parameter, before);
+          stack.undo();
+          await tester.pump();
+          expect(glued(), isEmpty);
+        });
+      }
+
+      testWidgets('dragged past the end of the edge, it stops at the end', (
+        tester,
+      ) async {
+        final origin = await pumpWithEdge(tester);
+        await pickPointTool(tester);
+        await tester.tapAt(origin + onEdge(0.5));
+        await tester.pump();
+        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        await tester.pump();
+        final drag = await tester.startGesture(origin + onEdge(0.5));
+        await drag.moveBy((onEdge(1) - onEdge(0.5)) * 3);
+        await tester.pump();
+        await drag.up();
+        await tester.pump();
+        expect(
+          glued().single.spacePosition!.distanceTo(apex.spacePosition!),
+          lessThan(1e-9),
+        );
       });
     });
 
