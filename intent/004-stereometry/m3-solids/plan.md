@@ -103,3 +103,10 @@ Three stages. Each ends green on the full gate, with a look, and merges to `main
   - The decoder's shared-sheet check admits `Polygon`, `TranslatedPoint`, and a `PointOnObject` whose host is a line.
   - **Not tested: `PointOnObject.near` from a space position.** There is no such factory; a space position reaches the kind as a parameter (`PointOnObject.onSpaceLine`).
   - Gotcha: a background gate started while editing reads half-edited files. Run it in the foreground or after the edits.
+  - **A face over points of space is ground to a planar tool**, like a plane's patch: the tap passes through it to the active plane. The first version of the refusal above also refused a Point-tool tap anywhere inside such a face, which the stage look found.
+
+- **Stage A look.** The release wasm build on 127.0.0.1 in a separate headless Chrome over the DevTools protocol, read from screenshots. The Chrome extension was not used.
+  - Seen at 1280 wide, mouse: a filled triangle ABC drawn with the Polygon tool and a segment AC; the 3D button tilts it; a tap on C shows the grip, and dragging it up lifts C with the fill and outline following (before this stage the polygon vanished); the Point tool tapped on the middle of the lifted edge AC puts a point on the edge, and tapped inside the face puts a free point on the base plane behind it; a drag of the glued point moves it along the edge and nowhere else; an orbit turns the figure with the glued point still on the edge.
+  - Seen at 400×800, touch: Fit frames the lifted triangle; a touch drag of the glued point slides it about 100 px down the edge.
+  - **Not seen in a browser**: a point glued by a touch tap (the one touch tap tried fell inside the face, on no edge); the slide stopping at an end of the edge; an edge seen end-on; a translated point in space; opening a saved file with these in it. Those rest on the widget and unit tests.
+- **Stage A closed 2026-11-25.** Final gate: analyze clean; 3917 with goldens, none moved; browser 18; `flutter build web --wasm` built. `git diff main --stat -- test/fixtures test/v1_oracle` is empty.

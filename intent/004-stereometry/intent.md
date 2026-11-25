@@ -74,4 +74,4 @@ Each is carried into the spec of the milestone it belongs to.
 |---|---|---|
 | 1. 3D view and camera | [spec](m1-camera/spec.md) | [plan](m1-camera/plan.md) |
 | 2. Space kernel, points, lines, planes, the active plane (done 2026-11-24) | [spec](m2-space-kernel/spec.md) | [plan](m2-space-kernel/plan.md) |
-| 3. Solids, cross-sections, dashed hidden edges (drafted 2026-11-25, awaiting approval) | [spec](m3-solids/spec.md) | [plan](m3-solids/plan.md) |
+| 3. Solids, cross-sections, dashed hidden edges (approved 2026-11-25; stage A done) | [spec](m3-solids/spec.md) | [plan](m3-solids/plan.md) |

@@ -10,6 +10,7 @@ import 'package:regula/domain/construction/objects/fixed_radius_circle.dart';
 import 'package:regula/domain/construction/objects/free_point.dart';
 import 'package:regula/domain/construction/objects/midpoint.dart';
 import 'package:regula/domain/construction/objects/point_on_object.dart';
+import 'package:regula/domain/construction/objects/polygon.dart';
 import 'package:regula/domain/construction/objects/segment.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/math/vec3.dart';
@@ -118,6 +119,41 @@ void main() {
         ScopeRefusal.notInPlane,
       );
     });
+  });
+
+  test('a face over points of space is ground to a planar tool: the tap '
+      'passes through it', () {
+    final b = FreePoint(id: 'b', position: const Vec2(0, 5));
+    final face = Polygon(id: 'p', vertices: [a, b, apex]);
+    c
+      ..add(b)
+      ..add(face);
+    final scope = PlaneScope();
+    final tool = PointTool(newId: newId);
+    final seen = scope.adapt(
+      ToolInput(const Vec2(1, 1), hit: face, objects: c.objects),
+      tool,
+      newId,
+    );
+    expect(seen.refusal, isNull);
+    expect(seen.input!.hits, isEmpty);
+    final made =
+        ((tool.onInput(seen.input!) as ToolCommitted).command
+                as AddObjectCommand)
+            .object;
+    expect((made as FreePoint).chartPosition, const Vec2(1, 1));
+
+    // A lifted point under the tap is still what was tapped: refused.
+    expect(
+      scope
+          .adapt(
+            ToolInput(Vec2.zero, hit: apex, extraHits: [face]),
+            tool,
+            newId,
+          )
+          .refusal,
+      ScopeRefusal.notInPlane,
+    );
   });
 
   group('SpaceSlideSession', () {

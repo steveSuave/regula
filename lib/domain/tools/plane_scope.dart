@@ -66,6 +66,12 @@ class PlaneScope {
       if (hit is GeoPlane) {
         continue;
       }
+      // So is a face over points of space: a region with no value in
+      // any sheet, which no planar tool can build on and which is seen
+      // through. The tap lands on the active plane behind it.
+      if (hit is GeoPolygon && hit.polygonVertices == null) {
+        continue;
+      }
       // A line with no planar value is its own host for a glued point.
       if (takesSpaceLines && _drawnInSpace(hit)) {
         seen.add(hit);
@@ -124,7 +130,6 @@ class PlaneScope {
   static bool _hasValueInSheet(GeoObject object) => switch (object) {
     GeoPoint() => object.projPoint != null,
     GeoLine() => object.projLine != null,
-    GeoPolygon() => object.polygonVertices != null,
     _ => true,
   };
 
