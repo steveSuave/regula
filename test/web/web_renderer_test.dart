@@ -6,9 +6,13 @@ import 'dart:ui';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:regula/application/providers/viewport_provider.dart';
+import 'package:regula/domain/construction/construction.dart';
+import 'package:regula/domain/construction/objects/prism.dart';
 import 'package:regula/domain/math/vec2.dart';
 import 'package:regula/domain/math/vec3.dart';
 import 'package:regula/domain/projective/space/plane_frame.dart';
+import 'package:regula/domain/tools/regular_solid_tool.dart';
+import 'package:regula/domain/tools/tool.dart';
 import 'package:regula/presentation/canvas/canvas_viewport.dart';
 import 'package:regula/presentation/canvas/geometry_painter.dart';
 import 'package:regula/presentation/canvas/sheet_canvas.dart';
@@ -261,6 +265,109 @@ void main() {
         expect(isInk(images[i] - normal * 4.5), isFalse, reason: 'in @$i');
       }
       expect(isInk(mapped), isFalse, reason: 'the centre is not stroked');
+    });
+  });
+
+  // Intent 004, milestone 3: hidden edges. Which stretches are hidden is
+  // our arithmetic and is tested on the VM; that a hidden stretch comes
+  // out as dashes over a translucent face, and a seen one as an unbroken
+  // stroke, is the renderer's compositing of a dashed, part-transparent
+  // path over two fills.
+  group('a cube seen obliquely', () {
+    test('its back edges are dashed over the faces and its front edges '
+        'are whole', () async {
+      const canvasSize = Size(400, 400);
+      var ids = 0;
+      String newId() => 'n${ids++}';
+      final c = Construction();
+      final tool = CubeTool(newId: newId)
+        ..onInput(ToolInput(const Vec2(-60, -60), objects: c.objects));
+      (tool.onInput(
+        ToolInput(const Vec2(60, -60), objects: c.objects),
+      ) as ToolCommitted).command.apply(c);
+      final cube = c.objects.whereType<Prism>().single;
+      const camera = CanvasViewport(
+        ViewportState(pan: Vec2(-430, 260), tilt: 1.0, rotation: -0.5),
+      );
+
+      final recorder = PictureRecorder();
+      GeometryPainter(
+        construction: c,
+        viewport: camera,
+        revision: 0,
+        defaultColor: const Color(0xFF000000),
+        selectionColor: const Color(0xFF0000FF),
+        selectedIds: const {},
+        highlightedIds: const {},
+      ).paint(Canvas(recorder), canvasSize);
+      final picture = recorder.endRecording();
+      final image = await picture.toImage(400, 400);
+      final data = (await image.toByteData())!;
+      picture.dispose();
+      image.dispose();
+      // The strongest of the pixels around a point of the stroke: the
+      // stroke is anti-aliased, and its centre falls between pixels.
+      int alphaAt(Offset at) {
+        var strongest = 0;
+        for (var dy = -1; dy <= 1; dy++) {
+          for (var dx = -1; dx <= 1; dx++) {
+            final x = at.dx.round() + dx;
+            final y = at.dy.round() + dy;
+            strongest = math.max(
+              strongest,
+              data.getUint8((y * 400 + x) * 4 + 3),
+            );
+          }
+        }
+        return strongest;
+      }
+
+      final vertices = cube.spaceVertices!;
+      var far = 0;
+      for (var i = 1; i < 8; i++) {
+        if (camera.depthOf(vertices[i]) < camera.depthOf(vertices[far])) {
+          far = i;
+        }
+      }
+      var back = 0;
+      var front = 0;
+      for (final (i, j) in cube.edges) {
+        final from = camera.spaceToScreen(vertices[i]);
+        final to = camera.spaceToScreen(vertices[j]);
+        // Clear of the corners, where other strokes and dots meet.
+        const samples = 120;
+        var strong = 0;
+        var faint = 0;
+        var runs = 0;
+        var previous = false;
+        for (var k = 0; k < samples; k++) {
+          final t = 0.12 + 0.76 * k / (samples - 1);
+          final alpha = alphaAt(from + (to - from) * t);
+          final inked = alpha > 110;
+          if (alpha > 200) strong += 1;
+          if (!inked) faint += 1;
+          if (inked && !previous) runs += 1;
+          previous = inked;
+        }
+        if (i == far || j == far) {
+          back += 1;
+          // Dashes: gaps where only the faces' tint shows, in several
+          // runs. Sampling the strongest neighbour narrows each gap, so
+          // the share of gaps is well under half; and the full stroke
+          // shows only where a front edge crosses in front.
+          expect(
+            faint / samples,
+            inInclusiveRange(0.08, 0.6),
+            reason: 'edge $i–$j',
+          );
+          expect(runs, greaterThanOrEqualTo(3), reason: 'edge $i–$j');
+          expect(strong, lessThan(samples ~/ 4), reason: 'edge $i–$j');
+        } else {
+          front += 1;
+          expect(strong, samples, reason: 'edge $i–$j');
+        }
+      }
+      expect((back, front), (3, 9));
     });
   });
 }

@@ -22,6 +22,7 @@ import '../../domain/projective/space/plane_frame.dart';
 import 'canvas_viewport.dart';
 import 'fit_viewport.dart';
 import 'grid_layout.dart';
+import 'hidden_line.dart';
 import 'label_layout.dart';
 import 'large_radius_arc.dart';
 import 'lift_handle.dart';
@@ -250,6 +251,17 @@ class GeometryPainter extends CustomPainter {
   /// sheet, and then one of these per plane that has something on it.
   GeoPlane? _sheetPlane;
 
+  /// The camera itself, on a painter that draws one plane's sheet
+  /// through that plane's viewport; null on the painter the canvas made.
+  CanvasViewport? _rootCamera;
+
+  CanvasViewport get _camera => _rootCamera ?? viewport;
+
+  /// The faces that hide ink behind them this frame, and the depth by
+  /// which ink must be behind one to count; see [_collectOccluders].
+  List<Occluder> _occluders = const [];
+  double _hiddenMargin = 0;
+
   /// Draws the coordinate axes / the background grid behind every object
   /// (the Phase 36 `DocumentSettings` toggles). Both default off, so
   /// existing callers — exporter included — render byte-identically.
@@ -349,6 +361,7 @@ class GeometryPainter extends CustomPainter {
     }
     _drawAbsolute(canvas, size);
 
+    _collectOccluders(size);
     _drawPlanePatches(screen, size);
 
     // The base sheet and everything with no sheet, in insertion order.
@@ -379,22 +392,26 @@ class GeometryPainter extends CustomPainter {
   /// This painter's settings on another sheet.
   GeometryPainter _forSheet(GeoPlane plane, PlaneFrame frame) =>
       GeometryPainter(
-        construction: construction,
-        viewport: PlaneViewport(viewport, frame),
-        revision: revision,
-        defaultColor: defaultColor,
-        selectionColor: selectionColor,
-        selectedIds: selectedIds,
-        highlightedIds: highlightedIds,
-        highlightColor: highlightColor,
-        highlightPulse: highlightPulse,
-        previewMarkers: previewMarkers,
-        previewObjectIds: previewObjectIds,
-        labelDragPreview: labelDragPreview,
-        showHidden: showHidden,
-        activePlaneId: activePlaneId,
-        activePlane: activePlane,
-      ).._sheetPlane = plane;
+          construction: construction,
+          viewport: PlaneViewport(viewport, frame),
+          revision: revision,
+          defaultColor: defaultColor,
+          selectionColor: selectionColor,
+          selectedIds: selectedIds,
+          highlightedIds: highlightedIds,
+          highlightColor: highlightColor,
+          highlightPulse: highlightPulse,
+          previewMarkers: previewMarkers,
+          previewObjectIds: previewObjectIds,
+          labelDragPreview: labelDragPreview,
+          showHidden: showHidden,
+          activePlaneId: activePlaneId,
+          activePlane: activePlane,
+        )
+        .._sheetPlane = plane
+        .._rootCamera = _camera
+        .._occluders = _occluders
+        .._hiddenMargin = _hiddenMargin;
 
   /// Paints the objects on [_sheetPlane]'s sheet, and the tool's preview
   /// markers when that plane is the active one.
@@ -498,6 +515,7 @@ class GeometryPainter extends CustomPainter {
         object,
         paint,
         dashPeriod: object.attributes.dashPeriod,
+        splitHidden: true,
       );
       final text = labelText(object);
       if (text != null) {
@@ -897,7 +915,15 @@ class GeometryPainter extends CustomPainter {
     Paint paint, {
     double pointRadiusExtra = 0,
     double dashPeriod = 0,
+    bool splitHidden = false,
   }) {
+    // Straight ink behind a face of a solid is dashed (intent 004,
+    // milestone 3). Only the object's own stroke: a halo is selection
+    // chrome and says where the object is, hidden or not.
+    if (splitHidden && _occluders.isNotEmpty && _isStraightInk(object)) {
+      _drawSplitByFaces(canvas, size, object, paint, dashPeriod);
+      return;
+    }
     if (drawnInSpace(object)) {
       _drawInSpace(
         canvas,
@@ -1041,6 +1067,112 @@ class GeometryPainter extends CustomPainter {
     }
     for (final (from, to) in ink.segments) {
       _drawStraight(direct, from, to, paint, dashPeriod);
+      if (object is Segment) {
+        _drawTickMarks(direct, from, to, object.attributes.tickMarks, paint);
+      }
+    }
+  }
+
+  /// The faces that hide: every face of every visible solid, as the
+  /// screen sees it, and the depth margin that keeps a face from hiding
+  /// what lies in it (intent 004, milestone 3).
+  ///
+  /// None when the camera looks straight down. There a solid's lower
+  /// edges lie exactly under its upper ones on screen, on the outline of
+  /// the face that would hide them, where inside and outside are a coin
+  /// toss; and a figure seen in plan is the planar figure, which is
+  /// drawn as it always was. A solid that is not visible hides nothing,
+  /// even while hidden objects are being shown: making a solid invisible
+  /// is how the user asks for the wireframe.
+  void _collectOccluders(Size size) {
+    _occluders = const [];
+    _hiddenMargin = 0;
+    if (!viewport.isTilted) {
+      return;
+    }
+    final faces = <Occluder>[];
+    var near = double.negativeInfinity;
+    var far = double.infinity;
+    for (final object in construction.objects) {
+      if (object is! GeoSolid ||
+          !object.isDefined ||
+          !object.attributes.visible) {
+        continue;
+      }
+      faces.addAll(
+        screenInkOf(construction.objects, viewport, size, object).faces,
+      );
+      for (final vertex in object.spaceVertices!) {
+        final depth = viewport.depthOf(vertex);
+        near = math.max(near, depth);
+        far = math.min(far, depth);
+      }
+    }
+    if (faces.isEmpty) {
+      return;
+    }
+    _occluders = faces;
+    _hiddenMargin = hiddenDepthMargin * (near - far) + hiddenDepthFloor;
+  }
+
+  static bool _isStraightInk(GeoObject object) =>
+      object is GeoLine || object is GeoPolygon;
+
+  /// Draws a straight-edged object's stroke in the stretches no face
+  /// hides, as it would have been drawn, and dashed and dimmed in the
+  /// stretches one does.
+  ///
+  /// From the object's [screenInkOf], which for a segment, a line or a
+  /// polygon's outline is the ends the per-kind code strokes between,
+  /// carried to the screen: the same pixels, cut where
+  /// [hiddenIntervals] says. A stroke the user dashed keeps its own
+  /// period where it is hidden too, and is told apart by the dimming.
+  void _drawSplitByFaces(
+    SheetCanvas canvas,
+    Size size,
+    GeoObject object,
+    Paint paint,
+    double dashPeriod,
+  ) {
+    final direct = SheetCanvas(canvas.screen, _flat);
+    final camera = _camera;
+    final ink = screenInkOf(construction.objects, camera, size, object);
+    final sheet = camera.forObject(object);
+    final behind = Paint()
+      ..color = paint.color.withValues(alpha: paint.color.a * hiddenInkAlpha)
+      ..strokeWidth = paint.strokeWidth
+      ..style = PaintingStyle.stroke;
+    final behindDash = dashPeriod > 0 ? dashPeriod : hiddenDashPeriod;
+    for (var i = 0; i < ink.segments.length; i++) {
+      final (from, to) = ink.segments[i];
+      final depths =
+          ink.segmentDepths?[i] ??
+          (sheet.sheetDepthAt(from), sheet.sheetDepthAt(to));
+      final length = (to - from).distance;
+      final hidden = length == 0
+          ? const <(double, double)>[]
+          : absorbSlivers(
+              hiddenIntervals(
+                from,
+                to,
+                depths.$1,
+                depths.$2,
+                _occluders,
+                margin: _hiddenMargin,
+              ),
+              hiddenSliverPx / length,
+            );
+      if (hidden.isEmpty) {
+        _drawStraight(direct, from, to, paint, dashPeriod);
+      } else {
+        Offset at(double t) => from + (to - from) * t;
+        for (final (a, b) in visibleIntervals(hidden)) {
+          _drawStraight(direct, at(a), at(b), paint, dashPeriod);
+        }
+        for (final (a, b) in hidden) {
+          _drawStraight(direct, at(a), at(b), behind, behindDash);
+        }
+      }
       if (object is Segment) {
         _drawTickMarks(direct, from, to, object.attributes.tickMarks, paint);
       }
